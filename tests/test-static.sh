@@ -32,4 +32,6 @@ if grep -E 'iptables .*-(I|A) (INPUT|FORWARD) -i tailscale\+? -j ACCEPT' "$REPO_
 fi
 
 "$TEST_DIR/test-firewall-mock.sh"
+"$TEST_DIR/test-config-validation.sh"
+"$TEST_DIR/test-evidence-collector.sh"
 echo "PASS: static test suite"

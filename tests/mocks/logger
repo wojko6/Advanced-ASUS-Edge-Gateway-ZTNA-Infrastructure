@@ -1,2 +1,4 @@
 #!/bin/sh
+
+[ -z "${MOCK_LOGGER_LOG:-}" ] || printf '%s\n' "$*" >>"$MOCK_LOGGER_LOG"
 exit 0

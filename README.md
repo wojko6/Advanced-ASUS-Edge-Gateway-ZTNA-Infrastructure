@@ -26,6 +26,7 @@ See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy
 - Classic DNS interception on TCP/UDP 53 through dnsmasq and Unbound.
 - Bounded `/opt` readiness check and startup lock; no package upgrades during boot.
 - Backup, dry-run restore, health checks, mock firewall tests, live tests, and CI.
+- Sanitized evidence collection with explicit separation of automated and live results.
 - Optional TLS log forwarding with syslog-ng.
 
 ## Repository layout
@@ -36,6 +37,7 @@ router/scripts/     Asuswrt-Merlin firewall-start and services-start hooks
 scripts/            Install, update, health-check, backup, restore, uninstall
 tests/              Static, mock-firewall, and live-client tests
 docs/               Architecture, security, operations, testing, and roadmap
+evidence/           Live-validation procedure and report template
 ```
 
 ## Requirements
@@ -123,6 +125,14 @@ sh tests/test-live-client.sh 192.168.50.1 192.168.50.20
 
 The second address is an optional LAN host on which SMB should be denied. See [testing](docs/testing.md) for the full security matrix and packet-capture procedure.
 
+Collect a sanitized router-side evidence snapshot:
+
+```sh
+/jffs/addons/asus-edge/bin/collect-evidence.sh
+```
+
+The collector excludes identity/configuration data and redacts firewall addresses, but its output still requires manual review before publication. This repository does not present expected behavior as observed live results. See [evidence collection](docs/evidence-collection.md) and the [validation evidence directory](evidence/README.md).
+
 Backup and rollback commands:
 
 ```sh
@@ -145,6 +155,7 @@ Tailscale updates are a separate maintenance action:
 - [Security design and limitations](docs/security.md)
 - [Threat model](docs/threat-model.md)
 - [Testing and evidence collection](docs/testing.md)
+- [Publishing validation evidence](docs/evidence-collection.md)
 - [Operations and recovery](docs/operations.md)
 - [Roadmap](docs/roadmap.md)
 
