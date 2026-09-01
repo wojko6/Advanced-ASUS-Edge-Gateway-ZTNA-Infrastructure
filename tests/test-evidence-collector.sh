@@ -28,9 +28,12 @@ EOF
 
 chmod +x "$TMP_DIR/iptables" "$TMP_DIR/dig" "$TMP_DIR/healthcheck"
 
-EVIDENCE_IPTABLES="$TMP_DIR/iptables" \
-EVIDENCE_IP6TABLES="$TMP_DIR/iptables" \
-EVIDENCE_DIG="$TMP_DIR/dig" \
+# Use command names instead of absolute paths to emulate Asuswrt-Merlin,
+# where BusyBox may not support "command -v".
+EVIDENCE_PATH="$TMP_DIR:/usr/bin:/bin" \
+EVIDENCE_IPTABLES="iptables" \
+EVIDENCE_IP6TABLES="iptables" \
+EVIDENCE_DIG="dig" \
 EVIDENCE_HEALTHCHECK="$TMP_DIR/healthcheck" \
 sh "$REPO_DIR/scripts/collect-evidence.sh" "$TMP_DIR/output" >/dev/null
 
