@@ -22,6 +22,7 @@ EDGE_ROUTER_SSH_PORT="22"
 # This does not intercept DoH, DoT, or DoQ; control those with endpoint policy.
 EDGE_INTERCEPT_DNS="1"
 EDGE_DNS_PORT="53"
+EDGE_UNBOUND_PORT="53535"
 
 # Least-privilege access to LAN services. Both lists are space-separated.
 # Every listed host receives every listed TCP/UDP port below.

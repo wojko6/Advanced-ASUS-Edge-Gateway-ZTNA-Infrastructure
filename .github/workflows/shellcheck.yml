@@ -1,6 +1,7 @@
 name: Shell tests
 
 on:
+  workflow_dispatch:
   push:
   pull_request:
 
@@ -10,6 +11,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Install ShellCheck

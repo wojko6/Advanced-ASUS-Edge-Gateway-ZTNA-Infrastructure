@@ -5,7 +5,7 @@ set -eu
 TEST_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 REPO_DIR="$(CDPATH='' cd -- "$TEST_DIR/.." && pwd)"
 
-find "$REPO_DIR/router" "$REPO_DIR/scripts" "$REPO_DIR/tests" -type f -name '*.sh' -o -path '*/router/scripts/*' | while IFS= read -r file; do
+find "$REPO_DIR/router" "$REPO_DIR/scripts" "$REPO_DIR/tests" -type f \( -name '*.sh' -o -path '*/router/scripts/*' \) | while IFS= read -r file; do
     sh -n "$file"
 done
 
@@ -15,6 +15,11 @@ if command -v shellcheck >/dev/null 2>&1; then
 else
     echo "WARN: shellcheck not installed"
 fi
+
+grep -F 'dig +time=3 +tries=1 +dnssec -p "$EDGE_UNBOUND_PORT" @127.0.0.1' "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+    echo "FAIL: healthcheck does not test the configured Unbound port" >&2
+    exit 1
+}
 
 if grep -F 'opkg update && opkg upgrade tailscale' "$REPO_DIR/router/scripts/services-start" >/dev/null; then
     echo "FAIL: package upgrade present in boot path" >&2
