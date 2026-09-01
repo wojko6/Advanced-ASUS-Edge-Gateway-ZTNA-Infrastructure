@@ -1,0 +1,172 @@
+#!/bin/sh
+# shellcheck shell=dash
+
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
+IPTABLES="${EDGE_IPTABLES:-iptables}"
+IP6TABLES="${EDGE_IP6TABLES:-ip6tables}"
+LOGGER="${EDGE_LOGGER:-logger}"
+
+log() {
+    "$LOGGER" -t asus-edge "$*"
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+[ -r "$CONFIG_FILE" ] || die "missing configuration: $CONFIG_FILE"
+# shellcheck disable=SC1090
+. "$CONFIG_FILE"
+
+: "${EDGE_TS_IF:=tailscale0}"
+: "${EDGE_TAILNET_V4_CIDR:=100.64.0.0/10}"
+: "${EDGE_ROUTER_LAN_IP:=192.168.50.1}"
+: "${EDGE_ADMIN_TS_SOURCES:=}"
+: "${EDGE_ALLOW_ROUTER_HTTPS:=1}"
+: "${EDGE_ROUTER_HTTPS_PORT:=8443}"
+: "${EDGE_ALLOW_ROUTER_SSH:=0}"
+: "${EDGE_ROUTER_SSH_PORT:=22}"
+: "${EDGE_INTERCEPT_DNS:=1}"
+: "${EDGE_DNS_PORT:=53}"
+: "${EDGE_ALLOWED_LAN_HOSTS:=}"
+: "${EDGE_ALLOWED_LAN_TCP_PORTS:=}"
+: "${EDGE_ALLOWED_LAN_UDP_PORTS:=}"
+: "${EDGE_ALLOW_LAN_ICMP:=0}"
+: "${EDGE_ENABLE_EXIT_NODE:=0}"
+: "${EDGE_WAN_IF:=}"
+: "${EDGE_LOG_DROPS:=1}"
+: "${EDGE_LOG_PREFIX:=ASUS-EDGE-DROP }"
+
+command -v "$IPTABLES" >/dev/null 2>&1 || die "iptables not found"
+
+valid_port() {
+    case "$1" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    [ "$1" -ge 1 ] 2>/dev/null && [ "$1" -le 65535 ] 2>/dev/null
+}
+
+for port in "$EDGE_ROUTER_HTTPS_PORT" "$EDGE_ROUTER_SSH_PORT" "$EDGE_DNS_PORT" $EDGE_ALLOWED_LAN_TCP_PORTS $EDGE_ALLOWED_LAN_UDP_PORTS; do
+    valid_port "$port" || die "invalid port: $port"
+done
+
+detect_wan_if() {
+    [ -n "$EDGE_WAN_IF" ] && { printf '%s\n' "$EDGE_WAN_IF"; return; }
+    if command -v nvram >/dev/null 2>&1; then
+        wan_if="$(nvram get wan0_gw_ifname 2>/dev/null)"
+        [ -n "$wan_if" ] || wan_if="$(nvram get wan0_ifname 2>/dev/null)"
+        [ -n "$wan_if" ] && { printf '%s\n' "$wan_if"; return; }
+    fi
+    ip route 2>/dev/null | awk '/^default / { print $5; exit }'
+}
+
+flush_chain() {
+    table="$1"
+    chain="$2"
+    "$IPTABLES" -t "$table" -N "$chain" 2>/dev/null || true
+    "$IPTABLES" -t "$table" -F "$chain" || die "cannot flush $table/$chain"
+}
+
+single_jump() {
+    table="$1"
+    parent="$2"
+    interface="$3"
+    chain="$4"
+    while "$IPTABLES" -t "$table" -D "$parent" -i "$interface" -j "$chain" 2>/dev/null; do :; done
+    "$IPTABLES" -t "$table" -I "$parent" 1 -i "$interface" -j "$chain" || die "cannot attach $chain"
+}
+
+add_admin_input_rules() {
+    for source in $EDGE_ADMIN_TS_SOURCES; do
+        if [ "$EDGE_ALLOW_ROUTER_HTTPS" = "1" ]; then
+            "$IPTABLES" -A EDGE_TS_INPUT -s "$source" -p tcp --dport "$EDGE_ROUTER_HTTPS_PORT" -m conntrack --ctstate NEW -j ACCEPT || die "HTTPS rule failed"
+        fi
+        if [ "$EDGE_ALLOW_ROUTER_SSH" = "1" ]; then
+            "$IPTABLES" -A EDGE_TS_INPUT -s "$source" -p tcp --dport "$EDGE_ROUTER_SSH_PORT" -m conntrack --ctstate NEW -j ACCEPT || die "SSH rule failed"
+        fi
+    done
+}
+
+add_lan_forward_rules() {
+    for host in $EDGE_ALLOWED_LAN_HOSTS; do
+        for port in $EDGE_ALLOWED_LAN_TCP_PORTS; do
+            "$IPTABLES" -A EDGE_TS_FORWARD -d "$host" -p tcp --dport "$port" -m conntrack --ctstate NEW -j ACCEPT || die "LAN TCP rule failed"
+        done
+        for port in $EDGE_ALLOWED_LAN_UDP_PORTS; do
+            "$IPTABLES" -A EDGE_TS_FORWARD -d "$host" -p udp --dport "$port" -m conntrack --ctstate NEW -j ACCEPT || die "LAN UDP rule failed"
+        done
+        if [ "$EDGE_ALLOW_LAN_ICMP" = "1" ]; then
+            "$IPTABLES" -A EDGE_TS_FORWARD -d "$host" -p icmp --icmp-type echo-request -j ACCEPT || die "LAN ICMP rule failed"
+        fi
+    done
+}
+
+# Keep re-application fail-closed while existing chains are rebuilt. On an
+# error these guards intentionally remain until Merlin restarts the firewall.
+"$IPTABLES" -t filter -I INPUT 1 -i "$EDGE_TS_IF" -j DROP || die "cannot install temporary INPUT guard"
+"$IPTABLES" -t filter -I FORWARD 1 -i "$EDGE_TS_IF" -j DROP || die "cannot install temporary FORWARD guard"
+
+flush_chain filter EDGE_TS_INPUT
+flush_chain filter EDGE_TS_FORWARD
+flush_chain nat EDGE_TS_PREROUTING
+
+"$IPTABLES" -A EDGE_TS_INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT || die "state rule failed"
+if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
+    "$IPTABLES" -A EDGE_TS_INPUT -s "$EDGE_TAILNET_V4_CIDR" -p udp --dport "$EDGE_DNS_PORT" -j ACCEPT || die "DNS UDP input rule failed"
+    "$IPTABLES" -A EDGE_TS_INPUT -s "$EDGE_TAILNET_V4_CIDR" -p tcp --dport "$EDGE_DNS_PORT" -j ACCEPT || die "DNS TCP input rule failed"
+    "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p udp --dport "$EDGE_DNS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_DNS_PORT" || die "DNS UDP redirect failed"
+    "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p tcp --dport "$EDGE_DNS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_DNS_PORT" || die "DNS TCP redirect failed"
+fi
+
+add_admin_input_rules
+
+if [ "$EDGE_LOG_DROPS" = "1" ]; then
+    "$IPTABLES" -A EDGE_TS_INPUT -m limit --limit 6/min --limit-burst 10 -j LOG --log-prefix "$EDGE_LOG_PREFIX" --log-level 6 || die "INPUT log rule failed"
+fi
+"$IPTABLES" -A EDGE_TS_INPUT -j DROP || die "INPUT drop rule failed"
+
+"$IPTABLES" -A EDGE_TS_FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT || die "forward state rule failed"
+add_lan_forward_rules
+
+if [ "$EDGE_ENABLE_EXIT_NODE" = "1" ]; then
+    WAN_IF="$(detect_wan_if)"
+    [ -n "$WAN_IF" ] || die "cannot detect WAN interface; set EDGE_WAN_IF"
+    "$IPTABLES" -A EDGE_TS_FORWARD -o "$WAN_IF" -j ACCEPT || die "exit-node rule failed"
+fi
+
+if [ "$EDGE_LOG_DROPS" = "1" ]; then
+    "$IPTABLES" -A EDGE_TS_FORWARD -m limit --limit 6/min --limit-burst 10 -j LOG --log-prefix "$EDGE_LOG_PREFIX" --log-level 6 || die "FORWARD log rule failed"
+fi
+"$IPTABLES" -A EDGE_TS_FORWARD -j DROP || die "FORWARD drop rule failed"
+
+single_jump filter INPUT "$EDGE_TS_IF" EDGE_TS_INPUT
+single_jump filter FORWARD "$EDGE_TS_IF" EDGE_TS_FORWARD
+single_jump nat PREROUTING "$EDGE_TS_IF" EDGE_TS_PREROUTING
+
+# The granular LAN policy is IPv4. Fail closed on Tailscale IPv6 so it cannot
+# bypass the IPv4 rules. Add granular IPv6 access only after end-to-end tests.
+if command -v "$IP6TABLES" >/dev/null 2>&1; then
+    for chain in EDGE_TS6_INPUT EDGE_TS6_FORWARD; do
+        "$IP6TABLES" -t filter -N "$chain" 2>/dev/null || true
+        "$IP6TABLES" -t filter -F "$chain" || die "cannot flush IPv6 chain $chain"
+        "$IP6TABLES" -t filter -A "$chain" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT || die "IPv6 state rule failed"
+        if [ "$EDGE_LOG_DROPS" = "1" ]; then
+            "$IP6TABLES" -t filter -A "$chain" -m limit --limit 6/min --limit-burst 10 -j LOG --log-prefix "$EDGE_LOG_PREFIX" --log-level 6 || die "IPv6 log rule failed"
+        fi
+        "$IP6TABLES" -t filter -A "$chain" -j DROP || die "IPv6 drop rule failed"
+    done
+    while "$IP6TABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j EDGE_TS6_INPUT 2>/dev/null; do :; done
+    while "$IP6TABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j EDGE_TS6_FORWARD 2>/dev/null; do :; done
+    "$IP6TABLES" -t filter -I INPUT 1 -i "$EDGE_TS_IF" -j EDGE_TS6_INPUT || die "cannot attach IPv6 INPUT guard"
+    "$IP6TABLES" -t filter -I FORWARD 1 -i "$EDGE_TS_IF" -j EDGE_TS6_FORWARD || die "cannot attach IPv6 FORWARD guard"
+else
+    log "WARNING: ip6tables unavailable; verify IPv6 is disabled"
+fi
+
+"$IPTABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary INPUT guard"
+"$IPTABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary FORWARD guard"
+
+log "firewall policy applied: interface=$EDGE_TS_IF"
+exit 0

@@ -1,0 +1,35 @@
+@version: 3.38
+
+options {
+    chain_hostnames(no);
+    flush_lines(10);
+    stats_freq(3600);
+    time_reopen(10);
+};
+
+source s_router {
+    system();
+    internal();
+};
+
+destination d_local_archive {
+    file("/opt/var/log/router/${YEAR}-${MONTH}-${DAY}.log"
+         create_dirs(yes)
+         dir_perm(0750)
+         perm(0640));
+};
+
+# Replace collector.example.lan and deploy a trusted CA file before enabling.
+destination d_remote_tls {
+    network("collector.example.lan"
+            port(6514)
+            transport("tls")
+            tls(ca-file("/opt/etc/syslog-ng/ca.d/collector-ca.pem"))
+            disk-buffer(mem-buf-size(262144)
+                        disk-buf-size(4194304)
+                        reliable(yes)));
+};
+
+log { source(s_router); destination(d_local_archive); };
+# Uncomment only after certificate and reachability validation.
+# log { source(s_router); destination(d_remote_tls); flags(flow-control); };

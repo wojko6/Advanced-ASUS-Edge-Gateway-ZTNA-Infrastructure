@@ -1,0 +1,48 @@
+server:
+    interface: 127.0.0.1
+    # dnsmasq owns LAN port 53 and forwards here.
+    port: 53535
+    access-control: 127.0.0.0/8 allow
+    access-control: 0.0.0.0/0 refuse
+
+    do-ip4: yes
+    do-ip6: no
+    do-udp: yes
+    do-tcp: yes
+    hide-identity: yes
+    hide-version: yes
+    harden-glue: yes
+    harden-dnssec-stripped: yes
+    harden-below-nxdomain: yes
+    harden-referral-path: yes
+    qname-minimisation: yes
+    aggressive-nsec: yes
+    minimal-responses: yes
+
+    auto-trust-anchor-file: "/opt/var/lib/unbound/root.key"
+    val-clean-additional: yes
+
+    prefetch: yes
+    prefetch-key: yes
+    serve-expired: yes
+    serve-expired-ttl: 86400
+    cache-min-ttl: 0
+    cache-max-ttl: 86400
+    msg-cache-size: 8m
+    rrset-cache-size: 16m
+
+    private-address: 10.0.0.0/8
+    private-address: 172.16.0.0/12
+    private-address: 192.168.0.0/16
+    private-address: 169.254.0.0/16
+    private-address: fd00::/8
+    private-address: fe80::/10
+    private-domain: "lan"
+
+    use-syslog: yes
+    verbosity: 1
+
+remote-control:
+    control-enable: yes
+    control-interface: 127.0.0.1
+    control-use-cert: no

@@ -1,0 +1,48 @@
+# Advanced ASUS Edge Gateway v2.0
+# Copy to /jffs/configs/asus-edge.conf and adapt before applying.
+
+EDGE_TS_IF="tailscale0"
+EDGE_TS_SOCKET="/var/run/tailscale/tailscaled.sock"
+EDGE_TS_STATE="/opt/var/lib/tailscale/tailscaled.state"
+EDGE_LAN_CIDR="192.168.50.0/24"
+EDGE_ROUTER_LAN_IP="192.168.50.1"
+EDGE_TAILNET_V4_CIDR="100.64.0.0/10"
+
+# Space-separated Tailscale IPv4 addresses/CIDRs allowed to administer the router.
+# Keep empty until you know the stable Tailscale IP of each admin device.
+EDGE_ADMIN_TS_SOURCES=""
+
+# Router-local services available to EDGE_ADMIN_TS_SOURCES.
+EDGE_ALLOW_ROUTER_HTTPS="1"
+EDGE_ROUTER_HTTPS_PORT="8443"
+EDGE_ALLOW_ROUTER_SSH="0"
+EDGE_ROUTER_SSH_PORT="22"
+
+# Force classic DNS from Tailscale clients through the router's resolver.
+# This does not intercept DoH, DoT, or DoQ; control those with endpoint policy.
+EDGE_INTERCEPT_DNS="1"
+EDGE_DNS_PORT="53"
+
+# Least-privilege access to LAN services. Both lists are space-separated.
+# Every listed host receives every listed TCP/UDP port below.
+EDGE_ALLOWED_LAN_HOSTS=""
+EDGE_ALLOWED_LAN_TCP_PORTS=""
+EDGE_ALLOWED_LAN_UDP_PORTS=""
+EDGE_ALLOW_LAN_ICMP="0"
+
+# Preserve the original project's exit-node function while keeping LAN denied.
+# The firewall allows forwarding only from tailscale0 to the detected WAN interface.
+EDGE_ENABLE_EXIT_NODE="1"
+EDGE_WAN_IF=""
+
+EDGE_ADVERTISE_ROUTES="192.168.50.0/24"
+EDGE_ACCEPT_DNS="false"
+EDGE_HOSTNAME="asus-edge-gateway"
+
+EDGE_LOG_DROPS="1"
+EDGE_LOG_PREFIX="ASUS-EDGE-DROP "
+EDGE_OPT_WAIT_SECONDS="90"
+
+# Optional centralized logging health target used by healthcheck.sh.
+EDGE_SYSLOG_HOST=""
+EDGE_SYSLOG_PORT="6514"

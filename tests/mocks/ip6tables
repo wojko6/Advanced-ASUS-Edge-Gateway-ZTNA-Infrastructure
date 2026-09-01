@@ -1,0 +1,9 @@
+#!/bin/sh
+
+: "${MOCK_IPTABLES_LOG:?MOCK_IPTABLES_LOG is required}"
+printf 'ip6 %s\n' "$*" >>"$MOCK_IPTABLES_LOG"
+
+case " $* " in
+    *" -D "*) exit 1 ;;
+esac
+exit 0

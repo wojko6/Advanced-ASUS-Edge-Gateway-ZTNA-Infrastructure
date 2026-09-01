@@ -1,0 +1,87 @@
+#!/bin/sh
+# shellcheck shell=dash
+
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
+LOCK_DIR="/var/run/asus-edge-services.lock"
+
+log() {
+    logger -t asus-edge "$*"
+}
+
+[ -r "$CONFIG_FILE" ] || { log "ERROR: missing $CONFIG_FILE"; exit 1; }
+# shellcheck disable=SC1090
+. "$CONFIG_FILE"
+
+: "${EDGE_OPT_WAIT_SECONDS:=90}"
+: "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
+: "${EDGE_TS_STATE:=/opt/var/lib/tailscale/tailscaled.state}"
+: "${EDGE_ADVERTISE_ROUTES:=}"
+: "${EDGE_ENABLE_EXIT_NODE:=0}"
+: "${EDGE_ACCEPT_DNS:=false}"
+: "${EDGE_HOSTNAME:=asus-edge-gateway}"
+
+opt_is_mounted() {
+    if command -v mountpoint >/dev/null 2>&1; then
+        mountpoint -q /opt
+    else
+        awk '$2 == "/opt" { found=1 } END { exit !found }' /proc/mounts
+    fi
+}
+
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    log "services-start already running; exiting"
+    exit 0
+fi
+trap 'rmdir "$LOCK_DIR" 2>/dev/null' EXIT HUP INT TERM
+
+elapsed=0
+while ! opt_is_mounted 2>/dev/null; do
+    elapsed=$((elapsed + 1))
+    if [ "$elapsed" -ge "$EDGE_OPT_WAIT_SECONDS" ]; then
+        log "ERROR: /opt not mounted after ${EDGE_OPT_WAIT_SECONDS}s"
+        exit 1
+    fi
+    sleep 1
+done
+
+if [ -x /opt/etc/init.d/rc.unslung ]; then
+    /opt/etc/init.d/rc.unslung start >/tmp/asus-edge-entware-start.log 2>&1 || log "WARNING: Entware startup returned non-zero"
+fi
+
+mkdir -p /opt/var/lib/unbound
+
+if command -v tailscaled >/dev/null 2>&1; then
+    if ! pidof tailscaled >/dev/null 2>&1; then
+        mkdir -p "$(dirname "$EDGE_TS_STATE")" "$(dirname "$EDGE_TS_SOCKET")"
+        tailscaled \
+            --state="$EDGE_TS_STATE" \
+            --socket="$EDGE_TS_SOCKET" \
+            >/opt/var/log/tailscaled.log 2>&1 &
+        sleep 3
+    fi
+
+    if tailscale --socket="$EDGE_TS_SOCKET" status >/dev/null 2>&1; then
+        set -- tailscale --socket="$EDGE_TS_SOCKET" up --accept-dns="$EDGE_ACCEPT_DNS" --hostname="$EDGE_HOSTNAME"
+        [ -n "$EDGE_ADVERTISE_ROUTES" ] && set -- "$@" --advertise-routes="$EDGE_ADVERTISE_ROUTES"
+        [ "$EDGE_ENABLE_EXIT_NODE" = "1" ] && set -- "$@" --advertise-exit-node
+        "$@" >/tmp/asus-edge-tailscale-up.log 2>&1 || log "WARNING: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"
+    else
+        log "WARNING: Tailscale is not authenticated; run tailscale up interactively once"
+    fi
+else
+    log "WARNING: tailscaled not installed"
+fi
+
+for service in /opt/etc/init.d/S*unbound /opt/etc/init.d/S*syslog-ng; do
+    if [ -x "$service" ]; then
+        "$service" restart >/dev/null 2>&1 || log "WARNING: failed to restart $service"
+    fi
+done
+
+if [ -x /jffs/scripts/firewall-start ]; then
+    /jffs/scripts/firewall-start || log "ERROR: firewall policy failed"
+fi
+
+log "services startup completed"
+exit 0

@@ -1,0 +1,6 @@
+config/edge.conf
+evidence/*.pcap
+evidence/*.pcapng
+evidence/*-private.*
+*.tar.gz
+*.tar.gz.sha256

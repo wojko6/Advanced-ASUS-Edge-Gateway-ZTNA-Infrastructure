@@ -1,0 +1,52 @@
+{
+  // Replace the example users and LAN addresses before publishing this policy.
+  "groups": {
+    "group:edge-admins": ["admin@example.com"],
+    "group:edge-users": ["admin@example.com", "user@example.com"],
+    "group:exit-users": ["admin@example.com"]
+  },
+
+  "hosts": {
+    "router-lan": "192.168.50.1",
+    "nas": "192.168.50.10"
+  },
+
+  "tagOwners": {
+    "tag:edge-gateway": ["group:edge-admins"]
+  },
+
+  "grants": [
+    {
+      "src": ["group:edge-admins"],
+      "dst": ["router-lan"],
+      "ip": ["tcp:8443", "tcp:22", "tcp:53", "udp:53"]
+    },
+    {
+      "src": ["group:edge-users"],
+      "dst": ["router-lan"],
+      "ip": ["tcp:53", "udp:53"]
+    },
+    {
+      "src": ["group:edge-users"],
+      "dst": ["nas"],
+      "ip": ["tcp:443"]
+    },
+    {
+      "src": ["group:exit-users"],
+      "dst": ["autogroup:internet"],
+      "ip": ["*"]
+    }
+  ],
+
+  "tests": [
+    {
+      "src": "admin@example.com",
+      "accept": ["router-lan:8443", "nas:443"]
+    },
+    {
+      "src": "user@example.com",
+      "accept": ["router-lan:53", "nas:443"],
+      "deny": ["router-lan:22", "router-lan:8443"]
+    }
+  ]
+}
