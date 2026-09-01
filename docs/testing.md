@@ -71,6 +71,8 @@ iptables -t nat -nvL EDGE_TS_PREROUTING --line-numbers
 
 If test evidence is published, sanitize counters and captures first. Never commit public IPs, auth material, or sensitive internal hostnames.
 
+Use `scripts/collect-evidence.sh` for a router-side snapshot and complete the remote results in the [live-validation template](../evidence/live-validation-template.md). The collector cannot prove WAN reachability or Tailscale identity decisions; those require separate clients. Follow the [publication checklist](evidence-collection.md) before committing any output.
+
 ## Performance baseline
 
 Measure at idle and under three flows: direct WAN, Tailscale subnet routing, and exit-node routing.

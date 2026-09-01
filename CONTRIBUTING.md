@@ -9,3 +9,5 @@ sh tests/test-static.sh
 ```
 
 Never include secrets, real credentials, private packet captures, Tailscale node state, or router configuration exports.
+
+Evidence must distinguish expected from observed behavior, include a date and configuration revision, and pass the manual review in `docs/evidence-collection.md`.
