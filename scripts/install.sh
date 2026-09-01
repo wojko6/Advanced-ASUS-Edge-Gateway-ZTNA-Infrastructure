@@ -3,8 +3,8 @@
 
 set -u
 
-SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-REPO_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+REPO_DIR="$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)"
 ADDON_DIR="/jffs/addons/asus-edge"
 BACKUP_DIR="$ADDON_DIR/backups/install-$(date +%Y%m%d-%H%M%S)"
 APPLY=0

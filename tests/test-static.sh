@@ -2,8 +2,8 @@
 
 set -eu
 
-TEST_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-REPO_DIR="$(CDPATH= cd -- "$TEST_DIR/.." && pwd)"
+TEST_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+REPO_DIR="$(CDPATH='' cd -- "$TEST_DIR/.." && pwd)"
 
 find "$REPO_DIR/router" "$REPO_DIR/scripts" "$REPO_DIR/tests" -type f -name '*.sh' -o -path '*/router/scripts/*' | while IFS= read -r file; do
     sh -n "$file"
