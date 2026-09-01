@@ -3,7 +3,7 @@
 
 set -u
 
-PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+PATH="${EVIDENCE_PATH:-/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin}"
 umask 077
 
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -20,6 +20,32 @@ DIG_BIN="${EVIDENCE_DIG:-dig}"
 }
 mkdir -p "$OUTPUT_DIR" || exit 1
 
+# Older Asuswrt-Merlin BusyBox shells may not implement "command -v".
+# Resolve executables directly through PATH so collection works consistently.
+executable_exists() {
+    executable_name="$1"
+    case "$executable_name" in
+        */*)
+            [ -x "$executable_name" ]
+            return
+            ;;
+    esac
+
+    saved_ifs="$IFS"
+    IFS=:
+    # PATH splitting is intentional here.
+    # shellcheck disable=SC2086
+    for executable_dir in $PATH; do
+        [ -n "$executable_dir" ] || continue
+        if [ -x "$executable_dir/$executable_name" ]; then
+            IFS="$saved_ifs"
+            return 0
+        fi
+    done
+    IFS="$saved_ifs"
+    return 1
+}
+
 if [ -r "$CONFIG_FILE" ]; then
     # shellcheck disable=SC1090
     . "$CONFIG_FILE"
@@ -29,7 +55,7 @@ fi
 first_line_or() {
     fallback="$1"
     shift
-    if command -v "$1" >/dev/null 2>&1; then
+    if executable_exists "$1"; then
         value="$("$@" 2>/dev/null | head -n 1)"
         [ -n "$value" ] && printf '%s\n' "$value" || printf '%s\n' "$fallback"
     else
@@ -38,7 +64,7 @@ first_line_or() {
 }
 
 nvram_value() {
-    if command -v nvram >/dev/null 2>&1; then
+    if executable_exists nvram; then
         nvram get "$1" 2>/dev/null
     fi
 }
@@ -60,7 +86,7 @@ capture_chain() {
     tool="$1"
     table="$2"
     chain="$3"
-    if command -v "$tool" >/dev/null 2>&1; then
+    if executable_exists "$tool"; then
         "$tool" -t "$table" -nvL "$chain" --line-numbers 2>&1 \
             | redact_firewall_addresses
     else
@@ -136,7 +162,7 @@ UPTIME_SECONDS="$(cut -d. -f1 /proc/uptime 2>/dev/null)"
 } >"$OUTPUT_DIR/firewall-counters.md"
 
 DNS_OUTPUT=""
-if command -v "$DIG_BIN" >/dev/null 2>&1; then
+if executable_exists "$DIG_BIN"; then
     DNS_OUTPUT="$("$DIG_BIN" +time=3 +tries=1 +dnssec -p "$EDGE_UNBOUND_PORT" @127.0.0.1 cloudflare.com A 2>/dev/null || true)"
 fi
 DNS_STATUS="$(printf '%s\n' "$DNS_OUTPUT" | sed -n 's/.*status: \([^,]*\).*/\1/p' | head -n 1)"
@@ -170,7 +196,7 @@ fi
     echo "- Complete the remote-client matrix separately; this local snapshot cannot prove WAN or identity-policy behavior."
 } >"$OUTPUT_DIR/README.md"
 
-if command -v sha256sum >/dev/null 2>&1; then
+if executable_exists sha256sum; then
     (
         cd "$OUTPUT_DIR" || exit 1
         sha256sum README.md environment.md healthcheck.md firewall-counters.md dns-validation.md
