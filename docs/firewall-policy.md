@@ -11,7 +11,7 @@ The project owns three IPv4 chains and two fail-closed IPv6 guard chains:
 
 It does not flush Merlin, Tailscale, or user-owned chains. Before attaching each managed chain, it deletes duplicate jumps and inserts exactly one interface-scoped jump.
 
-During re-application, temporary interface-scoped drop rules keep the transition fail-closed while managed chains are rebuilt. They are removed only after the complete IPv4 and IPv6 policy succeeds. Apply from LAN because an error intentionally leaves these guards in place until firewall restart/recovery.
+During re-application, temporary interface-scoped IPv4 and IPv6 drop rules keep the transition fail-closed while managed chains are rebuilt. They are removed only after the corresponding policy and jump rules succeed. Apply from LAN because an error intentionally leaves these guards in place until firewall restart/recovery.
 
 ## Evaluation order
 

@@ -2,11 +2,11 @@
 
 set -u
 
-ROUTER_IP="${1:-}"
+ROUTER_MANAGEMENT_IP="${1:-}"
 DENIED_LAN_IP="${2:-}"
 
-[ -n "$ROUTER_IP" ] || {
-    echo "Usage: $0 ROUTER_TAILSCALE_IP [DENIED_LAN_IP]" >&2
+[ -n "$ROUTER_MANAGEMENT_IP" ] || {
+    echo "Usage: $0 ROUTER_MANAGEMENT_IP [DENIED_LAN_IP]" >&2
     exit 2
 }
 
@@ -21,8 +21,8 @@ else
 fi
 
 if command -v nc >/dev/null 2>&1; then
-    nc -z -w 3 "$ROUTER_IP" 8443 >/dev/null 2>&1 && pass "router HTTPS reachable for this identity" || fail "router HTTPS unavailable"
-    nc -z -w 3 "$ROUTER_IP" 22 >/dev/null 2>&1 && fail "router SSH unexpectedly reachable" || pass "router SSH denied"
+    nc -z -w 3 "$ROUTER_MANAGEMENT_IP" 8443 >/dev/null 2>&1 && pass "router HTTPS reachable for this admin device" || fail "router HTTPS unavailable"
+    nc -z -w 3 "$ROUTER_MANAGEMENT_IP" 22 >/dev/null 2>&1 && fail "router SSH unexpectedly reachable" || pass "router SSH denied"
 fi
 
 if [ -n "$DENIED_LAN_IP" ] && command -v nc >/dev/null 2>&1; then

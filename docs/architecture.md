@@ -1,5 +1,7 @@
 # Architecture
 
+![Advanced ASUS Edge Gateway architecture](images/architecture-v2.png)
+
 ## Logical components
 
 | Layer | Component | Responsibility |
@@ -44,6 +46,8 @@ sequenceDiagram
 ```
 
 Encrypted DNS does not use this flow and is not intercepted.
+
+The supplied IPv6 chains fail closed for new Tailscale input and forwarded traffic. IPv6 access requires a separate granular policy and live validation before those guards are relaxed.
 
 ## Boot sequence
 

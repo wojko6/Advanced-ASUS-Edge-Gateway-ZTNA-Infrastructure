@@ -29,6 +29,7 @@ fi
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
+: "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_SYSLOG_HOST:=}"
 : "${EDGE_SYSLOG_PORT:=6514}"
 
@@ -67,8 +68,17 @@ fi
 
 input_jumps="$(iptables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_INPUT")"
 forward_jumps="$(iptables -t filter -S FORWARD 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_FORWARD")"
+prerouting_jumps="$(iptables -t nat -S PREROUTING 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_PREROUTING")"
 [ "$input_jumps" = "1" ] && ok "single INPUT jump" || fail "INPUT jump count: $input_jumps"
 [ "$forward_jumps" = "1" ] && ok "single FORWARD jump" || fail "FORWARD jump count: $forward_jumps"
+[ "$prerouting_jumps" = "1" ] && ok "single PREROUTING jump" || fail "PREROUTING jump count: $prerouting_jumps"
+
+if command -v ip6tables >/dev/null 2>&1; then
+    input6_jumps="$(ip6tables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS6_INPUT")"
+    forward6_jumps="$(ip6tables -t filter -S FORWARD 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS6_FORWARD")"
+    [ "$input6_jumps" = "1" ] && ok "single IPv6 INPUT jump" || fail "IPv6 INPUT jump count: $input6_jumps"
+    [ "$forward6_jumps" = "1" ] && ok "single IPv6 FORWARD jump" || fail "IPv6 FORWARD jump count: $forward6_jumps"
+fi
 
 if command -v unbound-control >/dev/null 2>&1 && unbound-control status >/dev/null 2>&1; then
     ok "Unbound running"
@@ -77,8 +87,8 @@ else
 fi
 
 if command -v dig >/dev/null 2>&1; then
-    if dig +time=3 +tries=1 +dnssec @127.0.0.1 cloudflare.com A 2>/dev/null | grep -q 'flags:.* ad'; then
-        ok "DNSSEC validation (AD flag)"
+    if dig +time=3 +tries=1 +dnssec -p "$EDGE_UNBOUND_PORT" @127.0.0.1 cloudflare.com A 2>/dev/null | grep -q 'flags:.* ad'; then
+        ok "Unbound DNSSEC validation on port $EDGE_UNBOUND_PORT (AD flag)"
     else
         warn "DNS resolved without observable AD flag"
     fi

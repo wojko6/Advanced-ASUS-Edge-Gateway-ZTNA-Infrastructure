@@ -4,6 +4,7 @@
 printf 'ip6 %s\n' "$*" >>"$MOCK_IPTABLES_LOG"
 
 case " $* " in
+    *" -D "*" -j DROP "*) exit 0 ;;
     *" -D "*) exit 1 ;;
 esac
 exit 0

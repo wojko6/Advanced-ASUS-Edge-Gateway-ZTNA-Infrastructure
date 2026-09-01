@@ -13,7 +13,7 @@ This performs shell syntax checks, optional ShellCheck analysis, boot-path regre
 | Source | Destination | Test | Expected |
 |---|---|---|---|
 | WAN | Router:8443 | `nmap -Pn -p 8443 PUBLIC_IP` | filtered/closed |
-| Admin tailnet device | Router:8443 | `nc -vz ROUTER_TS_IP 8443` | allowed |
+| Admin tailnet device | Router:8443 | `nc -vz ROUTER_MANAGEMENT_IP 8443` | allowed |
 | User tailnet device | Router:8443 | same | denied |
 | Tailnet device | Router:22 | same | denied by default |
 | Approved user | NAS:443 | `curl -kI https://NAS_IP/` | allowed |
@@ -53,6 +53,12 @@ tshark -r ts-dns.pcap -Y 'dns' -T fields \
   -e frame.number -e frame.time_relative -e ip.src -e ip.dst -e dns.qry.name
 ```
 
+Validate Unbound directly on its configured loopback port:
+
+```sh
+dig +dnssec -p 53535 @127.0.0.1 cloudflare.com A
+```
+
 ## Firewall counters
 
 Capture counters before and after each test:
@@ -63,7 +69,7 @@ iptables -nvL EDGE_TS_FORWARD --line-numbers
 iptables -t nat -nvL EDGE_TS_PREROUTING --line-numbers
 ```
 
-Commit sanitized counter tables and test dates under a future `evidence/` directory. Never commit public IPs, auth material, or sensitive internal hostnames.
+If test evidence is published, sanitize counters and captures first. Never commit public IPs, auth material, or sensitive internal hostnames.
 
 ## Performance baseline
 

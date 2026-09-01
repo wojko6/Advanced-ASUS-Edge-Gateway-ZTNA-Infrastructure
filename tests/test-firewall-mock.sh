@@ -42,6 +42,10 @@ assert_rule "-A EDGE_TS_FORWARD -j DROP"
 assert_rule "-t nat -A EDGE_TS_PREROUTING -p udp --dport 53 -j DNAT"
 assert_rule "ip6 -t filter -A EDGE_TS6_INPUT -j DROP"
 assert_rule "ip6 -t filter -A EDGE_TS6_FORWARD -j DROP"
+assert_rule "ip6 -t filter -I INPUT 1 -i tailscale0 -j DROP"
+assert_rule "ip6 -t filter -I FORWARD 1 -i tailscale0 -j DROP"
+assert_rule "ip6 -t filter -D INPUT -i tailscale0 -j DROP"
+assert_rule "ip6 -t filter -D FORWARD -i tailscale0 -j DROP"
 
 if grep -E -- '-A EDGE_TS_(INPUT|FORWARD) -j ACCEPT$' "$MOCK_IPTABLES_LOG" >/dev/null; then
     echo "FAIL: unrestricted ACCEPT rule found" >&2

@@ -148,6 +148,11 @@ single_jump nat PREROUTING "$EDGE_TS_IF" EDGE_TS_PREROUTING
 # The granular LAN policy is IPv4. Fail closed on Tailscale IPv6 so it cannot
 # bypass the IPv4 rules. Add granular IPv6 access only after end-to-end tests.
 if command -v "$IP6TABLES" >/dev/null 2>&1; then
+    # Keep IPv6 fail-closed while an already-attached managed chain is flushed
+    # and rebuilt, mirroring the temporary guards used for IPv4 above.
+    "$IP6TABLES" -t filter -I INPUT 1 -i "$EDGE_TS_IF" -j DROP || die "cannot install temporary IPv6 INPUT guard"
+    "$IP6TABLES" -t filter -I FORWARD 1 -i "$EDGE_TS_IF" -j DROP || die "cannot install temporary IPv6 FORWARD guard"
+
     for chain in EDGE_TS6_INPUT EDGE_TS6_FORWARD; do
         "$IP6TABLES" -t filter -N "$chain" 2>/dev/null || true
         "$IP6TABLES" -t filter -F "$chain" || die "cannot flush IPv6 chain $chain"
@@ -161,6 +166,8 @@ if command -v "$IP6TABLES" >/dev/null 2>&1; then
     while "$IP6TABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j EDGE_TS6_FORWARD 2>/dev/null; do :; done
     "$IP6TABLES" -t filter -I INPUT 1 -i "$EDGE_TS_IF" -j EDGE_TS6_INPUT || die "cannot attach IPv6 INPUT guard"
     "$IP6TABLES" -t filter -I FORWARD 1 -i "$EDGE_TS_IF" -j EDGE_TS6_FORWARD || die "cannot attach IPv6 FORWARD guard"
+    "$IP6TABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary IPv6 INPUT guard"
+    "$IP6TABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary IPv6 FORWARD guard"
 else
     log "WARNING: ip6tables unavailable; verify IPv6 is disabled"
 fi
