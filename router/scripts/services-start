@@ -41,6 +41,7 @@ log() {
 : "${EDGE_UNBOUND_PIDFILE:=/opt/var/run/unbound.pid}"
 : "${EDGE_UNBOUND_BIN:=/opt/sbin/unbound}"
 : "${EDGE_UNBOUND_CONFIG:=}"
+: "${EDGE_ENTWARE_LD_LIBRARY_PATH:=/opt/lib:/opt/usr/lib}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_STATE:=/opt/var/lib/tailscale/tailscaled.state}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
@@ -215,7 +216,8 @@ start_unbound_direct_if_stopped() {
 
     : >"$unbound_log"
     if executable_exists unbound-checkconf >/dev/null 2>&1; then
-        if ! unbound-checkconf "$unbound_config" >>"$unbound_log" 2>&1; then
+        if ! LD_LIBRARY_PATH="$EDGE_ENTWARE_LD_LIBRARY_PATH" \
+            unbound-checkconf "$unbound_config" >>"$unbound_log" 2>&1; then
             log "ERROR: Unbound configuration validation failed; inspect $unbound_log"
             return 1
         fi
@@ -230,7 +232,8 @@ start_unbound_direct_if_stopped() {
             "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" \
             "$EDGE_UNBOUND_BIN" "$unbound_config" >>"$unbound_log"
 
-        "$EDGE_UNBOUND_BIN" -c "$unbound_config" >>"$unbound_log" 2>&1
+        LD_LIBRARY_PATH="$EDGE_ENTWARE_LD_LIBRARY_PATH" \
+            "$EDGE_UNBOUND_BIN" -c "$unbound_config" >>"$unbound_log" 2>&1
         unbound_start_rc=$?
         printf 'Launcher exit status: %s\n' "$unbound_start_rc" >>"$unbound_log"
 
