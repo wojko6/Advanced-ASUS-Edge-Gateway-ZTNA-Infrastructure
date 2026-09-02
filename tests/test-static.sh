@@ -48,9 +48,26 @@ if grep -F '"$service" restart' "$REPO_DIR/router/scripts/services-start" >/dev/
     exit 1
 fi
 
+grep -F 'EDGE_RUN_RC_UNSLUNG="0"' "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+    echo "FAIL: rc.unslung must be externally owned by default" >&2
+    exit 1
+}
+
+for startup_coordination in \
+    'amtm_entware_startup_detected()' \
+    'wait_for_amtm_entware_startup()' \
+    '[ "$EDGE_RUN_RC_UNSLUNG" = "1" ]' \
+    'process_stays_running()'
+do
+    grep -F "$startup_coordination" "$REPO_DIR/router/scripts/services-start" >/dev/null || {
+        echo "FAIL: Entware startup coordination missing: $startup_coordination" >&2
+        exit 1
+    }
+done
+
 for startup_guard in \
     'pidof "$process_name"' \
-    '"$service_path" start >"$service_log" 2>&1' \
+    '"$service_path" start >>"$service_log" 2>&1' \
     '/tmp/asus-edge-unbound-start.log' \
     '/tmp/asus-edge-syslog-ng-start.log'
 do
