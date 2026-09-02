@@ -39,6 +39,8 @@ log() {
 : "${EDGE_SERVICE_START_ATTEMPTS:=6}"
 : "${EDGE_SERVICE_RETRY_SECONDS:=5}"
 : "${EDGE_UNBOUND_PIDFILE:=/opt/var/run/unbound.pid}"
+: "${EDGE_UNBOUND_BIN:=/opt/sbin/unbound}"
+: "${EDGE_UNBOUND_CONFIG:=}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_STATE:=/opt/var/lib/tailscale/tailscaled.state}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
@@ -171,6 +173,81 @@ remove_stale_process_pidfile() {
     log "removed stale $stale_process_name pidfile $stale_pidfile"
 }
 
+resolve_unbound_config() {
+    if [ -n "$EDGE_UNBOUND_CONFIG" ] && [ -r "$EDGE_UNBOUND_CONFIG" ]; then
+        printf '%s\n' "$EDGE_UNBOUND_CONFIG"
+        return 0
+    fi
+
+    for unbound_config_candidate in \
+        /opt/var/lib/unbound/unbound.conf \
+        /opt/etc/unbound/unbound.conf
+    do
+        if [ -r "$unbound_config_candidate" ]; then
+            printf '%s\n' "$unbound_config_candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+start_unbound_direct_if_stopped() {
+    unbound_log=/tmp/asus-edge-unbound-start.log
+
+    if pidof unbound >/dev/null 2>&1; then
+        if process_stays_running unbound; then
+            log "unbound already running and stable; preserving current process"
+            return 0
+        fi
+        log "WARNING: unbound exited during startup; attempting direct recovery"
+    fi
+
+    [ -x "$EDGE_UNBOUND_BIN" ] || {
+        log "ERROR: Unbound binary is not executable: $EDGE_UNBOUND_BIN"
+        return 1
+    }
+
+    unbound_config="$(resolve_unbound_config)" || {
+        log "ERROR: no readable Unbound configuration found"
+        return 1
+    }
+
+    : >"$unbound_log"
+    if executable_exists unbound-checkconf >/dev/null 2>&1; then
+        if ! unbound-checkconf "$unbound_config" >>"$unbound_log" 2>&1; then
+            log "ERROR: Unbound configuration validation failed; inspect $unbound_log"
+            return 1
+        fi
+    fi
+
+    attempt=1
+    while [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ]; do
+        remove_stale_process_pidfile unbound "$EDGE_UNBOUND_PIDFILE" || {
+            log "WARNING: could not remove stale pidfile $EDGE_UNBOUND_PIDFILE"
+        }
+        printf 'Attempt %s/%s: %s -c %s\n' \
+            "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" \
+            "$EDGE_UNBOUND_BIN" "$unbound_config" >>"$unbound_log"
+
+        "$EDGE_UNBOUND_BIN" -c "$unbound_config" >>"$unbound_log" 2>&1
+        unbound_start_rc=$?
+        printf 'Launcher exit status: %s\n' "$unbound_start_rc" >>"$unbound_log"
+
+        if process_stays_running unbound; then
+            log "unbound recovered directly on attempt $attempt"
+            return 0
+        fi
+
+        attempt=$((attempt + 1))
+        [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ] &&
+            sleep "$EDGE_SERVICE_RETRY_SECONDS"
+    done
+
+    log "ERROR: failed to stabilize unbound; inspect $unbound_log"
+    return 1
+}
+
 start_entware_service_if_stopped() {
     process_name="$1"
     service_log="$2"
@@ -215,12 +292,11 @@ start_entware_service_if_stopped() {
     return 1
 }
 
-# amtm normally starts Entware daemons from post-mount. After that external
-# startup settles, preserve stable processes and recover only a missing daemon.
+# amtm normally starts Entware daemons from post-mount. Preserve its stable
+# Unbound process. Recovery invokes the daemon directly so the third-party
+# S61unbound POSTCMD cannot restart dnsmasq after every failed launch.
 startup_failed=0
-start_entware_service_if_stopped \
-    unbound /tmp/asus-edge-unbound-start.log "$EDGE_UNBOUND_PIDFILE" \
-    /opt/etc/init.d/S*unbound || startup_failed=1
+start_unbound_direct_if_stopped || startup_failed=1
 
 start_entware_service_if_stopped \
     syslog-ng /tmp/asus-edge-syslog-ng-start.log "" \
