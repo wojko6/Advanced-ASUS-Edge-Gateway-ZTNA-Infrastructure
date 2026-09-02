@@ -21,9 +21,18 @@ executable_exists() {
     return 1
 }
 
+current_uid() {
+    for id_bin in /opt/bin/id /opt/sbin/id /usr/bin/id /usr/sbin/id /bin/id /sbin/id; do
+        [ -x "$id_bin" ] && { "$id_bin" -u; return; }
+    done
+    [ -x /bin/busybox ] && { /bin/busybox id -u; return; }
+    return 1
+}
+
 ADDON_DIR="/jffs/addons/asus-edge"
 
-[ "$(id -u)" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
+uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
+[ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 
 remove_jump_and_chain() {
     table="$1"

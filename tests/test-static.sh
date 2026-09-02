@@ -76,6 +76,34 @@ do
     }
 done
 
+for file in \
+    "$REPO_DIR/scripts/install.sh" \
+    "$REPO_DIR/scripts/backup.sh" \
+    "$REPO_DIR/scripts/restore.sh" \
+    "$REPO_DIR/scripts/update-tailscale.sh" \
+    "$REPO_DIR/scripts/uninstall.sh"
+do
+    if grep -F '$(id -u)' "$file" >/dev/null; then
+        echo "FAIL: direct id invocation without BusyBox fallback in $file" >&2
+        exit 1
+    fi
+    grep -F '/bin/busybox id -u' "$file" >/dev/null || {
+        echo "FAIL: BusyBox UID fallback missing in $file" >&2
+        exit 1
+    }
+done
+
+for file in \
+    "$REPO_DIR/scripts/backup.sh" \
+    "$REPO_DIR/scripts/restore.sh" \
+    "$REPO_DIR/scripts/collect-evidence.sh"
+do
+    grep -F '/bin/busybox sha256sum' "$file" >/dev/null || {
+        echo "FAIL: BusyBox SHA-256 fallback missing in $file" >&2
+        exit 1
+    }
+done
+
 grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/null || {
     echo "FAIL: legacy hooks are not disabled by default" >&2
     exit 1

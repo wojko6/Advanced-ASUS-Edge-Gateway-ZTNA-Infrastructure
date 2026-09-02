@@ -46,6 +46,18 @@ executable_exists() {
     return 1
 }
 
+sha256sum_run() {
+    if executable_exists sha256sum; then
+        sha256sum "$@"
+        return
+    fi
+    if [ -x /bin/busybox ] && /bin/busybox sha256sum /dev/null >/dev/null 2>&1; then
+        /bin/busybox sha256sum "$@"
+        return
+    fi
+    return 1
+}
+
 if [ -r "$CONFIG_FILE" ]; then
     # shellcheck disable=SC1090
     . "$CONFIG_FILE"
@@ -196,11 +208,12 @@ fi
     echo "- Complete the remote-client matrix separately; this local snapshot cannot prove WAN or identity-policy behavior."
 } >"$OUTPUT_DIR/README.md"
 
-if executable_exists sha256sum; then
-    (
-        cd "$OUTPUT_DIR" || exit 1
-        sha256sum README.md environment.md healthcheck.md firewall-counters.md dns-validation.md
-    ) >"$OUTPUT_DIR/SHA256SUMS"
+if ! (
+    cd "$OUTPUT_DIR" || exit 1
+    sha256sum_run README.md environment.md healthcheck.md firewall-counters.md dns-validation.md
+) >"$OUTPUT_DIR/SHA256SUMS"; then
+    rm -f "$OUTPUT_DIR/SHA256SUMS"
+    echo "WARNING: SHA-256 utility unavailable; manifest not created" >&2
 fi
 
 echo "Evidence snapshot created: $OUTPUT_DIR"
