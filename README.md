@@ -97,7 +97,7 @@ The installer backs up existing Merlin hooks but does not execute unreviewed leg
 
 ## DNS integration
 
-dnsmasq continues to own LAN port 53. Unbound listens on `127.0.0.1:53535`, and dnsmasq forwards queries to it.
+dnsmasq continues to own port 53 for LAN and `tailscale0`. Unbound listens on `127.0.0.1:53535`, and dnsmasq forwards queries to it. When Tailscale DNS interception is enabled, the active dnsmasq configuration must include `interface=tailscale0`.
 
 For a standard Entware deployment:
 
