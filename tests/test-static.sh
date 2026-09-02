@@ -44,6 +44,16 @@ do
     fi
 done
 
+grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+    echo "FAIL: legacy hooks are not disabled by default" >&2
+    exit 1
+}
+
+grep -F '${EDGE_RUN_LEGACY_HOOKS:-0}' "$REPO_DIR/scripts/install.sh" >/dev/null || {
+    echo "FAIL: installer does not gate preserved legacy hooks" >&2
+    exit 1
+}
+
 "$TEST_DIR/test-firewall-mock.sh"
 "$TEST_DIR/test-config-validation.sh"
 "$TEST_DIR/test-evidence-collector.sh"
