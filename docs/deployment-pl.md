@@ -56,7 +56,7 @@ Najpierw zainstaluj pliki bez aktywowania nowych reguł:
 ./scripts/install.sh
 ```
 
-Skrypt zapisuje istniejące hooki `firewall-start` i `services-start`, a następnie tworzy wrapper uruchamiający dotychczasowy hook i kod projektu. Lokalizacja kopii jest wyświetlana po instalacji.
+Skrypt zapisuje istniejące hooki `firewall-start` i `services-start`, ale domyślnie ich nie uruchamia. Wrapper uruchomi stary hook tylko po ustawieniu `EDGE_RUN_LEGACY_HOOKS="1"`, co należy zrobić wyłącznie po ręcznym przeglądzie. Lokalizacja kopii jest wyświetlana po instalacji.
 
 Jeżeli Tailscale nie jest uwierzytelniony, uruchom jednorazowo:
 

@@ -6,10 +6,11 @@
 2. Edit the repository copy, not the live file first.
 3. Run static/mock tests.
 4. Keep a LAN recovery session open.
-5. Install without `--apply` and inspect deployed files.
-6. Apply the firewall and run health checks.
-7. Run the remote security matrix and inspect counters/logs.
-8. Commit sanitized evidence and the configuration change.
+5. Install without `--apply`, inspect deployed files, and review the quarantined legacy hooks.
+6. Keep `EDGE_RUN_LEGACY_HOOKS="0"` unless each previous hook is proven compatible.
+7. Apply the firewall and run health checks.
+8. Run the remote security matrix and inspect counters/logs.
+9. Commit sanitized evidence and the configuration change.
 
 ## Backup
 

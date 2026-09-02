@@ -92,7 +92,7 @@ Apply and validate from the LAN:
 /jffs/addons/asus-edge/bin/healthcheck.sh
 ```
 
-The installer preserves existing Merlin hooks and wraps them. It does not install packages or update Tailscale.
+The installer backs up existing Merlin hooks but does not execute unreviewed legacy hooks by default. Set `EDGE_RUN_LEGACY_HOOKS="1"` only after confirming that the preserved scripts do not broaden access, upgrade packages during boot, or duplicate service startup. The installer does not install packages or update Tailscale.
 
 ## DNS integration
 
