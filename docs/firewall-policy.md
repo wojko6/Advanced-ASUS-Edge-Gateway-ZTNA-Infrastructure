@@ -40,7 +40,7 @@ During re-application, temporary interface-scoped IPv4 and IPv6 drop rules keep 
 - The granular service policy is IPv4. The installed IPv6 guard intentionally drops new Tailscale IPv6 input/forward traffic; do not remove it until an equivalent policy is tested.
 - `EDGE_ALLOWED_LAN_HOSTS` combined with each listed port is a Cartesian product. Create separate chains if hosts need different service sets.
 - Exit-node mode permits all protocols to the WAN interface; Tailscale Grants must restrict who may use `autogroup:internet`.
-- DNAT of port 53 does not block encrypted DNS protocols.
+- REDIRECT of classic DNS port 53 requires dnsmasq to include `tailscale0`; it does not block encrypted DNS protocols.
 
 ## Manual audit
 
