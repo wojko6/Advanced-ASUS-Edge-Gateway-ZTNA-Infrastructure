@@ -20,10 +20,12 @@ executable_exists() {
 }
 
 current_uid() {
-    for id_bin in /opt/bin/id /opt/sbin/id /usr/bin/id /usr/sbin/id /bin/id /sbin/id; do
-        [ -x "$id_bin" ] && { "$id_bin" -u; return; }
-    done
-    [ -x /bin/busybox ] && { /bin/busybox id -u; return; }
+    while read -r status_key status_uid status_rest; do
+        if [ "$status_key" = "Uid:" ]; then
+            printf '%s\n' "$status_uid"
+            return 0
+        fi
+    done </proc/self/status
     return 1
 }
 
