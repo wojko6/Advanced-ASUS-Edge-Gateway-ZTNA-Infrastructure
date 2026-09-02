@@ -40,6 +40,10 @@ EDGE_ADVERTISE_ROUTES="192.168.50.0/24"
 EDGE_ACCEPT_DNS="false"
 EDGE_HOSTNAME="asus-edge-gateway"
 
+# Existing Merlin hooks are backed up but must not run before the managed hooks
+# unless they have been reviewed and are known to be compatible.
+EDGE_RUN_LEGACY_HOOKS="0"
+
 EDGE_LOG_DROPS="1"
 EDGE_LOG_PREFIX="ASUS-EDGE-DROP "
 EDGE_OPT_WAIT_SECONDS="90"
