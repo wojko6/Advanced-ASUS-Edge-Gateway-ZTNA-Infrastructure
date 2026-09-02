@@ -2,6 +2,25 @@
 
 set -u
 
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Resolve executables directly because older Asuswrt-Merlin BusyBox shells may
+# not implement "command -v". Keep this helper local so each script is standalone.
+executable_exists() {
+    executable_name="$1"
+    case "$executable_name" in
+        */*)
+            [ -x "$executable_name" ]
+            return
+            ;;
+    esac
+
+    for executable_dir in /opt/sbin /opt/bin /usr/sbin /usr/bin /sbin /bin; do
+        [ -x "$executable_dir/$executable_name" ] && return 0
+    done
+    return 1
+}
+
 ADDON_DIR="/jffs/addons/asus-edge"
 
 [ "$(id -u)" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
@@ -27,7 +46,7 @@ remove_jump_and_chain filter INPUT "$EDGE_TS_IF" EDGE_TS_INPUT
 remove_jump_and_chain filter FORWARD "$EDGE_TS_IF" EDGE_TS_FORWARD
 remove_jump_and_chain nat PREROUTING "$EDGE_TS_IF" EDGE_TS_PREROUTING
 
-if command -v ip6tables >/dev/null 2>&1; then
+if executable_exists ip6tables >/dev/null 2>&1; then
     while ip6tables -t filter -D INPUT -i "$EDGE_TS_IF" -j EDGE_TS6_INPUT 2>/dev/null; do :; done
     while ip6tables -t filter -D FORWARD -i "$EDGE_TS_IF" -j EDGE_TS6_FORWARD 2>/dev/null; do :; done
     ip6tables -t filter -F EDGE_TS6_INPUT 2>/dev/null || true

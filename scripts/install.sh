@@ -3,6 +3,25 @@
 
 set -u
 
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Resolve executables directly because older Asuswrt-Merlin BusyBox shells may
+# not implement "command -v". Keep this helper local so each script is standalone.
+executable_exists() {
+    executable_name="$1"
+    case "$executable_name" in
+        */*)
+            [ -x "$executable_name" ]
+            return
+            ;;
+    esac
+
+    for executable_dir in /opt/sbin /opt/bin /usr/sbin /usr/bin /sbin /bin; do
+        [ -x "$executable_dir/$executable_name" ] && return 0
+    done
+    return 1
+}
+
 SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 REPO_DIR="$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)"
 ADDON_DIR="/jffs/addons/asus-edge"
@@ -78,7 +97,7 @@ install_hook() {
 install_hook firewall-start
 install_hook services-start
 
-if command -v nvram >/dev/null 2>&1 && [ "$(nvram get jffs2_scripts 2>/dev/null)" != "1" ]; then
+if executable_exists nvram >/dev/null 2>&1 && [ "$(nvram get jffs2_scripts 2>/dev/null)" != "1" ]; then
     echo "WARNING: enable 'JFFS custom scripts and configs' in Asuswrt-Merlin."
 fi
 
@@ -91,7 +110,7 @@ if [ "$APPLY" = "1" ]; then
         else
             rm -f /jffs/scripts/firewall-start
         fi
-        command -v service >/dev/null 2>&1 && service restart_firewall >/dev/null 2>&1
+        executable_exists service >/dev/null 2>&1 && service restart_firewall >/dev/null 2>&1
         exit 1
     }
 fi
