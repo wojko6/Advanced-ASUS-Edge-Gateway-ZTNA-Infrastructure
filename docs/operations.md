@@ -54,6 +54,12 @@ Never place `opkg update` or package upgrades in a boot hook. Use a maintenance 
 
 Entware may not retain a previous package version. Download/retain the known-good package before an upgrade if a package-level rollback is required.
 
+## Resolver ownership
+
+Use exactly one active upstream path behind dnsmasq. A supported deployment is `dnsmasq → Unbound:53535`. If NextDNS manages `dnsmasq.postconf`, verify whether it exits after configuring `127.0.0.1:5342`; in that state Unbound may be valid but unused.
+
+For amtm Unbound Manager, treat `/opt/var/lib/unbound/unbound.conf` as the generated runtime configuration. Do not replace it with the standard Entware example. Back up and review both the manager hook and runtime configuration before changes.
+
 ## Log rotation
 
 Use unique `cru` identifiers for every job:
