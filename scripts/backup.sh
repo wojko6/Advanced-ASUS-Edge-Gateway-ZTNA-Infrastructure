@@ -5,11 +5,32 @@ set -u
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 umask 077
 
+current_uid() {
+    for id_bin in /opt/bin/id /opt/sbin/id /usr/bin/id /usr/sbin/id /bin/id /sbin/id; do
+        [ -x "$id_bin" ] && { "$id_bin" -u; return; }
+    done
+    [ -x /bin/busybox ] && { /bin/busybox id -u; return; }
+    return 1
+}
+
+sha256sum_run() {
+    for sum_bin in /opt/bin/sha256sum /opt/sbin/sha256sum /usr/bin/sha256sum /usr/sbin/sha256sum /bin/sha256sum /sbin/sha256sum; do
+        [ -x "$sum_bin" ] && { "$sum_bin" "$@"; return; }
+    done
+    if [ -x /bin/busybox ] && /bin/busybox sha256sum /dev/null >/dev/null 2>&1; then
+        /bin/busybox sha256sum "$@"
+        return
+    fi
+    echo "ERROR: sha256sum unavailable" >&2
+    return 1
+}
+
 DESTINATION="${1:-/opt/backups/asus-edge}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 ARCHIVE="$DESTINATION/asus-edge-$STAMP.tar.gz"
 
-[ "$(id -u)" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
+uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
+[ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 mkdir -p "$DESTINATION"
 WORK_DIR="$(mktemp -d "$DESTINATION/asus-edge-$STAMP.XXXXXX")" || exit 1
 WORK_NAME="$(basename "$WORK_DIR")"
@@ -43,10 +64,15 @@ This backup intentionally excludes Tailscale state and authentication material.
 Use scripts/restore.sh from the repository. Review the dry-run before --apply.
 EOF
 
-(cd "$WORK_DIR" && find . -type f ! -name SHA256SUMS -exec sha256sum '{}' \; | sort >SHA256SUMS) || exit 1
+(
+    cd "$WORK_DIR" || exit 1
+    find . -type f ! -name SHA256SUMS | sort | while IFS= read -r file; do
+        sha256sum_run "$file" || exit 1
+    done >SHA256SUMS
+) || exit 1
 tar -czf "$ARCHIVE" -C "$DESTINATION" "$WORK_NAME" || exit 1
 rm -rf "$WORK_DIR"
 trap - EXIT HUP INT TERM
-sha256sum "$ARCHIVE" >"$ARCHIVE.sha256"
+sha256sum_run "$ARCHIVE" >"$ARCHIVE.sha256" || exit 1
 chmod 0600 "$ARCHIVE" "$ARCHIVE.sha256"
 echo "$ARCHIVE"
