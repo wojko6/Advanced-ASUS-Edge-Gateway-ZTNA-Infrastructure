@@ -60,7 +60,7 @@ Use exactly one active upstream path behind dnsmasq. A supported deployment is `
 
 For amtm Unbound Manager, treat `/opt/var/lib/unbound/unbound.conf` as the generated runtime configuration. Do not replace it with the standard Entware example. Back up and review both the manager hook and runtime configuration before changes.
 
-During boot, `rc.unslung` starts Entware daemons. The project hook preserves an already-running Unbound or syslog-ng process and issues `start` only when the process is absent; it does not perform a second unconditional restart. If a missing daemon cannot be started, inspect `/tmp/asus-edge-unbound-start.log` or `/tmp/asus-edge-syslog-ng-start.log`.
+With amtm, `post-mount` sources `mount-entware.mod`, which already runs `rc.unslung`. Keep `EDGE_RUN_RC_UNSLUNG="0"` so the project does not launch a parallel Entware startup. The project waits for the amtm startup and NTP readiness to settle, preserves a stable Unbound or syslog-ng process, and retries `start` only when a daemon is absent or disappears during initialization. Set `EDGE_RUN_RC_UNSLUNG="1"` only on deployments where no external hook owns Entware startup. Inspect `/tmp/asus-edge-entware-start.log`, `/tmp/asus-edge-unbound-start.log`, or `/tmp/asus-edge-syslog-ng-start.log` when startup fails.
 
 ## Log rotation
 
