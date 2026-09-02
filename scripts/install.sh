@@ -22,6 +22,14 @@ executable_exists() {
     return 1
 }
 
+current_uid() {
+    for id_bin in /opt/bin/id /opt/sbin/id /usr/bin/id /usr/sbin/id /bin/id /sbin/id; do
+        [ -x "$id_bin" ] && { "$id_bin" -u; return; }
+    done
+    [ -x /bin/busybox ] && { /bin/busybox id -u; return; }
+    return 1
+}
+
 SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 REPO_DIR="$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)"
 ADDON_DIR="/jffs/addons/asus-edge"
@@ -40,7 +48,8 @@ case "${1:-}" in
     *) usage >&2; exit 2 ;;
 esac
 
-[ "$(id -u)" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
+uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
+[ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 [ -d /jffs ] || { echo "ERROR: /jffs is unavailable" >&2; exit 1; }
 [ -f "$REPO_DIR/config/edge.conf" ] || {
     echo "ERROR: create config/edge.conf from config/edge.conf.example first" >&2
