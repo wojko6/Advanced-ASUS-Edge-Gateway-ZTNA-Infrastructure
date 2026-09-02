@@ -2,6 +2,23 @@
 # shellcheck shell=dash
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Resolve executables directly because older Asuswrt-Merlin BusyBox shells may
+# not implement "executable_exists". Keep this helper local so each hook is standalone.
+executable_exists() {
+    executable_name="$1"
+    case "$executable_name" in
+        */*)
+            [ -x "$executable_name" ]
+            return
+            ;;
+    esac
+
+    for executable_dir in /opt/sbin /opt/bin /usr/sbin /usr/bin /sbin /bin; do
+        [ -x "$executable_dir/$executable_name" ] && return 0
+    done
+    return 1
+}
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 LOCK_DIR="/var/run/asus-edge-services.lock"
 
@@ -22,7 +39,7 @@ log() {
 : "${EDGE_HOSTNAME:=asus-edge-gateway}"
 
 opt_is_mounted() {
-    if command -v mountpoint >/dev/null 2>&1; then
+    if executable_exists mountpoint >/dev/null 2>&1; then
         mountpoint -q /opt
     else
         awk '$2 == "/opt" { found=1 } END { exit !found }' /proc/mounts
@@ -51,7 +68,7 @@ fi
 
 mkdir -p /opt/var/lib/unbound
 
-if command -v tailscaled >/dev/null 2>&1; then
+if executable_exists tailscaled >/dev/null 2>&1; then
     if ! pidof tailscaled >/dev/null 2>&1; then
         mkdir -p "$(dirname "$EDGE_TS_STATE")" "$(dirname "$EDGE_TS_SOCKET")"
         tailscaled \
