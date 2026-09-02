@@ -67,7 +67,7 @@ done
 
 for startup_guard in \
     'pidof "$process_name"' \
-    '"$service_path" start >"$service_log" 2>&1' \
+    '"$service_path" start >>"$service_log" 2>&1' \
     '/tmp/asus-edge-unbound-start.log' \
     '/tmp/asus-edge-syslog-ng-start.log'
 do
