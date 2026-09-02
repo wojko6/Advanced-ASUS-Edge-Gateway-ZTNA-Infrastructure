@@ -141,6 +141,16 @@ grep -F 'coreutils-sha256sum' "$REPO_DIR/README.md" >/dev/null || {
     exit 1
 }
 
+grep -F 'interface=tailscale0' "$REPO_DIR/config/dnsmasq.conf.add.example" >/dev/null || {
+    echo "FAIL: dnsmasq example does not include tailscale0" >&2
+    exit 1
+}
+
+grep -F 'dnsmasq does not include $EDGE_TS_IF' "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+    echo "FAIL: healthcheck does not validate the dnsmasq Tailscale listener" >&2
+    exit 1
+}
+
 grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/null || {
     echo "FAIL: legacy hooks are not disabled by default" >&2
     exit 1

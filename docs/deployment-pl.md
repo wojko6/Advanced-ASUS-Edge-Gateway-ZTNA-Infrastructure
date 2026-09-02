@@ -92,7 +92,7 @@ ip6tables -nvL EDGE_TS6_FORWARD
 
 ## 6. Unbound i dnsmasq
 
-dnsmasq pozostaje usługą nasłuchującą na porcie LAN `53`. Unbound nasłuchuje wyłącznie na `127.0.0.1:53535`.
+dnsmasq pozostaje usługą nasłuchującą na porcie `53` dla LAN i `tailscale0`. Unbound nasłuchuje wyłącznie na `127.0.0.1:53535`.
 
 Dla standardowej instalacji Entware:
 
@@ -115,7 +115,7 @@ Następnie zweryfikuj resolver:
 dig +dnssec -p 53535 @127.0.0.1 cloudflare.com A
 ```
 
-Jeżeli `/jffs/configs/dnsmasq.conf.add` już istnieje, scal `config/dnsmasq.conf.add.example` zamiast nadpisywać prywatne rekordy DDNS lub lokalne. Sprawdź również `/jffs/scripts/dnsmasq.postconf`: aktywny hook NextDNS może zakończyć skrypt przed konfiguracją Unbound i przejąć ruch na port `5342`.
+Jeżeli `/jffs/configs/dnsmasq.conf.add` już istnieje, scal `config/dnsmasq.conf.add.example` zamiast nadpisywać prywatne rekordy DDNS lub lokalne. Aktywna konfiguracja musi zawierać `interface=tailscale0`; dzięki `bind-dynamic` dnsmasq obsłuży adres interfejsu po jego utworzeniu. Po scaleniu uruchom `service restart_dnsmasq` i potwierdź wpis w `/etc/dnsmasq.conf`. Sprawdź również `/jffs/scripts/dnsmasq.postconf`: aktywny hook NextDNS może zakończyć skrypt przed konfiguracją Unbound i przejąć ruch na port `5342`.
 
 ## 7. Test dostępu
 
