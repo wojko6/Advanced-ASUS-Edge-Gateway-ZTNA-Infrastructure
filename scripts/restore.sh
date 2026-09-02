@@ -14,6 +14,20 @@ current_uid() {
     return 1
 }
 
+secure_temp_dir() {
+    temp_prefix="$1"
+    temp_counter=0
+    while [ "$temp_counter" -lt 100 ]; do
+        temp_candidate="$temp_prefix.$.$temp_counter"
+        if (umask 077 && mkdir "$temp_candidate") 2>/dev/null; then
+            printf '%s\n' "$temp_candidate"
+            return 0
+        fi
+        temp_counter=$((temp_counter + 1))
+    done
+    return 1
+}
+
 sha256sum_run() {
     for sum_bin in /opt/bin/sha256sum /opt/sbin/sha256sum /usr/bin/sha256sum /usr/sbin/sha256sum /bin/sha256sum /sbin/sha256sum; do
         [ -x "$sum_bin" ] && { "$sum_bin" "$@"; return; }
@@ -37,7 +51,10 @@ usage() {
 [ -f "$ARCHIVE" ] || { echo "ERROR: backup not found" >&2; exit 1; }
 case "$MODE" in --dry-run|--apply) ;; *) usage; exit 2 ;; esac
 
-TMP_DIR="$(mktemp -d /tmp/asus-edge-restore.XXXXXX)" || exit 1
+TMP_DIR="$(secure_temp_dir /tmp/asus-edge-restore)" || {
+    echo "ERROR: cannot create private restore workspace" >&2
+    exit 1
+}
 trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
 
 tar -tzf "$ARCHIVE" | grep -Eq '(^|/)\.\.?(/|$)' && { echo "ERROR: unsafe archive path" >&2; exit 1; }
