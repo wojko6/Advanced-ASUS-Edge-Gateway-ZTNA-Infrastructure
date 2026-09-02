@@ -21,6 +21,23 @@ grep -F 'dig +time=3 +tries=1 +dnssec -p "$EDGE_UNBOUND_PORT" @127.0.0.1' "$REPO
     exit 1
 }
 
+grep -F '/opt/var/lib/unbound/unbound.conf' "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+    echo "FAIL: healthcheck does not detect the amtm Unbound Manager runtime configuration" >&2
+    exit 1
+}
+
+for backup_path in \
+    '/opt/etc/unbound/unbound.conf "$WORK_DIR/opt/etc/unbound/"' \
+    '/opt/var/lib/unbound/unbound.conf "$WORK_DIR/opt/var/lib/unbound/"' \
+    '/jffs/scripts/dnsmasq.postconf "$WORK_DIR/jffs/scripts/"' \
+    '/jffs/configs/dnsmasq.conf.add "$WORK_DIR/jffs/configs/"'
+do
+    grep -F "$backup_path" "$REPO_DIR/scripts/backup.sh" >/dev/null || {
+        echo "FAIL: backup does not preserve $backup_path" >&2
+        exit 1
+    }
+done
+
 if grep -F 'opkg update && opkg upgrade tailscale' "$REPO_DIR/router/scripts/services-start" >/dev/null; then
     echo "FAIL: package upgrade present in boot path" >&2
     exit 1

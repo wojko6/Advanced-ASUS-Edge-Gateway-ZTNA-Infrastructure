@@ -48,6 +48,7 @@ fi
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
 : "${EDGE_UNBOUND_PORT:=53535}"
+: "${EDGE_UNBOUND_CONFIG:=}"
 : "${EDGE_SYSLOG_HOST:=}"
 : "${EDGE_SYSLOG_PORT:=6514}"
 
@@ -98,8 +99,24 @@ if executable_exists ip6tables >/dev/null 2>&1; then
     [ "$forward6_jumps" = "1" ] && ok "single IPv6 FORWARD jump" || fail "IPv6 FORWARD jump count: $forward6_jumps"
 fi
 
-if executable_exists unbound-control >/dev/null 2>&1 && unbound-control status >/dev/null 2>&1; then
-    ok "Unbound running"
+unbound_control_status() {
+    if [ -n "$EDGE_UNBOUND_CONFIG" ]; then
+        [ -r "$EDGE_UNBOUND_CONFIG" ] || return 1
+        unbound-control -c "$EDGE_UNBOUND_CONFIG" status >/dev/null 2>&1
+        return
+    fi
+
+    for unbound_config in /opt/var/lib/unbound/unbound.conf /opt/etc/unbound/unbound.conf; do
+        [ -r "$unbound_config" ] || continue
+        if unbound-control -c "$unbound_config" status >/dev/null 2>&1; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+if executable_exists unbound-control >/dev/null 2>&1 && unbound_control_status; then
+    ok "Unbound running and control interface reachable"
 else
     fail "Unbound control/status unavailable"
 fi
