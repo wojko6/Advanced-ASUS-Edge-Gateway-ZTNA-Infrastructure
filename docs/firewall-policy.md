@@ -6,10 +6,12 @@ The project owns three IPv4 chains and two fail-closed IPv6 guard chains:
 
 - `filter/EDGE_TS_INPUT`: traffic from `tailscale0` to the router.
 - `filter/EDGE_TS_FORWARD`: traffic from `tailscale0` through the router.
-- `nat/EDGE_TS_PREROUTING`: DNS redirection before routing.
+- `nat/EDGE_TS_PREROUTING`: DNS redirection and source-scoped router HTTPS DNAT before routing.
 - `filter/EDGE_TS6_INPUT` and `filter/EDGE_TS6_FORWARD`: block new IPv6 traffic from `tailscale0` until an equivalent granular IPv6 policy exists.
 
 It does not flush Merlin, Tailscale, or user-owned chains. Before attaching each managed chain, it deletes duplicate jumps and inserts exactly one interface-scoped jump.
+
+During the first migration, the script removes exact legacy `tailscale+` rules created by the earlier documented configuration: broad INPUT/FORWARD accepts, direct DNS accepts/DNAT, and the unrestricted router-HTTPS DNAT. It does not remove Tailscale-owned `tailscale0` rules. Router HTTPS DNAT is recreated inside the managed NAT chain for `EDGE_ADMIN_TS_SOURCES` only.
 
 During re-application, temporary interface-scoped IPv4 and IPv6 drop rules keep the transition fail-closed while managed chains are rebuilt. They are removed only after the corresponding policy and jump rules succeed. Apply from LAN because an error intentionally leaves these guards in place until firewall restart/recovery.
 
