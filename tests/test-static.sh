@@ -104,6 +104,25 @@ do
     }
 done
 
+for file in \
+    "$REPO_DIR/scripts/backup.sh" \
+    "$REPO_DIR/scripts/restore.sh"
+do
+    if grep -F 'mktemp ' "$file" >/dev/null; then
+        echo "FAIL: unavailable mktemp dependency in $file" >&2
+        exit 1
+    fi
+    grep -F 'secure_temp_dir()' "$file" >/dev/null || {
+        echo "FAIL: atomic temporary-directory helper missing in $file" >&2
+        exit 1
+    }
+done
+
+grep -F 'coreutils-sha256sum' "$REPO_DIR/README.md" >/dev/null || {
+    echo "FAIL: SHA-256 backup dependency is undocumented" >&2
+    exit 1
+}
+
 grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/null || {
     echo "FAIL: legacy hooks are not disabled by default" >&2
     exit 1

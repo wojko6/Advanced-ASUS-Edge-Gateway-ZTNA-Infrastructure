@@ -15,6 +15,20 @@ current_uid() {
     return 1
 }
 
+secure_temp_dir() {
+    temp_prefix="$1"
+    temp_counter=0
+    while [ "$temp_counter" -lt 100 ]; do
+        temp_candidate="$temp_prefix.$.$temp_counter"
+        if (umask 077 && mkdir "$temp_candidate") 2>/dev/null; then
+            printf '%s\n' "$temp_candidate"
+            return 0
+        fi
+        temp_counter=$((temp_counter + 1))
+    done
+    return 1
+}
+
 sha256sum_run() {
     for sum_bin in /opt/bin/sha256sum /opt/sbin/sha256sum /usr/bin/sha256sum /usr/sbin/sha256sum /bin/sha256sum /sbin/sha256sum; do
         [ -x "$sum_bin" ] && { "$sum_bin" "$@"; return; }
@@ -34,7 +48,10 @@ ARCHIVE="$DESTINATION/asus-edge-$STAMP.tar.gz"
 uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
 [ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 mkdir -p "$DESTINATION"
-WORK_DIR="$(mktemp -d "$DESTINATION/asus-edge-$STAMP.XXXXXX")" || exit 1
+WORK_DIR="$(secure_temp_dir "$DESTINATION/asus-edge-$STAMP")" || {
+    echo "ERROR: cannot create private backup workspace" >&2
+    exit 1
+}
 WORK_NAME="$(basename "$WORK_DIR")"
 trap 'rm -rf "$WORK_DIR"' EXIT HUP INT TERM
 mkdir -p "$WORK_DIR/jffs/scripts" "$WORK_DIR/jffs/configs" \

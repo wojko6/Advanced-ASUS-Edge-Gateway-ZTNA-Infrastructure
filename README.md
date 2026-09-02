@@ -46,13 +46,14 @@ evidence/           Live-validation procedure and report template
 - JFFS custom scripts enabled.
 - Entware mounted at `/opt`.
 - Tailscale and Unbound installed; syslog-ng is optional.
+- A SHA-256 utility for verified backups; install Entware package `coreutils-sha256sum` when the firmware does not provide one.
 - A current router/JFFS backup and local recovery access for first deployment.
 
 Entware package names can differ by target. Confirm them before installation:
 
 ```sh
 opkg update
-opkg list | grep -E '^(tailscale|unbound|syslog-ng) '
+opkg list | grep -E '^(tailscale|unbound|syslog-ng|coreutils-sha256sum) '
 ```
 
 Never commit auth keys, node state, private keys, collector credentials, router exports, or real private infrastructure data.
