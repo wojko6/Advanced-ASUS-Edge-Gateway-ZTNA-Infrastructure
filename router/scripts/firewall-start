@@ -160,8 +160,8 @@ flush_chain nat EDGE_TS_PREROUTING
 if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
     "$IPTABLES" -A EDGE_TS_INPUT -s "$EDGE_TAILNET_V4_CIDR" -p udp --dport "$EDGE_DNS_PORT" -j ACCEPT || die "DNS UDP input rule failed"
     "$IPTABLES" -A EDGE_TS_INPUT -s "$EDGE_TAILNET_V4_CIDR" -p tcp --dport "$EDGE_DNS_PORT" -j ACCEPT || die "DNS TCP input rule failed"
-    "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p udp --dport "$EDGE_DNS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_DNS_PORT" || die "DNS UDP redirect failed"
-    "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p tcp --dport "$EDGE_DNS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_DNS_PORT" || die "DNS TCP redirect failed"
+    "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p udp --dport "$EDGE_DNS_PORT" -j REDIRECT --to-ports "$EDGE_DNS_PORT" || die "DNS UDP redirect failed"
+    "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p tcp --dport "$EDGE_DNS_PORT" -j REDIRECT --to-ports "$EDGE_DNS_PORT" || die "DNS TCP redirect failed"
 fi
 
 add_admin_nat_rules
