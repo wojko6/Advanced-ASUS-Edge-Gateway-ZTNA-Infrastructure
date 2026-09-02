@@ -88,11 +88,43 @@ else
     log "WARNING: tailscaled not installed"
 fi
 
-for service in /opt/etc/init.d/S*unbound /opt/etc/init.d/S*syslog-ng; do
-    if [ -x "$service" ]; then
-        "$service" restart >/dev/null 2>&1 || log "WARNING: failed to restart $service"
+start_entware_service_if_stopped() {
+    process_name="$1"
+    service_log="$2"
+    shift 2
+
+    if pidof "$process_name" >/dev/null 2>&1; then
+        log "$process_name already running; preserving current process"
+        return 0
     fi
-done
+
+    for service_path in "$@"; do
+        [ -x "$service_path" ] || continue
+        if "$service_path" start >"$service_log" 2>&1; then
+            elapsed=0
+            while ! pidof "$process_name" >/dev/null 2>&1; do
+                elapsed=$((elapsed + 1))
+                if [ "$elapsed" -ge 20 ]; then
+                    log "WARNING: $process_name did not become ready; inspect $service_log"
+                    return 1
+                fi
+                sleep 1
+            done
+            log "$process_name started via $service_path"
+            return 0
+        fi
+        log "WARNING: failed to start $service_path; inspect $service_log"
+        return 1
+    done
+
+    return 0
+}
+
+# rc.unslung normally starts Entware daemons. Do not restart a daemon that is
+# already healthy during boot: amtm Unbound Manager can be left stopped by a
+# redundant stop/start cycle while dnsmasq and its generated config are settling.
+start_entware_service_if_stopped unbound /tmp/asus-edge-unbound-start.log /opt/etc/init.d/S*unbound
+start_entware_service_if_stopped syslog-ng /tmp/asus-edge-syslog-ng-start.log /opt/etc/init.d/S*syslog-ng
 
 if [ -x /jffs/scripts/firewall-start ]; then
     /jffs/scripts/firewall-start || log "ERROR: firewall policy failed"
