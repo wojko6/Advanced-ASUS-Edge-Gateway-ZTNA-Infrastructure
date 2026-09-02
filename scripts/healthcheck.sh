@@ -89,6 +89,14 @@ prerouting_jumps="$(iptables -t nat -S PREROUTING 2>/dev/null | grep -c -- "-i $
 [ "$forward_jumps" = "1" ] && ok "single FORWARD jump" || fail "FORWARD jump count: $forward_jumps"
 [ "$prerouting_jumps" = "1" ] && ok "single PREROUTING jump" || fail "PREROUTING jump count: $prerouting_jumps"
 
+legacy_filter_rules="$({
+    iptables -t filter -S INPUT 2>/dev/null
+    iptables -t filter -S FORWARD 2>/dev/null
+} | grep -c -- '-i tailscale+.*-j ACCEPT')"
+legacy_nat_rules="$(iptables -t nat -S PREROUTING 2>/dev/null | grep -c -- '-i tailscale+')"
+[ "$legacy_filter_rules" = "0" ] && ok "no legacy broad Tailscale ACCEPT rules" || fail "legacy broad Tailscale ACCEPT rules: $legacy_filter_rules"
+[ "$legacy_nat_rules" = "0" ] && ok "no legacy tailscale+ NAT rules" || fail "legacy tailscale+ NAT rules: $legacy_nat_rules"
+
 if executable_exists ip6tables >/dev/null 2>&1; then
     input6_jumps="$(ip6tables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS6_INPUT")"
     forward6_jumps="$(ip6tables -t filter -S FORWARD 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS6_FORWARD")"
