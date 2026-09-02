@@ -2,6 +2,8 @@
 
 set -u
 
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 ARCHIVE="${1:-}"
 MODE="${2:---dry-run}"
 
