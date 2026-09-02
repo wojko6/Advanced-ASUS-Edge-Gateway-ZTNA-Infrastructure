@@ -106,6 +106,19 @@ do
     }
 done
 
+for loader_guard in \
+    'EDGE_ENTWARE_LD_LIBRARY_PATH:=/opt/lib:/opt/usr/lib' \
+    'LD_LIBRARY_PATH="$EDGE_ENTWARE_LD_LIBRARY_PATH"' \
+    'EDGE_ENTWARE_LD_LIBRARY_PATH="/opt/lib:/opt/usr/lib"'
+do
+    grep -F "$loader_guard" \
+        "$REPO_DIR/router/scripts/services-start" \
+        "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+        echo "FAIL: scoped Entware loader guard missing: $loader_guard" >&2
+        exit 1
+    }
+done
+
 if grep -F '/opt/etc/init.d/S*unbound' "$REPO_DIR/router/scripts/services-start" >/dev/null; then
     echo "FAIL: Unbound recovery still uses the init wrapper" >&2
     exit 1
