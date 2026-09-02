@@ -5,7 +5,7 @@ set -u
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 current_uid() {
-    while read -r status_key status_uid status_rest; do
+    while read -r status_key status_uid _; do
         if [ "$status_key" = "Uid:" ]; then
             printf '%s\n' "$status_uid"
             return 0
