@@ -31,6 +31,19 @@ if grep -E 'iptables .*-(I|A) (INPUT|FORWARD) -i tailscale\+? -j ACCEPT' "$REPO_
     exit 1
 fi
 
+for file in \
+    "$REPO_DIR/router/scripts/firewall-start" \
+    "$REPO_DIR/router/scripts/services-start" \
+    "$REPO_DIR/scripts/install.sh" \
+    "$REPO_DIR/scripts/healthcheck.sh" \
+    "$REPO_DIR/scripts/uninstall.sh"
+do
+    if sed '/^[[:space:]]*#/d' "$file" | grep -F 'command -v' >/dev/null; then
+        echo "FAIL: BusyBox-incompatible command discovery in $file" >&2
+        exit 1
+    fi
+done
+
 "$TEST_DIR/test-firewall-mock.sh"
 "$TEST_DIR/test-config-validation.sh"
 "$TEST_DIR/test-evidence-collector.sh"
