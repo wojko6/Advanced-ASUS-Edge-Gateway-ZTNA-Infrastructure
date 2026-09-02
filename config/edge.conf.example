@@ -28,6 +28,8 @@ EDGE_UNBOUND_PORT="53535"
 EDGE_UNBOUND_CONFIG=""
 # Used only for direct recovery after the amtm-managed startup has settled.
 EDGE_UNBOUND_BIN="/opt/sbin/unbound"
+# Scope Entware's glibc to resolver recovery; do not export it globally.
+EDGE_ENTWARE_LD_LIBRARY_PATH="/opt/lib:/opt/usr/lib"
 
 # Least-privilege access to LAN services. Both lists are space-separated.
 # Every listed host receives every listed TCP/UDP port below.
