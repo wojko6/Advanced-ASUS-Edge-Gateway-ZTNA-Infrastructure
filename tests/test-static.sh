@@ -87,8 +87,8 @@ do
         echo "FAIL: direct id invocation without BusyBox fallback in $file" >&2
         exit 1
     fi
-    grep -F '/bin/busybox id -u' "$file" >/dev/null || {
-        echo "FAIL: BusyBox UID fallback missing in $file" >&2
+    grep -F '</proc/self/status' "$file" >/dev/null || {
+        echo "FAIL: procfs UID detection missing in $file" >&2
         exit 1
     }
 done
