@@ -91,6 +91,26 @@ do
     }
 done
 
+for direct_unbound_guard in \
+    'start_unbound_direct_if_stopped()' \
+    'resolve_unbound_config()' \
+    '"$EDGE_UNBOUND_BIN" -c "$unbound_config"' \
+    'unbound-checkconf "$unbound_config"' \
+    'EDGE_UNBOUND_BIN="/opt/sbin/unbound"'
+do
+    grep -F "$direct_unbound_guard" \
+        "$REPO_DIR/router/scripts/services-start" \
+        "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+        echo "FAIL: direct Unbound recovery missing: $direct_unbound_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F '/opt/etc/init.d/S*unbound' "$REPO_DIR/router/scripts/services-start" >/dev/null; then
+    echo "FAIL: Unbound recovery still uses the init wrapper" >&2
+    exit 1
+fi
+
 if grep -E 'iptables .*-(I|A) (INPUT|FORWARD) -i tailscale\+? -j ACCEPT' "$REPO_DIR/router/scripts/firewall-start" >/dev/null; then
     echo "FAIL: broad Tailscale ACCEPT rule found" >&2
     exit 1
