@@ -6,7 +6,7 @@ set -u
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # Resolve executables directly because older Asuswrt-Merlin BusyBox shells may
-# not implement "executable_exists". Keep this helper local so each hook is standalone.
+# not implement "command -v". Keep this helper local so each script is standalone.
 executable_exists() {
     executable_name="$1"
     case "$executable_name" in
