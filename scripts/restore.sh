@@ -4,6 +4,26 @@ set -u
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+current_uid() {
+    for id_bin in /opt/bin/id /opt/sbin/id /usr/bin/id /usr/sbin/id /bin/id /sbin/id; do
+        [ -x "$id_bin" ] && { "$id_bin" -u; return; }
+    done
+    [ -x /bin/busybox ] && { /bin/busybox id -u; return; }
+    return 1
+}
+
+sha256sum_run() {
+    for sum_bin in /opt/bin/sha256sum /opt/sbin/sha256sum /usr/bin/sha256sum /usr/sbin/sha256sum /bin/sha256sum /sbin/sha256sum; do
+        [ -x "$sum_bin" ] && { "$sum_bin" "$@"; return; }
+    done
+    if [ -x /bin/busybox ] && /bin/busybox sha256sum /dev/null >/dev/null 2>&1; then
+        /bin/busybox sha256sum "$@"
+        return
+    fi
+    echo "ERROR: sha256sum unavailable" >&2
+    return 1
+}
+
 ARCHIVE="${1:-}"
 MODE="${2:---dry-run}"
 
@@ -26,13 +46,14 @@ fi
 tar -xzf "$ARCHIVE" -C "$TMP_DIR" || exit 1
 ROOT="$(find "$TMP_DIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
 [ -n "$ROOT" ] || { echo "ERROR: invalid backup" >&2; exit 1; }
-(cd "$ROOT" && sha256sum -c SHA256SUMS) || exit 1
+(cd "$ROOT" && sha256sum_run -c SHA256SUMS) || exit 1
 
 echo "Verified backup contents:"
 find "$ROOT" -type f | sed "s#^$ROOT/##" | sort
 
 [ "$MODE" = "--apply" ] || { echo "Dry-run only. Re-run with --apply to restore."; exit 0; }
-[ "$(id -u)" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
+uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
+[ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 
 [ -d "$ROOT/jffs" ] && cp -R "$ROOT/jffs/." /jffs/
 [ -d "$ROOT/opt" ] && cp -R "$ROOT/opt/." /opt/
