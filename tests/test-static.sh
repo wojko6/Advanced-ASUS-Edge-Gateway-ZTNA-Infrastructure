@@ -66,6 +66,24 @@ do
 done
 
 for file in \
+    "$REPO_DIR/router/scripts/services-start" \
+    "$REPO_DIR/scripts/healthcheck.sh"
+do
+    grep -F 'opt_is_ready()' "$file" >/dev/null || {
+        echo "FAIL: Entware readiness helper missing in $file" >&2
+        exit 1
+    }
+    grep -F '/opt/bin/opkg' "$file" >/dev/null || {
+        echo "FAIL: Entware readiness does not verify opkg in $file" >&2
+        exit 1
+    }
+    if grep -F 'mountpoint -q /opt' "$file" >/dev/null; then
+        echo "FAIL: symlink-incompatible /opt mountpoint check in $file" >&2
+        exit 1
+    fi
+done
+
+for file in \
     "$REPO_DIR/scripts/backup.sh" \
     "$REPO_DIR/scripts/restore.sh" \
     "$REPO_DIR/scripts/update-tailscale.sh"

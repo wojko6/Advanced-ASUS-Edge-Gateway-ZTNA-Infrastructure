@@ -27,12 +27,9 @@ ok() { printf '[OK]   %s\n' "$*"; }
 warn() { printf '[WARN] %s\n' "$*"; WARNINGS=$((WARNINGS + 1)); }
 fail() { printf '[FAIL] %s\n' "$*"; FAILURES=$((FAILURES + 1)); }
 
-opt_is_mounted() {
-    if executable_exists mountpoint >/dev/null 2>&1; then
-        mountpoint -q /opt
-    else
-        awk '$2 == "/opt" { found=1 } END { exit !found }' /proc/mounts
-    fi
+opt_is_ready() {
+    [ -d /opt ] || return 1
+    [ -x /opt/bin/opkg ] || [ -x /opt/sbin/opkg ]
 }
 
 if [ -r "$CONFIG_FILE" ]; then
@@ -52,7 +49,7 @@ fi
 : "${EDGE_SYSLOG_HOST:=}"
 : "${EDGE_SYSLOG_PORT:=6514}"
 
-opt_is_mounted 2>/dev/null && ok "/opt mounted" || fail "/opt not mounted"
+opt_is_ready 2>/dev/null && ok "Entware /opt ready" || fail "Entware /opt not ready"
 executable_exists opkg >/dev/null 2>&1 && ok "Entware available" || fail "opkg not found"
 
 if pidof tailscaled >/dev/null 2>&1; then
