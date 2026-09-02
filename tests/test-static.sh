@@ -43,6 +43,23 @@ if grep -F 'opkg update && opkg upgrade tailscale' "$REPO_DIR/router/scripts/ser
     exit 1
 fi
 
+if grep -F '"$service" restart' "$REPO_DIR/router/scripts/services-start" >/dev/null; then
+    echo "FAIL: Entware service restart present in boot path" >&2
+    exit 1
+fi
+
+for startup_guard in \
+    'pidof "$process_name"' \
+    '"$service_path" start >"$service_log" 2>&1' \
+    '/tmp/asus-edge-unbound-start.log' \
+    '/tmp/asus-edge-syslog-ng-start.log'
+do
+    grep -F "$startup_guard" "$REPO_DIR/router/scripts/services-start" >/dev/null || {
+        echo "FAIL: guarded Entware startup missing: $startup_guard" >&2
+        exit 1
+    }
+done
+
 if grep -E 'iptables .*-(I|A) (INPUT|FORWARD) -i tailscale\+? -j ACCEPT' "$REPO_DIR/router/scripts/firewall-start" >/dev/null; then
     echo "FAIL: broad Tailscale ACCEPT rule found" >&2
     exit 1
