@@ -1,5 +1,7 @@
 # Forward all ordinary DNS queries from Asuswrt dnsmasq to local Unbound.
 # Merge with an existing /jffs/configs/dnsmasq.conf.add; do not overwrite blindly.
+# Asuswrt uses bind-dynamic; explicitly include the Tailscale interface.
+interface=tailscale0
 no-resolv
 server=127.0.0.1#53535
 cache-size=0
