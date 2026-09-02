@@ -55,7 +55,12 @@ EDGE_OPT_WAIT_SECONDS="90"
 # parallel Entware startup; enable only when no external hook owns rc.unslung.
 EDGE_RUN_RC_UNSLUNG="0"
 EDGE_ENTWARE_START_WAIT_SECONDS="330"
+# Require a quiet interval after amtm/rc.unslung activity before recovery starts.
+EDGE_ENTWARE_QUIET_SECONDS="20"
 EDGE_SERVICE_STABILITY_SECONDS="5"
+EDGE_SERVICE_START_ATTEMPTS="6"
+EDGE_SERVICE_RETRY_SECONDS="5"
+EDGE_UNBOUND_PIDFILE="/opt/var/run/unbound.pid"
 
 # Optional centralized logging health target used by healthcheck.sh.
 EDGE_SYSLOG_HOST=""
