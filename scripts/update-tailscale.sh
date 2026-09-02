@@ -19,7 +19,16 @@ executable_exists() {
     return 1
 }
 
-[ "$(id -u)" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
+current_uid() {
+    for id_bin in /opt/bin/id /opt/sbin/id /usr/bin/id /usr/sbin/id /bin/id /sbin/id; do
+        [ -x "$id_bin" ] && { "$id_bin" -u; return; }
+    done
+    [ -x /bin/busybox ] && { /bin/busybox id -u; return; }
+    return 1
+}
+
+uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
+[ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 executable_exists opkg >/dev/null 2>&1 || { echo "ERROR: Entware not available" >&2; exit 1; }
 
 OLD_VERSION="$(tailscale version 2>/dev/null | head -n 1)"
