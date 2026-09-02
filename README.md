@@ -96,16 +96,24 @@ The installer backs up existing Merlin hooks but does not execute unreviewed leg
 
 ## DNS integration
 
-dnsmasq continues to own LAN port 53. Unbound listens on `127.0.0.1:53535`, and dnsmasq forwards queries to it:
+dnsmasq continues to own LAN port 53. Unbound listens on `127.0.0.1:53535`, and dnsmasq forwards queries to it.
+
+For a standard Entware deployment:
 
 ```sh
 cp config/unbound.conf.example /opt/etc/unbound/unbound.conf
-cp config/dnsmasq.conf.add.example /jffs/configs/dnsmasq.conf.add
 unbound-checkconf /opt/etc/unbound/unbound.conf
-service restart_dnsmasq
 ```
 
-Merge the dnsmasq example with any existing configuration. Do not run a second resolver on `192.168.50.1:53` while dnsmasq owns that socket.
+For amtm Unbound Manager, do not overwrite its generated runtime file. Validate the manager-owned configuration instead:
+
+```sh
+grep -E '^(port: 53535|interface: 127\.0\.0\.1@53535)' /opt/var/lib/unbound/unbound.conf
+unbound-checkconf /opt/var/lib/unbound/unbound.conf
+/opt/etc/init.d/S61unbound restart
+```
+
+Merge `config/dnsmasq.conf.add.example` with any existing `/jffs/configs/dnsmasq.conf.add`; do not overwrite private DDNS or local records. Review `/jffs/scripts/dnsmasq.postconf` for NextDNS or other hooks that may take precedence. Do not run a second resolver on `192.168.50.1:53` while dnsmasq owns that socket.
 
 ## Validation and recovery
 
