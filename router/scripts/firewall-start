@@ -96,6 +96,23 @@ single_jump() {
     "$IPTABLES" -t "$table" -I "$parent" 1 -i "$interface" -j "$chain" || die "cannot attach $chain"
 }
 
+remove_all_rules() {
+    table="$1"
+    chain="$2"
+    shift 2
+    while "$IPTABLES" -t "$table" -D "$chain" "$@" 2>/dev/null; do :; done
+}
+
+remove_legacy_tailscale_rules() {
+    remove_all_rules filter INPUT -i tailscale+ -j ACCEPT
+    remove_all_rules filter FORWARD -i tailscale+ -j ACCEPT
+    remove_all_rules filter INPUT -i tailscale+ -p tcp -m tcp --dport "$EDGE_DNS_PORT" -j ACCEPT
+    remove_all_rules filter INPUT -i tailscale+ -p udp -m udp --dport "$EDGE_DNS_PORT" -j ACCEPT
+    remove_all_rules nat PREROUTING -i tailscale+ -p tcp -m tcp --dport "$EDGE_DNS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_DNS_PORT"
+    remove_all_rules nat PREROUTING -i tailscale+ -p udp -m udp --dport "$EDGE_DNS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_DNS_PORT"
+    remove_all_rules nat PREROUTING -i tailscale+ -p tcp -m tcp --dport "$EDGE_ROUTER_HTTPS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_ROUTER_HTTPS_PORT"
+}
+
 add_admin_input_rules() {
     for source in $EDGE_ADMIN_TS_SOURCES; do
         if [ "$EDGE_ALLOW_ROUTER_HTTPS" = "1" ]; then
@@ -104,6 +121,13 @@ add_admin_input_rules() {
         if [ "$EDGE_ALLOW_ROUTER_SSH" = "1" ]; then
             "$IPTABLES" -A EDGE_TS_INPUT -s "$source" -p tcp --dport "$EDGE_ROUTER_SSH_PORT" -m conntrack --ctstate NEW -j ACCEPT || die "SSH rule failed"
         fi
+    done
+}
+
+add_admin_nat_rules() {
+    [ "$EDGE_ALLOW_ROUTER_HTTPS" = "1" ] || return 0
+    for source in $EDGE_ADMIN_TS_SOURCES; do
+        "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -s "$source" -p tcp --dport "$EDGE_ROUTER_HTTPS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_ROUTER_HTTPS_PORT" || die "HTTPS DNAT rule failed"
     done
 }
 
@@ -126,6 +150,8 @@ add_lan_forward_rules() {
 "$IPTABLES" -t filter -I INPUT 1 -i "$EDGE_TS_IF" -j DROP || die "cannot install temporary INPUT guard"
 "$IPTABLES" -t filter -I FORWARD 1 -i "$EDGE_TS_IF" -j DROP || die "cannot install temporary FORWARD guard"
 
+remove_legacy_tailscale_rules
+
 flush_chain filter EDGE_TS_INPUT
 flush_chain filter EDGE_TS_FORWARD
 flush_chain nat EDGE_TS_PREROUTING
@@ -138,6 +164,7 @@ if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
     "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p tcp --dport "$EDGE_DNS_PORT" -j DNAT --to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_DNS_PORT" || die "DNS TCP redirect failed"
 fi
 
+add_admin_nat_rules
 add_admin_input_rules
 
 if [ "$EDGE_LOG_DROPS" = "1" ]; then

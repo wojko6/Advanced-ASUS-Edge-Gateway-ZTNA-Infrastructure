@@ -35,6 +35,11 @@ assert_rule() {
 }
 
 assert_rule "-A EDGE_TS_INPUT -s 100.64.0.10/32 -p tcp --dport 8443"
+assert_rule "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.10/32 -p tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:8443"
+assert_rule "-t filter -D INPUT -i tailscale+ -j ACCEPT"
+assert_rule "-t filter -D FORWARD -i tailscale+ -j ACCEPT"
+assert_rule "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 53 -j DNAT --to-destination 192.168.50.1:53"
+assert_rule "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:8443"
 assert_rule "-A EDGE_TS_FORWARD -d 192.168.50.10 -p tcp --dport 443"
 assert_rule "-A EDGE_TS_FORWARD -d 192.168.50.10 -p udp --dport 123"
 assert_rule "-A EDGE_TS_FORWARD -o eth0 -j ACCEPT"
