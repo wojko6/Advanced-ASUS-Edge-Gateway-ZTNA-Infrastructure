@@ -88,7 +88,11 @@ install_hook() {
     {
         echo '#!/bin/sh'
         echo '# ASUS_EDGE_MANAGED_HOOK'
-        echo "[ -x '$legacy_path' ] && '$legacy_path' \"\$@\""
+        echo "CONFIG_FILE='/jffs/configs/asus-edge.conf'"
+        echo '[ -r "$CONFIG_FILE" ] && . "$CONFIG_FILE"'
+        echo "if [ \"\${EDGE_RUN_LEGACY_HOOKS:-0}\" = '1' ] && [ -x '$legacy_path' ]; then"
+        echo "    '$legacy_path' \"\$@\""
+        echo 'fi'
         echo "exec '$ADDON_DIR/bin/$hook_name' \"\$@\""
     } >"$hook_path" || exit 1
     chmod 0755 "$hook_path"
@@ -96,6 +100,9 @@ install_hook() {
 
 install_hook firewall-start
 install_hook services-start
+
+echo "Existing hooks were preserved under $ADDON_DIR/legacy and are disabled by default."
+echo "Set EDGE_RUN_LEGACY_HOOKS=1 only after reviewing those files."
 
 if executable_exists nvram >/dev/null 2>&1 && [ "$(nvram get jffs2_scripts 2>/dev/null)" != "1" ]; then
     echo "WARNING: enable 'JFFS custom scripts and configs' in Asuswrt-Merlin."
