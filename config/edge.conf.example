@@ -26,6 +26,8 @@ EDGE_UNBOUND_PORT="53535"
 # Leave empty to auto-detect amtm Unbound Manager first, then standard Entware.
 # Set an explicit path if more than one Unbound configuration is present.
 EDGE_UNBOUND_CONFIG=""
+# Used only for direct recovery after the amtm-managed startup has settled.
+EDGE_UNBOUND_BIN="/opt/sbin/unbound"
 
 # Least-privilege access to LAN services. Both lists are space-separated.
 # Every listed host receives every listed TCP/UDP port below.
