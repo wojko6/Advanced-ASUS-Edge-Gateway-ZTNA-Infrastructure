@@ -44,6 +44,7 @@ fi
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
+: "${EDGE_INTERCEPT_DNS:=1}"
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_UNBOUND_CONFIG:=}"
 : "${EDGE_SYSLOG_HOST:=}"
@@ -68,6 +69,14 @@ if ip link show "$EDGE_TS_IF" >/dev/null 2>&1; then
     ok "$EDGE_TS_IF exists"
 else
     fail "$EDGE_TS_IF missing"
+fi
+
+if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
+    if grep -F -x "interface=$EDGE_TS_IF" /etc/dnsmasq.conf >/dev/null 2>&1; then
+        ok "dnsmasq includes $EDGE_TS_IF"
+    else
+        fail "dnsmasq does not include $EDGE_TS_IF"
+    fi
 fi
 
 for chain in EDGE_TS_INPUT EDGE_TS_FORWARD; do
