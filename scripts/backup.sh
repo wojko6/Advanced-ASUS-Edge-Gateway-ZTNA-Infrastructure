@@ -2,6 +2,9 @@
 
 set -u
 
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+umask 077
+
 DESTINATION="${1:-/opt/backups/asus-edge}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 ARCHIVE="$DESTINATION/asus-edge-$STAMP.tar.gz"

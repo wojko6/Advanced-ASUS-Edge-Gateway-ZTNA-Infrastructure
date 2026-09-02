@@ -52,13 +52,28 @@ for file in \
     "$REPO_DIR/router/scripts/firewall-start" \
     "$REPO_DIR/router/scripts/services-start" \
     "$REPO_DIR/scripts/install.sh" \
+    "$REPO_DIR/scripts/backup.sh" \
+    "$REPO_DIR/scripts/restore.sh" \
     "$REPO_DIR/scripts/healthcheck.sh" \
+    "$REPO_DIR/scripts/collect-evidence.sh" \
+    "$REPO_DIR/scripts/update-tailscale.sh" \
     "$REPO_DIR/scripts/uninstall.sh"
 do
     if sed '/^[[:space:]]*#/d' "$file" | grep -F 'command -v' >/dev/null; then
         echo "FAIL: BusyBox-incompatible command discovery in $file" >&2
         exit 1
     fi
+done
+
+for file in \
+    "$REPO_DIR/scripts/backup.sh" \
+    "$REPO_DIR/scripts/restore.sh" \
+    "$REPO_DIR/scripts/update-tailscale.sh"
+do
+    grep -F 'PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"' "$file" >/dev/null || {
+        echo "FAIL: deterministic router PATH missing in $file" >&2
+        exit 1
+    }
 done
 
 grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/null || {
