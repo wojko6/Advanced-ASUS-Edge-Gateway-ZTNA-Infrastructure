@@ -57,10 +57,24 @@ for startup_coordination in \
     'amtm_entware_startup_detected()' \
     'wait_for_amtm_entware_startup()' \
     '[ "$EDGE_RUN_RC_UNSLUNG" = "1" ]' \
-    'process_stays_running()'
+    'EDGE_ENTWARE_QUIET_SECONDS:=20' \
+    'EDGE_SERVICE_START_ATTEMPTS:=6' \
+    'process_stays_running()' \
+    'remove_stale_process_pidfile()'
 do
     grep -F "$startup_coordination" "$REPO_DIR/router/scripts/services-start" >/dev/null || {
         echo "FAIL: Entware startup coordination missing: $startup_coordination" >&2
+        exit 1
+    }
+done
+
+for startup_failure_guard in \
+    'startup_failed=0' \
+    'startup_failed=1' \
+    'ERROR: required service startup failed'
+do
+    grep -F "$startup_failure_guard" "$REPO_DIR/router/scripts/services-start" >/dev/null || {
+        echo "FAIL: required service failure is not propagated: $startup_failure_guard" >&2
         exit 1
     }
 done
