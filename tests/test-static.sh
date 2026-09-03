@@ -242,6 +242,51 @@ grep -F '${EDGE_RUN_LEGACY_HOOKS:-0}' "$REPO_DIR/scripts/install.sh" >/dev/null 
     exit 1
 }
 
+for syslog_config in \
+    "$REPO_DIR/config/syslog-ng.conf.example" \
+    "$REPO_DIR/config/syslog-ng-collector.conf.example"
+do
+    grep -F 'ca-file(' "$syslog_config" >/dev/null || {
+        echo "FAIL: trusted CA is missing from $syslog_config" >&2
+        exit 1
+    }
+    grep -F 'peer-verify(required-trusted)' "$syslog_config" >/dev/null || {
+        echo "FAIL: mTLS peer verification is not required in $syslog_config" >&2
+        exit 1
+    }
+    if grep -F 'peer-verify(optional-untrusted)' "$syslog_config" >/dev/null; then
+        echo "FAIL: insecure transitional TLS policy remains in $syslog_config" >&2
+        exit 1
+    fi
+done
+
+for router_identity_option in \
+    'key-file("/opt/etc/syslog-ng/tls/router-client.key")' \
+    'cert-file("/opt/etc/syslog-ng/tls/router-client.crt")' \
+    'disk-buffer(' \
+    'reliable(yes)'
+do
+    grep -F "$router_identity_option" "$REPO_DIR/config/syslog-ng.conf.example" >/dev/null || {
+        echo "FAIL: router mTLS/buffer option missing: $router_identity_option" >&2
+        exit 1
+    }
+done
+
+grep -F '"/tmp/syslog.log"' "$REPO_DIR/config/syslog-ng.conf.example" >/dev/null || {
+    echo "FAIL: router syslog-ng does not tail the Asuswrt log" >&2
+    exit 1
+}
+
+if grep -F 'system();' "$REPO_DIR/config/syslog-ng.conf.example" >/dev/null; then
+    echo "FAIL: router syslog-ng conflicts with the firmware logging sockets" >&2
+    exit 1
+fi
+
+if find "$REPO_DIR" -path "$REPO_DIR/.git" -prune -o -type f -name '*.key' -print | grep -q .; then
+    echo "FAIL: private-key file found in repository" >&2
+    exit 1
+fi
+
 "$TEST_DIR/test-firewall-mock.sh"
 "$TEST_DIR/test-config-validation.sh"
 "$TEST_DIR/test-evidence-collector.sh"
