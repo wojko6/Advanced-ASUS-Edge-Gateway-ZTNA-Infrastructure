@@ -30,15 +30,31 @@ During re-application, temporary interface-scoped IPv4 and IPv6 drop rules keep 
 1. Allow established/related return traffic.
 2. Allow configured destination-host and destination-port combinations.
 3. Optionally allow ICMP echo to those hosts.
-4. If exit-node mode is enabled, allow forwarding only to the detected/configured WAN interface.
-5. Rate-limit security logging.
-6. Drop all remaining forwarding from `tailscale0`.
+4. Allow an optional printer policy only from configured Tailscale sources, through the configured LAN interface, to one printer and its required ports.
+5. If exit-node mode is enabled, allow forwarding only to the detected/configured WAN interface.
+6. Rate-limit security logging.
+7. Drop all remaining forwarding from `tailscale0`.
+
+## Source-scoped legacy printer access
+
+Some legacy Android print plugins probe a printer over HTTP and SNMP before sending a job over IPP or raw TCP. Enable only the ports confirmed by packet capture:
+
+```sh
+EDGE_LAN_IF="br0"
+EDGE_PRINTER_TS_SOURCES="192.0.2.95/32"
+EDGE_PRINTER_LAN_IP="198.51.100.140"
+EDGE_PRINTER_TCP_PORTS="80 631 9100"
+EDGE_PRINTER_UDP_PORTS="161"
+```
+
+The sample uses RFC 5737 documentation ranges. Keep real device addresses in the router-local configuration. TCP rules accept only new connections; established/related traffic is handled by the first rule in the chain. The UDP printer rule intentionally has no conntrack-state restriction because repeated SNMP polls from legacy clients may not consistently appear as `NEW`.
 
 ## Policy limitations
 
 - iptables sees source IPs, not Tailscale user identities. Enforce identities with Grants.
 - The granular service policy is IPv4. The installed IPv6 guard intentionally drops new Tailscale IPv6 input/forward traffic; do not remove it until an equivalent policy is tested.
 - `EDGE_ALLOWED_LAN_HOSTS` combined with each listed port is a Cartesian product. Create separate chains if hosts need different service sets.
+- Printer HTTP, SNMPv1/v2, IPP, and raw TCP are not encrypted on the LAN segment. Tailscale protects the remote path only as far as the subnet router; keep the printer policy source-restricted and never expose these ports to the WAN.
 - Exit-node mode permits all protocols to the WAN interface; Tailscale Grants must restrict who may use `autogroup:internet`.
 - REDIRECT of classic DNS port 53 requires dnsmasq to include `tailscale0`; it does not block encrypted DNS protocols.
 

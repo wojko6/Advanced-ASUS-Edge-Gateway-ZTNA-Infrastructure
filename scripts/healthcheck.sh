@@ -41,7 +41,12 @@ else
 fi
 
 : "${EDGE_TS_IF:=tailscale0}"
+: "${EDGE_LAN_IF:=br0}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
+: "${EDGE_PRINTER_TS_SOURCES:=}"
+: "${EDGE_PRINTER_LAN_IP:=}"
+: "${EDGE_PRINTER_TCP_PORTS:=80 631 9100}"
+: "${EDGE_PRINTER_UDP_PORTS:=161}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
 : "${EDGE_INTERCEPT_DNS:=1}"
@@ -83,6 +88,44 @@ for chain in EDGE_TS_INPUT EDGE_TS_FORWARD; do
     iptables -t filter -S "$chain" >/dev/null 2>&1 && ok "firewall chain $chain" || fail "missing firewall chain $chain"
 done
 iptables -t nat -S EDGE_TS_PREROUTING >/dev/null 2>&1 && ok "NAT chain EDGE_TS_PREROUTING" || fail "missing NAT chain"
+
+printer_forward_rule_exists() {
+    printer_rule_source="$1"
+    printer_rule_protocol="$2"
+    printer_rule_port="$3"
+
+    iptables -t filter -S EDGE_TS_FORWARD 2>/dev/null |
+        grep -F -- "-i $EDGE_TS_IF" |
+        grep -F -- "-o $EDGE_LAN_IF" |
+        grep -F -- "-s $printer_rule_source" |
+        grep -F -- "-d $EDGE_PRINTER_LAN_IP" |
+        grep -F -- "-p $printer_rule_protocol" |
+        grep -F -- "--dport $printer_rule_port" |
+        grep -F -- "-j ACCEPT" >/dev/null
+}
+
+if [ -n "$EDGE_PRINTER_TS_SOURCES" ] || [ -n "$EDGE_PRINTER_LAN_IP" ]; then
+    if [ -z "$EDGE_PRINTER_TS_SOURCES" ] || [ -z "$EDGE_PRINTER_LAN_IP" ]; then
+        fail "source-scoped printer configuration incomplete"
+    else
+        printer_policy_failures=0
+        for source in $EDGE_PRINTER_TS_SOURCES; do
+            for port in $EDGE_PRINTER_TCP_PORTS; do
+                if ! printer_forward_rule_exists "$source" tcp "$port"; then
+                    fail "missing printer TCP/$port rule for $source"
+                    printer_policy_failures=$((printer_policy_failures + 1))
+                fi
+            done
+            for port in $EDGE_PRINTER_UDP_PORTS; do
+                if ! printer_forward_rule_exists "$source" udp "$port"; then
+                    fail "missing printer UDP/$port rule for $source"
+                    printer_policy_failures=$((printer_policy_failures + 1))
+                fi
+            done
+        done
+        [ "$printer_policy_failures" -eq 0 ] && ok "source-scoped printer policy"
+    fi
+fi
 
 if executable_exists ip6tables >/dev/null 2>&1; then
     ip6tables -t filter -S EDGE_TS6_INPUT >/dev/null 2>&1 && ok "IPv6 INPUT guard" || fail "missing IPv6 INPUT guard"

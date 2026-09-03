@@ -2,6 +2,7 @@
 # Copy to /jffs/configs/asus-edge.conf and adapt before applying.
 
 EDGE_TS_IF="tailscale0"
+EDGE_LAN_IF="br0"
 EDGE_TS_SOCKET="/var/run/tailscale/tailscaled.sock"
 EDGE_TS_STATE="/opt/var/lib/tailscale/tailscaled.state"
 EDGE_LAN_CIDR="192.168.50.0/24"
@@ -37,6 +38,14 @@ EDGE_ALLOWED_LAN_HOSTS=""
 EDGE_ALLOWED_LAN_TCP_PORTS=""
 EDGE_ALLOWED_LAN_UDP_PORTS=""
 EDGE_ALLOW_LAN_ICMP="0"
+
+# Optional source-scoped access for a legacy network printer. The policy stays
+# disabled until both a printer address and at least one Tailscale source are set.
+# Keep deployment-specific addresses in the router-local configuration.
+EDGE_PRINTER_TS_SOURCES=""
+EDGE_PRINTER_LAN_IP=""
+EDGE_PRINTER_TCP_PORTS="80 631 9100"
+EDGE_PRINTER_UDP_PORTS="161"
 
 # Preserve the original project's exit-node function while keeping LAN denied.
 # The firewall allows forwarding only from tailscale0 to the detected WAN interface.
