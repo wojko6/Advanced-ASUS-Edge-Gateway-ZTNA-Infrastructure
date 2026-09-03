@@ -27,7 +27,7 @@ See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy
 - Bounded `/opt` readiness check and startup lock; no package upgrades during boot.
 - Backup, dry-run restore, health checks, mock firewall tests, live tests, and CI.
 - Sanitized evidence collection with explicit separation of automated and live results.
-- Optional TLS log forwarding with syslog-ng.
+- Optional mutually authenticated TLS log forwarding with syslog-ng and reliable disk buffering.
 
 ## Repository layout
 
@@ -116,6 +116,12 @@ unbound-checkconf /opt/var/lib/unbound/unbound.conf
 
 Merge `config/dnsmasq.conf.add.example` with any existing `/jffs/configs/dnsmasq.conf.add`; do not overwrite private DDNS or local records. Review `/jffs/scripts/dnsmasq.postconf` for NextDNS or other hooks that may take precedence. Do not run a second resolver on `192.168.50.1:53` while dnsmasq owns that socket.
 
+## Centralized logging
+
+The optional logging path tails the firmware-owned `/tmp/syslog.log`, forwards it through Tailscale using mutually authenticated TLS, and buffers messages on disk during collector outages. The collector validates the router certificate before accepting messages. Private keys and real Tailscale addresses remain deployment-local.
+
+See [centralized logging with mTLS](docs/centralized-logging.md) for the trust model, safe rollout order, negative certificate test, buffer recovery test, and reboot validation.
+
 ## Validation and recovery
 
 ```sh
@@ -165,6 +171,7 @@ Tailscale updates are a separate maintenance action:
 - [Threat model](docs/threat-model.md)
 - [Testing and evidence collection](docs/testing.md)
 - [Publishing validation evidence](docs/evidence-collection.md)
+- [Centralized logging with mTLS](docs/centralized-logging.md)
 - [Operations and recovery](docs/operations.md)
 - [Roadmap](docs/roadmap.md)
 
