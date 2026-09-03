@@ -28,6 +28,7 @@ See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy
 - Backup, dry-run restore, health checks, mock firewall tests, live tests, and CI.
 - Sanitized evidence collection with explicit separation of automated and live results.
 - Optional mutually authenticated TLS log forwarding with syslog-ng and reliable disk buffering.
+- Automated collector retention that compresses completed logs after 24 hours and expires them after 30 days.
 
 ## Repository layout
 

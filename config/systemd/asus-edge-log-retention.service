@@ -1,0 +1,16 @@
+[Unit]
+Description=ASUS Edge centralized log retention
+ConditionPathIsDirectory=/var/log/asus-edge
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/local/sbin/asus-edge-log-retention --apply
+Nice=10
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/asus-edge

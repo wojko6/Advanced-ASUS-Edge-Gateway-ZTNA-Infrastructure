@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily ASUS Edge log retention
+
+[Timer]
+OnCalendar=*-*-* 03:20:00
+Persistent=true
+RandomizedDelaySec=10m
+AccuracySec=1m
+Unit=asus-edge-log-retention.service
+
+[Install]
+WantedBy=timers.target
