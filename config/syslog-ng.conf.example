@@ -1,35 +1,65 @@
-@version: 3.38
+@version: 4.2
+@include "scl.conf"
+
+# Router-side syslog-ng configuration.
+# Replace collector.example.invalid with the collector's Tailscale DNS name or IP.
+# Never commit certificates, private keys, or real infrastructure addresses.
 
 options {
     chain_hostnames(no);
-    flush_lines(10);
-    stats_freq(3600);
+    create_dirs(yes);
+    keep_hostname(yes);
+    log_fifo_size(256);
+    log_msg_size(2048);
+    stats(freq(3600));
+    flush_lines(0);
     time_reopen(10);
+    use_fqdn(no);
 };
 
-source s_router {
-    system();
-    internal();
+# Asuswrt already owns /dev/log and /proc/kmsg. Tail its local log instead of
+# using system() so syslog-ng can coexist with the firmware logger.
+source s_asuswrt_file {
+    file(
+        "/tmp/syslog.log"
+        follow-freq(1)
+        flags(no-parse)
+        program-override("asuswrt")
+    );
 };
 
 destination d_local_archive {
-    file("/opt/var/log/router/${YEAR}-${MONTH}-${DAY}.log"
-         create_dirs(yes)
-         dir_perm(0750)
-         perm(0640));
+    file(
+        "/opt/var/log/asus-edge/${YEAR}-${MONTH}-${DAY}.log"
+        create_dirs(yes)
+        dir-perm(0750)
+        perm(0640)
+    );
 };
 
-# Replace collector.example.lan and deploy a trusted CA file before enabling.
 destination d_remote_tls {
-    network("collector.example.lan"
-            port(6514)
-            transport("tls")
-            tls(ca-file("/opt/etc/syslog-ng/ca.d/collector-ca.pem"))
-            disk-buffer(mem-buf-size(262144)
-                        disk-buf-size(4194304)
-                        reliable(yes)));
+    network(
+        "collector.example.invalid"
+        port(6514)
+        transport("tls")
+        tls(
+            key-file("/opt/etc/syslog-ng/tls/router-client.key")
+            cert-file("/opt/etc/syslog-ng/tls/router-client.crt")
+            ca-file("/opt/etc/syslog-ng/ca.d/asus-edge-ca.crt")
+            peer-verify(required-trusted)
+        )
+        disk-buffer(
+            reliable(yes)
+            dir("/opt/var/lib/syslog-ng")
+            disk-buf-size(4194304)
+            mem-buf-size(262144)
+        )
+    );
 };
 
-log { source(s_router); destination(d_local_archive); };
-# Uncomment only after certificate and reachability validation.
-# log { source(s_router); destination(d_remote_tls); flags(flow-control); };
+log {
+    source(s_asuswrt_file);
+    destination(d_local_archive);
+    destination(d_remote_tls);
+    flags(flow-control);
+};
