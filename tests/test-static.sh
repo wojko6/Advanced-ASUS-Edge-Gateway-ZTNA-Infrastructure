@@ -9,6 +9,11 @@ find "$REPO_DIR/router" "$REPO_DIR/scripts" "$REPO_DIR/tests" -type f \( -name '
     sh -n "$file"
 done
 
+grep -F 'Installed Advanced ASUS Edge Gateway v2.1.0' "$REPO_DIR/scripts/install.sh" >/dev/null || {
+    echo "FAIL: installer version does not match release v2.1.0" >&2
+    exit 1
+}
+
 if command -v shellcheck >/dev/null 2>&1; then
     find "$REPO_DIR/router" "$REPO_DIR/scripts" "$REPO_DIR/tests" -type f \( -name '*.sh' -o -path '*/router/scripts/*' \) -print0 \
         | xargs -0 shellcheck -S warning
