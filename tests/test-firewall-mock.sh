@@ -10,6 +10,11 @@ trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
 cp "$REPO_DIR/config/edge.conf.example" "$TMP_DIR/edge.conf"
 cat >>"$TMP_DIR/edge.conf" <<'EOF'
 EDGE_ADMIN_TS_SOURCES="100.64.0.10/32"
+EDGE_LAN_IF="br0"
+EDGE_PRINTER_TS_SOURCES="100.64.0.20/32"
+EDGE_PRINTER_LAN_IP="192.168.50.140"
+EDGE_PRINTER_TCP_PORTS="80 631 9100"
+EDGE_PRINTER_UDP_PORTS="161"
 EDGE_ALLOWED_LAN_HOSTS="192.168.50.10"
 EDGE_ALLOWED_LAN_TCP_PORTS="443"
 EDGE_ALLOWED_LAN_UDP_PORTS="123"
@@ -42,6 +47,10 @@ assert_rule "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 53 -j DNAT
 assert_rule "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:8443"
 assert_rule "-A EDGE_TS_FORWARD -d 192.168.50.10 -p tcp --dport 443"
 assert_rule "-A EDGE_TS_FORWARD -d 192.168.50.10 -p udp --dport 123"
+assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 100.64.0.20/32 -d 192.168.50.140 -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT"
+assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 100.64.0.20/32 -d 192.168.50.140 -p tcp --dport 631 -m conntrack --ctstate NEW -j ACCEPT"
+assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 100.64.0.20/32 -d 192.168.50.140 -p tcp --dport 9100 -m conntrack --ctstate NEW -j ACCEPT"
+assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 100.64.0.20/32 -d 192.168.50.140 -p udp --dport 161 -j ACCEPT"
 assert_rule "-A EDGE_TS_FORWARD -o eth0 -j ACCEPT"
 assert_rule "-A EDGE_TS_FORWARD -j DROP"
 assert_rule "-t nat -A EDGE_TS_PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53"
@@ -52,6 +61,18 @@ assert_rule "ip6 -t filter -I INPUT 1 -i tailscale0 -j DROP"
 assert_rule "ip6 -t filter -I FORWARD 1 -i tailscale0 -j DROP"
 assert_rule "ip6 -t filter -D INPUT -i tailscale0 -j DROP"
 assert_rule "ip6 -t filter -D FORWARD -i tailscale0 -j DROP"
+
+if grep -F -- "-d 192.168.50.140" "$MOCK_IPTABLES_LOG" |
+    grep -F -- "-j ACCEPT" |
+    grep -v -F -- "-i tailscale0 -o br0 -s 100.64.0.20/32"; then
+    echo "FAIL: printer rule is not source and interface scoped" >&2
+    exit 1
+fi
+
+if grep -F -- "-p udp --dport 161 -m conntrack" "$MOCK_IPTABLES_LOG" >/dev/null; then
+    echo "FAIL: printer SNMP rule is incorrectly limited by conntrack state" >&2
+    exit 1
+fi
 
 if grep -E -- '-A EDGE_TS_(INPUT|FORWARD) -j ACCEPT$' "$MOCK_IPTABLES_LOG" >/dev/null; then
     echo "FAIL: unrestricted ACCEPT rule found" >&2
