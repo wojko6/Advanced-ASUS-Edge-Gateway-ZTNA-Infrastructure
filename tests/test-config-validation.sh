@@ -28,4 +28,22 @@ grep -F 'invalid port: 70000' "$MOCK_LOGGER_LOG" >/dev/null || {
     exit 1
 }
 
+cp "$REPO_DIR/config/edge.conf.example" "$TMP_DIR/printer-edge.conf"
+echo 'EDGE_PRINTER_TS_SOURCES="192.0.2.95/32"' >>"$TMP_DIR/printer-edge.conf"
+: >"$MOCK_LOGGER_LOG"
+
+if EDGE_CONFIG_FILE="$TMP_DIR/printer-edge.conf" \
+    EDGE_IPTABLES="$TEST_DIR/mocks/iptables" \
+    EDGE_IP6TABLES="$TEST_DIR/mocks/ip6tables" \
+    EDGE_LOGGER="$TEST_DIR/mocks/logger" \
+    sh "$REPO_DIR/router/scripts/firewall-start"; then
+    echo "FAIL: incomplete printer policy was accepted" >&2
+    exit 1
+fi
+
+grep -F 'printer sources configured without EDGE_PRINTER_LAN_IP' "$MOCK_LOGGER_LOG" >/dev/null || {
+    echo "FAIL: incomplete printer-policy rejection was not logged" >&2
+    exit 1
+}
+
 echo "PASS: invalid configuration rejected"
