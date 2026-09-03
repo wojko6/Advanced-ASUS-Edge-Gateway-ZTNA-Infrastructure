@@ -24,7 +24,7 @@ The collector records:
 - a direct Unbound DNSSEC result;
 - SHA-256 hashes for the generated Markdown files.
 
-It does not collect Tailscale status, user identities, device names, configuration contents, routing tables, full DNS responses, or packet captures. Firewall source and destination addresses are replaced before the report is written.
+It does not collect Tailscale status, user identities, device names, configuration contents, routing tables, full DNS responses, or packet captures. Firewall source and destination addresses, including translated NAT targets, are replaced before the report is written.
 
 ## Remote validation
 
