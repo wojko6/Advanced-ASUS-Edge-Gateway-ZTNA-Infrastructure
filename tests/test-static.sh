@@ -287,6 +287,50 @@ if find "$REPO_DIR" -path "$REPO_DIR/.git" -prune -o -type f -name '*.key' -prin
     exit 1
 fi
 
+RETENTION_SCRIPT="$REPO_DIR/scripts/asus-edge-log-retention.sh"
+
+for retention_guard in \
+    'ASUS_EDGE_LOG_ROOT:-/var/log/asus-edge' \
+    'ASUS_EDGE_COMPRESS_AFTER_MINUTES:-1440' \
+    'ASUS_EDGE_DELETE_AFTER_MINUTES:-43200' \
+    '! -name "$TODAY_LOG"' \
+    'case "${1:---dry-run}"'
+do
+    grep -F "$retention_guard" "$RETENTION_SCRIPT" >/dev/null || {
+        echo "FAIL: collector retention guard missing: $retention_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F 'rm -rf' "$RETENTION_SCRIPT" >/dev/null; then
+    echo "FAIL: broad recursive deletion found in collector retention script" >&2
+    exit 1
+fi
+
+for service_guard in \
+    'ExecStart=/usr/local/sbin/asus-edge-log-retention --apply' \
+    'ProtectSystem=strict' \
+    'ProtectHome=true' \
+    'ReadWritePaths=/var/log/asus-edge'
+do
+    grep -F "$service_guard" "$REPO_DIR/config/systemd/asus-edge-log-retention.service" >/dev/null || {
+        echo "FAIL: retention service hardening missing: $service_guard" >&2
+        exit 1
+    }
+done
+
+for timer_guard in \
+    'OnCalendar=*-*-* 03:20:00' \
+    'Persistent=true' \
+    'RandomizedDelaySec=10m'
+do
+    grep -F "$timer_guard" "$REPO_DIR/config/systemd/asus-edge-log-retention.timer" >/dev/null || {
+        echo "FAIL: retention timer guard missing: $timer_guard" >&2
+        exit 1
+    }
+done
+
+"$TEST_DIR/test-log-retention.sh"
 "$TEST_DIR/test-firewall-mock.sh"
 "$TEST_DIR/test-config-validation.sh"
 "$TEST_DIR/test-evidence-collector.sh"

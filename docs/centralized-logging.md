@@ -117,6 +117,41 @@ Afterward, reboot the router and verify all of the following:
 - the project health check returns zero failures and zero warnings;
 - a post-reboot test message reaches the collector.
 
+## Collector retention
+
+The collector example writes one file per router and calendar day. Use the supplied retention script and systemd timer to prevent unbounded storage growth:
+
+- the current day's log is never compressed;
+- completed logs older than 24 hours are compressed with gzip;
+- compressed logs older than 30 days are removed;
+- the script defaults to `--dry-run`;
+- the service has a fixed writable path and a read-only system view.
+
+Install and inspect the policy on the Linux collector:
+
+```sh
+sudo install -m 0750 scripts/asus-edge-log-retention.sh \
+  /usr/local/sbin/asus-edge-log-retention
+sudo install -m 0644 config/systemd/asus-edge-log-retention.service \
+  config/systemd/asus-edge-log-retention.timer \
+  /etc/systemd/system/
+
+sudo systemd-analyze verify \
+  /etc/systemd/system/asus-edge-log-retention.service \
+  /etc/systemd/system/asus-edge-log-retention.timer
+sudo /usr/local/sbin/asus-edge-log-retention --dry-run
+```
+
+Review every listed path before enabling deletion. Then enable the daily timer:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now asus-edge-log-retention.timer
+systemctl list-timers asus-edge-log-retention.timer
+```
+
+The defaults provide at least 30 days of retained logs. Override `ASUS_EDGE_LOG_ROOT`, `ASUS_EDGE_COMPRESS_AFTER_MINUTES`, or `ASUS_EDGE_DELETE_AFTER_MINUTES` only for controlled testing or a deliberately different local policy. The script rejects relative roots and the filesystem root.
+
 ## Operational boundaries
 
 mTLS authenticates the sending router but does not replace Tailscale policy. Restrict port 6514 to the intended router identity in Tailscale Grants or ACLs. Retain the source-address filter as defense in depth.
