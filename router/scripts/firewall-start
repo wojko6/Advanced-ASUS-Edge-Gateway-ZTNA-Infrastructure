@@ -39,6 +39,7 @@ die() {
 . "$CONFIG_FILE"
 
 : "${EDGE_TS_IF:=tailscale0}"
+: "${EDGE_LAN_IF:=br0}"
 : "${EDGE_TAILNET_V4_CIDR:=100.64.0.0/10}"
 : "${EDGE_ROUTER_LAN_IP:=192.168.50.1}"
 : "${EDGE_ADMIN_TS_SOURCES:=}"
@@ -52,6 +53,10 @@ die() {
 : "${EDGE_ALLOWED_LAN_TCP_PORTS:=}"
 : "${EDGE_ALLOWED_LAN_UDP_PORTS:=}"
 : "${EDGE_ALLOW_LAN_ICMP:=0}"
+: "${EDGE_PRINTER_TS_SOURCES:=}"
+: "${EDGE_PRINTER_LAN_IP:=}"
+: "${EDGE_PRINTER_TCP_PORTS:=80 631 9100}"
+: "${EDGE_PRINTER_UDP_PORTS:=161}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
 : "${EDGE_WAN_IF:=}"
 : "${EDGE_LOG_DROPS:=1}"
@@ -66,9 +71,16 @@ valid_port() {
     [ "$1" -ge 1 ] 2>/dev/null && [ "$1" -le 65535 ] 2>/dev/null
 }
 
-for port in "$EDGE_ROUTER_HTTPS_PORT" "$EDGE_ROUTER_SSH_PORT" "$EDGE_DNS_PORT" $EDGE_ALLOWED_LAN_TCP_PORTS $EDGE_ALLOWED_LAN_UDP_PORTS; do
+for port in "$EDGE_ROUTER_HTTPS_PORT" "$EDGE_ROUTER_SSH_PORT" "$EDGE_DNS_PORT" $EDGE_ALLOWED_LAN_TCP_PORTS $EDGE_ALLOWED_LAN_UDP_PORTS $EDGE_PRINTER_TCP_PORTS $EDGE_PRINTER_UDP_PORTS; do
     valid_port "$port" || die "invalid port: $port"
 done
+
+if [ -n "$EDGE_PRINTER_TS_SOURCES" ] && [ -z "$EDGE_PRINTER_LAN_IP" ]; then
+    die "printer sources configured without EDGE_PRINTER_LAN_IP"
+fi
+if [ -z "$EDGE_PRINTER_TS_SOURCES" ] && [ -n "$EDGE_PRINTER_LAN_IP" ]; then
+    die "printer LAN IP configured without EDGE_PRINTER_TS_SOURCES"
+fi
 
 detect_wan_if() {
     [ -n "$EDGE_WAN_IF" ] && { printf '%s\n' "$EDGE_WAN_IF"; return; }
@@ -145,6 +157,21 @@ add_lan_forward_rules() {
     done
 }
 
+add_printer_forward_rules() {
+    [ -n "$EDGE_PRINTER_TS_SOURCES" ] || return 0
+
+    for source in $EDGE_PRINTER_TS_SOURCES; do
+        for port in $EDGE_PRINTER_TCP_PORTS; do
+            "$IPTABLES" -A EDGE_TS_FORWARD -i "$EDGE_TS_IF" -o "$EDGE_LAN_IF" -s "$source" -d "$EDGE_PRINTER_LAN_IP" -p tcp --dport "$port" -m conntrack --ctstate NEW -j ACCEPT || die "printer TCP rule failed"
+        done
+        for port in $EDGE_PRINTER_UDP_PORTS; do
+            # Do not restrict this rule to conntrack NEW. Some legacy printer
+            # SNMP exchanges are classified differently across repeated polls.
+            "$IPTABLES" -A EDGE_TS_FORWARD -i "$EDGE_TS_IF" -o "$EDGE_LAN_IF" -s "$source" -d "$EDGE_PRINTER_LAN_IP" -p udp --dport "$port" -j ACCEPT || die "printer UDP rule failed"
+        done
+    done
+}
+
 # Keep re-application fail-closed while existing chains are rebuilt. On an
 # error these guards intentionally remain until Merlin restarts the firewall.
 "$IPTABLES" -t filter -I INPUT 1 -i "$EDGE_TS_IF" -j DROP || die "cannot install temporary INPUT guard"
@@ -174,6 +201,7 @@ fi
 
 "$IPTABLES" -A EDGE_TS_FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT || die "forward state rule failed"
 add_lan_forward_rules
+add_printer_forward_rules
 
 if [ "$EDGE_ENABLE_EXIT_NODE" = "1" ]; then
     WAN_IF="$(detect_wan_if)"
