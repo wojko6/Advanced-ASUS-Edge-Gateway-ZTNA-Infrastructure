@@ -1,0 +1,37 @@
+# Collector-side drop-in for /etc/syslog-ng/conf.d/.
+# 192.0.2.10 and 192.0.2.20 are documentation-only addresses.
+# Replace them with the collector and router Tailscale addresses.
+# Private keys and issued certificates must remain outside the repository.
+
+source s_asus_edge_tls {
+    network(
+        ip("192.0.2.10")
+        port(6514)
+        transport("tls")
+        tls(
+            key-file("/etc/syslog-ng/tls/collector.key")
+            cert-file("/etc/syslog-ng/tls/collector.crt")
+            ca-file("/etc/syslog-ng/tls/asus-edge-ca.crt")
+            peer-verify(required-trusted)
+        )
+    );
+};
+
+filter f_asus_router {
+    netmask("192.0.2.20/32");
+};
+
+destination d_asus_edge_files {
+    file(
+        "/var/log/asus-edge/${HOST}/${YEAR}-${MONTH}-${DAY}.log"
+        create-dirs(yes)
+        dir-perm(0750)
+        perm(0640)
+    );
+};
+
+log {
+    source(s_asus_edge_tls);
+    filter(f_asus_router);
+    destination(d_asus_edge_files);
+};
