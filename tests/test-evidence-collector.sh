@@ -12,6 +12,7 @@ cat >"$TMP_DIR/iptables" <<'EOF'
 echo "Chain EDGE_TEST (1 references)"
 echo "num  pkts bytes target prot opt in out source destination"
 echo "1 10 640 ACCEPT tcp -- tailscale0 * 100.64.0.10 192.168.50.1 tcp dpt:8443"
+echo "2 4 240 DNAT tcp -- tailscale0 * 100.64.0.10 100.83.72.84 tcp dpt:8443 to:192.168.50.1:8443"
 EOF
 
 cat >"$TMP_DIR/dig" <<'EOF'
@@ -51,6 +52,7 @@ fi
 
 grep -F '[source-redacted]' "$TMP_DIR/output/firewall-counters.md" >/dev/null
 grep -F '[destination-redacted]' "$TMP_DIR/output/firewall-counters.md" >/dev/null
+grep -F 'to:[translated-address-redacted]:8443' "$TMP_DIR/output/firewall-counters.md" >/dev/null
 grep -F 'PASS (AD flag present)' "$TMP_DIR/output/dns-validation.md" >/dev/null
 grep -F '[OK] mock healthcheck' "$TMP_DIR/output/healthcheck.md" >/dev/null
 
@@ -59,3 +61,4 @@ if [ -f "$TMP_DIR/output/SHA256SUMS" ]; then
 fi
 
 echo "PASS: evidence collector"
+

@@ -90,7 +90,14 @@ redact_firewall_addresses() {
                 $10 = "[destination-redacted]"
             }
         }
-        { print }
+        {
+            for (field = 1; field <= NF; field++) {
+                if ($field ~ /^to:[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/) {
+                    sub(/^to:[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/, "to:[translated-address-redacted]", $field)
+                }
+            }
+            print
+        }
     '
 }
 
@@ -218,3 +225,4 @@ fi
 
 echo "Evidence snapshot created: $OUTPUT_DIR"
 echo "Review it manually before copying selected files into the public repository."
+
