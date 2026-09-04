@@ -49,6 +49,21 @@ EDGE_PRINTER_UDP_PORTS="161"
 
 The sample uses RFC 5737 documentation ranges. Keep real device addresses in the router-local configuration. TCP rules accept only new connections; established/related traffic is handled by the first rule in the chain. The UDP printer rule intentionally has no conntrack-state restriction because repeated SNMP polls from legacy clients may not consistently appear as `NEW`.
 
+### Android transport limitation
+
+The source-scoped policy permits the configured flows, but it cannot make a
+mobile print plugin support every Android network transport. A live test with a
+Samsung legacy print plugin produced the following results over the same
+Tailscale subnet route:
+
+- cellular data: SNMP request/response traffic succeeded, but the plugin did not
+  open an IPP or raw-TCP connection and no physical print completed;
+- external Wi-Fi/hotspot: the plugin submitted the job and the page printed.
+
+Treat cellular-only printing as client-dependent and unsupported unless it is
+validated with the exact Android build and print service. Do not broaden the
+firewall when packet capture shows no attempted print connection.
+
 ## Policy limitations
 
 - iptables sees source IPs, not Tailscale user identities. Enforce identities with Grants.
