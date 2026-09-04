@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.1.0 — 2026-09-04
+
+- Added source-scoped Tailscale access for a legacy LAN printer and validated
+  Android remote printing without an exit node.
+- Hardened amtm/Entware startup coordination and direct Unbound recovery.
+- Added mutual-TLS log forwarding, reliable buffering, retention controls, and
+  live delivery validation.
+- Prevented an ARMv7 Tailscale boot-time OOM by waiting for required swap,
+  retrying daemon startup, preserving the previous log, and extending health
+  and static checks.
+
 ## 2.0.1 — 2026-09-01
 
 - Replaced the old architecture asset with a diagram that matches the v2 firewall, DNS, logging, and operations model.

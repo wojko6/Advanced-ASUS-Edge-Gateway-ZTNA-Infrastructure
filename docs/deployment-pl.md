@@ -29,6 +29,10 @@ Ustaw przede wszystkim:
 - `EDGE_WAN_IF` — pozostaw puste dla autodetekcji lub ustaw interfejs wskazany przez router;
 - `EDGE_TS_SOCKET` — ścieżkę socketu lokalnego procesu `tailscaled`.
 - `EDGE_UNBOUND_PORT` — port loopback zgodny z konfiguracją Unbound, domyślnie `53535`.
+- `EDGE_REQUIRE_SWAP` — pozostaw `auto` albo ustaw `1` na routerze z małą
+  ilością RAM i swapem na USB; zabezpiecza start Tailscale przy rygorystycznym
+  `vm.overcommit_memory=2`.
+- `EDGE_SWAP_WAIT_SECONDS` — czas oczekiwania na swap przed startem Tailscale.
 
 Każdy port z listy zostanie udostępniony każdemu hostowi z listy. Jeżeli hosty wymagają różnych zestawów usług, potrzebne są osobne reguły/łańcuchy.
 

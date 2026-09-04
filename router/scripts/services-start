@@ -22,6 +22,8 @@ executable_exists() {
 
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 LOCK_DIR="/var/run/asus-edge-services.lock"
+SWAPS_FILE="${EDGE_PROC_SWAPS:-/proc/swaps}"
+OVERCOMMIT_FILE="${EDGE_PROC_OVERCOMMIT_MEMORY:-/proc/sys/vm/overcommit_memory}"
 
 log() {
     logger -t asus-edge "$*"
@@ -48,10 +50,133 @@ log() {
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
 : "${EDGE_ACCEPT_DNS:=false}"
 : "${EDGE_HOSTNAME:=asus-edge-gateway}"
+: "${EDGE_REQUIRE_SWAP:=auto}"
+: "${EDGE_SWAP_WAIT_SECONDS:=60}"
+: "${EDGE_TS_READY_WAIT_SECONDS:=20}"
+: "${EDGE_TAILSCALED_LOG:=/opt/var/log/tailscaled.log}"
+
+case "$EDGE_REQUIRE_SWAP" in
+    0|1|auto) ;;
+    *) log "ERROR: EDGE_REQUIRE_SWAP must be 0, 1, or auto"; exit 1 ;;
+esac
 
 opt_is_ready() {
     [ -d /opt ] || return 1
     [ -x /opt/bin/opkg ] || [ -x /opt/sbin/opkg ]
+}
+
+process_stays_running() {
+    monitored_process="$1"
+    stable_seconds=0
+
+    while [ "$stable_seconds" -lt "$EDGE_SERVICE_STABILITY_SECONDS" ]; do
+        pidof "$monitored_process" >/dev/null 2>&1 || return 1
+        stable_seconds=$((stable_seconds + 1))
+        sleep 1
+    done
+
+    return 0
+}
+
+swap_is_active() {
+    [ -r "$SWAPS_FILE" ] &&
+        awk 'NR > 1 { found=1 } END { exit !found }' "$SWAPS_FILE"
+}
+
+swap_is_required() {
+    case "$EDGE_REQUIRE_SWAP" in
+        1) return 0 ;;
+        0) return 1 ;;
+        auto) ;;
+    esac
+
+    [ -r "$OVERCOMMIT_FILE" ] || return 1
+    [ "$(cat "$OVERCOMMIT_FILE" 2>/dev/null)" = "2" ] || return 1
+
+    case "$(uname -m 2>/dev/null)" in
+        armv[5-8]*|i[3-6]86|mips*|ppc) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+wait_for_required_swap() {
+    swap_is_required || return 0
+    swap_is_active && return 0
+
+    log "waiting for active swap before starting tailscaled"
+    elapsed=0
+    while ! swap_is_active; do
+        if [ "$elapsed" -ge "$EDGE_SWAP_WAIT_SECONDS" ]; then
+            log "ERROR: required swap not active after ${EDGE_SWAP_WAIT_SECONDS}s"
+            return 1
+        fi
+        elapsed=$((elapsed + 1))
+        sleep 1
+    done
+    log "required swap is active"
+}
+
+rotate_tailscaled_log() {
+    [ -s "$EDGE_TAILSCALED_LOG" ] || return 0
+    cp -f "$EDGE_TAILSCALED_LOG" "$EDGE_TAILSCALED_LOG.previous" 2>/dev/null || return 1
+    chmod 0600 "$EDGE_TAILSCALED_LOG.previous" 2>/dev/null || true
+}
+
+start_tailscaled_with_retry() {
+    if pidof tailscaled >/dev/null 2>&1; then
+        if process_stays_running tailscaled; then
+            return 0
+        fi
+        log "WARNING: tailscaled exited during startup; attempting recovery"
+    fi
+
+    wait_for_required_swap || return 1
+    mkdir -p "$(dirname "$EDGE_TS_STATE")" "$(dirname "$EDGE_TS_SOCKET")" \
+        "$(dirname "$EDGE_TAILSCALED_LOG")"
+    rotate_tailscaled_log || log "WARNING: could not preserve previous tailscaled log"
+    : >"$EDGE_TAILSCALED_LOG" || return 1
+    chmod 0600 "$EDGE_TAILSCALED_LOG" 2>/dev/null || true
+
+    attempt=1
+    while [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ]; do
+        if pidof tailscaled >/dev/null 2>&1; then
+            if process_stays_running tailscaled; then
+                return 0
+            fi
+            log "WARNING: competing tailscaled process exited during startup"
+        fi
+        rm -f "$EDGE_TS_SOCKET"
+        printf 'Attempt %s/%s: tailscaled startup\n' \
+            "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" >>"$EDGE_TAILSCALED_LOG"
+        tailscaled \
+            --state="$EDGE_TS_STATE" \
+            --socket="$EDGE_TS_SOCKET" \
+            >>"$EDGE_TAILSCALED_LOG" 2>&1 &
+
+        if process_stays_running tailscaled; then
+            log "tailscaled started and stabilized on attempt $attempt"
+            return 0
+        fi
+
+        log "WARNING: tailscaled attempt ${attempt}/${EDGE_SERVICE_START_ATTEMPTS} failed"
+        attempt=$((attempt + 1))
+        [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ] &&
+            sleep "$EDGE_SERVICE_RETRY_SECONDS"
+    done
+
+    log "ERROR: failed to stabilize tailscaled; inspect $EDGE_TAILSCALED_LOG"
+    return 1
+}
+
+wait_for_tailscale_api() {
+    elapsed=0
+    while [ "$elapsed" -lt "$EDGE_TS_READY_WAIT_SECONDS" ]; do
+        pidof tailscaled >/dev/null 2>&1 || return 1
+        tailscale --socket="$EDGE_TS_SOCKET" status >/dev/null 2>&1 && return 0
+        elapsed=$((elapsed + 1))
+        sleep 1
+    done
+    return 1
 }
 
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
@@ -127,40 +252,22 @@ fi
 
 mkdir -p /opt/var/lib/unbound
 
+startup_failed=0
 if executable_exists tailscaled >/dev/null 2>&1; then
-    if ! pidof tailscaled >/dev/null 2>&1; then
-        mkdir -p "$(dirname "$EDGE_TS_STATE")" "$(dirname "$EDGE_TS_SOCKET")"
-        tailscaled \
-            --state="$EDGE_TS_STATE" \
-            --socket="$EDGE_TS_SOCKET" \
-            >/opt/var/log/tailscaled.log 2>&1 &
-        sleep 3
-    fi
-
-    if tailscale --socket="$EDGE_TS_SOCKET" status >/dev/null 2>&1; then
+    if start_tailscaled_with_retry && wait_for_tailscale_api; then
         set -- tailscale --socket="$EDGE_TS_SOCKET" up --accept-dns="$EDGE_ACCEPT_DNS" --hostname="$EDGE_HOSTNAME"
         [ -n "$EDGE_ADVERTISE_ROUTES" ] && set -- "$@" --advertise-routes="$EDGE_ADVERTISE_ROUTES"
         [ "$EDGE_ENABLE_EXIT_NODE" = "1" ] && set -- "$@" --advertise-exit-node
         "$@" >/tmp/asus-edge-tailscale-up.log 2>&1 || log "WARNING: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"
+    elif pidof tailscaled >/dev/null 2>&1; then
+        log "WARNING: Tailscale is not authenticated or its local API is unavailable"
     else
-        log "WARNING: Tailscale is not authenticated; run tailscale up interactively once"
+        log "ERROR: required Tailscale daemon failed to start"
+        startup_failed=1
     fi
 else
     log "WARNING: tailscaled not installed"
 fi
-
-process_stays_running() {
-    monitored_process="$1"
-    stable_seconds=0
-
-    while [ "$stable_seconds" -lt "$EDGE_SERVICE_STABILITY_SECONDS" ]; do
-        pidof "$monitored_process" >/dev/null 2>&1 || return 1
-        stable_seconds=$((stable_seconds + 1))
-        sleep 1
-    done
-
-    return 0
-}
 
 remove_stale_process_pidfile() {
     stale_process_name="$1"
@@ -298,7 +405,6 @@ start_entware_service_if_stopped() {
 # amtm normally starts Entware daemons from post-mount. Preserve its stable
 # Unbound process. Recovery invokes the daemon directly so the third-party
 # S61unbound POSTCMD cannot restart dnsmasq after every failed launch.
-startup_failed=0
 start_unbound_direct_if_stopped || startup_failed=1
 
 start_entware_service_if_stopped \
