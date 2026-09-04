@@ -75,6 +75,14 @@ EDGE_SERVICE_START_ATTEMPTS="6"
 EDGE_SERVICE_RETRY_SECONDS="5"
 EDGE_UNBOUND_PIDFILE="/opt/var/run/unbound.pid"
 
+# A Go daemon can fail before swap activation on a low-memory 32-bit router
+# using strict vm.overcommit_memory=2. "auto" waits on affected platforms.
+# Set to "1" to require swap on this deployment, or "0" to disable the guard.
+EDGE_REQUIRE_SWAP="auto"
+EDGE_SWAP_WAIT_SECONDS="60"
+EDGE_TS_READY_WAIT_SECONDS="20"
+EDGE_TAILSCALED_LOG="/opt/var/log/tailscaled.log"
+
 # Optional centralized logging health target used by healthcheck.sh.
 EDGE_SYSLOG_HOST=""
 EDGE_SYSLOG_PORT="6514"

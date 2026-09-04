@@ -14,6 +14,11 @@ grep -F 'Installed Advanced ASUS Edge Gateway v2.1.0' "$REPO_DIR/scripts/install
     exit 1
 }
 
+[ "$(cat "$REPO_DIR/VERSION")" = "2.1.0" ] || {
+    echo "FAIL: VERSION does not match release v2.1.0" >&2
+    exit 1
+}
+
 if command -v shellcheck >/dev/null 2>&1; then
     find "$REPO_DIR/router" "$REPO_DIR/scripts" "$REPO_DIR/tests" -type f \( -name '*.sh' -o -path '*/router/scripts/*' \) -print0 \
         | xargs -0 shellcheck -S warning
@@ -69,6 +74,34 @@ for startup_coordination in \
 do
     grep -F "$startup_coordination" "$REPO_DIR/router/scripts/services-start" >/dev/null || {
         echo "FAIL: Entware startup coordination missing: $startup_coordination" >&2
+        exit 1
+    }
+done
+
+for tailscale_startup_guard in \
+    'swap_is_required()' \
+    'wait_for_required_swap()' \
+    'start_tailscaled_with_retry()' \
+    'wait_for_tailscale_api()' \
+    'EDGE_REQUIRE_SWAP:=auto' \
+    'EDGE_TS_READY_WAIT_SECONDS:=20' \
+    'failed to stabilize tailscaled' \
+    'required Tailscale daemon failed to start' \
+    'startup_failed=1'
+do
+    grep -F "$tailscale_startup_guard" "$REPO_DIR/router/scripts/services-start" >/dev/null || {
+        echo "FAIL: guarded Tailscale startup missing: $tailscale_startup_guard" >&2
+        exit 1
+    }
+done
+
+for swap_health_guard in \
+    'EDGE_REQUIRE_SWAP:=auto' \
+    'required swap active' \
+    'required swap inactive'
+do
+    grep -F "$swap_health_guard" "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: required-swap health check missing: $swap_health_guard" >&2
         exit 1
     }
 done

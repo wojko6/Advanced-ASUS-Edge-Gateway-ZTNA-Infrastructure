@@ -55,9 +55,14 @@ The supplied IPv6 chains fail closed for new Tailscale input and forwarded traff
 flowchart TD
     B["Merlin services-start"] --> W["Wait for /opt with timeout"]
     W --> E["Start Entware services"]
-    E --> T["Start/verify Tailscale"]
+    E --> S["Wait for required swap"]
+    S --> T["Start/retry Tailscale"]
     T --> F["Apply idempotent firewall"]
     F --> H["Health check available"]
 ```
 
-The startup path uses the installed package version. Updates are a separate maintenance operation.
+On low-memory 32-bit systems with strict kernel overcommit, the startup path
+waits for active swap before launching the Go-based Tailscale daemon. Failed
+daemon starts are retried and propagated as a required-service failure without
+preventing the fail-closed firewall from being applied. The startup path uses
+the installed package version; updates remain a separate maintenance operation.

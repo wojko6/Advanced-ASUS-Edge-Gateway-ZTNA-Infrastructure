@@ -49,6 +49,7 @@ fi
 : "${EDGE_PRINTER_UDP_PORTS:=161}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
+: "${EDGE_REQUIRE_SWAP:=auto}"
 : "${EDGE_INTERCEPT_DNS:=1}"
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_UNBOUND_CONFIG:=}"
@@ -57,6 +58,28 @@ fi
 
 opt_is_ready 2>/dev/null && ok "Entware /opt ready" || fail "Entware /opt not ready"
 executable_exists opkg >/dev/null 2>&1 && ok "Entware available" || fail "opkg not found"
+
+swap_required=0
+case "$EDGE_REQUIRE_SWAP" in
+    1) swap_required=1 ;;
+    0) ;;
+    auto)
+        if [ "$(cat /proc/sys/vm/overcommit_memory 2>/dev/null)" = "2" ]; then
+            case "$(uname -m 2>/dev/null)" in
+                armv[5-8]*|i[3-6]86|mips*|ppc) swap_required=1 ;;
+            esac
+        fi
+        ;;
+    *) fail "invalid EDGE_REQUIRE_SWAP value: $EDGE_REQUIRE_SWAP" ;;
+esac
+
+if [ "$swap_required" = "1" ]; then
+    if awk 'NR > 1 { found=1 } END { exit !found }' /proc/swaps 2>/dev/null; then
+        ok "required swap active"
+    else
+        fail "required swap inactive"
+    fi
+fi
 
 if pidof tailscaled >/dev/null 2>&1; then
     ok "tailscaled running"

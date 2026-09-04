@@ -62,6 +62,28 @@ For amtm Unbound Manager, treat `/opt/var/lib/unbound/unbound.conf` as the gener
 
 With amtm, `post-mount` sources `mount-entware.mod`, which already runs `rc.unslung`. Keep `EDGE_RUN_RC_UNSLUNG="0"` so the project does not launch a parallel Entware startup. The project waits for NTP readiness and a configurable quiet interval after amtm startup activity and preserves a stable Unbound or syslog-ng process. If amtm does not leave Unbound running, recovery validates the generated configuration and starts `/opt/sbin/unbound` directly. Validation and launch receive a command-scoped `LD_LIBRARY_PATH=/opt/lib:/opt/usr/lib`; this prevents the early-boot loader from pairing Entware's `libunbound` with the older firmware libc, without changing the global environment that `rc.unslung` manages. Recovery intentionally bypasses `S61unbound` because that wrapper restarts dnsmasq after every launch attempt, including a failed one, which can feed the boot-time socket race. Before direct recovery it removes the Unbound PID file only when no Unbound process exists. Required-service failures are returned as a non-zero `services-start` status instead of being masked. Set `EDGE_RUN_RC_UNSLUNG="1"` only on deployments where no external hook owns Entware startup. Inspect `/tmp/asus-edge-entware-start.log`, `/tmp/asus-edge-unbound-start.log`, or `/tmp/asus-edge-syslog-ng-start.log` when startup fails.
 
+## Tailscale OOM during boot
+
+On a low-memory 32-bit router, `tailscaled` can fail with `out of memory
+allocating heap arena map` even when its resident memory is modest. With strict
+kernel overcommit, the daemon's virtual-memory reservation can be rejected if
+USB-backed swap has not yet been activated by `post-mount`.
+
+Keep `EDGE_REQUIRE_SWAP="auto"` or set it explicitly to `1`. The managed
+`services-start` hook waits for active swap, removes an orphaned socket, and
+retries the daemon using the general service-attempt settings. It keeps the
+previous daemon log as `/opt/var/log/tailscaled.log.previous`.
+
+Verify recovery with:
+
+```sh
+cat /proc/swaps
+pidof tailscaled
+/jffs/addons/asus-edge/bin/healthcheck.sh
+```
+
+Review and sanitize daemon logs before sharing or publishing them.
+
 ## Log rotation
 
 Use unique `cru` identifiers for every job:
