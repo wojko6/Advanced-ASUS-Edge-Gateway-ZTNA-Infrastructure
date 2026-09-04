@@ -84,6 +84,36 @@ pidof tailscaled
 
 Review and sanitize daemon logs before sharing or publishing them.
 
+## Android printer troubleshooting over Tailscale
+
+Keep only one Android print service enabled while testing and add the printer by
+its LAN address. First verify the printer web interface through the Tailscale
+subnet route, then inspect the managed forward-chain counters while submitting
+one small job.
+
+A working SNMP exchange proves reachability and printer-status access, not job
+submission. If packet capture shows UDP/161 request/response traffic but no TCP
+connection to the configured IPP or raw-print port, the job stopped inside the
+Android print stack. Opening more firewall ports will not correct that state.
+
+Use a header-only capture when diagnosis is required:
+
+```sh
+tcpdump -ni any -nn -s 96 \
+  'host PRINTER_LAN_IP and (tcp port 80 or tcp port 631 or tcp port 9100 or udp port 161)'
+```
+
+Before retrying, cancel the job, force-stop the Android print spooler and print
+plugin, clear the spooler's pending-job data, and restart the phone. Test with a
+single small page. Some mobile print services do not submit jobs while cellular
+data is the active transport even though Tailscale routing and SNMP work. An
+external Wi-Fi connection or hotspot with Tailscale enabled was validated as a
+working remote-print path for the tested Samsung plugin.
+
+Unrelated denied traffic must remain denied. For example, a phone attempting to
+reach a workstation service such as TCP/1716 is not printer traffic and is not a
+reason to expand `EDGE_PRINTER_TCP_PORTS`.
+
 ## Log rotation
 
 Use unique `cru` identifiers for every job:
