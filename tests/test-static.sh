@@ -372,4 +372,5 @@ done
 "$TEST_DIR/test-firewall-mock.sh"
 "$TEST_DIR/test-config-validation.sh"
 "$TEST_DIR/test-evidence-collector.sh"
+python3 "$TEST_DIR/test-recovery.py"
 echo "PASS: static test suite"

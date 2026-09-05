@@ -46,11 +46,62 @@ RAW i SNMP.
   automatycznie zainstalowanego Class Driver V4, jeśli ten nie przechodzi testu;
 - router reklamuje trasę podsieci LAN;
 - trasa została zatwierdzona w panelu administracyjnym Tailscale;
+- polityka Tailscale Grants dopuszcza wskazanego użytkownika do portów drukarki;
 - telefon znajduje się we właściwym tailnecie;
 - Samsung Print Service Plugin nie jest wykluczona w App split tunneling;
 - Exit Node na telefonie pozostaje niewybrany.
 
-## 4. Polityka źródłowa na routerze
+## 4. Uprawnienia Tailscale i polityka źródłowa na routerze
+
+### Tailscale Grants
+
+Samo zatwierdzenie trasy i dodanie reguł iptables nie nadaje uprawnień w
+Tailscale. W edytorze polityki tailnetu połącz poniższe wpisy z istniejącymi
+sekcjami `groups`, `hosts`, `grants` i `tests`. Nie zastępuj całej polityki tym
+fragmentem i nie twórz drugiej sekcji o tej samej nazwie.
+
+```json
+{
+  "groups": {
+    "group:printer-users": ["user@example.com"]
+  },
+  "hosts": {
+    "printer": "198.51.100.140"
+  },
+  "grants": [
+    {
+      "src": ["group:printer-users"],
+      "dst": ["printer"],
+      "ip": ["tcp:80", "tcp:631", "tcp:9100", "udp:161"]
+    }
+  ],
+  "tests": [
+    {
+      "src": "user@example.com",
+      "accept": ["printer:80", "printer:631", "printer:9100"],
+      "deny": ["printer:22"]
+    },
+    {
+      "src": "other@example.com",
+      "deny": ["printer:80", "printer:631", "printer:9100"]
+    }
+  ]
+}
+```
+
+Zastąp adres drukarki i przykładowe konta wartościami lokalnymi. Konto
+`other@example.com` powinno odpowiadać użytkownikowi bez prawa drukowania.
+Sprawdź wynik walidacji w edytorze przed zapisaniem polityki. Jeżeli istniejące
+ACL lub Grants szeroko zezwalają na dostęp do LAN, dodanie węższego wpisu nie
+odbierze tych uprawnień; usuń lub zawęź kolidujące zezwolenia. Wpis `deny` w
+`tests` jest oczekiwaniem testu, a nie regułą blokującą ruch.
+
+Grants ograniczają dostęp do użytkownika, a poniższe iptables dodatkowo do
+jednego urządzenia `/32`. Muszą zezwolić obie warstwy. Po wdrożeniu sprawdź
+wydruk z uprawnionego telefonu oraz brak dostępu z nieuprawnionego urządzenia.
+Testy polityki nie zastępują próby UDP/161 ani fizycznego wydruku.
+
+### Reguły na routerze
 
 Przykład do publicznej dokumentacji:
 
@@ -183,4 +234,3 @@ sterownikiem lokalnym był Samsung Universal Print Driver 3.
 
 Końcowo potwierdzony wariant to: **Android -> zewnętrzne Wi-Fi/hotspot ->
 Tailscale -> router ASUS -> drukarka**.
-

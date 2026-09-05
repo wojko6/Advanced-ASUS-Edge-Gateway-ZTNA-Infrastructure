@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -u
+set -eu
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 umask 077
@@ -62,7 +62,9 @@ mkdir -p "$WORK_DIR/jffs/scripts" "$WORK_DIR/jffs/configs" \
 copy_if_present() {
     src="$1"
     dst="$2"
-    [ -e "$src" ] && cp -p "$src" "$dst"
+    if [ -e "$src" ]; then
+        cp -p "$src" "$dst" || exit 1
+    fi
 }
 
 copy_if_present /jffs/configs/asus-edge.conf "$WORK_DIR/jffs/configs/"
@@ -85,7 +87,7 @@ EOF
 
 (
     cd "$WORK_DIR" || exit 1
-    find . -type f ! -name SHA256SUMS | sort | while IFS= read -r file; do
+    find . -type f ! -path './SHA256SUMS' | sort | while IFS= read -r file; do
         sha256sum_run "$file" || exit 1
     done >SHA256SUMS
 ) || exit 1

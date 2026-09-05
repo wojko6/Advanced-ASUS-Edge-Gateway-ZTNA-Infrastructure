@@ -112,19 +112,60 @@ for chain in EDGE_TS_INPUT EDGE_TS_FORWARD; do
 done
 iptables -t nat -S EDGE_TS_PREROUTING >/dev/null 2>&1 && ok "NAT chain EDGE_TS_PREROUTING" || fail "missing NAT chain"
 
+check_filter_enforcement() {
+    filter_tool="$1"
+    filter_parent="$2"
+    filter_chain="$3"
+    first_rule="$("$filter_tool" -t filter -S "$filter_parent" 2>/dev/null |
+        awk '$1 == "-A" { print; exit }')"
+    if [ "$first_rule" = "-A $filter_parent -i $EDGE_TS_IF -j $filter_chain" ]; then
+        ok "$filter_chain evaluated before other parent rules"
+    else
+        fail "$filter_chain is not the first parent rule"
+    fi
+    filter_rules="$("$filter_tool" -t filter -S "$filter_chain" 2>/dev/null)"
+    last_rule="$(printf '%s\n' "$filter_rules" | awk '$1 == "-A" { last=$0 } END { print last }')"
+    if [ "$last_rule" = "-A $filter_chain -j DROP" ]; then
+        ok "$filter_chain ends with unconditional DROP"
+    else
+        fail "$filter_chain missing terminal DROP"
+    fi
+    if printf '%s\n' "$filter_rules" | grep -F -x -- "-A $filter_chain -j ACCEPT" >/dev/null; then
+        fail "$filter_chain contains unconditional ACCEPT"
+    fi
+}
+
+check_filter_enforcement iptables INPUT EDGE_TS_INPUT
+check_filter_enforcement iptables FORWARD EDGE_TS_FORWARD
+
 printer_forward_rule_exists() {
     printer_rule_source="$1"
     printer_rule_protocol="$2"
     printer_rule_port="$3"
 
     iptables -t filter -S EDGE_TS_FORWARD 2>/dev/null |
-        grep -F -- "-i $EDGE_TS_IF" |
-        grep -F -- "-o $EDGE_LAN_IF" |
-        grep -F -- "-s $printer_rule_source" |
-        grep -F -- "-d $EDGE_PRINTER_LAN_IP" |
-        grep -F -- "-p $printer_rule_protocol" |
-        grep -F -- "--dport $printer_rule_port" |
-        grep -F -- "-j ACCEPT" >/dev/null
+        awk -v input="$EDGE_TS_IF" -v output="$EDGE_LAN_IF" \
+            -v source="$printer_rule_source" -v destination="$EDGE_PRINTER_LAN_IP" \
+            -v protocol="$printer_rule_protocol" -v port="$printer_rule_port" '
+            function host(value) { sub(/\/32$/, "", value); return value }
+            {
+                incoming=""; outgoing=""; src=""; dst=""; proto=""; dport=""; target=""
+                for (i=1; i<NF; i++) {
+                    if ($i == "-i") incoming=$(i+1)
+                    if ($i == "-o") outgoing=$(i+1)
+                    if ($i == "-s") src=$(i+1)
+                    if ($i == "-d") dst=$(i+1)
+                    if ($i == "-p") proto=$(i+1)
+                    if ($i == "--dport") dport=$(i+1)
+                    if ($i == "-j") target=$(i+1)
+                    if ($i == "!") next
+                }
+                if (incoming == input && outgoing == output && host(src) == host(source) &&
+                    host(dst) == host(destination) && proto == protocol && dport == port &&
+                    target == "ACCEPT") found=1
+            }
+            END { exit !found }
+        '
 }
 
 if [ -n "$EDGE_PRINTER_TS_SOURCES" ] || [ -n "$EDGE_PRINTER_LAN_IP" ]; then
@@ -153,6 +194,8 @@ fi
 if executable_exists ip6tables >/dev/null 2>&1; then
     ip6tables -t filter -S EDGE_TS6_INPUT >/dev/null 2>&1 && ok "IPv6 INPUT guard" || fail "missing IPv6 INPUT guard"
     ip6tables -t filter -S EDGE_TS6_FORWARD >/dev/null 2>&1 && ok "IPv6 FORWARD guard" || fail "missing IPv6 FORWARD guard"
+    check_filter_enforcement ip6tables INPUT EDGE_TS6_INPUT
+    check_filter_enforcement ip6tables FORWARD EDGE_TS6_FORWARD
 else
     warn "ip6tables unavailable; verify IPv6 is disabled"
 fi

@@ -6,7 +6,21 @@
 sh tests/test-static.sh
 ```
 
-This performs shell syntax checks, optional ShellCheck analysis, boot-path regression checks, and a mocked firewall render test. It does not prove the router kernel supports every match module; live validation remains required.
+Run this suite on a Linux workstation or CI runner with Python 3, not on the
+router. Python is used only by the test harness; deployed scripts remain POSIX
+shell. The suite performs shell syntax checks, optional ShellCheck analysis,
+boot-path regression checks, a mocked firewall render test and isolated recovery
+tests. Recovery tests exercise a backup/restore round trip, manifest rejection,
+copy failures, full installer rollback, first-install cleanup, firewall bypass
+detection and exact printer-port matching. The evidence test also checks that
+private healthcheck diagnostics are omitted.
+
+These checks do not prove the router kernel supports every match module; live
+validation remains required. The healthcheck requires managed filter jumps to
+be first in their parent chains and a terminal DROP in each managed chain. A
+failure can therefore indicate another component changed rule ordering. Review
+the active rules from LAN before reapplying the managed firewall. Packet tests
+remain necessary to verify actual access decisions.
 
 ## Security test matrix
 

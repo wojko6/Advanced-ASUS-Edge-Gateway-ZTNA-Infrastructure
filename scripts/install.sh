@@ -1,7 +1,7 @@
 #!/bin/sh
 # Install from a copy of this repository placed on the router.
 
-set -u
+set -eu
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -62,11 +62,62 @@ for file in "$REPO_DIR/router/scripts/firewall-start" "$REPO_DIR/router/scripts/
     sh -n "$file" || exit 1
 done
 
-mkdir -p "$ADDON_DIR/bin" "$ADDON_DIR/legacy" "$BACKUP_DIR" /jffs/scripts /jffs/configs
+umask 077
+mkdir -p "$ADDON_DIR/backups"
+mkdir "$BACKUP_DIR" || { echo "ERROR: backup directory already exists or is unavailable" >&2; exit 1; }
 
-backup_if_present() {
-    [ -e "$1" ] && cp -p "$1" "$BACKUP_DIR/$(basename "$1")"
+# Snapshot every path changed by installation, including absent paths on a
+# first install. Do not touch live files unless the entire snapshot succeeds.
+snapshot_path() {
+    if [ -e "$1" ] || [ -L "$1" ]; then
+        cp -Rp "$1" "$BACKUP_DIR/$2"
+    else
+        : >"$BACKUP_DIR/$2.absent"
+    fi
 }
+
+snapshot_path /jffs/configs/asus-edge.conf asus-edge.conf
+snapshot_path /jffs/scripts/firewall-start firewall-start
+snapshot_path /jffs/scripts/services-start services-start
+snapshot_path "$ADDON_DIR/bin" bin
+snapshot_path "$ADDON_DIR/legacy" legacy
+
+restore_path() {
+    # All targets below are fixed project paths, never supplied by the user.
+    rm -rf "$1" || return 1
+    if [ ! -f "$BACKUP_DIR/$2.absent" ]; then
+        cp -Rp "$BACKUP_DIR/$2" "$1" || return 1
+    fi
+}
+
+installation_active=1
+firewall_attempted=0
+finish_installation() {
+    result=$?
+    trap - EXIT HUP INT TERM
+    if [ "$installation_active" = "1" ]; then
+        echo "ERROR: installation failed; restoring complete snapshot from $BACKUP_DIR" >&2
+        rollback_failed=0
+        restore_path /jffs/configs/asus-edge.conf asus-edge.conf || rollback_failed=1
+        restore_path "$ADDON_DIR/bin" bin || rollback_failed=1
+        restore_path "$ADDON_DIR/legacy" legacy || rollback_failed=1
+        restore_path /jffs/scripts/firewall-start firewall-start || rollback_failed=1
+        restore_path /jffs/scripts/services-start services-start || rollback_failed=1
+        if [ "$rollback_failed" = "1" ]; then
+            echo "ERROR: rollback incomplete; recover from $BACKUP_DIR using local access" >&2
+        elif [ "$firewall_attempted" = "1" ]; then
+            if ! executable_exists service || ! service restart_firewall; then
+                echo "ERROR: files restored but firewall restart failed; recover using local access" >&2
+            fi
+        fi
+        result=1
+    fi
+    exit "$result"
+}
+trap finish_installation EXIT
+trap 'exit 1' HUP INT TERM
+
+mkdir -p "$ADDON_DIR/bin" "$ADDON_DIR/legacy" /jffs/scripts /jffs/configs
 
 install_file() {
     src="$1"
@@ -75,10 +126,6 @@ install_file() {
     cp "$src" "$dst" || exit 1
     chmod "$mode" "$dst" || exit 1
 }
-
-backup_if_present /jffs/configs/asus-edge.conf
-backup_if_present /jffs/scripts/firewall-start
-backup_if_present /jffs/scripts/services-start
 
 install_file "$REPO_DIR/config/edge.conf" /jffs/configs/asus-edge.conf 0600
 install_file "$REPO_DIR/router/scripts/firewall-start" "$ADDON_DIR/bin/firewall-start" 0755
@@ -121,18 +168,11 @@ fi
 
 if [ "$APPLY" = "1" ]; then
     echo "Applying Tailscale firewall policy..."
-    /jffs/scripts/firewall-start || {
-        echo "ERROR: policy failed; restoring hooks from $BACKUP_DIR" >&2
-        if [ -f "$BACKUP_DIR/firewall-start" ]; then
-            cp -p "$BACKUP_DIR/firewall-start" /jffs/scripts/firewall-start
-        else
-            rm -f /jffs/scripts/firewall-start
-        fi
-        executable_exists service >/dev/null 2>&1 && service restart_firewall >/dev/null 2>&1
-        exit 1
-    }
+    firewall_attempted=1
+    /jffs/scripts/firewall-start || exit 1
 fi
 
+installation_active=0
 echo "Installed Advanced ASUS Edge Gateway v2.1.0"
 echo "Backup: $BACKUP_DIR"
 echo "Next: $ADDON_DIR/bin/healthcheck.sh"

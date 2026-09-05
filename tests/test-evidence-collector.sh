@@ -25,6 +25,10 @@ EOF
 cat >"$TMP_DIR/healthcheck" <<'EOF'
 #!/bin/sh
 echo "[OK] mock healthcheck"
+echo "[WARN] private-host.example.invalid diagnostic"
+echo "[FAIL] missing printer TCP/631 rule for 192.0.2.95/32"
+echo "unexpected error at 2001:db8::95"
+exit 1
 EOF
 
 chmod +x "$TMP_DIR/iptables" "$TMP_DIR/dig" "$TMP_DIR/healthcheck"
@@ -54,11 +58,15 @@ grep -F '[source-redacted]' "$TMP_DIR/output/firewall-counters.md" >/dev/null
 grep -F '[destination-redacted]' "$TMP_DIR/output/firewall-counters.md" >/dev/null
 grep -F 'to:[translated-address-redacted]:8443' "$TMP_DIR/output/firewall-counters.md" >/dev/null
 grep -F 'PASS (AD flag present)' "$TMP_DIR/output/dns-validation.md" >/dev/null
-grep -F '[OK] mock healthcheck' "$TMP_DIR/output/healthcheck.md" >/dev/null
+grep -F 'Healthcheck statuses: 1 OK, 1 WARN, 1 FAIL' "$TMP_DIR/output/healthcheck.md" >/dev/null
+grep -F 'Healthcheck exit status: 1' "$TMP_DIR/output/healthcheck.md" >/dev/null
+if grep -E '192\.0\.2\.95|2001:db8|private-host|unexpected error' "$TMP_DIR/output/healthcheck.md" >/dev/null; then
+    echo "FAIL: private healthcheck diagnostics were published" >&2
+    exit 1
+fi
 
 if [ -f "$TMP_DIR/output/SHA256SUMS" ]; then
     (cd "$TMP_DIR/output" && sha256sum -c SHA256SUMS >/dev/null)
 fi
 
 echo "PASS: evidence collector"
-
