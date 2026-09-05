@@ -30,7 +30,23 @@ Restore is dry-run by default:
 ./scripts/restore.sh BACKUP.tar.gz --apply
 ```
 
-The restore verifies the internal manifest before writing. Review paths and maintain physical access.
+The restore rejects links, special files, unsafe paths, duplicate archive
+entries and multiple top-level roots. It requires every payload file to appear
+exactly once in the internal SHA-256 manifest before copying anything to the
+router. Hashes detect corruption; they do not authenticate an untrusted backup.
+Only regular files and directories with simple path names (letters, digits,
+underscore, dot, dollar sign, hyphen and slash) are accepted. A copy failure
+returns non-zero and reports a potentially partial restore. Review paths and
+maintain physical access; restore is not an atomic filesystem transaction.
+
+The installer snapshots the configuration, both hooks, managed binaries and
+preserved legacy hooks before changing live files. A failed copy or failed
+`--apply` restores that entire set, including removing files that did not exist
+before a first install. After a failed firewall apply it restarts the firmware
+firewall only if file rollback succeeds. Recovery errors retain the snapshot
+and require local intervention. The snapshot directory must be new; if two
+installs begin within the same second, a name collision aborts before live
+files are changed. Do not run concurrent installations.
 
 ## Emergency rollback
 

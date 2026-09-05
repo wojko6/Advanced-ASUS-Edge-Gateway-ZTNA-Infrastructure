@@ -147,9 +147,28 @@ UPTIME_SECONDS="$(cut -d. -f1 /proc/uptime 2>/dev/null)"
     echo
     echo '```text'
     if [ -x "$HEALTHCHECK_BIN" ]; then
-        "$HEALTHCHECK_BIN" 2>&1 || true
+        # Health errors can include private device addresses, configuration
+        # values, paths, or tool diagnostics. Publish only the status counts;
+        # inspect the complete healthcheck locally when diagnosing failures.
+        {
+            if "$HEALTHCHECK_BIN" 2>&1; then
+                echo '[EXIT] 0'
+            else
+                echo '[EXIT] 1'
+            fi
+        } | awk '
+            /^\[OK\]/ { ok++; next }
+            /^\[WARN\]/ { warnings++; next }
+            /^\[FAIL\]/ { failures++; next }
+            /^\[EXIT\] [01]$/ { result=$2; next }
+            END {
+                printf "Healthcheck statuses: %d OK, %d WARN, %d FAIL\n", ok, warnings, failures
+                printf "Healthcheck exit status: %s\n", result
+                print "Detailed diagnostics omitted; run healthcheck locally."
+            }
+        '
     else
-        echo "Healthcheck is not available at $HEALTHCHECK_BIN"
+        echo "Healthcheck is not available"
     fi
     echo '```'
 } >"$OUTPUT_DIR/healthcheck.md"
@@ -225,4 +244,3 @@ fi
 
 echo "Evidence snapshot created: $OUTPUT_DIR"
 echo "Review it manually before copying selected files into the public repository."
-

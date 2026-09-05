@@ -61,7 +61,8 @@ Never commit auth keys, node state, private keys, collector credentials, router 
 
 ## Quick start
 
-Prepare and validate the configuration on a working copy:
+Prepare and validate the configuration on a Linux workstation working copy
+with Python 3 available for the regression tests (not required on the router):
 
 ```sh
 cp config/edge.conf.example config/edge.conf

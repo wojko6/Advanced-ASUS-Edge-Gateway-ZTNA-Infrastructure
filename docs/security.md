@@ -38,7 +38,11 @@ Classic DNS redirection is a visibility/control measure, not a comprehensive DNS
 
 ## Logging caveats
 
-The syslog-ng example leaves remote TLS forwarding commented out until a trusted CA and collector hostname are configured. Plain UDP syslog is not recommended for security evidence. A collector is not a SIEM until rules, indexing, alerting, retention, access control, and incident workflows are deployed.
+The syslog-ng example includes remote TLS forwarding with required peer
+verification. Configure the trusted CA, certificates, private keys and collector
+hostname before enabling it. Plain UDP syslog is not recommended for security
+evidence. A collector is not a SIEM until rules, indexing, alerting, retention,
+access control, and incident workflows are deployed.
 
 ## Platform limitations
 

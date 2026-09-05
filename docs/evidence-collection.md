@@ -19,12 +19,17 @@ The default destination is a timestamped directory under `/tmp`. You can provide
 The collector records:
 
 - router model, firmware, kernel, memory, uptime, and service versions;
-- healthcheck output;
+- counts of healthcheck OK/WARN/FAIL statuses and its exit status;
 - managed IPv4 and IPv6 firewall counters;
 - a direct Unbound DNSSEC result;
 - SHA-256 hashes for the generated Markdown files.
 
 It does not collect Tailscale status, user identities, device names, configuration contents, routing tables, full DNS responses, or packet captures. Firewall source and destination addresses, including translated NAT targets, are replaced before the report is written.
+
+Detailed healthcheck diagnostics are deliberately omitted because failure
+messages can contain private device addresses or paths. Run `healthcheck.sh`
+locally to investigate failures, and manually sanitize any diagnostic excerpt
+you choose to publish. Existing historical snapshots are not rewritten.
 
 ## Remote validation
 
