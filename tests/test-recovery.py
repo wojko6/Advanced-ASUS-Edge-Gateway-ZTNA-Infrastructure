@@ -172,8 +172,20 @@ class RecoveryTests(unittest.TestCase):
         self.assertFalse((self.root / "jffs/scripts/firewall-start").exists())
 
     def test_healthcheck_detects_bypass_and_missing_drop(self):
-        for name in ("opkg", "tailscale", "ip", "pidof", "unbound-control"):
+        for name in ("opkg", "ip", "pidof", "unbound-control"):
             self.command(name, "exit 0")
+        self.command("tailscale", r"""
+case " $* " in
+    *" debug prefs "*)
+        if [ "$SCENARIO" = "netfilter_on" ]; then
+            echo '"NetfilterMode": 2,'
+        else
+            echo '"NetfilterMode": 0,'
+        fi
+        ;;
+esac
+exit 0
+""")
         self.command("dig", "echo ';; flags: qr rd ra ad;' ")
         opkg = self.root / "opt/bin/opkg"
         opkg.parent.mkdir(parents=True)
@@ -193,6 +205,9 @@ case "$chain" in
         suffix="$chain"
         echo "-A $chain -i tailscale0 -j EDGE_TS_$suffix" ;;
     PREROUTING) echo '-A PREROUTING -i tailscale0 -j EDGE_TS_PREROUTING' ;;
+    ts-input|ts-forward|ts-postrouting)
+        [ "$SCENARIO" = "native_chain" ] && exit 0
+        exit 1 ;;
     EDGE_TS_INPUT|EDGE_TS_FORWARD)
         echo "-A $chain -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT"
         if [ "$chain" = EDGE_TS_FORWARD ]; then
@@ -211,10 +226,13 @@ case "$4" in
 esac
 ''')
         health = self.script("healthcheck.sh")
-        for scenario, expected in (("valid", "Summary: 0 failure(s)"),
-                                   ("bypass", "is not the first parent rule"),
-                                   ("missing_drop", "missing terminal DROP"),
-                                   ("wrong_port", "missing printer TCP/80 rule")):
+        for scenario, expected in (
+                ("valid", "Summary: 0 failure(s)"),
+                ("netfilter_on", "Tailscale netfilter mode is not off"),
+                ("native_chain", "competing Tailscale netfilter chains present: 3"),
+                ("bypass", "is not the first parent rule"),
+                ("missing_drop", "missing terminal DROP"),
+                ("wrong_port", "missing printer TCP/80 rule")):
             with self.subTest(scenario=scenario):
                 result = self.run_script(health, env={"SCENARIO": scenario})
                 self.assertIn(expected, result.stdout, result.stderr)

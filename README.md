@@ -81,12 +81,18 @@ Authenticate the installed Tailscale instance once, using the socket configured 
 
 ```sh
 tailscale --socket=/var/run/tailscale/tailscaled.sock up \
+  --netfilter-mode=off \
   --accept-dns=false \
   --advertise-routes=192.168.50.0/24 \
   --advertise-exit-node
 ```
 
 If exit-node mode is disabled in `config/edge.conf`, omit `--advertise-exit-node`. Approve only the required route or exit node in the Tailscale admin console and adapt `config/tailscale/policy.example.hujson` before publishing it.
+
+ASUS Edge intentionally runs Tailscale with `netfilter-mode=off`. The project-owned
+`EDGE_TS_*` chains enforce the router firewall policy instead of Tailscale-managed
+`ts-input`, `ts-forward`, and `ts-postrouting` chains. Do not change this mode
+without redesigning and revalidating the firewall policy.
 
 Apply and validate from the LAN:
 
