@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.1.1 — 2026-09-05
+
+- Made ASUS Edge explicitly own the Tailscale firewall policy by enforcing
+  `netfilter-mode=off`.
+- Added health checks and regression tests for `NetfilterMode: 0` and the
+  absence of competing native `ts-input`, `ts-forward`, and `ts-postrouting`
+  chains.
+- Resolved the Asuswrt-Merlin Tailscale `ts-postrouting` health warning while
+  preserving subnet routing and exit-node operation.
+- Added sanitized post-deployment, post-reboot validation evidence with a
+  verified SHA-256 manifest.
+
+
 ## 2.1.0 — 2026-09-04
 
 - Added source-scoped Tailscale access for a legacy LAN printer and validated

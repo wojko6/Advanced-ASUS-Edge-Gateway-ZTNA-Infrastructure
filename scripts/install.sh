@@ -173,6 +173,6 @@ if [ "$APPLY" = "1" ]; then
 fi
 
 installation_active=0
-echo "Installed Advanced ASUS Edge Gateway v2.1.0"
+echo "Installed Advanced ASUS Edge Gateway v2.1.1"
 echo "Backup: $BACKUP_DIR"
 echo "Next: $ADDON_DIR/bin/healthcheck.sh"

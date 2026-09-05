@@ -9,13 +9,13 @@ find "$REPO_DIR/router" "$REPO_DIR/scripts" "$REPO_DIR/tests" -type f \( -name '
     sh -n "$file"
 done
 
-grep -F 'Installed Advanced ASUS Edge Gateway v2.1.0' "$REPO_DIR/scripts/install.sh" >/dev/null || {
-    echo "FAIL: installer version does not match release v2.1.0" >&2
+grep -F 'Installed Advanced ASUS Edge Gateway v2.1.1' "$REPO_DIR/scripts/install.sh" >/dev/null || {
+    echo "FAIL: installer version does not match release v2.1.1" >&2
     exit 1
 }
 
-[ "$(cat "$REPO_DIR/VERSION")" = "2.1.0" ] || {
-    echo "FAIL: VERSION does not match release v2.1.0" >&2
+[ "$(cat "$REPO_DIR/VERSION")" = "2.1.1" ] || {
+    echo "FAIL: VERSION does not match release v2.1.1" >&2
     exit 1
 }
 
