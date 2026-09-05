@@ -75,6 +75,26 @@ netstat -lnptu 2>/dev/null | grep -E ':(139|445|1900|8200)[[:space:]]' \
 
 For the hardened reference state, `dms_enable` must be `0`, the three service processes must be absent, the four sharing/discovery ports must be closed, and both health checks must exit successfully.
 
+## Reference runtime acceptance
+
+The merged implementation was subsequently staged from `main` on the reference router without reapplying the firewall policy. The workstation was first updated to commit `4b9c196266921c67ca1d8a701831176bcc4f0442` and the static test suite passed. The staged installer then deployed the dedicated check into `/jffs/addons/asus-edge/bin/`.
+
+After installation and after a full reboot, the reference deployment produced the following sanitized acceptance state:
+
+```text
+staged installer: PASS
+check-usb-exposure.sh: 0 failures, 0 warnings, exit 0
+healthcheck.sh: 0 failures, 0 warnings, exit 0
+dms_enable=0
+minidlna: stopped
+smbd: stopped
+nmbd: stopped
+TCP/UDP 139, 445, 1900, 8200: no listeners
+post-reboot acceptance: PASS
+```
+
+The installer-integration acceptance item is therefore complete for the reference deployment.
+
 ## Security rationale
 
 Tailscale identity enforcement protects paths entering through the tailnet. It does not automatically remove services exposed directly to the local LAN. Infrastructure storage therefore requires its own least-privilege policy: no unnecessary discovery, media indexing, or file-sharing service should expose the Entware filesystem.
