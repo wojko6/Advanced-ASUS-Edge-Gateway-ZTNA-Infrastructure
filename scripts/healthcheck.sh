@@ -43,6 +43,7 @@ fi
 : "${EDGE_TS_IF:=tailscale0}"
 : "${EDGE_LAN_IF:=br0}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
+: "${EDGE_TS_NETFILTER_MODE:=off}"
 : "${EDGE_PRINTER_TS_SOURCES:=}"
 : "${EDGE_PRINTER_LAN_IP:=}"
 : "${EDGE_PRINTER_TCP_PORTS:=80 631 9100}"
@@ -97,6 +98,38 @@ if ip link show "$EDGE_TS_IF" >/dev/null 2>&1; then
     ok "$EDGE_TS_IF exists"
 else
     fail "$EDGE_TS_IF missing"
+fi
+
+tailscale_netfilter_mode="$(
+    tailscale --socket="$EDGE_TS_SOCKET" debug prefs 2>/dev/null |
+        awk -F: '/"NetfilterMode"/ {
+            value=$2
+            gsub(/[[:space:],]/, "", value)
+            print value
+            exit
+        }'
+)"
+
+if [ "$EDGE_TS_NETFILTER_MODE" != "off" ]; then
+    fail "EDGE_TS_NETFILTER_MODE must be off"
+elif [ "$tailscale_netfilter_mode" = "0" ]; then
+    ok "Tailscale netfilter management disabled"
+else
+    fail "Tailscale netfilter mode is not off"
+fi
+
+native_ts_chains=0
+iptables -t filter -S ts-input >/dev/null 2>&1 &&
+    native_ts_chains=$((native_ts_chains + 1))
+iptables -t filter -S ts-forward >/dev/null 2>&1 &&
+    native_ts_chains=$((native_ts_chains + 1))
+iptables -t nat -S ts-postrouting >/dev/null 2>&1 &&
+    native_ts_chains=$((native_ts_chains + 1))
+
+if [ "$native_ts_chains" -eq 0 ]; then
+    ok "no competing Tailscale netfilter chains"
+else
+    fail "competing Tailscale netfilter chains present: $native_ts_chains"
 fi
 
 if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then

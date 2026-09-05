@@ -46,6 +46,7 @@ log() {
 : "${EDGE_ENTWARE_LD_LIBRARY_PATH:=/opt/lib:/opt/usr/lib}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_STATE:=/opt/var/lib/tailscale/tailscaled.state}"
+: "${EDGE_TS_NETFILTER_MODE:=off}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
 : "${EDGE_ACCEPT_DNS:=false}"
@@ -59,6 +60,11 @@ case "$EDGE_REQUIRE_SWAP" in
     0|1|auto) ;;
     *) log "ERROR: EDGE_REQUIRE_SWAP must be 0, 1, or auto"; exit 1 ;;
 esac
+
+[ "$EDGE_TS_NETFILTER_MODE" = "off" ] || {
+    log "ERROR: EDGE_TS_NETFILTER_MODE must be off because ASUS Edge owns the firewall policy"
+    exit 1
+}
 
 opt_is_ready() {
     [ -d /opt ] || return 1
@@ -255,7 +261,7 @@ mkdir -p /opt/var/lib/unbound
 startup_failed=0
 if executable_exists tailscaled >/dev/null 2>&1; then
     if start_tailscaled_with_retry && wait_for_tailscale_api; then
-        set -- tailscale --socket="$EDGE_TS_SOCKET" up --accept-dns="$EDGE_ACCEPT_DNS" --hostname="$EDGE_HOSTNAME"
+        set -- tailscale --socket="$EDGE_TS_SOCKET" up --netfilter-mode="$EDGE_TS_NETFILTER_MODE" --accept-dns="$EDGE_ACCEPT_DNS" --hostname="$EDGE_HOSTNAME"
         [ -n "$EDGE_ADVERTISE_ROUTES" ] && set -- "$@" --advertise-routes="$EDGE_ADVERTISE_ROUTES"
         [ "$EDGE_ENABLE_EXIT_NODE" = "1" ] && set -- "$@" --advertise-exit-node
         "$@" >/tmp/asus-edge-tailscale-up.log 2>&1 || log "WARNING: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"

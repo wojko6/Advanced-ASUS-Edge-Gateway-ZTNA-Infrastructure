@@ -78,6 +78,41 @@ do
     }
 done
 
+grep -F 'EDGE_TS_NETFILTER_MODE:=off' \
+    "$REPO_DIR/router/scripts/services-start" >/dev/null || {
+    echo "FAIL: services-start does not default Tailscale netfilter mode to off" >&2
+    exit 1
+}
+
+grep -F -- '--netfilter-mode="$EDGE_TS_NETFILTER_MODE"' \
+    "$REPO_DIR/router/scripts/services-start" >/dev/null || {
+    echo "FAIL: services-start does not enforce the configured Tailscale netfilter mode" >&2
+    exit 1
+}
+
+grep -F -- '--netfilter-mode=off' "$REPO_DIR/README.md" >/dev/null || {
+    echo "FAIL: README Tailscale setup does not disable native netfilter management" >&2
+    exit 1
+}
+
+grep -F 'EDGE_TS_NETFILTER_MODE="off"' \
+    "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+    echo "FAIL: example config does not document Tailscale netfilter ownership" >&2
+    exit 1
+}
+
+for tailscale_netfilter_health_guard in \
+    'Tailscale netfilter management disabled' \
+    'no competing Tailscale netfilter chains' \
+    'ts-postrouting'
+do
+    grep -F "$tailscale_netfilter_health_guard" \
+        "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: Tailscale netfilter health guard missing: $tailscale_netfilter_health_guard" >&2
+        exit 1
+    }
+done
+
 for tailscale_startup_guard in \
     'swap_is_required()' \
     'wait_for_required_swap()' \

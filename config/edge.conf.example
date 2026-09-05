@@ -5,6 +5,10 @@ EDGE_TS_IF="tailscale0"
 EDGE_LAN_IF="br0"
 EDGE_TS_SOCKET="/var/run/tailscale/tailscaled.sock"
 EDGE_TS_STATE="/opt/var/lib/tailscale/tailscaled.state"
+
+# ASUS Edge owns the iptables/ip6tables policy. Disable Tailscale's native
+# netfilter management to avoid competing ts-* chains on Asuswrt-Merlin.
+EDGE_TS_NETFILTER_MODE="off"
 EDGE_LAN_CIDR="192.168.50.0/24"
 EDGE_ROUTER_LAN_IP="192.168.50.1"
 EDGE_TAILNET_V4_CIDR="100.64.0.0/10"
