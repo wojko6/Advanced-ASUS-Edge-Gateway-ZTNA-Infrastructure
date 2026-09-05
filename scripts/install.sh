@@ -131,6 +131,7 @@ install_file "$REPO_DIR/config/edge.conf" /jffs/configs/asus-edge.conf 0600
 install_file "$REPO_DIR/router/scripts/firewall-start" "$ADDON_DIR/bin/firewall-start" 0755
 install_file "$REPO_DIR/router/scripts/services-start" "$ADDON_DIR/bin/services-start" 0755
 install_file "$REPO_DIR/scripts/healthcheck.sh" "$ADDON_DIR/bin/healthcheck.sh" 0755
+install_file "$REPO_DIR/scripts/check-usb-exposure.sh" "$ADDON_DIR/bin/check-usb-exposure.sh" 0755
 install_file "$REPO_DIR/scripts/collect-evidence.sh" "$ADDON_DIR/bin/collect-evidence.sh" 0755
 
 install_hook() {
@@ -176,3 +177,4 @@ installation_active=0
 echo "Installed Advanced ASUS Edge Gateway v2.1.1"
 echo "Backup: $BACKUP_DIR"
 echo "Next: $ADDON_DIR/bin/healthcheck.sh"
+echo "USB exposure check: $ADDON_DIR/bin/check-usb-exposure.sh"
