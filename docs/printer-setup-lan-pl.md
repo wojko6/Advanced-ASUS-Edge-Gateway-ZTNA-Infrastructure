@@ -50,7 +50,7 @@ Podczas automatycznego dodawania drukarki **Windows sam zainstalował**
 ręcznie. System wykrywał drukarkę i komunikował się z nią, lecz w testowanej
 konfiguracji zadania nie kończyły się fizycznym wydrukiem.
 
-Rozwiązaniem była ręczna instalacja producentowego
+Rozwiązaniem była ręczna instalacja sterownika producenta
 `Samsung Universal Print Driver 3`. W zweryfikowanym środowisku działała wersja
 `3.0.16.0`, sterownik Type 3, format danych RAW i port TCP 9100.
 
