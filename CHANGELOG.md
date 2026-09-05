@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Added explicit infrastructure-USB hardening controls for deployments where
+  Entware lives on router-attached storage.
+- Added a dedicated health check for unexpected MiniDLNA/UPnP and Samba/SMB
+  exposure, including NVRAM state, process state, and listener validation.
+- Documented the observed LAN-side DLNA enumeration finding, remediation, and
+  post-reboot validation workflow.
+
 ## 2.1.1 — 2026-09-05
 
 - Made ASUS Edge explicitly own the Tailscale firewall policy by enforcing
