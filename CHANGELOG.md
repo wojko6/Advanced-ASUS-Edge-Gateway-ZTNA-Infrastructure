@@ -8,6 +8,26 @@
   exposure, including NVRAM state, process state, and listener validation.
 - Documented the observed LAN-side DLNA enumeration finding, remediation, and
   post-reboot validation workflow.
+## [2.1.2] - 2026-09-08
+
+### Added
+- Sanitized live-validation evidence for remote Android DNS over Tailscale.
+- Documented LTE/5G and home Wi-Fi validation of the dnsmasq/Diversion/Unbound path.
+
+### Changed
+- Hardened infrastructure USB exposure by disabling unnecessary SMB/DLNA services.
+- Updated project documentation to surface the latest live DNS validation.
+
+### Validated
+- Remote Android client retained Internet connectivity with Tailscale DNS enabled.
+- DNS queries and responses traversed the Tailscale tunnel to the router.
+- Normal DNS resolution and Diversion NXDOMAIN blocking were confirmed.
+- Unbound DNSSEC validation passed.
+- Router healthcheck completed with 0 failures and 0 warnings.
+
+### Notes
+- The Android remote-client validation used a Tailscale beta client.
+- This release does not claim that the previously observed stable Android client DNS issue has been fixed in a stable release.
 
 ## 2.1.1 — 2026-09-05
 
