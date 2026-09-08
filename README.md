@@ -130,6 +130,31 @@ The optional logging path tails the firmware-owned `/tmp/syslog.log`, forwards i
 
 See [centralized logging with mTLS](docs/centralized-logging.md) for the trust model, safe rollout order, negative certificate test, buffer recovery test, and reboot validation.
 
+## Live validation status
+
+The deployed reference environment was live-validated on 2026-09-08.
+
+Remote-client testing over LTE/5G confirmed the functional DNS path:
+
+`Android remote client -> Tailscale tunnel -> router dnsmasq/Diversion -> Unbound on loopback:53535 -> recursive DNS`
+
+The validation confirmed:
+
+- Internet connectivity with Tailscale DNS enabled.
+- DNS queries and responses traversing the Tailscale tunnel.
+- Normal resolution of non-blocked domains.
+- Diversion blocking of a test advertising/tracking domain with NXDOMAIN.
+- DNSSEC validation through the local Unbound resolver.
+- Equivalent DNS and blocking behavior on the home Wi-Fi path.
+
+The Android remote-client validation was performed with a Tailscale beta client.
+A previously observed DNS connectivity issue on the stable Android client was
+not reproduced during this test; this does not claim that the issue has been
+fixed in a stable release.
+
+See the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.md)
+and its sanitized supporting evidence for the observed results.
+
 ## Validation and recovery
 
 ```sh

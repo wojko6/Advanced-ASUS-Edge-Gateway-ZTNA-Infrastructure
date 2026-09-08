@@ -5,3 +5,19 @@ Automated shell, configuration, mock-firewall, and evidence-redaction tests run 
 Live results are environment-specific and are not fabricated in this repository. Use [the collection procedure](../docs/evidence-collection.md) on the deployed router, review the output, complete the remote-client matrix, and then add a dated evidence directory.
 
 The [live-validation template](live-validation-template.md) distinguishes expected behavior from observed behavior. A row is evidence only after its date, source role, command, observation, and verdict have been completed.
+
+## Latest live validation
+
+The latest published validation was performed on **2026-09-08** and includes
+an actual remote Android client test over LTE/5G with Tailscale DNS enabled.
+
+It verifies the remote DNS path through Tailscale, dnsmasq/Diversion and
+recursive Unbound, including normal DNS resolution, DNSSEC validation and
+NXDOMAIN blocking of a test advertising/tracking domain.
+
+See the [2026-09-08 live validation report](2026-09-08/live-validation.md)
+and the sanitized supporting evidence in the same directory.
+
+The Android remote-client test used a Tailscale beta client. The report does
+not claim that the previously observed stable-client DNS issue has been fixed
+in a stable Android release.
