@@ -8,3 +8,13 @@ evidence/raw/
 *.pcapng
 *.tar.gz
 *.tar.gz.sha256
+.env
+.env.*
+*.key
+*.pem
+*.crt
+*.cer
+*.p12
+*.pfx
+tailscaled.state
+*tailscaled.state*
