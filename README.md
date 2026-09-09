@@ -205,6 +205,7 @@ Tailscale updates are a separate maintenance action:
 - [Testing and evidence collection](docs/testing.md)
 - [Publishing validation evidence](docs/evidence-collection.md)
 - [Centralized logging with mTLS](docs/centralized-logging.md)
+- [uiDivStats high-load troubleshooting case study](docs/uidivstats-high-load-case-study.md)
 - [Konfiguracja drukarki Samsung w LAN](docs/printer-setup-lan-pl.md)
 - [Zdalne drukowanie Samsung przez Tailscale](docs/printer-setup-tailscale-pl.md)
 - [Operations and recovery](docs/operations.md)
