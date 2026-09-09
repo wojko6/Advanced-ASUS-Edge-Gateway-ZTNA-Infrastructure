@@ -174,7 +174,8 @@ if [ "$APPLY" = "1" ]; then
 fi
 
 installation_active=0
-echo "Installed Advanced ASUS Edge Gateway v2.1.1"
+RELEASE_VERSION="$(cat "$REPO_DIR/VERSION")"
+echo "Installed Advanced ASUS Edge Gateway v$RELEASE_VERSION"
 echo "Backup: $BACKUP_DIR"
 echo "Next: $ADDON_DIR/bin/healthcheck.sh"
 echo "USB exposure check: $ADDON_DIR/bin/check-usb-exposure.sh"
