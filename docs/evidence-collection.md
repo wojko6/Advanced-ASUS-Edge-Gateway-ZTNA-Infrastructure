@@ -53,6 +53,7 @@ Before committing evidence:
 4. Treat packet captures as private by default. Publish only purpose-built, minimized, manually inspected extracts.
 5. State the test date, firmware, direction, source role, expected result, observed result, and verdict.
 6. Keep failed results when they explain a later fix; link the correcting commit or issue.
+7. After adding or updating `live-validation.md` and completing sanitization, regenerate `SHA256SUMS` so it covers the final published evidence set. Do not include `SHA256SUMS` itself in the manifest.
 
 ## Suggested evidence layout
 
