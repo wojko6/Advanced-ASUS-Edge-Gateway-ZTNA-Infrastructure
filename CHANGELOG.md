@@ -2,12 +2,32 @@
 
 ## Unreleased
 
-- Added explicit infrastructure-USB hardening controls for deployments where
-  Entware lives on router-attached storage.
-- Added a dedicated health check for unexpected MiniDLNA/UPnP and Samba/SMB
-  exposure, including NVRAM state, process state, and listener validation.
-- Documented the observed LAN-side DLNA enumeration finding, remediation, and
-  post-reboot validation workflow.
+## [2.1.3] - 2026-09-09
+
+### Security
+- Hardened installer file and Merlin-hook deployment against overwriting symbolic-link destinations.
+- Added regression coverage verifying that protected symlink targets remain unchanged.
+- Expanded `.gitignore` coverage for private keys, certificates, environment files, and Tailscale state.
+
+### Fixed
+- Restored `EDGE_SERVICE_RETRY_SECONDS` to the example configuration so documented settings match runtime behavior.
+- Made the installer report its release version directly from the repository `VERSION` file.
+- Marked the USB exposure checker executable so its repository mode matches deployment behavior.
+
+### Changed
+- Refactored health-check condition handling to remove ShellCheck SC2015 findings without changing validation behavior.
+- Clarified the final evidence checksum workflow so `SHA256SUMS` is regenerated after publication sanitization.
+
+### Validated
+- Added sanitized live-validation evidence from 2026-09-09 covering the local DNS path, observed DoT bypass, temporary TCP/853 enforcement, and encrypted DNS bypass over port 443.
+- Router evidence collection completed with 34 checks passing, 0 warnings, and 0 failures.
+- Static test suite passes with 11 recovery tests.
+- GitHub Actions `Shell tests` passed for the release candidate.
+
+### Notes
+- DNS interception remains a classic TCP/UDP 53 control and does not claim comprehensive prevention of DoH, DoT, or DoQ.
+- Permanent optional DoT/DoQ enforcement is planned separately rather than being included in this maintenance release.
+
 ## [2.1.2] - 2026-09-08
 
 ### Added
