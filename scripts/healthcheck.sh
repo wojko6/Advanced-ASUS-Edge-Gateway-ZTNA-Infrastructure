@@ -57,8 +57,16 @@ fi
 : "${EDGE_SYSLOG_HOST:=}"
 : "${EDGE_SYSLOG_PORT:=6514}"
 
-opt_is_ready 2>/dev/null && ok "Entware /opt ready" || fail "Entware /opt not ready"
-executable_exists opkg >/dev/null 2>&1 && ok "Entware available" || fail "opkg not found"
+if opt_is_ready 2>/dev/null; then
+    ok "Entware /opt ready"
+else
+    fail "Entware /opt not ready"
+fi
+if executable_exists opkg >/dev/null 2>&1; then
+    ok "Entware available"
+else
+    fail "opkg not found"
+fi
 
 swap_required=0
 case "$EDGE_REQUIRE_SWAP" in
@@ -141,9 +149,17 @@ if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
 fi
 
 for chain in EDGE_TS_INPUT EDGE_TS_FORWARD; do
-    iptables -t filter -S "$chain" >/dev/null 2>&1 && ok "firewall chain $chain" || fail "missing firewall chain $chain"
+    if iptables -t filter -S "$chain" >/dev/null 2>&1; then
+        ok "firewall chain $chain"
+    else
+        fail "missing firewall chain $chain"
+    fi
 done
-iptables -t nat -S EDGE_TS_PREROUTING >/dev/null 2>&1 && ok "NAT chain EDGE_TS_PREROUTING" || fail "missing NAT chain"
+if iptables -t nat -S EDGE_TS_PREROUTING >/dev/null 2>&1; then
+    ok "NAT chain EDGE_TS_PREROUTING"
+else
+    fail "missing NAT chain"
+fi
 
 check_filter_enforcement() {
     filter_tool="$1"
@@ -225,8 +241,16 @@ if [ -n "$EDGE_PRINTER_TS_SOURCES" ] || [ -n "$EDGE_PRINTER_LAN_IP" ]; then
 fi
 
 if executable_exists ip6tables >/dev/null 2>&1; then
-    ip6tables -t filter -S EDGE_TS6_INPUT >/dev/null 2>&1 && ok "IPv6 INPUT guard" || fail "missing IPv6 INPUT guard"
-    ip6tables -t filter -S EDGE_TS6_FORWARD >/dev/null 2>&1 && ok "IPv6 FORWARD guard" || fail "missing IPv6 FORWARD guard"
+    if ip6tables -t filter -S EDGE_TS6_INPUT >/dev/null 2>&1; then
+        ok "IPv6 INPUT guard"
+    else
+        fail "missing IPv6 INPUT guard"
+    fi
+    if ip6tables -t filter -S EDGE_TS6_FORWARD >/dev/null 2>&1; then
+        ok "IPv6 FORWARD guard"
+    else
+        fail "missing IPv6 FORWARD guard"
+    fi
     check_filter_enforcement ip6tables INPUT EDGE_TS6_INPUT
     check_filter_enforcement ip6tables FORWARD EDGE_TS6_FORWARD
 else
@@ -236,23 +260,51 @@ fi
 input_jumps="$(iptables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_INPUT")"
 forward_jumps="$(iptables -t filter -S FORWARD 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_FORWARD")"
 prerouting_jumps="$(iptables -t nat -S PREROUTING 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_PREROUTING")"
-[ "$input_jumps" = "1" ] && ok "single INPUT jump" || fail "INPUT jump count: $input_jumps"
-[ "$forward_jumps" = "1" ] && ok "single FORWARD jump" || fail "FORWARD jump count: $forward_jumps"
-[ "$prerouting_jumps" = "1" ] && ok "single PREROUTING jump" || fail "PREROUTING jump count: $prerouting_jumps"
+if [ "$input_jumps" = "1" ]; then
+    ok "single INPUT jump"
+else
+    fail "INPUT jump count: $input_jumps"
+fi
+if [ "$forward_jumps" = "1" ]; then
+    ok "single FORWARD jump"
+else
+    fail "FORWARD jump count: $forward_jumps"
+fi
+if [ "$prerouting_jumps" = "1" ]; then
+    ok "single PREROUTING jump"
+else
+    fail "PREROUTING jump count: $prerouting_jumps"
+fi
 
 legacy_filter_rules="$({
     iptables -t filter -S INPUT 2>/dev/null
     iptables -t filter -S FORWARD 2>/dev/null
 } | grep -c -- '-i tailscale+.*-j ACCEPT')"
 legacy_nat_rules="$(iptables -t nat -S PREROUTING 2>/dev/null | grep -c -- '-i tailscale+')"
-[ "$legacy_filter_rules" = "0" ] && ok "no legacy broad Tailscale ACCEPT rules" || fail "legacy broad Tailscale ACCEPT rules: $legacy_filter_rules"
-[ "$legacy_nat_rules" = "0" ] && ok "no legacy tailscale+ NAT rules" || fail "legacy tailscale+ NAT rules: $legacy_nat_rules"
+if [ "$legacy_filter_rules" = "0" ]; then
+    ok "no legacy broad Tailscale ACCEPT rules"
+else
+    fail "legacy broad Tailscale ACCEPT rules: $legacy_filter_rules"
+fi
+if [ "$legacy_nat_rules" = "0" ]; then
+    ok "no legacy tailscale+ NAT rules"
+else
+    fail "legacy tailscale+ NAT rules: $legacy_nat_rules"
+fi
 
 if executable_exists ip6tables >/dev/null 2>&1; then
     input6_jumps="$(ip6tables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS6_INPUT")"
     forward6_jumps="$(ip6tables -t filter -S FORWARD 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS6_FORWARD")"
-    [ "$input6_jumps" = "1" ] && ok "single IPv6 INPUT jump" || fail "IPv6 INPUT jump count: $input6_jumps"
-    [ "$forward6_jumps" = "1" ] && ok "single IPv6 FORWARD jump" || fail "IPv6 FORWARD jump count: $forward6_jumps"
+    if [ "$input6_jumps" = "1" ]; then
+        ok "single IPv6 INPUT jump"
+    else
+        fail "IPv6 INPUT jump count: $input6_jumps"
+    fi
+    if [ "$forward6_jumps" = "1" ]; then
+        ok "single IPv6 FORWARD jump"
+    else
+        fail "IPv6 FORWARD jump count: $forward6_jumps"
+    fi
 fi
 
 unbound_control_status() {
@@ -287,7 +339,11 @@ else
     warn "dig not installed; DNSSEC test skipped"
 fi
 
-pidof syslog-ng >/dev/null 2>&1 && ok "syslog-ng running" || warn "syslog-ng not running"
+if pidof syslog-ng >/dev/null 2>&1; then
+    ok "syslog-ng running"
+else
+    warn "syslog-ng not running"
+fi
 
 if [ -n "$EDGE_SYSLOG_HOST" ]; then
     if executable_exists nc >/dev/null 2>&1 && nc -z -w 3 "$EDGE_SYSLOG_HOST" "$EDGE_SYSLOG_PORT" >/dev/null 2>&1; then

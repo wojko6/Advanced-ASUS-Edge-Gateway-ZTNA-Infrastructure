@@ -21,12 +21,24 @@ else
 fi
 
 if command -v nc >/dev/null 2>&1; then
-    nc -z -w 3 "$ROUTER_MANAGEMENT_IP" 8443 >/dev/null 2>&1 && pass "router HTTPS reachable for this admin device" || fail "router HTTPS unavailable"
-    nc -z -w 3 "$ROUTER_MANAGEMENT_IP" 22 >/dev/null 2>&1 && fail "router SSH unexpectedly reachable" || pass "router SSH denied"
+    if nc -z -w 3 "$ROUTER_MANAGEMENT_IP" 8443 >/dev/null 2>&1; then
+        pass "router HTTPS reachable for this admin device"
+    else
+        fail "router HTTPS unavailable"
+    fi
+    if nc -z -w 3 "$ROUTER_MANAGEMENT_IP" 22 >/dev/null 2>&1; then
+        fail "router SSH unexpectedly reachable"
+    else
+        pass "router SSH denied"
+    fi
 fi
 
 if [ -n "$DENIED_LAN_IP" ] && command -v nc >/dev/null 2>&1; then
-    nc -z -w 3 "$DENIED_LAN_IP" 445 >/dev/null 2>&1 && fail "SMB unexpectedly reachable" || pass "SMB denied"
+    if nc -z -w 3 "$DENIED_LAN_IP" 445 >/dev/null 2>&1; then
+        fail "SMB unexpectedly reachable"
+    else
+        pass "SMB denied"
+    fi
 fi
 
 [ "$FAILURES" -eq 0 ]
