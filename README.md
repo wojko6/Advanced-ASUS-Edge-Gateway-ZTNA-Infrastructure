@@ -8,7 +8,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 
 ## Architecture
 
-![Advanced ASUS Edge Gateway architecture](docs/images/architecture-v2.png)
+![Current ASUS Edge Gateway architecture](docs/images/architecture-current.svg)
 
 Remote access is enforced at two layers:
 
