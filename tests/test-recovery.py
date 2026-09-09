@@ -171,6 +171,23 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(config.read_text(), "old\n")
         self.assertFalse((self.root / "jffs/scripts/firewall-start").exists())
 
+    def test_symlink_hook_is_rejected_without_touching_target(self):
+        target = self.root / "outside-target"
+        target.write_text("DO NOT TOUCH\n")
+
+        hook = self.root / "jffs/scripts/firewall-start"
+        hook.parent.mkdir(parents=True, exist_ok=True)
+        hook.symlink_to(target)
+
+        result = self.run_script(self.prepare_install())
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("refusing to overwrite symlink", result.stderr)
+        self.assertTrue(hook.is_symlink())
+        self.assertEqual(hook.resolve(), target)
+        self.assertEqual(target.read_text(), "DO NOT TOUCH\n")
+
+
     def test_healthcheck_detects_bypass_and_missing_drop(self):
         for name in ("opkg", "ip", "pidof", "unbound-control"):
             self.command(name, "exit 0")

@@ -119,10 +119,19 @@ trap 'exit 1' HUP INT TERM
 
 mkdir -p "$ADDON_DIR/bin" "$ADDON_DIR/legacy" /jffs/scripts /jffs/configs
 
+refuse_symlink_destination() {
+    destination="$1"
+    if [ -L "$destination" ]; then
+        echo "ERROR: refusing to overwrite symlink: $destination" >&2
+        exit 1
+    fi
+}
+
 install_file() {
     src="$1"
     dst="$2"
     mode="$3"
+    refuse_symlink_destination "$dst"
     cp "$src" "$dst" || exit 1
     chmod "$mode" "$dst" || exit 1
 }
@@ -138,6 +147,8 @@ install_hook() {
     hook_name="$1"
     hook_path="/jffs/scripts/$hook_name"
     legacy_path="$ADDON_DIR/legacy/$hook_name"
+
+    refuse_symlink_destination "$hook_path"
 
     if [ -f "$hook_path" ] && ! grep -q 'ASUS_EDGE_MANAGED_HOOK' "$hook_path"; then
         cp -p "$hook_path" "$legacy_path" || exit 1
