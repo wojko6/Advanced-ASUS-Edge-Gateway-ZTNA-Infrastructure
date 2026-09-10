@@ -352,6 +352,14 @@ start_unbound_direct_if_stopped() {
 
         if process_stays_running unbound; then
             log "unbound recovered directly on attempt $attempt"
+
+            if service restart_dnsmasq >/dev/null 2>&1; then
+                log "dnsmasq restarted after unbound recovery"
+            else
+                log "ERROR: failed to restart dnsmasq after unbound recovery"
+                return 1
+            fi
+
             return 0
         fi
 
