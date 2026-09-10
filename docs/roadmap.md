@@ -1,19 +1,25 @@
 # Roadmap
 
-## Near-term — Personal Cloud / Automated File Sync
+## Near-term — SSD Migration + Personal Cloud / Automated File Sync
 
-- Temporarily attach a dedicated USB SSD to the ASUS TUF-AX5400 and use it as private file storage.
+- Replace the current router USB flash drive with a dedicated SSD connected to the ASUS TUF-AX5400 through a compatible M.2 SATA-to-USB enclosure.
+- Migrate the existing Entware environment, swap usage, logs, add-on data, and other required persistent router storage from the current USB flash drive to the SSD.
+- Preserve the current router configuration and service behaviour during the migration, with a documented rollback path to the original USB flash drive.
+- Reserve a separate directory on the SSD for private user data, isolated from Entware and router-service files.
 - Create a workstation sync directory (for example `~/RouterCloud`) on Zorin OS.
 - Implement incremental synchronization with `rsync` over SSH.
 - Support secure remote synchronization through Tailscale without exposing file-sharing services to the public Internet.
-- Automate synchronization with a systemd user timer or filesystem-triggered workflow.
+- Automate synchronization with a systemd user timer and/or a filesystem-triggered workflow.
 - Default to upload/copy semantics so accidental local deletion does not automatically remove the remote copy.
 - Validate LAN and Tailscale transfers, interrupted-transfer recovery, router/workstation reboot behaviour, permissions, and unauthorized-access handling.
 - Verify transferred-file integrity with SHA-256 and record measured throughput.
-- Document deployment and rollback procedures and retain sanitized test evidence.
-- After validation, the temporary SSD may be removed and the router returned to its current Entware USB-storage arrangement.
+- Validate Entware and router services after migration, including startup/autostart and storage mounts.
+- Document the SSD migration procedure, synchronization workflow, failure handling, recovery, and rollback procedure.
+- Retain sanitized test evidence suitable for portfolio documentation.
 
-Target documentation status after successful testing: **Completed and validated — currently not active**. This status must only be used after the implementation and validation steps above have actually been completed.
+Target end state: the SSD becomes the router's persistent USB storage for Entware and related services, while also providing a separate private cloud-like data area synchronized automatically from Zorin OS.
+
+The feature must only be documented as **Completed and validated** after the storage migration, service validation, file synchronization, recovery, and integrity tests have actually been completed.
 
 ## Phase 2 — dedicated x86 edge
 
