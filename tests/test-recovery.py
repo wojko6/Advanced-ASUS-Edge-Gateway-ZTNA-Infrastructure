@@ -102,8 +102,9 @@ class RecoveryTests(unittest.TestCase):
 
     def test_restore_copy_failure_is_not_success(self):
         restore = self.script("restore.sh")
+        files = {"jffs/configs/asus-edge.conf": b"original\n"}
         self.command("cp", "exit 1")
-        result = self.run_script(restore, self.archive({"jffs/configs/test": b"ok"}), "--apply")
+        result = self.run_script(restore, self.archive(files), "--apply")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("restore copy failed", result.stderr)
         self.assertNotIn("Restore completed", result.stdout)
@@ -174,42 +175,58 @@ class RecoveryTests(unittest.TestCase):
     def test_symlink_hook_is_rejected_without_touching_target(self):
         target = self.root / "outside-target"
         target.write_text("DO NOT TOUCH\n")
-
         hook = self.root / "jffs/scripts/firewall-start"
         hook.parent.mkdir(parents=True, exist_ok=True)
         hook.symlink_to(target)
-
         result = self.run_script(self.prepare_install())
-
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("refusing to overwrite symlink", result.stderr)
         self.assertTrue(hook.is_symlink())
         self.assertEqual(hook.resolve(), target)
         self.assertEqual(target.read_text(), "DO NOT TOUCH\n")
 
-
     def test_symlink_install_file_is_rejected_without_touching_target(self):
         target = self.root / "outside-config-target"
         target.write_text("DO NOT TOUCH\n")
-
         config = self.root / "jffs/configs/asus-edge.conf"
         config.parent.mkdir(parents=True, exist_ok=True)
         if config.exists() or config.is_symlink():
             config.unlink()
         config.symlink_to(target)
-
         result = self.run_script(self.prepare_install())
-
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("refusing to overwrite symlink", result.stderr)
         self.assertTrue(config.is_symlink())
         self.assertEqual(config.resolve(), target)
         self.assertEqual(target.read_text(), "DO NOT TOUCH\n")
 
-
     def test_healthcheck_detects_bypass_and_missing_drop(self):
-        for name in ("opkg", "ip", "pidof", "unbound-control"):
+        for name in ("opkg", "ip", "unbound-control"):
             self.command(name, "exit 0")
+        self.command("pidof", r'''
+case "$1" in
+    tailscaled|syslog-ng) exit 0 ;;
+    lpd|u2ec)
+        case "$SCENARIO:$1" in
+            lpd_running:lpd|u2ec_running:u2ec) exit 0 ;;
+            *) exit 1 ;;
+        esac ;;
+    *) exit 1 ;;
+esac
+''')
+        self.command("nvram", r'''
+if [ "$1" = get ] && [ "$2" = usb_printer ]; then
+    [ "$SCENARIO" = usb_printer_enabled ] && echo 1 || echo 0
+    exit 0
+fi
+exit 1
+''')
+        self.command("netstat", r'''
+echo 'Active Internet connections (only servers)'
+echo 'Proto Recv-Q Send-Q Local Address           Foreign Address         State'
+[ "$SCENARIO" = port515_open ] && echo 'tcp        0      0 192.168.50.1:515        0.0.0.0:*               LISTEN'
+exit 0
+''')
         self.command("tailscale", r"""
 case " $* " in
     *" debug prefs "*)
@@ -268,7 +285,11 @@ esac
                 ("native_chain", "competing Tailscale netfilter chains present: 3"),
                 ("bypass", "is not the first parent rule"),
                 ("missing_drop", "missing terminal DROP"),
-                ("wrong_port", "missing printer TCP/80 rule")):
+                ("wrong_port", "missing printer TCP/80 rule"),
+                ("usb_printer_enabled", "ASUS USB print server enabled or unknown in NVRAM: 1"),
+                ("lpd_running", "lpd process running"),
+                ("u2ec_running", "u2ec process running"),
+                ("port515_open", "router TCP/515 listener present")):
             with self.subTest(scenario=scenario):
                 result = self.run_script(health, env={"SCENARIO": scenario})
                 self.assertIn(expected, result.stdout, result.stderr)
