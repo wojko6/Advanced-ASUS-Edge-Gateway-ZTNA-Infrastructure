@@ -6,6 +6,14 @@ A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. It combines A
 
 This is an **enterprise-style lab**, not an enterprise-grade appliance. It has no high availability, redundant WAN, native VLAN microsegmentation, or vendor support.
 
+## Portfolio highlights
+
+- Built a consumer-router security edge with Tailscale identity, project-owned default-deny firewall chains, and explicit router/LAN allowlists.
+- Integrated dnsmasq with local Unbound on loopback:53535 and validated DNSSEC with the AD flag after controlled reboots.
+- Added install, backup, restore, uninstall, health-check, evidence-collection, WAN-event recovery, and rollback workflows.
+- Migrated the persistent Entware environment from USB flash storage to SSD, restored swap-backed service startup, and validated Tailscale/Unbound/syslog-ng after reboot.
+- Captured sanitized live evidence instead of presenting expected behavior as observed results.
+
 ## Architecture
 
 ![Current ASUS Edge Gateway architecture](docs/images/Architecture.png)
@@ -132,28 +140,28 @@ See [centralized logging with mTLS](docs/centralized-logging.md) for the trust m
 
 ## Live validation status
 
-The deployed reference environment was live-validated on 2026-09-08.
+The deployed reference environment was most recently validated on **2026-09-11** after the Entware SSD migration and a controlled router reboot.
 
-Remote-client testing over LTE/5G confirmed the functional DNS path:
+The current validated state includes:
+
+- both SSD partitions mounted automatically after reboot;
+- active swap on the Entware and data partitions;
+- Tailscale connected and offering exit-node functionality;
+- Unbound reachable on `127.0.0.1:53535` with DNSSEC validation confirmed by the AD flag;
+- dnsmasq forwarding through local Unbound;
+- syslog-ng running;
+- project firewall chains and printer-hardening checks passing;
+- Adaptive QoS disabled after repeatable boot-time QoS failures were traced to the enabled firmware feature;
+- no fresh `asus-edge: ERROR`, Tailscale OOM, fatal error, or recurring QoS failure in the post-reboot validation window;
+- final project health check: **0 failures, 0 warnings, exit code 0**.
+
+Remote-client testing over LTE/5G previously confirmed the functional DNS path:
 
 `Android remote client -> Tailscale tunnel -> router dnsmasq/Diversion -> Unbound on loopback:53535 -> recursive DNS`
 
-The validation confirmed:
+That validation confirmed Internet connectivity with Tailscale DNS enabled, DNS traffic through the tunnel, normal resolution of allowed domains, Diversion blocking of a test advertising/tracking domain, DNSSEC validation, and equivalent home-Wi-Fi behavior.
 
-- Internet connectivity with Tailscale DNS enabled.
-- DNS queries and responses traversing the Tailscale tunnel.
-- Normal resolution of non-blocked domains.
-- Diversion blocking of a test advertising/tracking domain with NXDOMAIN.
-- DNSSEC validation through the local Unbound resolver.
-- Equivalent DNS and blocking behavior on the home Wi-Fi path.
-
-The Android remote-client validation was performed with a Tailscale beta client.
-A previously observed DNS connectivity issue on the stable Android client was
-not reproduced during this test; this does not claim that the issue has been
-fixed in a stable release.
-
-See the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.md)
-and its sanitized supporting evidence for the observed results.
+See the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.md), the [SSD migration procedure](docs/ENTWARE-SSD-MIGRATION.md), and the sanitized [2026-09-11 reboot validation evidence](evidence/2026-09-11/entware-ssd-migration-validation.txt).
 
 ## Validation and recovery
 
@@ -205,6 +213,8 @@ Tailscale updates are a separate maintenance action:
 - [Testing and evidence collection](docs/testing.md)
 - [Publishing validation evidence](docs/evidence-collection.md)
 - [Centralized logging with mTLS](docs/centralized-logging.md)
+- [Entware SSD migration](docs/ENTWARE-SSD-MIGRATION.md)
+- [Printer hardening](docs/PRINTER-HARDENING.md)
 - [uiDivStats high-load troubleshooting case study](docs/uidivstats-high-load-case-study.md)
 - [Konfiguracja drukarki Samsung w LAN](docs/printer-setup-lan-pl.md)
 - [Zdalne drukowanie Samsung przez Tailscale](docs/printer-setup-tailscale-pl.md)
