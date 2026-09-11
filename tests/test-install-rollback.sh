@@ -12,6 +12,7 @@ printf '%s\n' '#!/bin/sh' 'echo legacy' > "$TMPROOT/jffs/scripts/wan-event"
 chmod +x "$TMPROOT/jffs/scripts/wan-event"
 
 cp -a "$ROOT_DIR"/. "$TMPROOT/repo"
+cp "$TMPROOT/repo/config/edge.conf.example" "$TMPROOT/repo/config/edge.conf"
 
 python3 - <<'PY' "$TMPROOT/repo/scripts/install.sh"
 from pathlib import Path
@@ -47,5 +48,4 @@ if EDGE_TEST_ROOT="$TMPROOT" sh "$TMPROOT/repo/scripts/install.sh"; then
 fi
 
 grep -q 'legacy' "$TMPROOT/jffs/scripts/wan-event"
-
 echo "PASS: rollback restored previous hook"
