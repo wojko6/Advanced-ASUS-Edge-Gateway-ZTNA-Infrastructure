@@ -15,6 +15,21 @@ copy failures, full installer rollback, first-install cleanup, firewall bypass
 detection and exact printer-port matching. The evidence test also checks that
 private healthcheck diagnostics are omitted.
 
+GitHub Actions runs the main static/recovery/evidence suite and also enforces two
+separate deployment-path checks so their status is visible independently:
+
+```sh
+sh tests/test-wan-event-handler.sh
+sh tests/test-install-rollback.sh
+```
+
+The WAN test covers the normal recovery path plus DNS-unavailable, missing
+`resolv.conf`, and failed Tailscale-restart cases using mocks. The isolated
+install/rollback test creates a temporary test root, installs the managed WAN
+hook there, injects a controlled installer failure, and verifies that the
+previous hook is restored. These CI checks operate only on temporary test data;
+they do not connect to or modify the router.
+
 These checks do not prove the router kernel supports every match module; live
 validation remains required. The healthcheck requires managed filter jumps to
 be first in their parent chains and a terminal DROP in each managed chain. A
