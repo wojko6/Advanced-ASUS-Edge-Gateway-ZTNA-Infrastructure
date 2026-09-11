@@ -1,0 +1,43 @@
+Entware SSD migration validation
+Date: 2026-09-11
+Platform: ASUS TUF-AX5400 / ASUSWRT-Merlin 3004.388.9_2-gnuton1
+
+NOTE: Tailnet IP addresses, usernames/account identifiers, LAN peer details and process IDs have been omitted from this public evidence snapshot.
+
+=== STORAGE AFTER CONTROLLED REBOOT ===
+/dev/sda1 on /tmp/mnt/ENTWARE type ext4 (rw,nodev,relatime,stripe=8191,data=ordered)
+/dev/sda2 on /tmp/mnt/ROUTER_DATA type ext4 (rw,nodev,relatime,stripe=8191,data=ordered)
+
+=== SWAP AFTER CONTROLLED REBOOT ===
+Filename                              Type  Size     Used Priority
+/tmp/mnt/ENTWARE/myswap.swp           file  524284   0    -1
+/tmp/mnt/ROUTER_DATA/myswap.swp       file  2097148  0    -2
+
+=== SERVICE VALIDATION ===
+tailscaled: running (PID omitted)
+unbound: running (PID omitted)
+Tailscale: status command successful; router online and offering exit-node capability.
+
+=== UNBOUND DIRECT DNS TEST ===
+Command:
+/opt/bin/dig @127.0.0.1 -p 53535 example.com
+
+Result summary:
+status: NOERROR
+flags: qr rd ra ad
+QUERY: 1
+ANSWER: 2
+SERVER: 127.0.0.1#53535
+
+=== DNSMASQ UPSTREAM CONFIGURATION ===
+no-resolv
+server=127.0.0.1#53535
+
+=== RESULT ===
+PASS
+- SSD partitions mounted automatically after reboot.
+- Early 512 MiB and additional 2 GiB swap files activated automatically.
+- Tailscale started successfully after the earlier no-swap OOM condition was eliminated.
+- Unbound started successfully.
+- Direct Unbound DNS resolution succeeded with DNSSEC AD flag.
+- dnsmasq remained configured to forward to local Unbound on 127.0.0.1:53535.
