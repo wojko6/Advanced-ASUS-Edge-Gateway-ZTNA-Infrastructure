@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+### Added
+- Added a dedicated Entware SSD migration runbook and sanitized reboot-validation evidence.
+- Added printer-hardening documentation and health-check coverage for disabling the router USB print server and TCP/515 exposure.
+- Added recruiter-facing portfolio highlights to the README.
+
+### Changed
+- Migrated the persistent Entware environment from USB flash storage to SSD with separate `ENTWARE` and `ROUTER_DATA` filesystems.
+- Added active swap on the SSD-backed Entware and data partitions to protect memory-constrained services such as Tailscale.
+- Refreshed the roadmap and README to reflect the validated 2026-09-11 deployment state.
+- Updated the pinned `actions/checkout` dependency to v7.0.1 on its immutable commit SHA for the Node 24 GitHub Actions runtime.
+
+### Fixed
+- Finalized WAN event handling and rollback tests, including recovery from DNS-path and Tailscale restart failures.
+- Removed stale ExpressVPN and NordVPN client configuration from the deployed reference environment.
+- Disabled Adaptive QoS after repeatable firmware QoS failures were isolated to the enabled feature.
+- Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
+
+### Validated
+- Controlled post-migration reboot restored both SSD mounts, both swap files, Tailscale, Unbound, syslog-ng, dnsmasq forwarding, and project firewall policy without manual repair.
+- Unbound returned DNSSEC-validated answers with the AD flag on `127.0.0.1:53535` after reboot.
+- Final router health check completed with 0 failures, 0 warnings, and exit code 0.
+- Fresh post-reboot logs contained no new `asus-edge: ERROR`, Tailscale OOM, fatal error, or recurring Adaptive QoS failure in the validation window.
+- Printer regression checks and the repository static/recovery suite pass in GitHub Actions.
+- A 14-day unchanged-state stability observation is in progress; long-term stability is not claimed until that observation completes.
+
 ## [2.1.3] - 2026-09-09
 
 ### Security
