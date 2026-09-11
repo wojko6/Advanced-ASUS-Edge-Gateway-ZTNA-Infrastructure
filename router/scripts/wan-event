@@ -1,0 +1,18 @@
+#!/bin/sh
+# shellcheck shell=dash
+# ASUS_EDGE_MANAGED_HOOK
+
+WAN_UNIT="${1:-}"
+WAN_EVENT="${2:-}"
+
+[ "$WAN_UNIT" = "0" ] || exit 0
+[ "$WAN_EVENT" = "connected" ] || exit 0
+
+HANDLER="/jffs/addons/asus-edge/bin/wan-event-handler"
+
+if [ ! -x "$HANDLER" ]; then
+    logger -t asus-edge "ERROR: WAN event handler not found or not executable: $HANDLER"
+    exit 1
+fi
+
+exec "$HANDLER" "$@"

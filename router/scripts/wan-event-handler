@@ -1,0 +1,119 @@
+#!/bin/sh
+# shellcheck shell=dash
+
+BASE_PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [ -n "${EDGE_TEST_PATH_PREFIX:-}" ]; then
+    PATH="${EDGE_TEST_PATH_PREFIX}:${BASE_PATH}"
+else
+    PATH="$BASE_PATH"
+fi
+export PATH
+
+CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
+RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
+TAILSCALED_INIT="${EDGE_TAILSCALED_INIT:-/opt/etc/init.d/S06tailscaled}"
+
+log() {
+    logger -t asus-edge "$*"
+}
+
+[ -r "$CONFIG_FILE" ] || {
+    log "ERROR: missing $CONFIG_FILE"
+    exit 1
+}
+
+# shellcheck disable=SC1090
+. "$CONFIG_FILE"
+
+: "${EDGE_UNBOUND_PORT:=53535}"
+: "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
+: "${EDGE_WAN_DNS_WAIT_SECONDS:=30}"
+: "${EDGE_TAILSCALE_WAIT_SECONDS:=20}"
+
+dns_path_ready() {
+    pidof dnsmasq >/dev/null 2>&1 || return 1
+    pidof unbound >/dev/null 2>&1 || return 1
+
+    netstat -ln 2>/dev/null |
+        grep -q "127\.0\.0\.1:${EDGE_UNBOUND_PORT}[[:space:]]" ||
+        return 1
+
+    return 0
+}
+
+wait_for_dns_path() {
+    elapsed=0
+
+    while [ "$elapsed" -lt "$EDGE_WAN_DNS_WAIT_SECONDS" ]; do
+        dns_path_ready && return 0
+
+        elapsed=$((elapsed + 1))
+        sleep 1
+    done
+
+    return 1
+}
+
+enforce_system_resolver() {
+    [ -f "$RESOLV_CONF" ] || {
+        log "ERROR: missing $RESOLV_CONF"
+        return 1
+    }
+
+    if [ "$(cat "$RESOLV_CONF" 2>/dev/null)" = "nameserver 127.0.0.1" ]; then
+        log "system resolver already points to 127.0.0.1"
+        return 0
+    fi
+
+    printf 'nameserver 127.0.0.1\n' >"$RESOLV_CONF" || {
+        log "ERROR: failed to update $RESOLV_CONF"
+        return 1
+    }
+
+    log "system resolver enforced: 127.0.0.1"
+    return 0
+}
+
+restart_tailscaled() {
+    [ -x "$TAILSCALED_INIT" ] || {
+        log "ERROR: tailscaled init script not found"
+        return 1
+    }
+
+    "$TAILSCALED_INIT" restart >/dev/null 2>&1 || {
+        log "ERROR: failed to restart tailscaled after WAN DNS update"
+        return 1
+    }
+
+    elapsed=0
+
+    while [ "$elapsed" -lt "$EDGE_TAILSCALE_WAIT_SECONDS" ]; do
+        if pidof tailscaled >/dev/null 2>&1 &&
+            tailscale --socket="$EDGE_TS_SOCKET" status >/dev/null 2>&1; then
+            log "tailscaled restarted after WAN DNS update"
+            return 0
+        fi
+
+        elapsed=$((elapsed + 1))
+        sleep 1
+    done
+
+    log "ERROR: tailscaled did not become ready after WAN DNS update"
+    return 1
+}
+
+if ! wait_for_dns_path; then
+    log "ERROR: local DNS path not ready after WAN connected event"
+    exit 1
+fi
+
+if ! enforce_system_resolver; then
+    exit 1
+fi
+
+if ! restart_tailscaled; then
+    exit 1
+fi
+
+exit 0
