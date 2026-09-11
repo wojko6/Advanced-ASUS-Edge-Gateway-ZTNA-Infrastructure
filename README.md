@@ -1,6 +1,6 @@
 # Advanced ASUS Edge Gateway & Zero-Trust Lab
 
-[![Shell tests](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml)
+[![Validation suite](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml)
 
 A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. It combines Asuswrt-Merlin, Entware, Tailscale, Unbound, syslog-ng, and a least-privilege firewall policy.
 
@@ -155,6 +155,8 @@ The current validated state includes:
 - no fresh `asus-edge: ERROR`, Tailscale OOM, fatal error, or recurring QoS failure in the post-reboot validation window;
 - final project health check: **0 failures, 0 warnings, exit code 0**.
 
+See the sanitized [validated router-state snapshot](evidence/ROUTER-STATE-2026-09-11.md) for the recruiter-facing baseline and explicit stability-claim boundary.
+
 Remote-client testing over LTE/5G previously confirmed the functional DNS path:
 
 `Android remote client -> Tailscale tunnel -> router dnsmasq/Diversion -> Unbound on loopback:53535 -> recursive DNS`
@@ -212,6 +214,7 @@ Tailscale updates are a separate maintenance action:
 - [Threat model](docs/threat-model.md)
 - [Testing and evidence collection](docs/testing.md)
 - [Publishing validation evidence](docs/evidence-collection.md)
+- [Validated router-state snapshot](evidence/ROUTER-STATE-2026-09-11.md)
 - [Centralized logging with mTLS](docs/centralized-logging.md)
 - [Entware SSD migration](docs/ENTWARE-SSD-MIGRATION.md)
 - [Printer hardening](docs/PRINTER-HARDENING.md)
