@@ -17,6 +17,21 @@ Completed work:
 
 The SSD is now the router's persistent Entware storage. The separate `ROUTER_DATA` partition is reserved for data and future storage workflows rather than being mixed with Entware service files.
 
+## Current validation gate — stability observation
+
+The 2026-09-11 deployment has passed controlled reboot validation, the project health check, and the repository validation suite. Long-term stability is intentionally tracked separately from reboot success.
+
+Current validation controls:
+
+- GitHub Actions runs static, recovery, configuration, firewall, evidence-redaction, and log-retention checks.
+- A dedicated CI job runs WAN-event-handler mock scenarios and the isolated install/rollback test.
+- The current sanitized router-state snapshot is published in `evidence/ROUTER-STATE-2026-09-11.md`.
+- A 14-day unchanged-state observation window runs from 2026-09-11 through 2026-09-25 under normal use.
+- During the observation window, avoid intentional router reboots and major configuration changes unless recovery is required.
+- At the end of the window, review uptime, RAM/swap, SSD mounts, Tailscale, Unbound/DNSSEC, syslog-ng, project health checks, and logs for OOM, crashes, unexpected restarts, WAN/DNS recovery failures, or storage errors.
+
+The deployment must not be described as long-term stable until that observation is completed and the resulting evidence has been reviewed and sanitized.
+
 ## Near-term — Personal cloud / automated file sync
 
 - Create a workstation sync directory (for example `~/RouterCloud`) on Zorin OS.
