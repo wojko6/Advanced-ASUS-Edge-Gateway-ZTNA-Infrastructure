@@ -8,7 +8,7 @@ The [live-validation template](live-validation-template.md) distinguishes expect
 
 ## Published validation timeline
 
-- **2026-09-11 — current router baseline:** sanitized SSD/Entware migration and controlled reboot validation. The published evidence records automatic mounting of both SSD partitions, active swap, restored Tailscale/Unbound/syslog-ng service state, dnsmasq forwarding to local Unbound, DNSSEC AD validation, and the post-reboot health-check result. See [2026-09-11 evidence](2026-09-11/entware-ssd-migration-validation.txt).
+- **2026-09-11 — current router baseline:** sanitized SSD/Entware migration and controlled reboot validation. The published evidence records automatic mounting of both SSD partitions, active swap, restored Tailscale/Unbound/syslog-ng service state, dnsmasq forwarding to local Unbound, DNSSEC AD validation, and the post-reboot health-check result. Start with the recruiter-facing [validated router-state snapshot](ROUTER-STATE-2026-09-11.md), then review the underlying [2026-09-11 evidence](2026-09-11/entware-ssd-migration-validation.txt).
 - **2026-09-08 — remote-client validation:** Android over LTE/5G with Tailscale DNS enabled. It validates the remote DNS path through Tailscale, dnsmasq/Diversion, and recursive Unbound, including normal resolution, DNSSEC validation, and NXDOMAIN blocking of a test advertising/tracking domain. See the [live validation report](2026-09-08/live-validation.md).
 - Earlier dated directories preserve narrower validation snapshots and regression evidence from the deployment process.
 

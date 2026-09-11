@@ -1,4 +1,4 @@
-name: Shell tests
+name: Validation suite
 
 on:
   workflow_dispatch:
@@ -9,12 +9,13 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  static-and-recovery:
+    name: Static, recovery and evidence checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install ShellCheck
         run: sudo apt-get update && sudo apt-get install --yes shellcheck
-      - name: Run tests
+      - name: Run static, recovery and evidence-redaction tests
         run: sh tests/test-static.sh
