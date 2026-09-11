@@ -1,25 +1,44 @@
 # Roadmap
 
-## Near-term — SSD Migration + Personal Cloud / Automated File Sync
+## Completed and validated — SSD migration
 
-- Replace the current router USB flash drive with a dedicated SSD connected to the ASUS TUF-AX5400 through a compatible M.2 SATA-to-USB enclosure.
-- Migrate the existing Entware environment, swap usage, logs, add-on data, and other required persistent router storage from the current USB flash drive to the SSD.
-- Preserve the current router configuration and service behaviour during the migration, with a documented rollback path to the original USB flash drive.
-- Reserve a separate directory on the SSD for private user data, isolated from Entware and router-service files.
+The persistent router storage migration was completed and reboot-validated on 2026-09-11.
+
+Completed work:
+
+- Replaced the previous Entware USB flash-drive deployment with a dedicated M.2 SATA SSD connected to the ASUS TUF-AX5400 through a compatible USB enclosure.
+- Partitioned the SSD into a dedicated `ENTWARE` filesystem and a separate `ROUTER_DATA` filesystem.
+- Migrated the existing Entware environment while preserving the original USB flash drive as rollback media during validation.
+- Restored swap-backed service startup and validated both swap files after a clean router reboot.
+- Validated automatic storage mounts and the startup of Tailscale, Unbound, dnsmasq integration, syslog-ng, and project firewall controls.
+- Confirmed direct Unbound DNS resolution with DNSSEC validation after reboot.
+- Retained sanitized validation evidence suitable for public portfolio documentation.
+- Documented the migration procedure and recovery considerations in `docs/ENTWARE-SSD-MIGRATION.md`.
+
+The SSD is now the router's persistent Entware storage. The separate `ROUTER_DATA` partition is reserved for data and future storage workflows rather than being mixed with Entware service files.
+
+## Near-term — Personal cloud / automated file sync
+
 - Create a workstation sync directory (for example `~/RouterCloud`) on Zorin OS.
 - Implement incremental synchronization with `rsync` over SSH.
+- Store synchronized data on the dedicated `ROUTER_DATA` filesystem, isolated from Entware and router-service files.
 - Support secure remote synchronization through Tailscale without exposing file-sharing services to the public Internet.
 - Automate synchronization with a systemd user timer and/or a filesystem-triggered workflow.
 - Default to upload/copy semantics so accidental local deletion does not automatically remove the remote copy.
 - Validate LAN and Tailscale transfers, interrupted-transfer recovery, router/workstation reboot behaviour, permissions, and unauthorized-access handling.
 - Verify transferred-file integrity with SHA-256 and record measured throughput.
-- Validate Entware and router services after migration, including startup/autostart and storage mounts.
-- Document the SSD migration procedure, synchronization workflow, failure handling, recovery, and rollback procedure.
+- Document synchronization, failure handling, recovery, and rollback procedures.
 - Retain sanitized test evidence suitable for portfolio documentation.
 
-Target end state: the SSD becomes the router's persistent USB storage for Entware and related services, while also providing a separate private cloud-like data area synchronized automatically from Zorin OS.
+Target end state: the SSD remains the router's persistent storage for Entware and related services while `ROUTER_DATA` provides a separate private cloud-like data area synchronized automatically from Zorin OS.
 
-The feature must only be documented as **Completed and validated** after the storage migration, service validation, file synchronization, recovery, and integrity tests have actually been completed.
+The synchronization feature must only be documented as **Completed and validated** after file synchronization, recovery, integrity, permissions, and reboot tests have actually been completed.
+
+## Stability follow-up
+
+- Keep the validated SSD/Entware deployment under normal operation and retain a later stability snapshot.
+- Review logs for recurring Tailscale memory failures, WAN/DNS recovery errors, storage/mount failures, and unexpected service restarts.
+- Publish only sanitized evidence; never publish raw router syslog or credentials.
 
 ## Phase 2 — dedicated x86 edge
 
