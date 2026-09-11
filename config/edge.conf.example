@@ -50,6 +50,12 @@ EDGE_PRINTER_LAN_IP=""
 EDGE_PRINTER_TCP_PORTS="80 631 9100"
 EDGE_PRINTER_UDP_PORTS="161"
 
+# Require the router's legacy USB print server to remain disabled. This is
+# independent of direct access to a standalone LAN printer above. healthcheck.sh
+# verifies NVRAM, lpd/u2ec runtime processes, and the router TCP/515 listener.
+# Set to 0 only when a USB printer is intentionally attached to the ASUS router.
+EDGE_REQUIRE_USB_PRINTER_DISABLED="1"
+
 # Preserve the original project's exit-node function while keeping LAN denied.
 # The firewall allows forwarding only from tailscale0 to the detected WAN interface.
 EDGE_ENABLE_EXIT_NODE="1"
