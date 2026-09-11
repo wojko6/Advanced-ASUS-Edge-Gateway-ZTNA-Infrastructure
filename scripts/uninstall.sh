@@ -66,7 +66,7 @@ if executable_exists ip6tables >/dev/null 2>&1; then
     ip6tables -t filter -X EDGE_TS6_FORWARD 2>/dev/null || true
 fi
 
-for hook in firewall-start services-start; do
+for hook in firewall-start services-start wan-event; do
     current="/jffs/scripts/$hook"
     legacy="$ADDON_DIR/legacy/$hook"
     if [ -f "$current" ] && grep -q 'ASUS_EDGE_MANAGED_HOOK' "$current"; then

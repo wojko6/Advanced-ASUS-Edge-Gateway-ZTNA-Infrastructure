@@ -54,9 +54,13 @@ class RecoveryTests(unittest.TestCase):
         return path
 
     def run_script(self, path, *args, env=None):
+        test_env = dict(os.environ)
+        test_env["EDGE_TEST_ROOT"] = str(self.root)
+        test_env.update(env or {})
+
         return subprocess.run(["sh", str(path), *map(str, args)],
                               capture_output=True, text=True,
-                              env=dict(os.environ, **(env or {})), timeout=20)
+                              env=test_env, timeout=20)
 
     def archive(self, files, manifest=None, link=False):
         if manifest is None:

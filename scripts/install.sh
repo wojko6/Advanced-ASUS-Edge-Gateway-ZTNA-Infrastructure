@@ -34,8 +34,11 @@ current_uid() {
 
 SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 REPO_DIR="$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)"
-ADDON_DIR="/jffs/addons/asus-edge"
-BACKUP_DIR="$ADDON_DIR/backups/install-$(date +%Y%m%d-%H%M%S)"
+ROOT_DIR="${EDGE_TEST_ROOT:-}"
+JFFS_DIR="${ROOT_DIR}/jffs"
+
+ADDON_DIR="$JFFS_DIR/addons/asus-edge"
+BACKUP_DIR="$ADDON_DIR/backups/install-$(date +%Y%m%d-%H%M%S)-$$"
 APPLY=0
 
 usage() {
@@ -52,13 +55,19 @@ esac
 
 uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
 [ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
-[ -d /jffs ] || { echo "ERROR: /jffs is unavailable" >&2; exit 1; }
+[ -d "$JFFS_DIR" ] || { echo "ERROR: $JFFS_DIR is unavailable" >&2; exit 1; }
 [ -f "$REPO_DIR/config/edge.conf" ] || {
     echo "ERROR: create config/edge.conf from config/edge.conf.example first" >&2
     exit 1
 }
 
-for file in "$REPO_DIR/router/scripts/firewall-start" "$REPO_DIR/router/scripts/services-start" "$REPO_DIR/config/edge.conf"; do
+for file in \
+    "$REPO_DIR/router/scripts/firewall-start" \
+    "$REPO_DIR/router/scripts/services-start" \
+    "$REPO_DIR/router/scripts/wan-event" \
+    "$REPO_DIR/router/scripts/wan-event-handler" \
+    "$REPO_DIR/config/edge.conf"
+do
     sh -n "$file" || exit 1
 done
 
@@ -76,9 +85,10 @@ snapshot_path() {
     fi
 }
 
-snapshot_path /jffs/configs/asus-edge.conf asus-edge.conf
-snapshot_path /jffs/scripts/firewall-start firewall-start
-snapshot_path /jffs/scripts/services-start services-start
+snapshot_path "$JFFS_DIR/configs/asus-edge.conf" asus-edge.conf
+snapshot_path "$JFFS_DIR/scripts/firewall-start" firewall-start
+snapshot_path "$JFFS_DIR/scripts/services-start" services-start
+snapshot_path "$JFFS_DIR/scripts/wan-event" wan-event
 snapshot_path "$ADDON_DIR/bin" bin
 snapshot_path "$ADDON_DIR/legacy" legacy
 
@@ -98,11 +108,12 @@ finish_installation() {
     if [ "$installation_active" = "1" ]; then
         echo "ERROR: installation failed; restoring complete snapshot from $BACKUP_DIR" >&2
         rollback_failed=0
-        restore_path /jffs/configs/asus-edge.conf asus-edge.conf || rollback_failed=1
+        restore_path "$JFFS_DIR/configs/asus-edge.conf" asus-edge.conf || rollback_failed=1
         restore_path "$ADDON_DIR/bin" bin || rollback_failed=1
         restore_path "$ADDON_DIR/legacy" legacy || rollback_failed=1
-        restore_path /jffs/scripts/firewall-start firewall-start || rollback_failed=1
-        restore_path /jffs/scripts/services-start services-start || rollback_failed=1
+        restore_path "$JFFS_DIR/scripts/firewall-start" firewall-start || rollback_failed=1
+        restore_path "$JFFS_DIR/scripts/services-start" services-start || rollback_failed=1
+        restore_path "$JFFS_DIR/scripts/wan-event" wan-event || rollback_failed=1
         if [ "$rollback_failed" = "1" ]; then
             echo "ERROR: rollback incomplete; recover from $BACKUP_DIR using local access" >&2
         elif [ "$firewall_attempted" = "1" ]; then
@@ -117,7 +128,7 @@ finish_installation() {
 trap finish_installation EXIT
 trap 'exit 1' HUP INT TERM
 
-mkdir -p "$ADDON_DIR/bin" "$ADDON_DIR/legacy" /jffs/scripts /jffs/configs
+mkdir -p "$ADDON_DIR/bin" "$ADDON_DIR/legacy" "$JFFS_DIR/scripts" "$JFFS_DIR/configs"
 
 refuse_symlink_destination() {
     destination="$1"
@@ -136,16 +147,18 @@ install_file() {
     chmod "$mode" "$dst" || exit 1
 }
 
-install_file "$REPO_DIR/config/edge.conf" /jffs/configs/asus-edge.conf 0600
+install_file "$REPO_DIR/config/edge.conf" "$JFFS_DIR/configs/asus-edge.conf" 0600
 install_file "$REPO_DIR/router/scripts/firewall-start" "$ADDON_DIR/bin/firewall-start" 0755
 install_file "$REPO_DIR/router/scripts/services-start" "$ADDON_DIR/bin/services-start" 0755
+install_file "$REPO_DIR/router/scripts/wan-event" "$ADDON_DIR/bin/wan-event" 0755
+install_file "$REPO_DIR/router/scripts/wan-event-handler" "$ADDON_DIR/bin/wan-event-handler" 0755
 install_file "$REPO_DIR/scripts/healthcheck.sh" "$ADDON_DIR/bin/healthcheck.sh" 0755
 install_file "$REPO_DIR/scripts/check-usb-exposure.sh" "$ADDON_DIR/bin/check-usb-exposure.sh" 0755
 install_file "$REPO_DIR/scripts/collect-evidence.sh" "$ADDON_DIR/bin/collect-evidence.sh" 0755
 
 install_hook() {
     hook_name="$1"
-    hook_path="/jffs/scripts/$hook_name"
+    hook_path="$JFFS_DIR/scripts/$hook_name"
     legacy_path="$ADDON_DIR/legacy/$hook_name"
 
     refuse_symlink_destination "$hook_path"
@@ -158,7 +171,7 @@ install_hook() {
     {
         echo '#!/bin/sh'
         echo '# ASUS_EDGE_MANAGED_HOOK'
-        echo "CONFIG_FILE='/jffs/configs/asus-edge.conf'"
+        echo "CONFIG_FILE='$JFFS_DIR/configs/asus-edge.conf'"
         echo '[ -r "$CONFIG_FILE" ] && . "$CONFIG_FILE"'
         echo "if [ \"\${EDGE_RUN_LEGACY_HOOKS:-0}\" = '1' ] && [ -x '$legacy_path' ]; then"
         echo "    '$legacy_path' \"\$@\""
@@ -170,6 +183,7 @@ install_hook() {
 
 install_hook firewall-start
 install_hook services-start
+install_hook wan-event
 
 echo "Existing hooks were preserved under $ADDON_DIR/legacy and are disabled by default."
 echo "Set EDGE_RUN_LEGACY_HOOKS=1 only after reviewing those files."
@@ -181,7 +195,7 @@ fi
 if [ "$APPLY" = "1" ]; then
     echo "Applying Tailscale firewall policy..."
     firewall_attempted=1
-    /jffs/scripts/firewall-start || exit 1
+    "$JFFS_DIR/scripts/firewall-start" || exit 1
 fi
 
 installation_active=0
