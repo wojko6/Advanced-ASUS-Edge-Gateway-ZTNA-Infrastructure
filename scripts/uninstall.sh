@@ -66,17 +66,27 @@ if executable_exists ip6tables >/dev/null 2>&1; then
     ip6tables -t filter -X EDGE_TS6_FORWARD 2>/dev/null || true
 fi
 
+hook_restore_failed=0
 for hook in firewall-start services-start wan-event; do
     current="/jffs/scripts/$hook"
     legacy="$ADDON_DIR/legacy/$hook"
     if [ -f "$current" ] && grep -q 'ASUS_EDGE_MANAGED_HOOK' "$current"; then
         if [ -f "$legacy" ]; then
-            cp -p "$legacy" "$current"
-        else
-            rm -f "$current"
+            if ! cp -p "$legacy" "$current"; then
+                echo "ERROR: failed to restore previous hook: $hook" >&2
+                hook_restore_failed=1
+            fi
+        elif ! rm -f "$current"; then
+            echo "ERROR: failed to remove managed hook: $hook" >&2
+            hook_restore_failed=1
         fi
     fi
 done
+
+if [ "$hook_restore_failed" = "1" ]; then
+    echo "ERROR: uninstall incomplete; inspect /jffs/scripts using local access" >&2
+    exit 1
+fi
 
 echo "Runtime rules removed and previous hooks restored when available."
 echo "Configuration and backups remain under /jffs; remove them manually after verification."
