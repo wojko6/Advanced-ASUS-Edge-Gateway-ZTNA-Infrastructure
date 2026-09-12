@@ -20,14 +20,17 @@ After the controlled reboot:
 - An additional 2 GiB swap file on `ROUTER_DATA` was active.
 - Both swap files reported zero use at the validation point.
 
+These storage and swap observations are directly supported by the sanitized `2026-09-11/entware-ssd-migration-validation.txt` artifact.
+
 ## Services
 
-The post-reboot validation confirmed:
+The published 2026-09-11 SSD-migration artifact directly confirms:
 
-- `tailscaled` running successfully.
-- Tailscale status command successful; the router was online and offering exit-node capability.
+- `tailscaled` running successfully;
+- Tailscale status command successful, with the router online and offering exit-node capability;
 - `unbound` running successfully.
-- `syslog-ng` restored as part of the validated reboot state documented elsewhere in the repository.
+
+`syslog-ng` is part of the broader reference deployment and is discussed in other repository documentation/evidence, but it is **not directly evidenced by the SSD-migration validation artifact linked below**. Do not use this snapshot alone to claim successful syslog-ng recovery, mTLS delivery, buffering, or post-reboot collector delivery.
 
 ## DNS path
 
@@ -35,28 +38,44 @@ The deployed DNS chain remained:
 
 `client -> dnsmasq -> Unbound @ 127.0.0.1:53535 -> recursive DNS`
 
-The public validation snapshot confirmed:
+The public validation snapshot directly confirmed:
 
-- `dnsmasq` configured with `no-resolv`.
-- `dnsmasq` forwarding to `127.0.0.1#53535`.
-- Direct Unbound query for `example.com` returned `NOERROR`.
-- The response included the DNSSEC `AD` flag.
+- `dnsmasq` configured with `no-resolv`;
+- `dnsmasq` forwarding to `127.0.0.1#53535`;
+- direct Unbound query for `example.com` returned `NOERROR`;
+- the response included the DNSSEC `AD` flag.
+
+The artifact confirms the configured dnsmasq upstream and a successful direct Unbound query at the validation point. It does not, by itself, prove every possible client path, encrypted-DNS behavior, or continuous resolver availability outside that observation.
 
 ## Validation result
 
-The sanitized 2026-09-11 evidence records a PASS for the SSD migration and controlled reboot validation:
+The sanitized 2026-09-11 evidence records a PASS for the specific SSD migration and controlled reboot checks captured in the artifact:
 
-- both SSD partitions auto-mounted,
-- swap activated automatically,
-- Tailscale recovered successfully after the earlier no-swap OOM condition was eliminated,
-- Unbound started successfully,
-- direct recursive DNS resolution succeeded with DNSSEC validation,
-- dnsmasq continued forwarding to the local Unbound resolver.
+- both SSD partitions auto-mounted;
+- swap activated automatically;
+- Tailscale was running successfully after the earlier no-swap OOM condition was addressed;
+- Unbound was running successfully;
+- direct recursive DNS resolution succeeded with DNSSEC validation;
+- dnsmasq remained configured to use the local Unbound resolver.
 
 See: [`2026-09-11/entware-ssd-migration-validation.txt`](2026-09-11/entware-ssd-migration-validation.txt).
+
+## Evidence boundary
+
+Treat this document as an index/interpretation of the linked sanitized artifact, not as additional independent evidence. Claims above are deliberately limited to observations present in that artifact unless another evidence source is explicitly named.
+
+In particular:
+
+- process presence/status at one validation point is not a long-term availability claim;
+- an advertised exit-node capability is not, by itself, evidence that every exit-node traffic path was exercised successfully in this artifact;
+- a DNSSEC `AD` response for the recorded direct query is evidence for that validation event, not a guarantee for every domain or future query;
+- configuration presence is not equivalent to end-to-end traffic validation;
+- components not captured in the linked artifact must not be inferred merely because they are part of the intended architecture.
 
 ## Stability claim boundary
 
 This snapshot proves the validated state at the time of the controlled reboot test. It does **not** by itself prove long-term stability.
 
-A 14-day unchanged-state observation period began on 2026-09-11. Long-term stability should only be claimed after that observation is completed and documented with final uptime, memory/swap, service, resolver, firewall, health-check, and error-log evidence.
+A 14-day unchanged-state observation period began on 2026-09-11 and runs through 2026-09-25. Long-term stability should only be claimed after that observation is completed and documented with final uptime, memory/swap, service, resolver, firewall, health-check, and error-log evidence.
+
+During the active observation window, do not create stronger evidence by intentionally changing router configuration, restarting services, re-applying the firewall, or rebooting merely to repeat these checks. Prefer read-only observation. If recovery from an active fault or security incident requires an intervention, document it and establish a new known-good baseline before restarting the observation period.
