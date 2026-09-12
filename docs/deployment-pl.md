@@ -2,6 +2,8 @@
 
 Ten przewodnik opisuje pierwsze, kontrolowane wdrożenie projektu na Asuswrt-Merlin. Pierwsze zastosowanie reguł wykonaj z komputera podłączonego do LAN i zachowaj dostęp do panelu routera.
 
+> **Aktualna bramka stabilności:** poniższe polecenia opisują wdrożenie lub zaplanowane okno serwisowe. Nie są instrukcją do ponownego zastosowania konfiguracji na referencyjnym routerze podczas obserwacji niezmienionego stanu trwającej do **2026-09-25**. W tym okresie nie wykonuj rutynowo `install.sh --apply`, restartów dnsmasq/Unbound, zmian firewalla/DNS/usług/pakietów ani celowego restartu routera. Dopuszczalne są odczytowe kontrole stanu; awaria lub aktywny incydent bezpieczeństwa ma pierwszeństwo przed obserwacją stabilności.
+
 ## 1. Przygotowanie routera
 
 Włącz obsługę własnych skryptów JFFS. Sprawdź montowanie `/opt`, Entware i wymagane pakiety:
@@ -27,12 +29,10 @@ Ustaw przede wszystkim:
 - `EDGE_ALLOWED_LAN_TCP_PORTS` i `EDGE_ALLOWED_LAN_UDP_PORTS` — wymagane porty;
 - `EDGE_ENABLE_EXIT_NODE` — `1` tylko wtedy, gdy router ma być exit node;
 - `EDGE_WAN_IF` — pozostaw puste dla autodetekcji lub ustaw interfejs wskazany przez router;
-- `EDGE_TS_SOCKET` — ścieżkę socketu lokalnego procesu `tailscaled`.
-- `EDGE_UNBOUND_PORT` — port loopback zgodny z konfiguracją Unbound, domyślnie `53535`.
-- `EDGE_REQUIRE_SWAP` — pozostaw `auto` albo ustaw `1` na routerze z małą
-  ilością RAM i swapem na USB; zabezpiecza start Tailscale przy rygorystycznym
-  `vm.overcommit_memory=2`.
-- `EDGE_SWAP_WAIT_SECONDS` — czas oczekiwania na swap przed startem Tailscale.
+- `EDGE_TS_SOCKET` — ścieżkę socketu lokalnego procesu `tailscaled`;
+- `EDGE_UNBOUND_PORT` — port loopback zgodny z konfiguracją Unbound, domyślnie `53535`;
+- `EDGE_REQUIRE_SWAP` — pozostaw `auto`, ustaw `1`, jeśli dane wdrożenie bezwzględnie wymaga aktywnego swapu przed startem Tailscale, albo `0`, aby wyłączyć ten warunek. W trybie `auto` skrypt wymaga swapu na platformach niskopamięciowych objętych ochroną przy rygorystycznym `vm.overcommit_memory=2`; mechanizm nie zależy od tego, czy swap znajduje się na SSD, flashu czy innym odpowiednim nośniku;
+- `EDGE_SWAP_WAIT_SECONDS` — czas oczekiwania na wymagany swap przed startem Tailscale.
 
 Każdy port z listy zostanie udostępniony każdemu hostowi z listy. Jeżeli hosty wymagają różnych zestawów usług, potrzebne są osobne reguły/łańcuchy.
 
@@ -66,16 +66,17 @@ Jeżeli Tailscale nie jest uwierzytelniony, uruchom jednorazowo:
 
 ```sh
 tailscale --socket=/var/run/tailscale/tailscaled.sock up \
+  --netfilter-mode=off \
   --accept-dns=false \
   --advertise-routes=192.168.50.0/24 \
   --advertise-exit-node
 ```
 
-Pomiń `--advertise-exit-node`, jeżeli `EDGE_ENABLE_EXIT_NODE="0"`. Dostosuj `config/tailscale/policy.example.hujson`, opublikuj politykę i zatwierdź tylko wymaganą trasę lub exit node w panelu Tailscale.
+`--netfilter-mode=off` jest celowy: politykę routera egzekwują łańcuchy `EDGE_TS_*`, a nie równoległe reguły `ts-*` zarządzane przez Tailscale. Pomiń `--advertise-exit-node`, jeżeli `EDGE_ENABLE_EXIT_NODE="0"`. Dostosuj `config/tailscale/policy.example.hujson`, opublikuj politykę i zatwierdź tylko wymaganą trasę lub exit node w panelu Tailscale.
 
 ## 5. Zastosowanie firewalla
 
-Pozostając w LAN:
+Poniższe wykonuj z LAN wyłącznie podczas pierwszego wdrożenia, zaplanowanego maintenance albo odzyskiwania po awarii — nie jako rutynową czynność podczas aktywnej bramki stabilności:
 
 ```sh
 ./scripts/install.sh --apply
@@ -105,7 +106,7 @@ cp config/unbound.conf.example /opt/etc/unbound/unbound.conf
 unbound-checkconf /opt/etc/unbound/unbound.conf
 ```
 
-Jeżeli używasz amtm Unbound Manager, nie nadpisuj generowanego pliku runtime. Sprawdź konfigurację zarządzaną przez dodatek:
+Jeżeli używasz amtm Unbound Manager, nie nadpisuj generowanego pliku runtime. Sprawdź konfigurację zarządzaną przez dodatek. Restart poniżej jest działaniem serwisowym i podczas aktywnej obserwacji niezmienionego stanu powinien zostać odłożony, chyba że jest potrzebny do odzyskania usługi:
 
 ```sh
 grep -E '^(port: 53535|interface: 127\.0\.0\.1@53535)' /opt/var/lib/unbound/unbound.conf
@@ -119,7 +120,7 @@ Następnie zweryfikuj resolver:
 dig +dnssec -p 53535 @127.0.0.1 cloudflare.com A
 ```
 
-Jeżeli `/jffs/configs/dnsmasq.conf.add` już istnieje, scal `config/dnsmasq.conf.add.example` zamiast nadpisywać prywatne rekordy DDNS lub lokalne. Aktywna konfiguracja musi zawierać `interface=tailscale0`; dzięki `bind-dynamic` dnsmasq obsłuży adres interfejsu po jego utworzeniu. Po scaleniu uruchom `service restart_dnsmasq` i potwierdź wpis w `/etc/dnsmasq.conf`. Sprawdź również `/jffs/scripts/dnsmasq.postconf`: aktywny hook NextDNS może zakończyć skrypt przed konfiguracją Unbound i przejąć ruch na port `5342`.
+Jeżeli `/jffs/configs/dnsmasq.conf.add` już istnieje, scal `config/dnsmasq.conf.add.example` zamiast nadpisywać prywatne rekordy DDNS lub lokalne. Aktywna konfiguracja musi zawierać `interface=tailscale0`; dzięki `bind-dynamic` dnsmasq obsłuży adres interfejsu po jego utworzeniu. Po scaleniu, podczas zaplanowanego wdrożenia/maintenance, uruchom `service restart_dnsmasq` i potwierdź wpis w `/etc/dnsmasq.conf`. Podczas aktywnej bramki stabilności ogranicz się do odczytowej weryfikacji istniejącego stanu. Sprawdź również `/jffs/scripts/dnsmasq.postconf`: aktywny hook innego resolvera może zakończyć skrypt przed konfiguracją Unbound lub przejąć klasyczny ruch DNS; nie zakładaj konkretnego portu bez sprawdzenia bieżącej konfiguracji.
 
 ## 7. Test dostępu
 
@@ -129,9 +130,11 @@ Z uprawnionego urządzenia administracyjnego uruchom test, wskazując adres zarz
 sh tests/test-live-client.sh 192.168.50.1 192.168.50.20
 ```
 
-Następnie wykonaj macierz z [testing.md](testing.md) dla urządzenia administratora i zwykłego użytkownika. Porównaj wyniki z licznikami iptables i przechwyconym ruchem.
+Następnie wykonaj macierz z [testing.md](testing.md) dla urządzenia administratora i zwykłego użytkownika. Porównaj wyniki z licznikami iptables i — poza okresem obserwacji niezmienionego stanu — z kontrolowanym przechwyceniem ruchu, jeżeli jest ono rzeczywiście potrzebne. Podczas aktywnej bramki stabilności preferuj istniejące logi i odczytowe liczniki zamiast wprowadzania nowych mechanizmów telemetrycznych na routerze.
 
 ## 8. Backup i wycofanie zmian
+
+Poniższe polecenia są przeznaczone dla zaplanowanego maintenance lub odzyskiwania, a nie do rutynowego wykonywania podczas aktywnej obserwacji:
 
 ```sh
 ./scripts/backup.sh /opt/backups/asus-edge
