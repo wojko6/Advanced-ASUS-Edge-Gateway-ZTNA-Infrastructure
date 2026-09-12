@@ -165,6 +165,12 @@ That validation confirmed Internet connectivity with Tailscale DNS enabled, DNS 
 
 See the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.md), the [SSD migration procedure](docs/ENTWARE-SSD-MIGRATION.md), and the sanitized [2026-09-11 reboot validation evidence](evidence/2026-09-11/entware-ssd-migration-validation.txt).
 
+## Current stability gate
+
+The reference router is in a 14-day unchanged-state observation window from **2026-09-11 through 2026-09-25**. During this gate, router configuration changes and intentional reboots are avoided unless recovery is required. Repository/documentation work and endpoint-only experiments may continue without changing the router.
+
+The planned [endpoint filtering validation](docs/endpoint-filtering-validation.md) evaluates Zen on Windows/Chrome and, optionally, AdGuard for Windows while preserving the existing router DNS architecture. Results will only be promoted to evidence after real tests are completed.
+
 ## Validation and recovery
 
 ```sh
@@ -214,6 +220,7 @@ Tailscale updates are a separate maintenance action:
 - [Threat model](docs/threat-model.md)
 - [Testing and evidence collection](docs/testing.md)
 - [Publishing validation evidence](docs/evidence-collection.md)
+- [Endpoint filtering validation](docs/endpoint-filtering-validation.md)
 - [Validated router-state snapshot](evidence/ROUTER-STATE-2026-09-11.md)
 - [Centralized logging with mTLS](docs/centralized-logging.md)
 - [Entware SSD migration](docs/ENTWARE-SSD-MIGRATION.md)
