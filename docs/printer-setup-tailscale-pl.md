@@ -7,6 +7,14 @@ LAN zgodnie z [instrukcją lokalną](printer-setup-lan-pl.md).
 > Adresy w publicznym dokumencie pochodzą z zakresów dokumentacyjnych. Rzeczywiste
 > adresy LAN i Tailscale przechowuj wyłącznie w lokalnym `asus-edge.conf`.
 
+> **Stability gate:** na referencyjnym routerze trwa niezmieniany okres obserwacji
+> 2026-09-11–2026-09-25. W tym czasie nie uruchamiaj `firewall-start`, nie zeruj
+> liczników iptables i nie zmieniaj polityki tylko w celu powtórzenia testu.
+> Dozwolona jest pasywna, tylko do odczytu kontrola istniejących reguł i liczników.
+> Procedury wdrożeniowe i aktywne testy zmian wykonuj po zakończeniu obserwacji albo
+> w zaplanowanym oknie utrzymaniowym. Wymagana interwencja awaryjna przerywa
+> niezmieniany baseline i powinna zostać odnotowana.
+
 ## 1. Potwierdzony i niepotwierdzony zakres
 
 Potwierdzono:
@@ -124,7 +132,8 @@ Polityka powinna dopuszczać jedno źródło `/32`, jeden cel `/32` i wyłączni
 potwierdzone porty. Pozostały ruch przychodzący z `tailscale0` pozostaje
 blokowany.
 
-Zastosowanie i kontrola:
+Wdrożenie lub ponowne zastosowanie polityki wykonuj wyłącznie w zaplanowanym
+oknie zmian:
 
 ```sh
 /jffs/scripts/firewall-start
@@ -132,8 +141,17 @@ Zastosowanie i kontrola:
 iptables -nvL EDGE_TS_FORWARD --line-numbers
 ```
 
-Oczekiwany healthcheck zawiera `source-scoped printer policy`, zero błędów i zero
-ostrzeżeń. Dwukrotne uruchomienie `firewall-start` nie może powielać reguł.
+Podczas bieżącego stability gate ogranicz kontrolę do odczytu istniejącego stanu:
+
+```sh
+iptables -nvL EDGE_TS_FORWARD --line-numbers
+iptables-save | grep -E 'EDGE_TS_|tailscale0'
+```
+
+Oczekiwany healthcheck po zaplanowanym wdrożeniu zawiera `source-scoped printer
+policy`, zero błędów i zero ostrzeżeń. Test idempotencji przez ponowne uruchomienie
+`firewall-start` wykonuj tylko w oknie utrzymaniowym; nie re-aplikuj firewalla
+wyłącznie dla audytu podczas niezmienianej obserwacji.
 
 ## 5. Konfiguracja telefonu
 
@@ -151,6 +169,10 @@ SyncThru. Logowanie administratora jest wymagane tylko przy zmianie ustawień.
 
 ## 6. Potwierdzony test zdalny
 
+Poniższa procedura opisuje aktywny test funkcjonalny. Na referencyjnym routerze
+powtarzaj ją dopiero po zakończeniu bieżącego stability gate lub w świadomie
+zaplanowanym oknie walidacji.
+
 1. Odłącz telefon od domowego Wi-Fi.
 2. Połącz go z obcą siecią Wi-Fi albo hotspotem drugiego urządzenia.
 3. Włącz Tailscale; Exit Node pozostaw niewybrany.
@@ -158,12 +180,15 @@ SyncThru. Logowanie administratora jest wymagane tylko przy zmianie ustawień.
 5. Wyślij jedną stronę PDF lub zdjęcie przez Samsung Print Service Plugin.
 6. Potwierdź fizyczny wydruk i brak zaległego zadania Androida.
 
-Podczas próby obserwuj liczniki:
+Podczas próby obserwuj liczniki bez ich zerowania:
 
 ```sh
-iptables -Z EDGE_TS_FORWARD
 iptables -nvL EDGE_TS_FORWARD --line-numbers
 ```
+
+Jeżeli potrzebny jest czysty pomiar delta, zapisz stan liczników przed testem i
+porównaj go ze stanem po teście. Nie używaj `iptables -Z` na referencyjnym
+routerze podczas niezmienianej obserwacji.
 
 Interpretacja:
 
@@ -197,6 +222,10 @@ tcpdump -ni any -nn -s 96 \
   'host PRINTER_LAN_IP and (tcp port 80 or tcp port 631 or tcp port 9100 or udp port 161)'
 ```
 
+Uruchamiaj nowe przechwycenie na referencyjnym routerze tylko wtedy, gdy jest ono
+zgodne z aktualnym planem obserwacji/walidacji; podczas stability gate preferuj
+już istniejące logi, liczniki i opublikowane evidence.
+
 | Objaw | Wniosek | Dalszy krok |
 |---|---|---|
 | Brak HTTP i wszystkie liczniki = 0 | Ruch nie wszedł przez Tailscale | Sprawdź połączenie, trasę i split tunneling |
@@ -227,7 +256,7 @@ sterownikiem lokalnym był Samsung Universal Print Driver 3.
 - nie dopuszczaj całego tailnetu, jeżeli drukować ma jedno urządzenie;
 - po zmianie telefonu zaktualizuj źródłowy adres Tailscale `/32`;
 - przechowuj rzeczywiste adresy wyłącznie w lokalnej konfiguracji;
-- po restarcie routera uruchom healthcheck i sprawdź reguły;
+- po zaplanowanym restarcie routera uruchom healthcheck i sprawdź reguły;
 - traktuj dostęp przez same dane komórkowe jako niepotwierdzony;
 - w przyszłości rozważ CUPS/IPP na Raspberry Pi lub x86-64, jeśli wymagany jest
   niezawodny wydruk niezależny od zachowania starej wtyczki Androida.
