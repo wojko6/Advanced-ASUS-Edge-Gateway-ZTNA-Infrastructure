@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+PATH="${EDGE_AUDIT_PATH:-/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin}"
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 FAILURES=0
 WARNINGS=0
