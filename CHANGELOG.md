@@ -20,16 +20,15 @@
 
 ### Fixed
 - Finalized WAN event handling and rollback tests, including recovery from DNS-path and Tailscale restart failures.
+- Hardened firewall, service-start, WAN-event, health-check, log-retention, USB-exposure, uninstall, and Tailscale-update failure handling with regression coverage for the repository-side behavior.
 - Removed stale ExpressVPN and NordVPN client configuration from the deployed reference environment.
 - Disabled Adaptive QoS after repeatable firmware QoS failures were isolated to the enabled feature.
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
-- Controlled post-migration reboot restored both SSD mounts, both swap files, Tailscale, Unbound, syslog-ng, dnsmasq forwarding, and project firewall policy without manual repair.
-- Unbound returned DNSSEC-validated answers with the AD flag on `127.0.0.1:53535` after reboot.
-- Final router health check completed with 0 failures, 0 warnings, and exit code 0.
-- Fresh post-reboot logs contained no new `asus-edge: ERROR`, Tailscale OOM, fatal error, or recurring Adaptive QoS failure in the validation window.
-- Printer regression checks and the repository static/recovery suite pass in GitHub Actions.
+- The sanitized 2026-09-11 SSD-migration artifact directly confirms automatic mounting of both SSD filesystems, activation of both swap files, successful Tailscale status with exit-node capability advertised, Unbound running, direct DNSSEC-validated resolution on `127.0.0.1:53535`, and dnsmasq configured to use the local Unbound resolver.
+- The 2026-09-11 SSD-migration artifact does not by itself prove syslog-ng recovery, end-to-end mTLS delivery, firewall/printer behavior, every exit-node traffic path, a complete health-check result, or long-term stability; those claims require their own dated evidence.
+- Printer regression checks and the repository static/recovery/configuration-validation suite pass in GitHub Actions; CI results are repository-level evidence, not a substitute for live-router validation.
 - A 14-day unchanged-state stability observation is in progress; long-term stability is not claimed until that observation completes.
 - Endpoint-filtering and mobile-telemetry results are not yet claimed as validated; the repository currently contains methodology and evidence rules for those future tests.
 
