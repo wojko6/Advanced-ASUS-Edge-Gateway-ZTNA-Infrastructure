@@ -2,6 +2,8 @@
 
 This design forwards the Asuswrt local log to a Linux collector over Tailscale and mutually authenticated TLS (mTLS). The router authenticates the collector certificate, the collector authenticates the router certificate, and a reliable disk buffer preserves messages while the collector is unavailable.
 
+> **Reference-router stability gate:** the rollout, restart, outage and reboot procedures below are maintenance/validation procedures, not instructions to exercise against the current reference router during its unchanged-state observation through **2026-09-25**. During the gate, use existing configuration and read-only observations only. If recovery from an active logging fault or security incident requires a router-side change, document the intervention and restart the stability baseline after returning to a known-good state.
+
 ## Data path
 
 ```text
@@ -45,6 +47,8 @@ chmod 644 /etc/syslog-ng/tls/collector.crt
 
 ## Safe rollout order
 
+Use this sequence in a planned maintenance window, not during an active unchanged-state observation:
+
 1. Back up both syslog-ng configurations.
 2. Configure the collector for TLS with `peer-verify(optional-untrusted)` only during initial transport validation.
 3. Install the CA certificate plus client certificate and key on the router.
@@ -54,11 +58,13 @@ chmod 644 /etc/syslog-ng/tls/collector.crt
 7. Validate and restart the collector.
 8. Remove temporary private-key copies.
 
-Do not leave `optional-untrusted` enabled after rollout.
+Do not leave `optional-untrusted` enabled after rollout. The checked-in examples already use `required-trusted`; the temporary relaxed mode is a rollout diagnostic state only and must not be committed as the final policy.
 
 ## Validation
 
-Validate configuration before every restart:
+Configuration syntax checks are read-only, but a router-side restart is a maintenance action. During the stability gate, syntax-check the existing file only if useful and defer sender restarts and trust-policy changes unless recovery is required.
+
+Validate configuration before every planned restart:
 
 ```sh
 # Router
@@ -69,7 +75,7 @@ LD_LIBRARY_PATH=/opt/lib:/opt/usr/lib \
 sudo syslog-ng -s
 ```
 
-A TLS client without a certificate must fail:
+A TLS client without a certificate must fail when validating the deployed mTLS policy:
 
 ```sh
 sudo timeout 5 openssl s_client \
@@ -93,7 +99,7 @@ sudo timeout 5 openssl s_client \
   -brief </dev/null
 ```
 
-Generate a unique router message and verify it on the collector:
+Generate a unique router message and verify it on the collector during an appropriate validation window:
 
 ```sh
 logger -t asus-edge-test "MTLS_END_TO_END_OK"
@@ -101,6 +107,8 @@ grep -R "MTLS_END_TO_END_OK" /var/log/asus-edge
 ```
 
 ## Failure and persistence tests
+
+These are controlled fault-injection tests. Run them only in a planned validation window after the unchanged-state gate, or on a disposable/non-reference environment.
 
 To validate the disk buffer:
 
@@ -110,12 +118,14 @@ To validate the disk buffer:
 4. Start the collector.
 5. Verify that every buffered message arrives.
 
-Afterward, reboot the router and verify all of the following:
+A reboot test is also a planned maintenance test. After the stability gate, when a reboot is intentionally scheduled, verify all of the following:
 
 - `syslog-ng` is running;
 - the TLS connection to port 6514 is established;
-- the project health check returns zero failures and zero warnings;
+- the project health check returns the expected result for the deployed optional-logging policy;
 - a post-reboot test message reaches the collector.
+
+The project health check treats syslog-ng as optional unless remote logging is configured; do not describe an absent optional sender as a router-wide health failure.
 
 ## Collector retention
 
@@ -152,8 +162,12 @@ systemctl list-timers asus-edge-log-retention.timer
 
 The defaults provide at least 30 days of retained logs. Override `ASUS_EDGE_LOG_ROOT`, `ASUS_EDGE_COMPRESS_AFTER_MINUTES`, or `ASUS_EDGE_DELETE_AFTER_MINUTES` only for controlled testing or a deliberately different local policy. The script rejects relative roots and the filesystem root.
 
+Collector-only maintenance does not modify the router, but intentionally stopping the collector can still change the behavior being observed by exercising the router's reliable buffer. During the reference stability gate, avoid deliberate collector outages if the goal is to preserve an unchanged end-to-end logging state.
+
 ## Operational boundaries
 
 mTLS authenticates the sending router but does not replace Tailscale policy. Restrict port 6514 to the intended router identity in Tailscale Grants or ACLs. Retain the source-address filter as defense in depth.
 
-The reliable buffer protects short outages, not unlimited collector downtime. Monitor storage under `/opt/var/lib/syslog-ng`, define a collector retention policy, and test recovery after configuration or package upgrades.
+The reliable buffer protects short outages, not unlimited collector downtime. Monitor storage under `/opt/var/lib/syslog-ng`, define a collector retention policy, and test recovery after configuration or package upgrades during planned maintenance.
+
+The example configuration demonstrates the intended architecture; successful end-to-end mTLS, buffering and post-reboot delivery must be claimed as **observed** only when dated evidence from the deployed environment exists. Configuration presence or CI syntax validation alone is not live operational evidence.
