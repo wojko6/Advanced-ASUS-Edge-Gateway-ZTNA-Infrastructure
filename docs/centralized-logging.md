@@ -50,15 +50,15 @@ chmod 644 /etc/syslog-ng/tls/collector.crt
 Use this sequence in a planned maintenance window, not during an active unchanged-state observation:
 
 1. Back up both syslog-ng configurations.
-2. Configure the collector for TLS with `peer-verify(optional-untrusted)` only during initial transport validation.
-3. Install the CA certificate plus client certificate and key on the router.
-4. Add `key-file()`, `cert-file()`, `ca-file()`, and `peer-verify(required-trusted)` to the router destination.
-5. Validate and restart the router sender.
-6. Add the CA file and change the collector to `peer-verify(required-trusted)`.
-7. Validate and restart the collector.
+2. Install the dedicated CA certificate plus the collector certificate/key and router client certificate/key before enabling the TLS listener or sender.
+3. Configure the collector with `key-file()`, `cert-file()`, `ca-file()`, and `peer-verify(required-trusted)` from the first network-facing test.
+4. Validate the collector configuration and confirm that its certificate SAN matches the Tailscale DNS name or IP used by the router.
+5. Configure the router destination with `key-file()`, `cert-file()`, `ca-file()`, and `peer-verify(required-trusted)`.
+6. Validate and restart the collector, then validate and restart the router sender.
+7. Test both negative and positive mTLS cases: an unauthenticated client must fail, while the issued router client certificate must succeed.
 8. Remove temporary private-key copies.
 
-Do not leave `optional-untrusted` enabled after rollout. The checked-in examples already use `required-trusted`; the temporary relaxed mode is a rollout diagnostic state only and must not be committed as the final policy.
+Do not weaken peer verification as a normal rollout step. If certificate troubleshooting requires isolating a trust-chain problem, do it offline or in a disposable/non-reference environment rather than exposing the production collector with `optional-untrusted`. The checked-in examples intentionally use `required-trusted` on both peers.
 
 ## Validation
 
