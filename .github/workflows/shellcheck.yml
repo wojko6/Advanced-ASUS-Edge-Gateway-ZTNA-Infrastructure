@@ -21,6 +21,8 @@ jobs:
         run: sh tests/test-static.sh
       - name: Run services-start configuration validation
         run: sh tests/test-services-config-validation.sh
+      - name: Run services-start Tailscale policy guards
+        run: sh tests/test-services-tailscale-policy-static.sh
       - name: Run healthcheck configuration validation
         run: sh tests/test-healthcheck-config-validation.sh
       - name: Run Tailscale update recovery-guard checks
