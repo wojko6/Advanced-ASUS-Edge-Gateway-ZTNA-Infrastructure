@@ -90,7 +90,9 @@ Never place `opkg update` or package upgrades in a boot hook. Use a planned main
 ./scripts/update-tailscale.sh
 ```
 
-Entware may not retain a previous package version. Download/retain the known-good package before an upgrade if a package-level rollback is required.
+`update-tailscale.sh` is deliberately coupled to the managed recovery path. Before it touches Entware package metadata, it requires both `/jffs/addons/asus-edge/bin/services-start` and `/jffs/addons/asus-edge/bin/healthcheck.sh` to exist and be executable. A failed `opkg update`, failed upgradable-package query, failed Tailscale package upgrade, failed post-update service recovery, or failed final health check returns non-zero. If no Tailscale update is advertised, the script exits without changing the package. Treat any non-zero result after `opkg upgrade tailscale` as a maintenance incident: keep local/LAN recovery access, inspect the managed service logs and health output, and do not assume that the package transaction itself was rolled back.
+
+Entware may not retain a previous package version. Download/retain the known-good package before an upgrade if a package-level rollback is required. The maintenance helper does not implement package rollback; its recovery contract is to restore the managed runtime path where possible and fail visibly when that cannot be verified.
 
 ## Resolver ownership
 
