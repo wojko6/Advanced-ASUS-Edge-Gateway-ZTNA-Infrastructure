@@ -38,7 +38,14 @@ echo "Installed Tailscale: ${OLD_VERSION:-unknown}"
 echo "This is an explicit maintenance action; no package upgrades run at boot."
 
 opkg update || exit 1
-opkg list-upgradable | grep '^tailscale ' || { echo "No Tailscale update available."; exit 0; }
+UPGRADABLE="$(opkg list-upgradable)" || {
+    echo "ERROR: failed to query upgradable packages" >&2
+    exit 1
+}
+printf '%s\n' "$UPGRADABLE" | grep '^tailscale ' >/dev/null || {
+    echo "No Tailscale update available."
+    exit 0
+}
 opkg upgrade tailscale || exit 1
 
 if [ -x /jffs/addons/asus-edge/bin/services-start ]; then
