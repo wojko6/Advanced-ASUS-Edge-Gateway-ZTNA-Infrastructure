@@ -66,6 +66,9 @@ for file in \
     "$REPO_DIR/router/scripts/services-start" \
     "$REPO_DIR/router/scripts/wan-event" \
     "$REPO_DIR/router/scripts/wan-event-handler" \
+    "$REPO_DIR/scripts/healthcheck.sh" \
+    "$REPO_DIR/scripts/check-usb-exposure.sh" \
+    "$REPO_DIR/scripts/collect-evidence.sh" \
     "$REPO_DIR/config/edge.conf"
 do
     sh -n "$file" || exit 1
