@@ -102,6 +102,44 @@ Opening roughly 15–20 browser tabs and exercising pages did not cause the late
 
 Conclusion: CPU impact was low in the captured snapshots, while RAM use was material for an endpoint filtering utility and should remain an operational consideration.
 
+## Upstream security architecture review
+
+The following points come from the upstream `irbis-sh/zen-desktop` repository and are recorded separately from the workstation observations above. They describe the upstream design and stated controls; this project did not independently audit every implementation detail.
+
+### Local CA trust model
+
+Upstream documentation states that Zen generates its root CA key pair locally on the endpoint, does not send the private key to a remote server, and stores the private key with minimal filesystem permissions (`0600`). The maintainers also state that stronger private-key protection using operating-system facilities is still being explored.
+
+This is consistent with the locally observed `Zen Personal CA` interception model. Because the CA can authorize locally generated HTTPS leaf certificates, compromise of its private key or of the filtering process would be security-significant.
+
+### Sensitive-hostname proxy exclusions
+
+Zen uses a PAC-based system proxy and maintains hostname exclusions for traffic that should not be proxied/MITM. The upstream common exclusion list contains categories such as authentication gateways, government/e-government services, password managers, banks and financial institutions, payment processors, messaging services, and digital-infrastructure providers.
+
+Examples present in the reviewed upstream list include `accounts.google.com`, `bitwarden.com`, `1password.com`, `paypal.com`, `stripe.com`, `revolut.com`, `signal.org`, `whatsapp.com`, `github.com`, and selected OpenAI/ChatGPT service domains.
+
+This reduces interception exposure for listed sensitive destinations, but it is a maintained allow/exclusion list rather than a universal guarantee that every sensitive hostname is excluded.
+
+### Release provenance controls
+
+Upstream documentation states that GitHub releases and associated tags are immutable and that release artifacts are built through GitHub CI with artifact attestations. The documented verification workflow uses GitHub CLI attestation verification against `irbis-sh/zen-desktop`.
+
+These controls provide a stronger provenance path for release artifacts obtained through the documented GitHub release workflow and allow an operator to verify that an attested artifact was produced by the project's CI from the associated source.
+
+### Update-delivery residual risk
+
+The upstream security architecture explicitly marks update delivery as a work in progress. It states that updates are currently served from a private Cloudflare R2 bucket and acknowledges that this delivery path, without sufficient cryptographic verification, is not by itself an adequate integrity guarantee.
+
+The maintainers list project-owned binary signing, runtime signature verification, and a framework such as TUF as possible future improvements.
+
+For this project, that is a material residual risk because Zen is a high-trust endpoint component capable of HTTPS interception. Release provenance controls are a positive property, but they should not be conflated with a fully hardened automatic-update channel.
+
+### Upstream review conclusion
+
+The reviewed upstream design shows deliberate attention to the risks created by system-wide proxying and local HTTPS interception: local CA generation, sensitive-host exclusions, public source, immutable releases, and artifact attestations are positive controls. The most important documented residual concern is the still-in-progress cryptographic hardening of update delivery. Local CA private-key protection is another area the maintainers themselves identify for improvement.
+
+These upstream claims improve the architectural context for the endpoint test but do not convert this artifact into a source-code security audit or formal supply-chain verification.
+
 ## Overall assessment
 
 | Area | Result | Notes |
@@ -114,14 +152,18 @@ Conclusion: CPU impact was low in the captured snapshots, while RAM use was mate
 | HTTPS interception | PASS | Browser trusted a leaf certificate issued by `Zen Personal CA` |
 | CPU | PASS for captured snapshots | Effectively 0% at capture time |
 | RAM | NOTABLE COST | Stabilized near ~791 MB in the short follow-up; earlier ~1.58 GB state observed |
+| Upstream CA / proxy design | POSITIVE WITH RESIDUAL RISK | Local CA and sensitive-host exclusions are documented; CA key protection remains high-trust |
+| Upstream release provenance | POSITIVE | Immutable releases and GitHub artifact attestations are documented |
+| Upstream update delivery | RESIDUAL RISK | Upstream explicitly describes cryptographic update verification as work in progress |
 | Router configuration impact | NONE | No router configuration change was made for this validation |
 
 ## Decision
 
-Zen remains a viable endpoint-side defense-in-depth candidate based on this short validation, with two important qualifications:
+Zen remains a viable endpoint-side defense-in-depth candidate based on this short validation and upstream architecture review, with three important qualifications:
 
 1. custom cosmetic filtering can create site-specific compatibility failures, demonstrated by WP Poczta;
-2. memory use is significant enough to monitor if Zen is retained long term.
+2. memory use is significant enough to monitor if Zen is retained long term;
+3. Zen is a high-trust HTTPS-interception component, and upstream update-delivery hardening is not yet described as complete.
 
 The YouTube result must remain explicitly inconclusive until a controlled session produces an advertisement with Zen disabled and allows a meaningful ON/OFF comparison.
 
