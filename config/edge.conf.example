@@ -73,8 +73,10 @@ EDGE_LOG_DROPS="1"
 EDGE_LOG_PREFIX="ASUS-EDGE-DROP "
 EDGE_OPT_WAIT_SECONDS="90"
 
-# Infrastructure USB hardening. Keep these enabled when /opt/Entware lives on a
-# router-attached USB device that is not intended to be a user file share.
+# Router-attached storage service hardening. Keep these enabled when the device
+# hosting /opt/Entware is infrastructure storage (for example the reference SSD)
+# and is not intended to expose a user file share or media library through the router.
+# These controls are independent of whether the physical medium is flash or SSD.
 # Set either control to 0 only for a deliberate, documented exception.
 EDGE_REQUIRE_DLNA_DISABLED="1"
 EDGE_REQUIRE_SMB_DISABLED="1"
