@@ -81,6 +81,19 @@ valid_ipv4_cidr() {
     [ "$prefix" -le 32 ] 2>/dev/null
 }
 valid_ipv4_or_cidr() { valid_ipv4 "$1" || valid_ipv4_cidr "$1"; }
+valid_host() {
+    [ -n "$1" ] || return 1
+    [ "${#1}" -le 253 ] || return 1
+    case "$1" in
+        *[!A-Za-z0-9.-]*|.*|*.|*..*) return 1 ;;
+    esac
+    old_ifs="$IFS"; IFS=.; set -- $1; IFS="$old_ifs"
+    for label in "$@"; do
+        [ -n "$label" ] || return 1
+        [ "${#label}" -le 63 ] || return 1
+        case "$label" in -*|*-) return 1 ;; esac
+    done
+}
 
 valid_boolean "$EDGE_REQUIRE_USB_PRINTER_DISABLED" || fail "invalid EDGE_REQUIRE_USB_PRINTER_DISABLED value: $EDGE_REQUIRE_USB_PRINTER_DISABLED"
 valid_boolean "$EDGE_ENABLE_EXIT_NODE" || fail "invalid EDGE_ENABLE_EXIT_NODE value: $EDGE_ENABLE_EXIT_NODE"
@@ -89,6 +102,7 @@ valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
 valid_port "$EDGE_UNBOUND_PORT" || fail "invalid EDGE_UNBOUND_PORT value: $EDGE_UNBOUND_PORT"
 valid_port "$EDGE_SYSLOG_PORT" || fail "invalid EDGE_SYSLOG_PORT value: $EDGE_SYSLOG_PORT"
+[ -z "$EDGE_SYSLOG_HOST" ] || valid_ipv4 "$EDGE_SYSLOG_HOST" || valid_host "$EDGE_SYSLOG_HOST" || fail "invalid EDGE_SYSLOG_HOST value: $EDGE_SYSLOG_HOST"
 for source in $EDGE_PRINTER_TS_SOURCES; do valid_ipv4_or_cidr "$source" || fail "invalid printer Tailscale source: $source"; done
 [ -z "$EDGE_PRINTER_LAN_IP" ] || valid_ipv4 "$EDGE_PRINTER_LAN_IP" || fail "invalid printer LAN IPv4: $EDGE_PRINTER_LAN_IP"
 for port in $EDGE_PRINTER_TCP_PORTS $EDGE_PRINTER_UDP_PORTS; do valid_port "$port" || fail "invalid printer port: $port"; done
@@ -253,9 +267,12 @@ if executable_exists ip6tables >/dev/null 2>&1; then
     if [ "$forward6_jumps" = "1" ]; then ok "single IPv6 FORWARD jump"; else fail "IPv6 FORWARD jump count: $forward6_jumps"; fi
 fi
 
+if pidof unbound >/dev/null 2>&1; then ok "Unbound running"; else fail "Unbound not running"; fi
 unbound_control_status() {
-    if [ -n "$EDGE_UNBOUND_CONFIG" ]; then [ -r "$EDGE_UNBOUND_CONFIG" ] || return 1; unbound-control -c "$EDGE_UNBOUND_CONFIG" status >/dev/null 2>&1; return; fi
-    for unbound_config in /opt/var/lib/unbound/unbound.conf /opt/etc/unbound/unbound.conf; do [ -r "$unbound_config" ] || continue; if unbound-control -c "$unbound_config" status >/dev/null 2>&1; then return 0; fi; done
+    if [ -n "$EDGE_UNBOUND_CONFIG" ]; then unbound-control -c "$EDGE_UNBOUND_CONFIG" status >/dev/null 2>&1 && return 0; else
+        for candidate in /opt/var/lib/unbound/unbound.conf /opt/etc/unbound/unbound.conf; do [ -f "$candidate" ] && unbound-control -c "$candidate" status >/dev/null 2>&1 && return 0; done
+        unbound-control status >/dev/null 2>&1 && return 0
+    fi
     return 1
 }
 if executable_exists unbound-control >/dev/null 2>&1 && unbound_control_status; then ok "Unbound running and control interface reachable"; else fail "Unbound control/status unavailable"; fi
