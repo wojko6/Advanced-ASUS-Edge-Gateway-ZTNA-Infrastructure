@@ -18,6 +18,7 @@ fi
 
 : "${EDGE_REQUIRE_DLNA_DISABLED:=1}"
 : "${EDGE_REQUIRE_SMB_DISABLED:=1}"
+: "${EDGE_REQUIRE_USB_PRINTER_DISABLED:=1}"
 
 case "$EDGE_REQUIRE_DLNA_DISABLED" in
     0|1) ;;
@@ -27,6 +28,11 @@ esac
 case "$EDGE_REQUIRE_SMB_DISABLED" in
     0|1) ;;
     *) fail "invalid EDGE_REQUIRE_SMB_DISABLED value: $EDGE_REQUIRE_SMB_DISABLED" ;;
+esac
+
+case "$EDGE_REQUIRE_USB_PRINTER_DISABLED" in
+    0|1) ;;
+    *) fail "invalid EDGE_REQUIRE_USB_PRINTER_DISABLED value: $EDGE_REQUIRE_USB_PRINTER_DISABLED" ;;
 esac
 
 if [ "$EDGE_REQUIRE_DLNA_DISABLED" = "1" ]; then
@@ -66,6 +72,34 @@ if [ "$EDGE_REQUIRE_SMB_DISABLED" = "1" ]; then
         fail "SMB listener present on port 139 or 445"
     else
         ok "SMB ports closed"
+    fi
+fi
+
+if [ "$EDGE_REQUIRE_USB_PRINTER_DISABLED" = "1" ]; then
+    usb_printer_state="$(nvram get usb_printer 2>/dev/null)"
+    if [ "$usb_printer_state" = "0" ]; then
+        ok "ASUS USB print server disabled in NVRAM"
+    else
+        fail "ASUS USB print server enabled or unknown in NVRAM: ${usb_printer_state:-unset}"
+    fi
+
+    if pidof lpd >/dev/null 2>&1; then
+        fail "lpd process running"
+    else
+        ok "lpd process stopped"
+    fi
+
+    if pidof u2ec >/dev/null 2>&1; then
+        fail "u2ec process running"
+    else
+        ok "u2ec process stopped"
+    fi
+
+    if netstat -lnt 2>/dev/null |
+        awk 'NR > 1 { local_addr=$4; if (local_addr ~ /:515$/) found=1 } END { exit !found }'; then
+        fail "router TCP/515 listener present"
+    else
+        ok "router TCP/515 closed"
     fi
 fi
 
