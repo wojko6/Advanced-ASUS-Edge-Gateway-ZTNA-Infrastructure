@@ -33,6 +33,17 @@ uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 
 [ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 executable_exists opkg >/dev/null 2>&1 || { echo "ERROR: Entware not available" >&2; exit 1; }
 
+SERVICES_START=/jffs/addons/asus-edge/bin/services-start
+HEALTHCHECK=/jffs/addons/asus-edge/bin/healthcheck.sh
+[ -x "$SERVICES_START" ] || {
+    echo "ERROR: managed services-start hook missing or not executable: $SERVICES_START" >&2
+    exit 1
+}
+[ -x "$HEALTHCHECK" ] || {
+    echo "ERROR: managed healthcheck missing or not executable: $HEALTHCHECK" >&2
+    exit 1
+}
+
 OLD_VERSION="$(tailscale version 2>/dev/null | head -n 1)"
 echo "Installed Tailscale: ${OLD_VERSION:-unknown}"
 echo "This is an explicit maintenance action; no package upgrades run at boot."
@@ -48,16 +59,14 @@ printf '%s\n' "$UPGRADABLE" | grep '^tailscale ' >/dev/null || {
 }
 opkg upgrade tailscale || exit 1
 
-if [ -x /jffs/addons/asus-edge/bin/services-start ]; then
-    /jffs/addons/asus-edge/bin/services-start || {
-        echo "ERROR: post-update service recovery failed" >&2
-        exit 1
-    }
-fi
+"$SERVICES_START" || {
+    echo "ERROR: post-update service recovery failed" >&2
+    exit 1
+}
 
 NEW_VERSION="$(tailscale version 2>/dev/null | head -n 1)"
 echo "Updated Tailscale: ${NEW_VERSION:-unknown}"
-/jffs/addons/asus-edge/bin/healthcheck.sh || {
+"$HEALTHCHECK" || {
     echo "ERROR: post-update health check failed" >&2
     exit 1
 }
