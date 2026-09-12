@@ -29,6 +29,8 @@ jobs:
         run: sh tests/test-update-tailscale-static.sh
       - name: Run restore archive validation
         run: sh tests/test-restore-validation.sh
+      - name: Run WAN prevalidation ordering guard
+        run: sh tests/test-wan-prevalidation-static.sh
 
   wan-and-rollback:
     name: WAN handler and install rollback checks
