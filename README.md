@@ -69,6 +69,8 @@ Never commit auth keys, node state, private keys, collector credentials, router 
 
 ## Quick start
 
+> **Reference-router stability gate:** the commands in this section describe a normal deployment or planned maintenance workflow. They are **not** instructions to re-run installation, firewall apply, resolver restart, package discovery/update, or an intentional reboot on the currently observed reference router during the unchanged-state window ending **2026-09-25**. During that gate, keep router-side checks read-only unless recovery from an active fault or security incident requires intervention. See [Current stability gate](#current-stability-gate) and [Operations and recovery](docs/operations.md).
+
 Prepare and validate the configuration on a Linux workstation working copy
 with Python 3 available for the regression tests (not required on the router):
 
@@ -102,7 +104,7 @@ ASUS Edge intentionally runs Tailscale with `netfilter-mode=off`. The project-ow
 `ts-input`, `ts-forward`, and `ts-postrouting` chains. Do not change this mode
 without redesigning and revalidating the firewall policy.
 
-Apply and validate from the LAN:
+Apply and validate from the LAN during a planned deployment or maintenance window:
 
 ```sh
 ./scripts/install.sh --apply
@@ -122,7 +124,7 @@ cp config/unbound.conf.example /opt/etc/unbound/unbound.conf
 unbound-checkconf /opt/etc/unbound/unbound.conf
 ```
 
-For amtm Unbound Manager, do not overwrite its generated runtime file. Validate the manager-owned configuration instead:
+For amtm Unbound Manager, do not overwrite its generated runtime file. Validate the manager-owned configuration instead. The restart command below is a maintenance action and should not be run on the reference router during the active unchanged-state observation:
 
 ```sh
 grep -E '^(port: 53535|interface: 127\.0\.0\.1@53535)' /opt/var/lib/unbound/unbound.conf
@@ -173,6 +175,8 @@ The planned [endpoint filtering validation](docs/endpoint-filtering-validation.m
 
 ## Validation and recovery
 
+The commands below are operational examples. During the active stability gate, use only the read-only checks that are necessary for observation; defer install/uninstall/restore/firewall-apply actions to a maintenance window unless recovery is required.
+
 ```sh
 sh tests/test-static.sh
 /jffs/addons/asus-edge/bin/healthcheck.sh
@@ -197,7 +201,7 @@ Collect a sanitized router-side evidence snapshot:
 
 The collector excludes identity/configuration data and redacts firewall addresses, but its output still requires manual review before publication. This repository does not present expected behavior as observed live results. See [evidence collection](docs/evidence-collection.md) and the [validation evidence directory](evidence/README.md).
 
-Backup and rollback commands:
+Backup and rollback commands for planned maintenance or recovery:
 
 ```sh
 ./scripts/backup.sh /opt/backups/asus-edge
@@ -205,7 +209,7 @@ Backup and rollback commands:
 ./scripts/uninstall.sh
 ```
 
-Tailscale updates are a separate maintenance action:
+Tailscale updates are a separate planned-maintenance action:
 
 ```sh
 ./scripts/update-tailscale.sh
