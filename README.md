@@ -173,17 +173,24 @@ The planned [endpoint filtering validation](docs/endpoint-filtering-validation.m
 
 ## Validation and recovery
 
-The commands below are operational examples. During the active stability gate, use only the read-only checks that are necessary for observation; defer install/uninstall/restore/firewall-apply actions to a maintenance window unless recovery is required.
+The commands below are operational examples. During the active stability gate, use only the read-only checks that are necessary for observation; defer install/uninstall/restore/firewall-apply actions and deliberate live-client policy tests to a maintenance window unless recovery is required.
+
+Read-only router inspection during the gate can include:
 
 ```sh
-sh tests/test-static.sh
 /jffs/addons/asus-edge/bin/healthcheck.sh
 iptables -nvL EDGE_TS_INPUT
 iptables -nvL EDGE_TS_FORWARD
 iptables -t nat -nvL EDGE_TS_PREROUTING
 ```
 
-From an authorized admin device, target the router's management address, normally `192.168.50.1`:
+The repository regression suite remains safe to run on a workstation working copy:
+
+```sh
+sh tests/test-static.sh
+```
+
+The live-client script actively probes management and LAN policy from an authorized remote client. Run it after the stability gate or during a planned validation/maintenance window, not merely as a routine unchanged-state observation:
 
 ```sh
 sh tests/test-live-client.sh 192.168.50.1 192.168.50.20
@@ -191,7 +198,7 @@ sh tests/test-live-client.sh 192.168.50.1 192.168.50.20
 
 The second address is an optional LAN host on which SMB should be denied. See [testing](docs/testing.md) for the full security matrix and packet-capture procedure.
 
-Collect a sanitized router-side evidence snapshot:
+Collecting a new evidence snapshot executes the project's collector and should be treated as an explicit validation action. During the unchanged-state gate, prefer existing logs and read-only inspection unless a dated snapshot is intentionally part of the observation plan:
 
 ```sh
 /jffs/addons/asus-edge/bin/collect-evidence.sh
