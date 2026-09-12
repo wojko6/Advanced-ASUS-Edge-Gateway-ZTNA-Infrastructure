@@ -3,17 +3,11 @@
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-# Resolve executables directly because older Asuswrt-Merlin BusyBox shells may
-# not implement "command -v". Keep this helper local so each script is standalone.
 executable_exists() {
     executable_name="$1"
     case "$executable_name" in
-        */*)
-            [ -x "$executable_name" ]
-            return
-            ;;
+        */*) [ -x "$executable_name" ]; return ;;
     esac
-
     for executable_dir in /opt/sbin /opt/bin /usr/sbin /usr/bin /sbin /bin; do
         [ -x "$executable_dir/$executable_name" ] && return 0
     done
@@ -24,10 +18,7 @@ CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 LOCK_DIR="/var/run/asus-edge-services.lock"
 SWAPS_FILE="${EDGE_PROC_SWAPS:-/proc/swaps}"
 OVERCOMMIT_FILE="${EDGE_PROC_OVERCOMMIT_MEMORY:-/proc/sys/vm/overcommit_memory}"
-
-log() {
-    logger -t asus-edge "$*"
-}
+log() { logger -t asus-edge "$*"; }
 
 [ -r "$CONFIG_FILE" ] || { log "ERROR: missing $CONFIG_FILE"; exit 1; }
 # shellcheck disable=SC1090
@@ -57,22 +48,11 @@ log() {
 : "${EDGE_TAILSCALED_LOG:=/opt/var/log/tailscaled.log}"
 
 valid_positive_integer() {
-    case "$1" in
-        ''|*[!0-9]*) return 1 ;;
-    esac
+    case "$1" in ''|*[!0-9]*) return 1 ;; esac
     [ "$1" -gt 0 ]
 }
 
-for timing_name in \
-    EDGE_OPT_WAIT_SECONDS \
-    EDGE_ENTWARE_START_WAIT_SECONDS \
-    EDGE_ENTWARE_QUIET_SECONDS \
-    EDGE_SERVICE_STABILITY_SECONDS \
-    EDGE_SERVICE_START_ATTEMPTS \
-    EDGE_SERVICE_RETRY_SECONDS \
-    EDGE_SWAP_WAIT_SECONDS \
-    EDGE_TS_READY_WAIT_SECONDS
-do
+for timing_name in EDGE_OPT_WAIT_SECONDS EDGE_ENTWARE_START_WAIT_SECONDS EDGE_ENTWARE_QUIET_SECONDS EDGE_SERVICE_STABILITY_SECONDS EDGE_SERVICE_START_ATTEMPTS EDGE_SERVICE_RETRY_SECONDS EDGE_SWAP_WAIT_SECONDS EDGE_TS_READY_WAIT_SECONDS; do
     case "$timing_name" in
         EDGE_OPT_WAIT_SECONDS) timing_value="$EDGE_OPT_WAIT_SECONDS" ;;
         EDGE_ENTWARE_START_WAIT_SECONDS) timing_value="$EDGE_ENTWARE_START_WAIT_SECONDS" ;;
@@ -83,225 +63,177 @@ do
         EDGE_SWAP_WAIT_SECONDS) timing_value="$EDGE_SWAP_WAIT_SECONDS" ;;
         EDGE_TS_READY_WAIT_SECONDS) timing_value="$EDGE_TS_READY_WAIT_SECONDS" ;;
     esac
-    valid_positive_integer "$timing_value" || {
-        log "ERROR: $timing_name must be a positive integer"
-        exit 1
-    }
+    valid_positive_integer "$timing_value" || { log "ERROR: $timing_name must be a positive integer"; exit 1; }
 done
+case "$EDGE_RUN_RC_UNSLUNG" in 0|1) ;; *) log "ERROR: EDGE_RUN_RC_UNSLUNG must be 0 or 1"; exit 1 ;; esac
+case "$EDGE_ENABLE_EXIT_NODE" in 0|1) ;; *) log "ERROR: EDGE_ENABLE_EXIT_NODE must be 0 or 1"; exit 1 ;; esac
+case "$EDGE_ACCEPT_DNS" in true|false) ;; *) log "ERROR: EDGE_ACCEPT_DNS must be true or false"; exit 1 ;; esac
+case "$EDGE_REQUIRE_SWAP" in 0|1|auto) ;; *) log "ERROR: EDGE_REQUIRE_SWAP must be 0, 1, or auto"; exit 1 ;; esac
+[ "$EDGE_TS_NETFILTER_MODE" = "off" ] || { log "ERROR: EDGE_TS_NETFILTER_MODE must be off because ASUS Edge owns the firewall policy"; exit 1; }
 
-case "$EDGE_RUN_RC_UNSLUNG" in
-    0|1) ;;
-    *) log "ERROR: EDGE_RUN_RC_UNSLUNG must be 0 or 1"; exit 1 ;;
-esac
-
-case "$EDGE_ENABLE_EXIT_NODE" in
-    0|1) ;;
-    *) log "ERROR: EDGE_ENABLE_EXIT_NODE must be 0 or 1"; exit 1 ;;
-esac
-
-case "$EDGE_ACCEPT_DNS" in
-    true|false) ;;
-    *) log "ERROR: EDGE_ACCEPT_DNS must be true or false"; exit 1 ;;
-esac
-
-case "$EDGE_REQUIRE_SWAP" in
-    0|1|auto) ;;
-    *) log "ERROR: EDGE_REQUIRE_SWAP must be 0, 1, or auto"; exit 1 ;;
-esac
-
-[ "$EDGE_TS_NETFILTER_MODE" = "off" ] || {
-    log "ERROR: EDGE_TS_NETFILTER_MODE must be off because ASUS Edge owns the firewall policy"
-    exit 1
-}
-
-opt_is_ready() {
-    [ -d /opt ] || return 1
-    [ -x /opt/bin/opkg ] || [ -x /opt/sbin/opkg ]
-}
-
+opt_is_ready() { [ -d /opt ] || return 1; [ -x /opt/bin/opkg ] || [ -x /opt/sbin/opkg ]; }
 process_stays_running() {
-    monitored_process="$1"
-    stable_seconds=0
-
+    monitored_process="$1"; stable_seconds=0
     while [ "$stable_seconds" -lt "$EDGE_SERVICE_STABILITY_SECONDS" ]; do
         pidof "$monitored_process" >/dev/null 2>&1 || return 1
-        stable_seconds=$((stable_seconds + 1))
-        sleep 1
+        stable_seconds=$((stable_seconds + 1)); sleep 1
     done
-
     return 0
 }
-
-swap_is_active() {
-    [ -r "$SWAPS_FILE" ] &&
-        awk 'NR > 1 { found=1 } END { exit !found }' "$SWAPS_FILE"
-}
-
+swap_is_active() { [ -r "$SWAPS_FILE" ] && awk 'NR > 1 { found=1 } END { exit !found }' "$SWAPS_FILE"; }
 swap_is_required() {
-    case "$EDGE_REQUIRE_SWAP" in
-        1) return 0 ;;
-        0) return 1 ;;
-        auto) ;;
-    esac
-
+    case "$EDGE_REQUIRE_SWAP" in 1) return 0 ;; 0) return 1 ;; auto) ;; esac
     [ -r "$OVERCOMMIT_FILE" ] || return 1
     [ "$(cat "$OVERCOMMIT_FILE" 2>/dev/null)" = "2" ] || return 1
-
-    case "$(uname -m 2>/dev/null)" in
-        armv[5-8]*|i[3-6]86|mips*|ppc) return 0 ;;
-        *) return 1 ;;
-    esac
+    case "$(uname -m 2>/dev/null)" in armv[5-8]*|i[3-6]86|mips*|ppc) return 0 ;; *) return 1 ;; esac
 }
-
 wait_for_required_swap() {
-    swap_is_required || return 0
-    swap_is_active && return 0
-
-    log "waiting for active swap before starting tailscaled"
-    elapsed=0
+    swap_is_required || return 0; swap_is_active && return 0
+    log "waiting for active swap before starting tailscaled"; elapsed=0
     while ! swap_is_active; do
-        if [ "$elapsed" -ge "$EDGE_SWAP_WAIT_SECONDS" ]; then
-            log "ERROR: required swap not active after ${EDGE_SWAP_WAIT_SECONDS}s"
-            return 1
-        fi
-        elapsed=$((elapsed + 1))
-        sleep 1
+        [ "$elapsed" -ge "$EDGE_SWAP_WAIT_SECONDS" ] && { log "ERROR: required swap not active after ${EDGE_SWAP_WAIT_SECONDS}s"; return 1; }
+        elapsed=$((elapsed + 1)); sleep 1
     done
     log "required swap is active"
 }
-
 rotate_tailscaled_log() {
     [ -s "$EDGE_TAILSCALED_LOG" ] || return 0
     cp -f "$EDGE_TAILSCALED_LOG" "$EDGE_TAILSCALED_LOG.previous" 2>/dev/null || return 1
     chmod 0600 "$EDGE_TAILSCALED_LOG.previous" 2>/dev/null || true
 }
-
 start_tailscaled_with_retry() {
     if pidof tailscaled >/dev/null 2>&1; then
-        if process_stays_running tailscaled; then
-            return 0
-        fi
+        process_stays_running tailscaled && return 0
         log "WARNING: tailscaled exited during startup; attempting recovery"
     fi
-
     wait_for_required_swap || return 1
-    mkdir -p "$(dirname "$EDGE_TS_STATE")" "$(dirname "$EDGE_TS_SOCKET")" \
-        "$(dirname "$EDGE_TAILSCALED_LOG")"
+    mkdir -p "$(dirname "$EDGE_TS_STATE")" "$(dirname "$EDGE_TS_SOCKET")" "$(dirname "$EDGE_TAILSCALED_LOG")"
     rotate_tailscaled_log || log "WARNING: could not preserve previous tailscaled log"
-    : >"$EDGE_TAILSCALED_LOG" || return 1
-    chmod 0600 "$EDGE_TAILSCALED_LOG" 2>/dev/null || true
-
+    : >"$EDGE_TAILSCALED_LOG" || return 1; chmod 0600 "$EDGE_TAILSCALED_LOG" 2>/dev/null || true
     attempt=1
     while [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ]; do
         if pidof tailscaled >/dev/null 2>&1; then
-            if process_stays_running tailscaled; then
-                return 0
-            fi
+            process_stays_running tailscaled && return 0
             log "WARNING: competing tailscaled process exited during startup"
         fi
         rm -f "$EDGE_TS_SOCKET"
-        printf 'Attempt %s/%s: tailscaled startup\n' \
-            "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" >>"$EDGE_TAILSCALED_LOG"
-        tailscaled \
-            --state="$EDGE_TS_STATE" \
-            --socket="$EDGE_TS_SOCKET" \
-            >>"$EDGE_TAILSCALED_LOG" 2>&1 &
-
-        if process_stays_running tailscaled; then
-            log "tailscaled started and stabilized on attempt $attempt"
-            return 0
-        fi
-
+        printf 'Attempt %s/%s: tailscaled startup\n' "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" >>"$EDGE_TAILSCALED_LOG"
+        tailscaled --state="$EDGE_TS_STATE" --socket="$EDGE_TS_SOCKET" >>"$EDGE_TAILSCALED_LOG" 2>&1 &
+        if process_stays_running tailscaled; then log "tailscaled started and stabilized on attempt $attempt"; return 0; fi
         log "WARNING: tailscaled attempt ${attempt}/${EDGE_SERVICE_START_ATTEMPTS} failed"
-        attempt=$((attempt + 1))
-        [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ] &&
-            sleep "$EDGE_SERVICE_RETRY_SECONDS"
+        attempt=$((attempt + 1)); [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ] && sleep "$EDGE_SERVICE_RETRY_SECONDS"
     done
-
-    log "ERROR: failed to stabilize tailscaled; inspect $EDGE_TAILSCALED_LOG"
-    return 1
+    log "ERROR: failed to stabilize tailscaled; inspect $EDGE_TAILSCALED_LOG"; return 1
 }
-
 wait_for_tailscale_api() {
     elapsed=0
     while [ "$elapsed" -lt "$EDGE_TS_READY_WAIT_SECONDS" ]; do
         pidof tailscaled >/dev/null 2>&1 || return 1
         tailscale --socket="$EDGE_TS_SOCKET" status >/dev/null 2>&1 && return 0
-        elapsed=$((elapsed + 1))
-        sleep 1
+        elapsed=$((elapsed + 1)); sleep 1
     done
     return 1
 }
 
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-    log "services-start already running; exiting"
-    exit 0
-fi
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then log "services-start already running; exiting"; exit 0; fi
 trap 'rmdir "$LOCK_DIR" 2>/dev/null' EXIT HUP INT TERM
-
 elapsed=0
 while ! opt_is_ready 2>/dev/null; do
     elapsed=$((elapsed + 1))
-    if [ "$elapsed" -ge "$EDGE_OPT_WAIT_SECONDS" ]; then
-        log "ERROR: Entware /opt not ready after ${EDGE_OPT_WAIT_SECONDS}s"
-        exit 1
-    fi
+    [ "$elapsed" -ge "$EDGE_OPT_WAIT_SECONDS" ] && { log "ERROR: Entware /opt not ready after ${EDGE_OPT_WAIT_SECONDS}s"; exit 1; }
     sleep 1
 done
 
-amtm_entware_startup_detected() {
-    [ -r /jffs/scripts/post-mount ] &&
-        grep -F '/jffs/addons/amtm/mount-entware.mod' /jffs/scripts/post-mount >/dev/null 2>&1
-}
-
-external_entware_start_running() {
-    ps w 2>/dev/null |
-        grep -E '[/](rc\.unslung|S[0-9][0-9]*unbound)([[:space:]]|$)' |
-        grep -v grep >/dev/null 2>&1
-}
-
+amtm_entware_startup_detected() { [ -r /jffs/scripts/post-mount ] && grep -F '/jffs/addons/amtm/mount-entware.mod' /jffs/scripts/post-mount >/dev/null 2>&1; }
+external_entware_start_running() { ps w 2>/dev/null | grep -E '[/](rc\.unslung|S[0-9][0-9]*unbound)([[:space:]]|$)' | grep -v grep >/dev/null 2>&1; }
 wait_for_amtm_entware_startup() {
-    elapsed=0
-    quiet_seconds=0
-    unbound_stable_seconds=0
-
+    elapsed=0; quiet_seconds=0; unbound_stable_seconds=0
     while [ "$elapsed" -lt "$EDGE_ENTWARE_START_WAIT_SECONDS" ]; do
         ntp_ready=1
-        if executable_exists nvram >/dev/null 2>&1; then
-            [ "$(nvram get ntp_ready 2>/dev/null)" = "1" ] || ntp_ready=0
-        fi
-
+        if executable_exists nvram >/dev/null 2>&1; then [ "$(nvram get ntp_ready 2>/dev/null)" = "1" ] || ntp_ready=0; fi
         if pidof unbound >/dev/null 2>&1; then
-            quiet_seconds=0
-            unbound_stable_seconds=$((unbound_stable_seconds + 1))
-            [ "$unbound_stable_seconds" -ge "$EDGE_SERVICE_STABILITY_SECONDS" ] && return 0
-        elif external_entware_start_running || [ "$ntp_ready" != "1" ]; then
-            quiet_seconds=0
-            unbound_stable_seconds=0
-        else
-            unbound_stable_seconds=0
-            quiet_seconds=$((quiet_seconds + 1))
-            [ "$quiet_seconds" -ge "$EDGE_ENTWARE_QUIET_SECONDS" ] && return 0
+            quiet_seconds=0; unbound_stable_seconds=$((unbound_stable_seconds + 1)); [ "$unbound_stable_seconds" -ge "$EDGE_SERVICE_STABILITY_SECONDS" ] && return 0
+        elif external_entware_start_running || [ "$ntp_ready" != "1" ]; then quiet_seconds=0; unbound_stable_seconds=0
+        else unbound_stable_seconds=0; quiet_seconds=$((quiet_seconds + 1)); [ "$quiet_seconds" -ge "$EDGE_ENTWARE_QUIET_SECONDS" ] && return 0
         fi
-
-        elapsed=$((elapsed + 1))
-        sleep 1
+        elapsed=$((elapsed + 1)); sleep 1
     done
-
     return 1
 }
-
 if amtm_entware_startup_detected; then
-    if wait_for_amtm_entware_startup; then
-        log "amtm Entware startup settled"
-    else
-        log "WARNING: amtm Entware startup did not settle after ${EDGE_ENTWARE_START_WAIT_SECONDS}s"
-    fi
+    if wait_for_amtm_entware_startup; then log "amtm Entware startup settled"; else log "WARNING: amtm Entware startup did not settle after ${EDGE_ENTWARE_START_WAIT_SECONDS}s"; fi
 fi
-
-if [ "$EDGE_RUN_RC_UNSLUNG" = "1" ] && [ -x /opt/etc/init.d/rc.unslung ]; then
-    /opt/etc/init.d/rc.unslung start >/tmp/asus-edge-entware-start.log 2>&1 ||
-        log "WARNING: Entware startup returned non-zero"
-fi
-
+if [ "$EDGE_RUN_RC_UNSLUNG" = "1" ] && [ -x /opt/etc/init.d/rc.unslung ]; then /opt/etc/init.d/rc.unslung start >/tmp/asus-edge-entware-start.log 2>&1 || log "WARNING: Entware startup returned non-zero"; fi
 mkdir -p /opt/var/lib/unbound
+
+startup_failed=0
+if executable_exists tailscaled >/dev/null 2>&1; then
+    if start_tailscaled_with_retry && wait_for_tailscale_api; then
+        set -- tailscale --socket="$EDGE_TS_SOCKET" up --netfilter-mode="$EDGE_TS_NETFILTER_MODE" --accept-dns="$EDGE_ACCEPT_DNS" --hostname="$EDGE_HOSTNAME"
+        [ -n "$EDGE_ADVERTISE_ROUTES" ] && set -- "$@" --advertise-routes="$EDGE_ADVERTISE_ROUTES"
+        [ "$EDGE_ENABLE_EXIT_NODE" = "1" ] && set -- "$@" --advertise-exit-node
+        "$@" >/tmp/asus-edge-tailscale-up.log 2>&1 || log "WARNING: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"
+    elif pidof tailscaled >/dev/null 2>&1; then log "WARNING: Tailscale is not authenticated or its local API is unavailable"
+    else log "ERROR: required Tailscale daemon failed to start"; startup_failed=1; fi
+else log "WARNING: tailscaled not installed"; fi
+
+remove_stale_process_pidfile() {
+    stale_process_name="$1"; stale_pidfile="$2"
+    [ -n "$stale_pidfile" ] || return 0; [ -f "$stale_pidfile" ] || return 0; pidof "$stale_process_name" >/dev/null 2>&1 && return 0
+    rm -f "$stale_pidfile" || return 1; log "removed stale $stale_process_name pidfile $stale_pidfile"
+}
+resolve_unbound_config() {
+    if [ -n "$EDGE_UNBOUND_CONFIG" ] && [ -r "$EDGE_UNBOUND_CONFIG" ]; then printf '%s\n' "$EDGE_UNBOUND_CONFIG"; return 0; fi
+    for unbound_config_candidate in /opt/var/lib/unbound/unbound.conf /opt/etc/unbound/unbound.conf; do
+        [ -r "$unbound_config_candidate" ] && { printf '%s\n' "$unbound_config_candidate"; return 0; }
+    done
+    return 1
+}
+start_unbound_direct_if_stopped() {
+    unbound_log=/tmp/asus-edge-unbound-start.log
+    if pidof unbound >/dev/null 2>&1; then process_stays_running unbound && { log "unbound already running and stable; preserving current process"; return 0; }; log "WARNING: unbound exited during startup; attempting direct recovery"; fi
+    [ -x "$EDGE_UNBOUND_BIN" ] || { log "ERROR: Unbound binary is not executable: $EDGE_UNBOUND_BIN"; return 1; }
+    unbound_config="$(resolve_unbound_config)" || { log "ERROR: no readable Unbound configuration found"; return 1; }
+    : >"$unbound_log"
+    if executable_exists unbound-checkconf >/dev/null 2>&1; then
+        if ! LD_LIBRARY_PATH="$EDGE_ENTWARE_LD_LIBRARY_PATH" unbound-checkconf "$unbound_config" >>"$unbound_log" 2>&1; then log "ERROR: Unbound configuration validation failed; inspect $unbound_log"; return 1; fi
+    fi
+    attempt=1
+    while [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ]; do
+        remove_stale_process_pidfile unbound "$EDGE_UNBOUND_PIDFILE" || log "WARNING: could not remove stale pidfile $EDGE_UNBOUND_PIDFILE"
+        printf 'Attempt %s/%s: %s -c %s\n' "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" "$EDGE_UNBOUND_BIN" "$unbound_config" >>"$unbound_log"
+        LD_LIBRARY_PATH="$EDGE_ENTWARE_LD_LIBRARY_PATH" "$EDGE_UNBOUND_BIN" -c "$unbound_config" >>"$unbound_log" 2>&1
+        unbound_start_rc=$?; printf 'Launcher exit status: %s\n' "$unbound_start_rc" >>"$unbound_log"
+        if process_stays_running unbound; then
+            log "unbound recovered directly on attempt $attempt"
+            if service restart_dnsmasq >/dev/null 2>&1; then log "dnsmasq restarted after unbound recovery"; else log "ERROR: failed to restart dnsmasq after unbound recovery"; return 1; fi
+            return 0
+        fi
+        attempt=$((attempt + 1)); [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ] && sleep "$EDGE_SERVICE_RETRY_SECONDS"
+    done
+    log "ERROR: failed to stabilize unbound; inspect $unbound_log"; return 1
+}
+start_entware_service_if_stopped() {
+    process_name="$1"; service_log="$2"; process_pidfile="$3"; shift 3
+    if pidof "$process_name" >/dev/null 2>&1; then process_stays_running "$process_name" && { log "$process_name already running and stable; preserving current process"; return 0; }; log "WARNING: $process_name exited during startup; attempting recovery"; fi
+    service_found=0
+    for service_path in "$@"; do
+        [ -x "$service_path" ] || continue; service_found=1; : >"$service_log"; attempt=1
+        while [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ]; do
+            remove_stale_process_pidfile "$process_name" "$process_pidfile" || log "WARNING: could not remove stale pidfile $process_pidfile"
+            printf 'Attempt %s/%s: %s start\n' "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" "$service_path" >>"$service_log"
+            "$service_path" start >>"$service_log" 2>&1 || true
+            if process_stays_running "$process_name"; then log "$process_name started via $service_path on attempt $attempt"; return 0; fi
+            attempt=$((attempt + 1)); [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ] && sleep "$EDGE_SERVICE_RETRY_SECONDS"
+        done
+        log "WARNING: failed to stabilize $process_name; inspect $service_log"; return 1
+    done
+    [ "$service_found" -eq 1 ] || log "WARNING: no executable init script found for $process_name"; return 1
+}
+
+start_unbound_direct_if_stopped || startup_failed=1
+start_entware_service_if_stopped syslog-ng /tmp/asus-edge-syslog-ng-start.log "" /opt/etc/init.d/S*syslog-ng || log "WARNING: optional syslog-ng service unavailable"
+if [ -x /jffs/scripts/firewall-start ]; then /jffs/scripts/firewall-start || { log "ERROR: firewall policy failed"; startup_failed=1; }; fi
+if [ "$startup_failed" -ne 0 ]; then log "ERROR: required service startup failed"; exit 1; fi
+log "services startup completed"
+exit 0
