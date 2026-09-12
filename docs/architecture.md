@@ -32,12 +32,12 @@ Tailscale is the first authorization boundary. The router firewall is a second, 
 ```mermaid
 sequenceDiagram
     participant C as Remote client
-    participant F as iptables DNAT
+    participant F as iptables REDIRECT
     participant D as dnsmasq :53
     participant U as Unbound :53535
     participant A as Authoritative DNS
     C->>F: UDP/TCP 53 (any destination)
-    F->>D: 192.168.50.1:53
+    F->>D: REDIRECT to router-local :53
     D->>U: 127.0.0.1:53535
     U->>A: Iterative DNS query
     A-->>U: Signed response
@@ -45,7 +45,7 @@ sequenceDiagram
     D-->>C: DNS response
 ```
 
-Encrypted DNS does not use this flow and is not intercepted.
+Classic UDP/TCP port 53 arriving on `tailscale0` is redirected to the router-local DNS listener. The firewall uses the netfilter `REDIRECT` target rather than DNAT to a configured LAN address, so DNS interception remains bound to the receiving router even if its LAN IPv4 address changes. Encrypted DNS does not use this flow and is not intercepted.
 
 The supplied IPv6 chains fail closed for new Tailscale input and forwarded traffic. IPv6 access requires a separate granular policy and live validation before those guards are relaxed.
 
