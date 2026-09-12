@@ -6,12 +6,17 @@
 - Added a dedicated Entware SSD migration runbook and sanitized reboot-validation evidence.
 - Added printer-hardening documentation and health-check coverage for disabling the router USB print server and TCP/515 exposure.
 - Added recruiter-facing portfolio highlights to the README.
+- Added a controlled endpoint-filtering validation methodology for workstation-local Zen and optional AdGuard for Windows testing.
+- Added evidence guidance for post-hardening mobile telemetry case studies without inventing a pre-debloat baseline.
 
 ### Changed
 - Migrated the persistent Entware environment from USB flash storage to SSD with separate `ENTWARE` and `ROUTER_DATA` filesystems.
 - Added active swap on the SSD-backed Entware and data partitions to protect memory-constrained services such as Tailscale.
 - Refreshed the roadmap and README to reflect the validated 2026-09-11 deployment state.
 - Updated the pinned `actions/checkout` dependency to v7.0.1 on its immutable commit SHA for the Node 24 GitHub Actions runtime.
+- Extended the security design and threat model to treat endpoint HTTPS interception, local CA trust, DNS-path preservation, and evidence privacy as explicit trust boundaries.
+- Split testing and evidence documentation into CI/mock, router-live, remote-client, endpoint-filtering, and mobile-telemetry validation tracks so results from one layer are not overstated as another layer's capability.
+- Documented that repo/documentation work and workstation-local tests may continue during the 2026-09-11 through 2026-09-25 stability observation while router-side corroboration remains read-only.
 
 ### Fixed
 - Finalized WAN event handling and rollback tests, including recovery from DNS-path and Tailscale restart failures.
@@ -26,6 +31,7 @@
 - Fresh post-reboot logs contained no new `asus-edge: ERROR`, Tailscale OOM, fatal error, or recurring Adaptive QoS failure in the validation window.
 - Printer regression checks and the repository static/recovery suite pass in GitHub Actions.
 - A 14-day unchanged-state stability observation is in progress; long-term stability is not claimed until that observation completes.
+- Endpoint-filtering and mobile-telemetry results are not yet claimed as validated; the repository currently contains methodology and evidence rules for those future tests.
 
 ## [2.1.3] - 2026-09-09
 
