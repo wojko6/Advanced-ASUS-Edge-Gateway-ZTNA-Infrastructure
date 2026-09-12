@@ -86,11 +86,15 @@ firewall when packet capture shows no attempted print connection.
 
 ## Manual audit
 
+The following commands are read-only and can be used to inspect the current policy without rebuilding it:
+
 ```sh
 iptables-save | grep -E 'EDGE_TS_|tailscale0'
 iptables -nvL EDGE_TS_INPUT --line-numbers
 iptables -nvL EDGE_TS_FORWARD --line-numbers
 iptables -t nat -nvL EDGE_TS_PREROUTING --line-numbers
+ip6tables -nvL EDGE_TS6_INPUT --line-numbers
+ip6tables -nvL EDGE_TS6_FORWARD --line-numbers
 ```
 
-Re-run `/jffs/scripts/firewall-start` and confirm jump counts remain one.
+To verify idempotency during a planned deployment or maintenance window, re-run `/jffs/scripts/firewall-start` and confirm that each project-owned parent jump remains singular. **Do not perform that re-apply merely for audit purposes during the reference router's unchanged-state observation window ending 2026-09-25.** During the active stability gate, use the read-only ruleset/counter inspection above instead. If recovery from an active fault or security incident requires firewall re-application, record the intervention and restart the stability baseline after the router returns to a known-good state.
