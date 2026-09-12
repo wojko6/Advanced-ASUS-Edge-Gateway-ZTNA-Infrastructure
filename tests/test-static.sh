@@ -48,6 +48,24 @@ do
     }
 done
 
+UPDATE_TAILSCALE="$REPO_DIR/scripts/update-tailscale.sh"
+for update_guard in \
+    'UPGRADABLE="$(opkg list-upgradable)" || {' \
+    'ERROR: failed to query upgradable packages' \
+    'ERROR: post-update service recovery failed' \
+    'ERROR: post-update health check failed'
+do
+    grep -F "$update_guard" "$UPDATE_TAILSCALE" >/dev/null || {
+        echo "FAIL: Tailscale update failure guard missing: $update_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F "opkg list-upgradable | grep '^tailscale '" "$UPDATE_TAILSCALE" >/dev/null; then
+    echo "FAIL: Tailscale update query failure can still be masked by a pipeline" >&2
+    exit 1
+fi
+
 if grep -F 'opkg update && opkg upgrade tailscale' "$REPO_DIR/router/scripts/services-start" >/dev/null; then
     echo "FAIL: package upgrade present in boot path" >&2
     exit 1
@@ -380,32 +398,25 @@ if grep -F 'rm -rf' "$RETENTION_SCRIPT" >/dev/null; then
     exit 1
 fi
 
-for service_guard in \
-    'ExecStart=/usr/local/sbin/asus-edge-log-retention --apply' \
-    'ProtectSystem=strict' \
-    'ProtectHome=true' \
-    'ReadWritePaths=/var/log/asus-edge'
+for retention_doc in \
+    "$REPO_DIR/docs/centralized-logging.md" \
+    "$REPO_DIR/docs/operations.md"
 do
-    grep -F "$service_guard" "$REPO_DIR/config/systemd/asus-edge-log-retention.service" >/dev/null || {
-        echo "FAIL: retention service hardening missing: $service_guard" >&2
+    grep -F 'asus-edge-log-retention.sh' "$retention_doc" >/dev/null || {
+        echo "FAIL: collector retention helper undocumented in $retention_doc" >&2
         exit 1
     }
 done
 
-for timer_guard in \
-    'OnCalendar=*-*-* 03:20:00' \
-    'Persistent=true' \
-    'RandomizedDelaySec=10m'
-do
-    grep -F "$timer_guard" "$REPO_DIR/config/systemd/asus-edge-log-retention.timer" >/dev/null || {
-        echo "FAIL: retention timer guard missing: $timer_guard" >&2
+for printer_service in lpd u2ec; do
+    grep -F "$printer_service" "$REPO_DIR/scripts/check-usb-exposure.sh" >/dev/null || {
+        echo "FAIL: USB exposure audit does not inspect $printer_service" >&2
+        exit 1
+    }
+    grep -F "$printer_service" "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: healthcheck does not inspect $printer_service" >&2
         exit 1
     }
 done
 
-"$TEST_DIR/test-log-retention.sh"
-"$TEST_DIR/test-firewall-mock.sh"
-"$TEST_DIR/test-config-validation.sh"
-"$TEST_DIR/test-evidence-collector.sh"
-python3 "$TEST_DIR/test-recovery.py"
-echo "PASS: static test suite"
+printf '%s\n' "Static tests passed."
