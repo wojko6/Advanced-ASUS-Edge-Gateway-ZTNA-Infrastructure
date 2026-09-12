@@ -246,7 +246,12 @@ start_entware_service_if_stopped() {
 
 start_unbound_direct_if_stopped || startup_failed=1
 start_entware_service_if_stopped syslog-ng /tmp/asus-edge-syslog-ng-start.log "" /opt/etc/init.d/S*syslog-ng || log "WARNING: optional syslog-ng service unavailable"
-if [ -x /jffs/scripts/firewall-start ]; then /jffs/scripts/firewall-start || { log "ERROR: firewall policy failed"; startup_failed=1; }; fi
+if [ -x /jffs/scripts/firewall-start ]; then
+    /jffs/scripts/firewall-start || { log "ERROR: firewall policy failed"; startup_failed=1; }
+else
+    log "ERROR: required managed firewall hook is missing or not executable: /jffs/scripts/firewall-start"
+    startup_failed=1
+fi
 if [ "$startup_failed" -ne 0 ]; then log "ERROR: required service startup failed"; exit 1; fi
 log "services startup completed"
 exit 0
