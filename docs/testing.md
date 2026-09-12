@@ -27,20 +27,28 @@ copy failures, full installer rollback, first-install cleanup, firewall bypass
 detection and exact printer-port matching. The evidence test also checks that
 private healthcheck diagnostics are omitted.
 
-GitHub Actions runs the main static/recovery/evidence suite and also enforces two
-separate deployment-path checks so their status is visible independently:
+GitHub Actions runs the main static/recovery/evidence suite plus focused regression
+checks for configuration validation and maintenance/recovery paths:
 
 ```sh
+sh tests/test-services-config-validation.sh
+sh tests/test-healthcheck-config-validation.sh
+sh tests/test-update-tailscale-static.sh
 sh tests/test-wan-event-handler.sh
+sh tests/test-wan-config-validation.sh
 sh tests/test-install-rollback.sh
 ```
 
-The WAN test covers the normal recovery path plus DNS-unavailable, missing
-`resolv.conf`, and failed Tailscale-restart cases using mocks. The isolated
-install/rollback test creates a temporary test root, installs the managed WAN
-hook there, injects a controlled installer failure, and verifies that the
-previous hook is restored. These CI checks operate only on temporary test data;
-they do not connect to or modify the router.
+The configuration-validation tests reject invalid startup, healthcheck, firewall,
+and WAN-event inputs before those values can reach runtime commands. The Tailscale
+update guard test verifies that the managed recovery and healthcheck hooks are
+required before package mutation and that package/recovery failures remain fatal.
+The WAN tests cover the normal recovery path plus invalid configuration,
+DNS-unavailable, missing `resolv.conf`, and failed Tailscale-restart cases using
+mocks. The isolated install/rollback test creates a temporary test root, installs
+the managed WAN hook there, injects a controlled installer failure, and verifies
+that the previous hook is restored. These CI checks operate only on repository or
+temporary test data; they do not connect to or modify the router.
 
 These checks do not prove the router kernel supports every match module; live
 validation remains required. The healthcheck requires managed filter jumps to
