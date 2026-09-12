@@ -19,6 +19,14 @@ The firewall script does not flush Merlin or user-owned chains. Before attaching
 each managed chain, it deletes duplicate project-owned jumps and inserts exactly
 one interface-scoped jump.
 
+Before the first iptables mutation, `firewall-start` validates the configured
+booleans, ports, interface names, router IPv4 address, tailnet IPv4 CIDR, admin
+and printer source addresses/CIDRs, allowed LAN destination addresses/CIDRs, and
+optional printer IPv4 address. Malformed policy input is therefore rejected
+before the temporary fail-closed guards or managed chains are changed. Dynamic
+WAN auto-detection is validated when exit-node policy is built; if a valid WAN
+interface cannot be determined, the apply fails closed and requires recovery.
+
 During the first migration, the script removes exact legacy `tailscale+` rules created by the earlier documented configuration: broad INPUT/FORWARD accepts, direct DNS accepts/DNAT, and the unrestricted router-HTTPS DNAT. It does not remove arbitrary third-party rules. Native Tailscale netfilter chains
 left from an earlier configuration are treated as an invalid runtime state and
 must be resolved before final validation. Router HTTPS DNAT is recreated inside
@@ -79,7 +87,7 @@ firewall when packet capture shows no attempted print connection.
 
 - iptables sees source IPs, not Tailscale user identities. Enforce identities with Grants.
 - The granular service policy is IPv4. The installed IPv6 guard intentionally drops new Tailscale IPv6 input/forward traffic; do not remove it until an equivalent policy is tested.
-- `EDGE_ALLOWED_LAN_HOSTS` combined with each listed port is a Cartesian product. Create separate chains if hosts need different service sets.
+- `EDGE_ALLOWED_LAN_HOSTS` accepts IPv4 addresses/CIDRs, not hostnames, and combined with each listed port is a Cartesian product. Create separate chains if hosts need different service sets.
 - Printer HTTP, SNMPv1/v2, IPP, and raw TCP are not encrypted on the LAN segment. Tailscale protects the remote path only as far as the subnet router; keep the printer policy source-restricted and never expose these ports to the WAN.
 - Exit-node mode permits all protocols to the WAN interface; Tailscale Grants must restrict who may use `autogroup:internet`.
 - REDIRECT of classic DNS port 53 requires dnsmasq to include `tailscale0`; it does not block encrypted DNS protocols.
