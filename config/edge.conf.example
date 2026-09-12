@@ -35,8 +35,11 @@ EDGE_UNBOUND_BIN="/opt/sbin/unbound"
 # Scope Entware's glibc to resolver recovery; do not export it globally.
 EDGE_ENTWARE_LD_LIBRARY_PATH="/opt/lib:/opt/usr/lib"
 
-# Least-privilege access to LAN services. Both lists are space-separated.
-# Every listed host receives every listed TCP/UDP port below.
+# Least-privilege access to LAN services. Host entries are space-separated IPv4
+# addresses or IPv4 CIDRs; hostnames are intentionally not resolved here so the
+# firewall policy remains deterministic and does not depend on DNS at apply time.
+# TCP/UDP port lists are also space-separated. Every listed host/network receives
+# every listed TCP/UDP port below.
 EDGE_ALLOWED_LAN_HOSTS=""
 EDGE_ALLOWED_LAN_TCP_PORTS=""
 EDGE_ALLOWED_LAN_UDP_PORTS=""
