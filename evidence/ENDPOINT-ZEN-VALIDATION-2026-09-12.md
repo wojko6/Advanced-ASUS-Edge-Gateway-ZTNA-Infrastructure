@@ -4,12 +4,13 @@
 
 This artifact records a Windows endpoint validation of Zen as an optional defense-in-depth content-filtering layer. The router remained unchanged during the active 14-day stability observation window.
 
-The purpose was to check practical browser compatibility, DNS-path preservation, HTTPS interception behaviour, ad/content-filtering observations, false positives, and approximate endpoint resource cost without changing router DNS, firewall, Unbound, Tailscale, or other router services.
+The purpose was to check practical browser compatibility, DNS-path preservation, HTTPS interception behaviour, ad/content-filtering observations, false positives, approximate endpoint resource cost, and selected runtime-log behaviour without changing router DNS, firewall, Unbound, Tailscale, or other router services.
 
 ## Test environment
 
 - Endpoint: Windows workstation.
 - Browsers used during validation: Google Chrome and Brave.
+- Zen: v0.25.1 in the captured application log.
 - Zen: enabled for the active-filter tests.
 - Brave Shields: disabled during the dedicated Zen/Brave load test so browser-native blocking would not be intentionally mixed with the Zen result.
 - Router DNS address configured on the Windows Wi-Fi interface: `192.168.50.1`.
@@ -69,11 +70,13 @@ The inspected page DOM also contained ad-detection-related elements. The observa
 
 Conclusion: do not deploy either custom WP cosmetic rule. The result is retained as a real false-positive/compatibility example rather than hidden by an over-broad exception or an unsupported claim.
 
-### YouTube — INCONCLUSIVE
+### YouTube — A/B INCONCLUSIVE; FILTER ACTIVITY CONFIRMED
 
 With Zen enabled, tested YouTube videos started without an observed advertisement. A control run with Zen disabled also failed to receive an advertisement.
 
-Because the control session did not produce an ad, this test cannot establish a causal Zen ON/OFF blocking result. The observation is retained as inconclusive rather than promoted to a PASS claim.
+Because the control session did not produce an ad, this test cannot establish a causal Zen ON/OFF blocking result. The observation therefore remains inconclusive as a user-visible A/B test.
+
+The captured Zen runtime log adds separate technical evidence that the filter engine was actively processing YouTube responses. It recorded removal of ad-related properties including `adSlots`, `playerAds`, and, in later attempts, `adPlacements`. This confirms filter activity against YouTube advertising structures, but it does not substitute for a control session in which an advertisement is actually served with Zen disabled.
 
 ### HTTPS interception — PASS for the tested browser path
 
@@ -101,6 +104,26 @@ The displayed CPU value was effectively 0% at the captured moments.
 Opening roughly 15–20 browser tabs and exercising pages did not cause the later Zen memory figure to grow beyond the observed ~791 MB state. The short test therefore did not demonstrate a monotonic memory leak. It also does not prove long-term memory stability.
 
 Conclusion: CPU impact was low in the captured snapshots, while RAM use was material for an endpoint filtering utility and should remain an operational consideration.
+
+### Runtime log behaviour — cache/update/proxy observations
+
+The captured Zen application log records initialization as version `v0.25.1`, followed by `checking for updates`, local proxy startup, a whitelist server, and a PAC server. Subsequent proxy starts repeatedly loaded configured subscriptions `from cache`, including EasyList/EasyPrivacy, AdGuard filters, malware/phishing lists, the Polish regional list, and Zen's own lists.
+
+This confirms an update check occurred and confirms filter-cache reuse. It does **not** by itself identify the exact update endpoint, prove that every cache refresh avoids network access, or prove that Zen never performs other outbound activity.
+
+An earlier controlled idle observation did not show unexpected external TCP activity attributable to Zen after other applications using the proxy were closed. That remains a bounded observation from the tested window rather than proof of permanent absence of telemetry.
+
+### Runtime log privacy — PARTIAL REDACTION
+
+The log frequently replaces destinations with `[REDACTED]`, including many TLS-handshake and filtering messages. Redaction is not comprehensive: some DNS/error/debug paths expose destination hostnames, and YouTube processing errors can include full watch URLs.
+
+Conclusion: raw Zen application logs are treated as sensitive evidence and must **not** be committed to the public repository without sanitization. Portfolio evidence should use a sanitized summary or deliberately redacted excerpt only.
+
+### Runtime transport errors — compatibility signal, not compromise evidence
+
+The log contains repeated TLS `EOF`, connection-cancelled/reset, DNS-resolution, and HTTP/2 transport messages during normal browsing. These entries are not by themselves evidence of compromise. One certificate-verification failure caused a destination to be added to Zen's ignored-host handling during the test.
+
+This is operationally relevant because HTTPS interception can encounter applications or destinations whose certificate/trust behaviour is incompatible with interception. Sensitive or certificate-pinned applications remain a residual compatibility area for later normal-use observation.
 
 ## Upstream security architecture review
 
@@ -148,10 +171,14 @@ These upstream claims improve the architectural context for the endpoint test bu
 | Repeated direct DNS queries | PASS | 10/10 to `192.168.50.1`; initial transient timeout was not reproduced |
 | Facebook / Google / Xiaomi | PASS | Functional spot checks only |
 | WP Poczta | PARTIAL / COMPATIBILITY ISSUE | Standard filtering usable, but tested custom cosmetic ad rules removed the login form too |
-| YouTube ad blocking | INCONCLUSIVE | No ad appeared in either Zen ON or Zen OFF control run |
+| YouTube ad blocking | INCONCLUSIVE A/B | No ad appeared in either Zen ON or Zen OFF control run; runtime logs independently confirm ad-object filter activity |
 | HTTPS interception | PASS | Browser trusted a leaf certificate issued by `Zen Personal CA` |
 | CPU | PASS for captured snapshots | Effectively 0% at capture time |
 | RAM | NOTABLE COST | Stabilized near ~791 MB in the short follow-up; earlier ~1.58 GB state observed |
+| Filter cache | CONFIRMED | Configured subscriptions were repeatedly loaded from cache on later proxy starts |
+| Application update check | CONFIRMED | Runtime log records `checking for updates`; exact update network path was not established by this artifact |
+| Idle unexpected outbound TCP | NOT OBSERVED | Bounded controlled observation; not proof of permanent telemetry absence |
+| Log privacy | PARTIAL REDACTION | Raw log can expose hostnames/full URLs in some error/debug paths and is not suitable for public commit |
 | Upstream CA / proxy design | POSITIVE WITH RESIDUAL RISK | Local CA and sensitive-host exclusions are documented; CA key protection remains high-trust |
 | Upstream release provenance | POSITIVE | Immutable releases and GitHub artifact attestations are documented |
 | Upstream update delivery | RESIDUAL RISK | Upstream explicitly describes cryptographic update verification as work in progress |
@@ -159,12 +186,13 @@ These upstream claims improve the architectural context for the endpoint test bu
 
 ## Decision
 
-Zen remains a viable endpoint-side defense-in-depth candidate based on this short validation and upstream architecture review, with three important qualifications:
+Zen remains a viable endpoint-side defense-in-depth candidate based on this short validation, runtime-log evidence, and upstream architecture review, with four important qualifications:
 
 1. custom cosmetic filtering can create site-specific compatibility failures, demonstrated by WP Poczta;
 2. memory use is significant enough to monitor if Zen is retained long term;
-3. Zen is a high-trust HTTPS-interception component, and upstream update-delivery hardening is not yet described as complete.
+3. Zen is a high-trust HTTPS-interception component, and upstream update-delivery hardening is not yet described as complete;
+4. raw application logs require sanitization because destination redaction is incomplete.
 
-The YouTube result must remain explicitly inconclusive until a controlled session produces an advertisement with Zen disabled and allows a meaningful ON/OFF comparison.
+The YouTube user-visible result must remain explicitly inconclusive until a controlled session produces an advertisement with Zen disabled and allows a meaningful ON/OFF comparison. The runtime log nevertheless provides separate evidence that Zen actively removed YouTube ad-related response properties during the tested session.
 
 No result in this artifact changes or shortens the separate router stability gate. Router-side DNS/filtering remains authoritative for the project architecture, and Zen is treated as an optional endpoint layer rather than a replacement for router controls.
