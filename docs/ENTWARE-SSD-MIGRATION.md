@@ -4,7 +4,9 @@ Date: 2026-09-11
 
 ## Goal
 
-Migrate the router's production Entware installation from a USB flash drive to a SATA SSD while preserving services, configuration, permissions and boot-time behavior.
+Migrate the router's active Entware installation from a USB flash drive to a SATA SSD while preserving services, configuration, permissions and boot-time behavior.
+
+This document records a completed migration of the reference Home/SMB lab deployment. It is a historical procedure and validation record, not an instruction to repeat storage or reboot changes during the unchanged-state stability observation running through 2026-09-25.
 
 ## Target storage layout
 
@@ -108,8 +110,14 @@ no-resolv
 server=127.0.0.1#53535
 ```
 
+## Evidence boundary
+
+The dated artifact `evidence/2026-09-11/entware-ssd-migration-validation.txt` directly supports the SSD mounts, active swap files, running Tailscale/Unbound processes, Tailscale control-plane status, the direct Unbound DNSSEC response, and the recorded dnsmasq upstream configuration at that validation point.
+
+It does **not** by itself prove syslog-ng recovery, end-to-end mTLS collector delivery, every firewall or printer path, every exit-node traffic path, or long-term stability. Those claims require their own dated evidence. Process presence after the controlled reboot is also narrower than continuous service availability.
+
 ## Result
 
-The Entware installation, Tailscale, Unbound, dnsmasq integration and swap configuration all survived the controlled reboot and started automatically from the SSD-backed environment.
+For the checks recorded in the 2026-09-11 validation artifact, the SSD-backed Entware environment mounted correctly after the controlled reboot, both swap files were active, Tailscale and Unbound were running, and the tested resolver configuration remained intact.
 
-The old flash drive is no longer required for the active Entware runtime.
+The old flash drive is no longer required for the active Entware runtime. Long-term unchanged-state stability is being evaluated separately through 2026-09-25.
