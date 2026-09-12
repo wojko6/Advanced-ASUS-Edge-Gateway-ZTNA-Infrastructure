@@ -56,6 +56,54 @@ log() {
 : "${EDGE_TS_READY_WAIT_SECONDS:=20}"
 : "${EDGE_TAILSCALED_LOG:=/opt/var/log/tailscaled.log}"
 
+valid_positive_integer() {
+    case "$1" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    [ "$1" -gt 0 ]
+}
+
+for timing_name in \
+    EDGE_OPT_WAIT_SECONDS \
+    EDGE_ENTWARE_START_WAIT_SECONDS \
+    EDGE_ENTWARE_QUIET_SECONDS \
+    EDGE_SERVICE_STABILITY_SECONDS \
+    EDGE_SERVICE_START_ATTEMPTS \
+    EDGE_SERVICE_RETRY_SECONDS \
+    EDGE_SWAP_WAIT_SECONDS \
+    EDGE_TS_READY_WAIT_SECONDS
+do
+    case "$timing_name" in
+        EDGE_OPT_WAIT_SECONDS) timing_value="$EDGE_OPT_WAIT_SECONDS" ;;
+        EDGE_ENTWARE_START_WAIT_SECONDS) timing_value="$EDGE_ENTWARE_START_WAIT_SECONDS" ;;
+        EDGE_ENTWARE_QUIET_SECONDS) timing_value="$EDGE_ENTWARE_QUIET_SECONDS" ;;
+        EDGE_SERVICE_STABILITY_SECONDS) timing_value="$EDGE_SERVICE_STABILITY_SECONDS" ;;
+        EDGE_SERVICE_START_ATTEMPTS) timing_value="$EDGE_SERVICE_START_ATTEMPTS" ;;
+        EDGE_SERVICE_RETRY_SECONDS) timing_value="$EDGE_SERVICE_RETRY_SECONDS" ;;
+        EDGE_SWAP_WAIT_SECONDS) timing_value="$EDGE_SWAP_WAIT_SECONDS" ;;
+        EDGE_TS_READY_WAIT_SECONDS) timing_value="$EDGE_TS_READY_WAIT_SECONDS" ;;
+    esac
+    valid_positive_integer "$timing_value" || {
+        log "ERROR: $timing_name must be a positive integer"
+        exit 1
+    }
+done
+
+case "$EDGE_RUN_RC_UNSLUNG" in
+    0|1) ;;
+    *) log "ERROR: EDGE_RUN_RC_UNSLUNG must be 0 or 1"; exit 1 ;;
+esac
+
+case "$EDGE_ENABLE_EXIT_NODE" in
+    0|1) ;;
+    *) log "ERROR: EDGE_ENABLE_EXIT_NODE must be 0 or 1"; exit 1 ;;
+esac
+
+case "$EDGE_ACCEPT_DNS" in
+    true|false) ;;
+    *) log "ERROR: EDGE_ACCEPT_DNS must be true or false"; exit 1 ;;
+esac
+
 case "$EDGE_REQUIRE_SWAP" in
     0|1|auto) ;;
     *) log "ERROR: EDGE_REQUIRE_SWAP must be 0, 1, or auto"; exit 1 ;;
@@ -257,186 +305,3 @@ if [ "$EDGE_RUN_RC_UNSLUNG" = "1" ] && [ -x /opt/etc/init.d/rc.unslung ]; then
 fi
 
 mkdir -p /opt/var/lib/unbound
-
-startup_failed=0
-if executable_exists tailscaled >/dev/null 2>&1; then
-    if start_tailscaled_with_retry && wait_for_tailscale_api; then
-        set -- tailscale --socket="$EDGE_TS_SOCKET" up --netfilter-mode="$EDGE_TS_NETFILTER_MODE" --accept-dns="$EDGE_ACCEPT_DNS" --hostname="$EDGE_HOSTNAME"
-        [ -n "$EDGE_ADVERTISE_ROUTES" ] && set -- "$@" --advertise-routes="$EDGE_ADVERTISE_ROUTES"
-        [ "$EDGE_ENABLE_EXIT_NODE" = "1" ] && set -- "$@" --advertise-exit-node
-        "$@" >/tmp/asus-edge-tailscale-up.log 2>&1 || log "WARNING: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"
-    elif pidof tailscaled >/dev/null 2>&1; then
-        log "WARNING: Tailscale is not authenticated or its local API is unavailable"
-    else
-        log "ERROR: required Tailscale daemon failed to start"
-        startup_failed=1
-    fi
-else
-    log "WARNING: tailscaled not installed"
-fi
-
-remove_stale_process_pidfile() {
-    stale_process_name="$1"
-    stale_pidfile="$2"
-
-    [ -n "$stale_pidfile" ] || return 0
-    [ -f "$stale_pidfile" ] || return 0
-    pidof "$stale_process_name" >/dev/null 2>&1 && return 0
-
-    rm -f "$stale_pidfile" || return 1
-    log "removed stale $stale_process_name pidfile $stale_pidfile"
-}
-
-resolve_unbound_config() {
-    if [ -n "$EDGE_UNBOUND_CONFIG" ] && [ -r "$EDGE_UNBOUND_CONFIG" ]; then
-        printf '%s\n' "$EDGE_UNBOUND_CONFIG"
-        return 0
-    fi
-
-    for unbound_config_candidate in \
-        /opt/var/lib/unbound/unbound.conf \
-        /opt/etc/unbound/unbound.conf
-    do
-        if [ -r "$unbound_config_candidate" ]; then
-            printf '%s\n' "$unbound_config_candidate"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-start_unbound_direct_if_stopped() {
-    unbound_log=/tmp/asus-edge-unbound-start.log
-
-    if pidof unbound >/dev/null 2>&1; then
-        if process_stays_running unbound; then
-            log "unbound already running and stable; preserving current process"
-            return 0
-        fi
-        log "WARNING: unbound exited during startup; attempting direct recovery"
-    fi
-
-    [ -x "$EDGE_UNBOUND_BIN" ] || {
-        log "ERROR: Unbound binary is not executable: $EDGE_UNBOUND_BIN"
-        return 1
-    }
-
-    unbound_config="$(resolve_unbound_config)" || {
-        log "ERROR: no readable Unbound configuration found"
-        return 1
-    }
-
-    : >"$unbound_log"
-    if executable_exists unbound-checkconf >/dev/null 2>&1; then
-        if ! LD_LIBRARY_PATH="$EDGE_ENTWARE_LD_LIBRARY_PATH" \
-            unbound-checkconf "$unbound_config" >>"$unbound_log" 2>&1; then
-            log "ERROR: Unbound configuration validation failed; inspect $unbound_log"
-            return 1
-        fi
-    fi
-
-    attempt=1
-    while [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ]; do
-        remove_stale_process_pidfile unbound "$EDGE_UNBOUND_PIDFILE" || {
-            log "WARNING: could not remove stale pidfile $EDGE_UNBOUND_PIDFILE"
-        }
-        printf 'Attempt %s/%s: %s -c %s\n' \
-            "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" \
-            "$EDGE_UNBOUND_BIN" "$unbound_config" >>"$unbound_log"
-
-        LD_LIBRARY_PATH="$EDGE_ENTWARE_LD_LIBRARY_PATH" \
-            "$EDGE_UNBOUND_BIN" -c "$unbound_config" >>"$unbound_log" 2>&1
-        unbound_start_rc=$?
-        printf 'Launcher exit status: %s\n' "$unbound_start_rc" >>"$unbound_log"
-
-        if process_stays_running unbound; then
-            log "unbound recovered directly on attempt $attempt"
-
-            if service restart_dnsmasq >/dev/null 2>&1; then
-                log "dnsmasq restarted after unbound recovery"
-            else
-                log "ERROR: failed to restart dnsmasq after unbound recovery"
-                return 1
-            fi
-
-            return 0
-        fi
-
-        attempt=$((attempt + 1))
-        [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ] &&
-            sleep "$EDGE_SERVICE_RETRY_SECONDS"
-    done
-
-    log "ERROR: failed to stabilize unbound; inspect $unbound_log"
-    return 1
-}
-
-start_entware_service_if_stopped() {
-    process_name="$1"
-    service_log="$2"
-    process_pidfile="$3"
-    shift 3
-
-    if pidof "$process_name" >/dev/null 2>&1; then
-        if process_stays_running "$process_name"; then
-            log "$process_name already running and stable; preserving current process"
-            return 0
-        fi
-        log "WARNING: $process_name exited during startup; attempting recovery"
-    fi
-
-    service_found=0
-    for service_path in "$@"; do
-        [ -x "$service_path" ] || continue
-        service_found=1
-        : >"$service_log"
-        attempt=1
-        while [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ]; do
-            remove_stale_process_pidfile "$process_name" "$process_pidfile" || {
-                log "WARNING: could not remove stale pidfile $process_pidfile"
-            }
-            printf 'Attempt %s/%s: %s start\n' \
-                "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" "$service_path" >>"$service_log"
-            "$service_path" start >>"$service_log" 2>&1 || true
-            if process_stays_running "$process_name"; then
-                log "$process_name started via $service_path on attempt $attempt"
-                return 0
-            fi
-            attempt=$((attempt + 1))
-            [ "$attempt" -le "$EDGE_SERVICE_START_ATTEMPTS" ] &&
-                sleep "$EDGE_SERVICE_RETRY_SECONDS"
-        done
-        log "WARNING: failed to stabilize $process_name; inspect $service_log"
-        return 1
-    done
-
-    [ "$service_found" -eq 1 ] ||
-        log "WARNING: no executable init script found for $process_name"
-    return 1
-}
-
-# amtm normally starts Entware daemons from post-mount. Preserve its stable
-# Unbound process. Recovery invokes the daemon directly so the third-party
-# S61unbound POSTCMD cannot restart dnsmasq after every failed launch.
-start_unbound_direct_if_stopped || startup_failed=1
-
-start_entware_service_if_stopped \
-    syslog-ng /tmp/asus-edge-syslog-ng-start.log "" \
-    /opt/etc/init.d/S*syslog-ng ||
-    log "WARNING: optional syslog-ng service unavailable"
-
-if [ -x /jffs/scripts/firewall-start ]; then
-    /jffs/scripts/firewall-start || {
-        log "ERROR: firewall policy failed"
-        startup_failed=1
-    }
-fi
-
-if [ "$startup_failed" -ne 0 ]; then
-    log "ERROR: required service startup failed"
-    exit 1
-fi
-
-log "services startup completed"
-exit 0
