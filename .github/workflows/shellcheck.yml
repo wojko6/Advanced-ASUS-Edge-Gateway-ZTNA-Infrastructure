@@ -19,6 +19,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes shellcheck
       - name: Run static, recovery and evidence-redaction tests
         run: sh tests/test-static.sh
+      - name: Run services-start configuration validation
+        run: sh tests/test-services-config-validation.sh
 
   wan-and-rollback:
     name: WAN handler and install rollback checks
