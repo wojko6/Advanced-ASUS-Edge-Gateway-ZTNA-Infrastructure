@@ -34,6 +34,7 @@ checks for configuration validation and maintenance/recovery paths:
 sh tests/test-services-config-validation.sh
 sh tests/test-healthcheck-config-validation.sh
 sh tests/test-update-tailscale-static.sh
+sh tests/test-restore-validation.sh
 sh tests/test-wan-event-handler.sh
 sh tests/test-wan-config-validation.sh
 sh tests/test-install-rollback.sh
@@ -43,12 +44,15 @@ The configuration-validation tests reject invalid startup, healthcheck, firewall
 and WAN-event inputs before those values can reach runtime commands. The Tailscale
 update guard test verifies that the managed recovery and healthcheck hooks are
 required before package mutation and that package/recovery failures remain fatal.
-The WAN tests cover the normal recovery path plus invalid configuration,
-DNS-unavailable, missing `resolv.conf`, and failed Tailscale-restart cases using
-mocks. The isolated install/rollback test creates a temporary test root, installs
-the managed WAN hook there, injects a controlled installer failure, and verifies
-that the previous hook is restored. These CI checks operate only on repository or
-temporary test data; they do not connect to or modify the router.
+The restore archive test accepts a known-good dry-run and rejects checksum
+tampering, payload files omitted from the manifest, and malformed manifest
+records before any restore apply is attempted. The WAN tests cover the normal
+recovery path plus invalid configuration, DNS-unavailable, missing `resolv.conf`,
+and failed Tailscale-restart cases using mocks. The isolated install/rollback test
+creates a temporary test root, installs the managed WAN hook there, injects a
+controlled installer failure, and verifies that the previous hook is restored.
+These CI checks operate only on repository or temporary test data; they do not
+connect to or modify the router.
 
 These checks do not prove the router kernel supports every match module; live
 validation remains required. The healthcheck requires managed filter jumps to
@@ -67,7 +71,7 @@ remain necessary to verify actual access decisions.
 | Tailnet device | Router:22 | same | denied by default |
 | Approved user | NAS:443 | `curl -kI https://NAS_IP/` | allowed |
 | Tailnet device | Unlisted host:445 | `nc -vz HOST 445` | denied |
-| Tailnet device | `1.1.1.1:53` | `dig @1.1.1.1 example.com` | answer via local resolver after DNAT |
+| Tailnet device | `1.1.1.1:53` | `dig @1.1.1.1 example.com` | answer via local resolver after REDIRECT |
 | Unauthorized exit user | Public IP | select exit node + `curl` | denied by Grants |
 
 Run WAN scans only against addresses you own or are authorized to test.
@@ -93,7 +97,7 @@ dig @1.1.1.1 example.com A
 Expected evidence:
 
 - the request enters `tailscale0` with its original destination;
-- DNAT directs classic DNS to the router;
+- netfilter REDIRECT sends classic DNS to the router-local port 53 listener;
 - no equivalent plaintext request to `1.1.1.1:53` exits WAN;
 - resolver upstream traffic reflects recursive resolution (or configured forwarding), not the client's original packet.
 
