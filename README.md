@@ -11,7 +11,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 - Built a consumer-router security edge with Tailscale identity, project-owned default-deny firewall chains, and explicit router/LAN allowlists.
 - Integrated dnsmasq with local Unbound on loopback:53535 and validated DNSSEC with the AD flag after controlled reboots.
 - Added install, backup, restore, uninstall, health-check, evidence-collection, WAN-event recovery, and rollback workflows.
-- Migrated the persistent Entware environment from USB flash storage to SSD, restored swap-backed service startup, and validated Tailscale/Unbound/syslog-ng after reboot.
+- Migrated the persistent Entware environment from USB flash storage to SSD, restored swap-backed service startup, and directly validated SSD mounts, swap activation, Tailscale, Unbound, and resolver configuration after the controlled reboot.
 - Captured sanitized live evidence instead of presenting expected behavior as observed results.
 
 ## Architecture
@@ -136,28 +136,26 @@ Merge `config/dnsmasq.conf.add.example` with any existing `/jffs/configs/dnsmasq
 
 ## Centralized logging
 
-The optional logging path tails the firmware-owned `/tmp/syslog.log`, forwards it through Tailscale using mutually authenticated TLS, and buffers messages on disk during collector outages. The collector validates the router certificate before accepting messages. Private keys and real Tailscale addresses remain deployment-local.
+The optional logging design tails the firmware-owned `/tmp/syslog.log`, forwards it through Tailscale using mutually authenticated TLS, and can buffer messages on disk during collector outages. The checked-in examples require trusted peer certificates. Live mTLS delivery, buffer recovery, and post-reboot collector delivery should be described as observed only when the corresponding dated evidence exists; the presence of the example configuration alone is not operational proof.
 
-See [centralized logging with mTLS](docs/centralized-logging.md) for the trust model, safe rollout order, negative certificate test, buffer recovery test, and reboot validation.
+See [centralized logging with mTLS](docs/centralized-logging.md) for the trust model, safe rollout order, negative certificate test, buffer recovery test, reboot validation, and evidence boundaries.
 
 ## Live validation status
 
-The deployed reference environment was most recently validated on **2026-09-11** after the Entware SSD migration and a controlled router reboot.
+The reference environment has multiple dated evidence sets. The **2026-09-11 SSD-migration/reboot artifact** directly validates the storage and core-service subset listed below; other firewall, printer, logging, health-check, and remote-client observations belong to their own dated evidence and must not be inferred from that single artifact.
 
-The current validated state includes:
+Directly supported by `evidence/2026-09-11/entware-ssd-migration-validation.txt`:
 
-- both SSD partitions mounted automatically after reboot;
-- active swap on the Entware and data partitions;
-- Tailscale connected and offering exit-node functionality;
-- Unbound reachable on `127.0.0.1:53535` with DNSSEC validation confirmed by the AD flag;
-- dnsmasq forwarding through local Unbound;
-- syslog-ng running;
-- project firewall chains and printer-hardening checks passing;
-- Adaptive QoS disabled after repeatable boot-time QoS failures were traced to the enabled firmware feature;
-- no fresh `asus-edge: ERROR`, Tailscale OOM, fatal error, or recurring QoS failure in the post-reboot validation window;
-- final project health check: **0 failures, 0 warnings, exit code 0**.
+- both SSD partitions mounted automatically after the controlled reboot;
+- active 512 MiB and 2 GiB swap files;
+- `tailscaled` running, with the Tailscale status command successful and the router offering exit-node capability;
+- `unbound` running;
+- direct Unbound resolution on `127.0.0.1:53535` returning `NOERROR` with the DNSSEC `AD` flag;
+- dnsmasq configured with `no-resolv` and `server=127.0.0.1#53535`.
 
-See the sanitized [validated router-state snapshot](evidence/ROUTER-STATE-2026-09-11.md) for the recruiter-facing baseline and explicit stability-claim boundary.
+The artifact does **not** by itself prove syslog-ng recovery, end-to-end mTLS delivery, firewall/printer results, every exit-node traffic path, or long-term stability. See the sanitized [validated router-state snapshot](evidence/ROUTER-STATE-2026-09-11.md) for the exact claim boundary.
+
+Other dated repository evidence documents additional validation performed in the reference environment, including remote-client DNS behavior and earlier router/firewall checks. Keep those observations attached to their original dates and artifacts rather than folding them into the 2026-09-11 SSD evidence.
 
 Remote-client testing over LTE/5G previously confirmed the functional DNS path:
 
@@ -220,21 +218,36 @@ Tailscale updates are a separate planned-maintenance action:
 - [Polski przewodnik wdrożenia](docs/deployment-pl.md)
 - [Architecture](docs/architecture.md)
 - [Firewall policy](docs/firewall-policy.md)
-- [Security design and limitations](docs/security.md)
+- [Security model and limitations](docs/security.md)
 - [Threat model](docs/threat-model.md)
-- [Testing and evidence collection](docs/testing.md)
-- [Publishing validation evidence](docs/evidence-collection.md)
+- [Testing strategy](docs/testing.md)
+- [Evidence collection](docs/evidence-collection.md)
 - [Endpoint filtering validation](docs/endpoint-filtering-validation.md)
 - [Validated router-state snapshot](evidence/ROUTER-STATE-2026-09-11.md)
 - [Centralized logging with mTLS](docs/centralized-logging.md)
 - [Entware SSD migration](docs/ENTWARE-SSD-MIGRATION.md)
 - [Printer hardening](docs/PRINTER-HARDENING.md)
-- [uiDivStats high-load troubleshooting case study](docs/uidivstats-high-load-case-study.md)
-- [Konfiguracja drukarki Samsung w LAN](docs/printer-setup-lan-pl.md)
-- [Zdalne drukowanie Samsung przez Tailscale](docs/printer-setup-tailscale-pl.md)
+- [uiDivStats high-load case study](docs/uidivstats-high-load-case-study.md)
+- [Printer setup from LAN](docs/printer-setup-lan-pl.md)
+- [Printer setup through Tailscale](docs/printer-setup-tailscale-pl.md)
 - [Operations and recovery](docs/operations.md)
 - [Roadmap](docs/roadmap.md)
 
+## Validation evidence
+
+Sanitized evidence is stored under `evidence/YYYY-MM-DD/`. Each artifact should state what was actually observed and omit credentials, node state, real private addresses, or unrelated user data. Automated CI/mock output and live-router evidence are separate evidence classes; one must not be presented as proof of the other.
+
+Automated shell, configuration, mock-firewall, recovery, and evidence-redaction tests run in GitHub Actions. Live network claims require separate dated evidence.
+
+## Design principles
+
+1. **Least privilege**: identities are filtered by Tailscale policy, then device IPs and destination ports are filtered again on the router.
+2. **Fail closed**: invalid policy input aborts deployment; IPv6 is blocked until equivalent granular policy exists.
+3. **Reproducible**: configuration templates, tests, rollback paths, and evidence procedures live with the code.
+4. **Observable**: logs, counters, health checks, and sanitized evidence make policy behavior inspectable.
+5. **Recoverable**: backups, dry-run restore, installer rollback, and LAN recovery procedures are documented and tested.
+6. **Honest scope**: expected, automated, and live-validated behavior are kept separate, and platform limitations are explicit.
+
 ## License
 
-MIT — see [LICENSE](LICENSE).
+See [LICENSE](LICENSE).
