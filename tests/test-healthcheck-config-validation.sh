@@ -29,6 +29,8 @@ expect_rejected EDGE_TS_IF 'tailscale0;bad' 'invalid EDGE_TS_IF value: tailscale
 expect_rejected EDGE_LAN_IF 'br0 bad' 'invalid EDGE_LAN_IF value: br0 bad'
 expect_rejected EDGE_UNBOUND_PORT 70000 'invalid EDGE_UNBOUND_PORT value: 70000'
 expect_rejected EDGE_SYSLOG_PORT abc 'invalid EDGE_SYSLOG_PORT value: abc'
+expect_rejected EDGE_SYSLOG_HOST 'collector;reboot' 'invalid EDGE_SYSLOG_HOST value: collector;reboot'
+expect_rejected EDGE_SYSLOG_HOST '.collector.example' 'invalid EDGE_SYSLOG_HOST value: .collector.example'
 expect_rejected EDGE_PRINTER_TS_SOURCES '100.64.0.1/99' 'invalid printer Tailscale source: 100.64.0.1/99'
 expect_rejected EDGE_PRINTER_LAN_IP '192.168.50.300' 'invalid printer LAN IPv4: 192.168.50.300'
 expect_rejected EDGE_PRINTER_TCP_PORTS 0 'invalid printer port: 0'
