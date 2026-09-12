@@ -25,6 +25,8 @@ jobs:
         run: sh tests/test-healthcheck-config-validation.sh
       - name: Run Tailscale update recovery-guard checks
         run: sh tests/test-update-tailscale-static.sh
+      - name: Run restore archive validation
+        run: sh tests/test-restore-validation.sh
 
   wan-and-rollback:
     name: WAN handler and install rollback checks
