@@ -22,10 +22,11 @@ one interface-scoped jump.
 Before the first iptables mutation, `firewall-start` validates the configured
 booleans, ports, interface names, router IPv4 address, tailnet IPv4 CIDR, admin
 and printer source addresses/CIDRs, allowed LAN destination addresses/CIDRs, and
-optional printer IPv4 address. Malformed policy input is therefore rejected
-before the temporary fail-closed guards or managed chains are changed. Dynamic
-WAN auto-detection is validated when exit-node policy is built; if a valid WAN
-interface cannot be determined, the apply fails closed and requires recovery.
+optional printer IPv4 address. When exit-node mode is enabled, a configured WAN
+interface is validated or dynamic WAN auto-detection is resolved and validated
+at the same pre-mutation boundary. Malformed policy input or failure to determine
+a valid WAN interface is therefore rejected before the temporary fail-closed
+guards or managed chains are changed.
 
 During the first migration, the script removes exact legacy `tailscale+` rules created by the earlier documented configuration: broad INPUT/FORWARD accepts, direct DNS accepts/DNAT, and the unrestricted router-HTTPS DNAT. It does not remove arbitrary third-party rules. Native Tailscale netfilter chains
 left from an earlier configuration are treated as an invalid runtime state and
