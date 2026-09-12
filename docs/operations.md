@@ -75,6 +75,8 @@ service restart_firewall
 
 `uninstall.sh` removes the project-owned IPv4 and IPv6 runtime chains/jumps and restores a preserved pre-project hook only when the current hook is marked as ASUS Edge managed. It intentionally leaves the project configuration and backups in place for review. It does **not** itself restart the firmware firewall, stop Tailscale/Unbound/syslog-ng, remove packages, erase Tailscale state, or delete unrelated router configuration. Treat `service restart_firewall` as a separate recovery action and verify the resulting state locally.
 
+If hook restoration or managed-hook removal fails, `uninstall.sh` returns non-zero and reports an incomplete uninstall. Do not continue with a remote-only recovery assumption; inspect `/jffs/scripts` through local access before deciding whether to restart the firewall.
+
 If hooks cannot run, rename the managed hook files under `/jffs/scripts/`, restore the corresponding installer backup, and restart the router. The installer prints its timestamped backup path.
 
 An emergency rollback during the active stability observation interrupts that observation. Record why it was necessary and establish a new known-good baseline before restarting the observation period.
@@ -151,6 +153,17 @@ working remote-print path for the tested Samsung plugin.
 Unrelated denied traffic must remain denied. For example, a phone attempting to
 reach a workstation service such as TCP/1716 is not printer traffic and is not a
 reason to expand `EDGE_PRINTER_TCP_PORTS`.
+
+## Collector log retention
+
+The centralized collector has a separate retention helper, `scripts/asus-edge-log-retention.sh`. It is not a router boot hook and does not modify the reference router. Run it on the collector host first in its default dry-run mode and inspect the candidate files before applying retention:
+
+```sh
+./scripts/asus-edge-log-retention.sh --dry-run
+./scripts/asus-edge-log-retention.sh --apply
+```
+
+By default it operates under `/var/log/asus-edge`, compresses eligible older logs after 1440 minutes, deletes eligible compressed logs after 43200 minutes, and excludes the current day's log from those actions. Override its environment settings only on the collector after reviewing the target directory and retention requirements. Keep collector retention evidence separate from router stability evidence.
 
 ## Log rotation
 
