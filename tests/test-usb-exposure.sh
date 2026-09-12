@@ -42,7 +42,7 @@ case "${MOCK_LISTENERS:-}" in
     *515*) printf '%s\n' 'tcp        0      0 0.0.0.0:515             0.0.0.0:*               LISTEN' ;;
 esac
 case "${MOCK_LISTENERS:-}" in
-    *8200*) printf '%s\n' 'tcp        0      0 0.0.0.0:8200            0.0.0.0:*               LISTEN' ;;
+    *8200*) printf '%s\n' 'tcp        0      0 0.0.0:8200            0.0.0.0:*               LISTEN' ;;
 esac
 case "${MOCK_LISTENERS:-}" in
     *1900*) printf '%s\n' 'udp        0      0 0.0.0.0:1900            0.0.0.0:*' ;;
@@ -64,7 +64,7 @@ EDGE_REQUIRE_USB_PRINTER_DISABLED=1
 EOF
 
 run_audit() {
-    PATH="$MOCK_BIN:/usr/bin:/bin" \
+    EDGE_AUDIT_PATH="$MOCK_BIN:/usr/bin:/bin" \
     EDGE_CONFIG_FILE="$CONFIG_FILE" \
     MOCK_DMS_ENABLE="${MOCK_DMS_ENABLE:-0}" \
     MOCK_USB_PRINTER="${MOCK_USB_PRINTER:-0}" \
