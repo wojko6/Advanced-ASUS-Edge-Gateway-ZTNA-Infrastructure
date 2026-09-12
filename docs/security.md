@@ -9,6 +9,7 @@
 | Device-IP allowlist | Accidental broad tailnet management access | Identity lifecycle management |
 | Default-deny managed chains | Lateral movement through the subnet router | LAN segmentation/VLANs |
 | Unbound hardening + DNSSEC | Some spoofing, cache poisoning, rebinding patterns | DoH/DoT controls and endpoint policy |
+| Endpoint content filtering (optional) | Browser/app content that DNS filtering cannot reliably separate | Router DNS policy, endpoint patching, browser security |
 | TLS syslog forwarding | Passive log interception and basic transport tampering | SIEM correlation and immutable storage |
 | Backup hashes | Accidental/corrupt restore material | Encrypted/off-device backup protection |
 
@@ -18,6 +19,7 @@ Never commit:
 
 - Tailscale auth keys or `/opt/var/lib/tailscale/tailscaled.state`;
 - router exports, password hashes, SSH private keys, TLS private keys;
+- endpoint-filtering CA private keys, exported browser trust stores, cookies, profiles, or authentication tokens;
 - real internal hostnames/IPs when the repository must remain public;
 - SIEM tokens, collector credentials, or private CA keys.
 
@@ -35,6 +37,23 @@ The provided backup excludes Tailscale state. Store backups off-device and encry
 ## DNS caveats
 
 Classic DNS redirection is a visibility/control measure, not a comprehensive DNS security boundary. Browsers and applications can use DoH (TCP 443), DoT (TCP 853), DoQ (UDP 853), VPN tunnels, or hard-coded proxies. Manage these at the endpoint or a gateway capable of application-aware filtering.
+
+Endpoint-side filtering must not be presented as proof that router DNS filtering can block the same content. Conversely, an endpoint filter that silently replaces the configured DNS resolver can reduce router visibility and invalidate DNS-path assumptions. The endpoint-filtering validation therefore checks that the existing router DNS path remains authoritative.
+
+## Endpoint HTTPS filtering caveats
+
+Optional system-level content filters such as Zen or AdGuard for Windows may inspect HTTPS by installing a local certificate authority and proxying traffic on the endpoint. This creates a separate trust boundary from the ASUS gateway.
+
+Before treating such a tool as part of the validated design:
+
+- verify the software source and tested version;
+- document whether a local root CA is installed and how it is removed;
+- verify that normal TLS validation and security-sensitive applications continue to work;
+- keep DNS protection disabled when the purpose of the test is to preserve the existing router DNS architecture;
+- record false positives and certificate failures rather than hiding them;
+- never publish generated CA private keys or private browsing/session material.
+
+Endpoint HTTPS interception is optional defense in depth, not a prerequisite for the router security edge. See `docs/endpoint-filtering-validation.md` for the controlled test methodology.
 
 ## Logging caveats
 
