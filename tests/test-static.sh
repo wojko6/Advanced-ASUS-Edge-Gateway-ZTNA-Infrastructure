@@ -419,4 +419,6 @@ for printer_service in lpd u2ec; do
     }
 done
 
+sh "$REPO_DIR/tests/test-usb-exposure.sh"
+
 printf '%s\n' "Static tests passed."
