@@ -4,7 +4,12 @@ Automated shell, configuration, mock-firewall, recovery, and evidence-redaction 
 
 Live results are environment-specific and are not fabricated in this repository. Use [the collection procedure](../docs/evidence-collection.md) on the deployed router, review and sanitize the output, complete the relevant client-side checks, and then add a dated evidence directory.
 
-The [live-validation template](live-validation-template.md) distinguishes expected behavior from observed behavior. A row is evidence only after its date, source role, command, observation, and verdict have been completed.
+Use the template that matches the evidence class:
+
+- The [live-validation template](live-validation-template.md) is for router, firewall, DNS/Tailscale, remote-client, and related live-network validation. A row is evidence only after its date, source role, command or method, observation, and verdict have been completed.
+- The [endpoint-filtering template](endpoint-filtering-template.md) is for workstation-local Zen, AdGuard for Windows, or comparable endpoint-filter validation. It records baseline/filtered states, DNS-path preservation, HTTPS/root-CA behaviour, compatibility, resource observations, cleanup, and claim boundaries.
+
+Both files are templates only. A template or unfilled placeholder is never validation evidence.
 
 ## Published validation timeline
 
@@ -30,7 +35,7 @@ Do not merge these classes into a stronger claim than the underlying evidence su
 
 ## Endpoint-filter evidence
 
-Use the methodology in [endpoint filtering validation](../docs/endpoint-filtering-validation.md). A dated endpoint result should identify at minimum:
+Use the methodology in [endpoint filtering validation](../docs/endpoint-filtering-validation.md) and record the run with the [endpoint-filtering evidence template](endpoint-filtering-template.md). A dated endpoint result should identify at minimum:
 
 - test date;
 - Windows and browser versions;
