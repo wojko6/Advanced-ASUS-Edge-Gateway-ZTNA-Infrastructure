@@ -2,7 +2,9 @@
 
 ## Scope
 
-The scope includes the ASUS gateway, JFFS/Entware configuration, Tailscale subnet/exit routing, router management plane, recursive DNS, LAN destinations, and forwarded logs. Physical compromise and upstream ISP compromise are documented but not fully mitigated by this project.
+The scope includes the ASUS gateway, JFFS/Entware configuration, Tailscale subnet/exit routing, router management plane, recursive DNS, LAN destinations, forwarded logs, and optional endpoint-filtering validation. Physical compromise and upstream ISP compromise are documented but not fully mitigated by this project.
+
+Endpoint content filtering is a separate optional trust boundary. It is evaluated as defense in depth and must not be confused with router-side DNS enforcement.
 
 ## Assets and trust boundaries
 
@@ -14,6 +16,8 @@ The scope includes the ASUS gateway, JFFS/Entware configuration, Tailscale subne
 | DNS resolver/cache | Validated answers, limited clients, resistant to rebinding |
 | Firewall policy | Versioned, idempotent, reviewable, recoverable |
 | Logs/backups | Integrity, restricted access, useful retention |
+| Endpoint HTTPS trust store | No unauthorized CA persistence; controlled installation/removal |
+| Endpoint browsing/session data | Not exposed through evidence collection or public repository content |
 
 ## Threats and controls
 
@@ -29,6 +33,10 @@ The scope includes the ASUS gateway, JFFS/Entware configuration, Tailscale subne
 | T8 | Logs are lost or modified | Medium | Medium | Local archive, TLS forwarding, collector retention | Router compromise before forwarding |
 | T9 | Backup exposes credentials | Medium | High | State excluded, mode 0600, off-device encryption guidance | Other copied configs may contain secrets |
 | T10 | IPv6 bypasses IPv4 rules | Medium | High | IPv6 forwarding out of scope/disabled until tested | Platform-specific IPv6 behavior |
+| T11 | Endpoint filter silently changes DNS path | Medium | Medium | DNS-path validation; endpoint DNS protection disabled for architecture-preservation tests | Application-level DoH or VPN bypass |
+| T12 | HTTPS interception CA is abused or left behind | Low | High | Source/version verification, trust-store inspection, uninstall/cleanup validation | Endpoint compromise can undermine local trust store |
+| T13 | Endpoint evidence leaks private browsing/session data | Medium | High | Sanitized text-first evidence, manual review, no cookies/tokens/profiles/private keys | Human redaction error |
+| T14 | Endpoint-filter result is overstated as router capability | Medium | Medium | Separate test methodology and precise result language | Portfolio reader may still conflate layers |
 
 ## Abuse cases to test
 
@@ -39,5 +47,14 @@ The scope includes the ASUS gateway, JFFS/Entware configuration, Tailscale subne
 - A remote client uses the exit node without membership in `group:exit-users`.
 - The firewall hook runs repeatedly and duplicate jumps do not appear.
 - `/opt` mounts after the startup timeout and services remain unavailable but fail visibly.
+- A Windows endpoint filter is enabled and the workstation DNS resolver is checked for unexpected replacement.
+- Endpoint HTTPS filtering is disabled/uninstalled and the local trust-store/certificate state is checked for expected cleanup.
+- Endpoint-filter evidence is reviewed for hostnames, account identifiers, cookies, tokens, private IPs, unrelated browsing history, and certificate private material before publication.
 
-Review this model after every new exposed service, firmware upgrade, LAN addressing change, or identity-policy change.
+## Evidence and claim boundary
+
+Endpoint-filtering results are date-, version-, browser-, and workload-specific. A successful YouTube or browser test demonstrates only what was observed during the defined test window. It does not establish permanent blocking effectiveness and does not prove equivalent router-side capability.
+
+During the router stability observation window, endpoint tests must remain workstation-local. Router-side checks are read-only so the unchanged-state observation is not invalidated.
+
+Review this model after every new exposed service, firmware upgrade, LAN addressing change, identity-policy change, or newly trusted endpoint interception component.
