@@ -71,6 +71,25 @@ valid_port() {
     [ "$1" -ge 1 ] 2>/dev/null && [ "$1" -le 65535 ] 2>/dev/null
 }
 
+valid_boolean() {
+    case "$1" in
+        0|1) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+for flag_name in \
+    EDGE_ALLOW_ROUTER_HTTPS \
+    EDGE_ALLOW_ROUTER_SSH \
+    EDGE_INTERCEPT_DNS \
+    EDGE_ALLOW_LAN_ICMP \
+    EDGE_ENABLE_EXIT_NODE \
+    EDGE_LOG_DROPS
+do
+    eval "flag_value=\${$flag_name}"
+    valid_boolean "$flag_value" || die "invalid boolean $flag_name: $flag_value"
+done
+
 for port in "$EDGE_ROUTER_HTTPS_PORT" "$EDGE_ROUTER_SSH_PORT" "$EDGE_DNS_PORT" $EDGE_ALLOWED_LAN_TCP_PORTS $EDGE_ALLOWED_LAN_UDP_PORTS $EDGE_PRINTER_TCP_PORTS $EDGE_PRINTER_UDP_PORTS; do
     valid_port "$port" || die "invalid port: $port"
 done
@@ -246,7 +265,8 @@ else
 fi
 
 "$IPTABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary INPUT guard"
-"$IPTABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary FORWARD guard"
+"$IPTABLES" -t filter -D FORWARD 1 -i "$EDGE_TS_IF" -j DROP 2>/dev/null || \
+    "$IPTABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary FORWARD guard"
 
 log "firewall policy applied: interface=$EDGE_TS_IF"
 exit 0
