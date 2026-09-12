@@ -265,8 +265,7 @@ else
 fi
 
 "$IPTABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary INPUT guard"
-"$IPTABLES" -t filter -D FORWARD 1 -i "$EDGE_TS_IF" -j DROP 2>/dev/null || \
-    "$IPTABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary FORWARD guard"
+"$IPTABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary FORWARD guard"
 
 log "firewall policy applied: interface=$EDGE_TS_IF"
 exit 0
