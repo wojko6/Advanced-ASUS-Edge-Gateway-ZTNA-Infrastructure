@@ -120,6 +120,13 @@ detect_wan_if() {
     [ -n "$wan_if" ] && valid_interface "$wan_if" && printf '%s\n' "$wan_if"
 }
 
+WAN_IF=""
+if [ "$EDGE_ENABLE_EXIT_NODE" = "1" ]; then
+    WAN_IF="$(detect_wan_if)" || die "cannot detect valid WAN interface; set EDGE_WAN_IF"
+    [ -n "$WAN_IF" ] || die "cannot detect WAN interface; set EDGE_WAN_IF"
+    valid_interface "$WAN_IF" || die "invalid detected WAN interface: $WAN_IF"
+fi
+
 flush_chain() { table="$1"; chain="$2"; "$IPTABLES" -t "$table" -N "$chain" 2>/dev/null || true; "$IPTABLES" -t "$table" -F "$chain" || die "cannot flush $table/$chain"; }
 single_jump() { table="$1"; parent="$2"; interface="$3"; chain="$4"; while "$IPTABLES" -t "$table" -D "$parent" -i "$interface" -j "$chain" 2>/dev/null; do :; done; "$IPTABLES" -t "$table" -I "$parent" 1 -i "$interface" -j "$chain" || die "cannot attach $chain"; }
 remove_all_rules() { table="$1"; chain="$2"; shift 2; while "$IPTABLES" -t "$table" -D "$chain" "$@" 2>/dev/null; do :; done; }
@@ -174,7 +181,7 @@ if [ "$EDGE_LOG_DROPS" = "1" ]; then "$IPTABLES" -A EDGE_TS_INPUT -m limit --lim
 "$IPTABLES" -A EDGE_TS_FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT || die "forward state rule failed"
 add_lan_forward_rules
 add_printer_forward_rules
-if [ "$EDGE_ENABLE_EXIT_NODE" = "1" ]; then WAN_IF="$(detect_wan_if)"; [ -n "$WAN_IF" ] || die "cannot detect WAN interface; set EDGE_WAN_IF"; "$IPTABLES" -A EDGE_TS_FORWARD -o "$WAN_IF" -j ACCEPT || die "exit-node rule failed"; fi
+if [ "$EDGE_ENABLE_EXIT_NODE" = "1" ]; then "$IPTABLES" -A EDGE_TS_FORWARD -o "$WAN_IF" -j ACCEPT || die "exit-node rule failed"; fi
 if [ "$EDGE_LOG_DROPS" = "1" ]; then "$IPTABLES" -A EDGE_TS_FORWARD -m limit --limit 6/min --limit-burst 10 -j LOG --log-prefix "$EDGE_LOG_PREFIX" --log-level 6 || die "FORWARD log rule failed"; fi
 "$IPTABLES" -A EDGE_TS_FORWARD -j DROP || die "FORWARD drop rule failed"
 single_jump filter INPUT "$EDGE_TS_IF" EDGE_TS_INPUT
