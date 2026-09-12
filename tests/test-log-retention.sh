@@ -47,4 +47,20 @@ if ASUS_EDGE_LOG_ROOT='relative/path' "$RETENTION_SCRIPT" --dry-run >/dev/null 2
     exit 1
 fi
 
+if ASUS_EDGE_LOG_ROOT="$LOG_ROOT" \
+    ASUS_EDGE_COMPRESS_AFTER_MINUTES=1440 \
+    ASUS_EDGE_DELETE_AFTER_MINUTES=1440 \
+    "$RETENTION_SCRIPT" --dry-run >/dev/null 2>&1; then
+    echo "FAIL: equal compression and deletion retention was accepted" >&2
+    exit 1
+fi
+
+if ASUS_EDGE_LOG_ROOT="$LOG_ROOT" \
+    ASUS_EDGE_COMPRESS_AFTER_MINUTES=43200 \
+    ASUS_EDGE_DELETE_AFTER_MINUTES=1440 \
+    "$RETENTION_SCRIPT" --dry-run >/dev/null 2>&1; then
+    echo "FAIL: deletion retention shorter than compression retention was accepted" >&2
+    exit 1
+fi
+
 echo "PASS: collector log retention"
