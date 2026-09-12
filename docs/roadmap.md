@@ -10,16 +10,17 @@ Completed work:
 - Partitioned the SSD into a dedicated `ENTWARE` filesystem and a separate `ROUTER_DATA` filesystem.
 - Migrated the existing Entware environment while preserving the original USB flash drive as rollback media during validation.
 - Restored swap-backed service startup and validated both swap files after a clean router reboot.
-- Validated automatic storage mounts and the startup of Tailscale, Unbound, dnsmasq integration, syslog-ng, and project firewall controls.
-- Confirmed direct Unbound DNS resolution with DNSSEC validation after reboot.
+- Validated automatic SSD mounts, active swap, Tailscale process/control-plane status, Unbound process state, direct DNSSEC resolution, and the recorded dnsmasq upstream configuration after reboot.
 - Retained sanitized validation evidence suitable for public portfolio documentation.
 - Documented the migration procedure and recovery considerations in `docs/ENTWARE-SSD-MIGRATION.md`.
+
+The 2026-09-11 SSD artifact does not independently prove syslog-ng recovery, end-to-end mTLS collector delivery, every firewall/printer path, every exit-node traffic path, or long-term stability. Those behaviors remain tied to their own dated evidence or later validation.
 
 The SSD is now the router's persistent Entware storage. The separate `ROUTER_DATA` partition is reserved for data and future storage workflows rather than being mixed with Entware service files.
 
 ## Current validation gate — stability observation
 
-The 2026-09-11 deployment has passed controlled reboot validation, the project health check, and the repository validation suite. Long-term stability is intentionally tracked separately from reboot success.
+The 2026-09-11 deployment has passed controlled reboot validation for the checks recorded in the SSD migration artifact, and the repository validation suite passes for the current code/documentation state. Long-term stability is intentionally tracked separately from reboot success.
 
 Current validation controls:
 
