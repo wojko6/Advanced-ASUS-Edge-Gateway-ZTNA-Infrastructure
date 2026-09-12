@@ -25,7 +25,7 @@ vi config/edge.conf
 Ustaw przede wszystkim:
 
 - `EDGE_ADMIN_TS_SOURCES` — adresy Tailscale urządzeń administracyjnych, np. `100.70.10.20/32`;
-- `EDGE_ALLOWED_LAN_HOSTS` — hosty LAN dostępne zdalnie;
+- `EDGE_ALLOWED_LAN_HOSTS` — adresy IPv4 lub CIDR hostów/sieci LAN dostępnych zdalnie; nazwy DNS nie są tu rozwiązywane;
 - `EDGE_ALLOWED_LAN_TCP_PORTS` i `EDGE_ALLOWED_LAN_UDP_PORTS` — wymagane porty;
 - `EDGE_ENABLE_EXIT_NODE` — `1` tylko wtedy, gdy router ma być exit node;
 - `EDGE_WAN_IF` — pozostaw puste dla autodetekcji lub ustaw interfejs wskazany przez router;
@@ -54,13 +54,15 @@ sh tests/test-static.sh
 
 ## 4. Instalacja etapowa
 
-Najpierw zainstaluj pliki bez aktywowania nowych reguł:
+Najpierw zainstaluj pliki bez aktywowania nowej polityki firewalla:
 
 ```sh
 ./scripts/install.sh
 ```
 
-Skrypt zapisuje istniejące hooki `firewall-start` i `services-start`, ale domyślnie ich nie uruchamia. Wrapper uruchomi stary hook tylko po ustawieniu `EDGE_RUN_LEGACY_HOOKS="1"`, co należy zrobić wyłącznie po ręcznym przeglądzie. Lokalizacja kopii jest wyświetlana po instalacji.
+To nie jest całkowicie pasywny „dry-run”. Instalator zapisuje snapshot ścieżek, które zmienia, kopiuje konfigurację i zarządzane binaria do JFFS oraz instaluje wrappery `firewall-start`, `services-start` i `wan-event`. Bez `--apply` nie wywołuje jednak nowej polityki firewalla w bieżącej sesji. Istniejące niezarządzane hooki są zachowywane pod katalogiem `legacy` i domyślnie wyłączone; wrapper uruchomi stary hook tylko po ustawieniu `EDGE_RUN_LEGACY_HOOKS="1"`, co należy zrobić wyłącznie po ręcznym przeglądzie. Lokalizacja kopii jest wyświetlana po instalacji.
+
+Jeżeli którykolwiek etap instalacji plików/hooków się nie powiedzie, instalator próbuje odtworzyć cały snapshot i kończy się błędem. W trybie bez `--apply` nie wykonuje restartu firewalla, ponieważ polityka nie została jeszcze zastosowana. Zachowaj dostęp lokalny/LAN również na tym etapie, ponieważ zainstalowane hooki zaczną uczestniczyć w odpowiednich przyszłych zdarzeniach firmware'u.
 
 Jeżeli Tailscale nie jest uwierzytelniony, uruchom jednorazowo:
 
@@ -82,6 +84,8 @@ Poniższe wykonuj z LAN wyłącznie podczas pierwszego wdrożenia, zaplanowanego
 ./scripts/install.sh --apply
 /jffs/addons/asus-edge/bin/healthcheck.sh
 ```
+
+`--apply` ponownie wykonuje instalację/snapshot, a następnie uruchamia zarządzany hook `firewall-start`; nie jest to osobny tryb, który jedynie stosuje wcześniej skopiowane pliki. Jeżeli zastosowanie firewalla zawiedzie, instalator odtwarza snapshot i — tylko gdy rollback plików się powiedzie — próbuje `service restart_firewall`, aby wrócić do polityki firmware'u. Nie traktuj tego jako gwarantowanego zdalnego rollbacku: błąd odtwarzania lub restartu wymaga lokalnego dostępu i ręcznej weryfikacji.
 
 Sprawdź reguły i liczniki:
 
