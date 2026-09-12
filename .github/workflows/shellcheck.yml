@@ -23,6 +23,8 @@ jobs:
         run: sh tests/test-services-config-validation.sh
       - name: Run healthcheck configuration validation
         run: sh tests/test-healthcheck-config-validation.sh
+      - name: Run Tailscale update recovery-guard checks
+        run: sh tests/test-update-tailscale-static.sh
 
   wan-and-rollback:
     name: WAN handler and install rollback checks
