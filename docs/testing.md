@@ -1,5 +1,17 @@
 # Testing and evidence collection
 
+## Test boundaries
+
+This repository uses separate validation tracks. A PASS in one track must not be promoted into a claim about another layer.
+
+- **CI/static/mock** validates repository logic in an isolated test environment.
+- **Router live** validates the deployed ASUS gateway at a point in time.
+- **Remote client** validates end-to-end Tailscale, DNS, firewall, and reachability behaviour from defined client roles.
+- **Endpoint filtering** validates workstation-local content filtering and DNS-path preservation.
+- **Mobile telemetry** records device-specific traffic observations under defined scenarios.
+
+During the 2026-09-11 through 2026-09-25 unchanged-state router observation window, endpoint tests may continue but router configuration, services, firewall, DNS settings, filtering lists, and startup hooks remain unchanged. Router-side corroboration during this period is read-only.
+
 ## Static and mock tests
 
 ```sh
@@ -37,7 +49,7 @@ failure can therefore indicate another component changed rule ordering. Review
 the active rules from LAN before reapplying the managed firewall. Packet tests
 remain necessary to verify actual access decisions.
 
-## Security test matrix
+## Router and remote-client security matrix
 
 | Source | Destination | Test | Expected |
 |---|---|---|---|
@@ -53,6 +65,8 @@ remain necessary to verify actual access decisions.
 Run WAN scans only against addresses you own or are authorized to test.
 
 ## Packet capture
+
+Packet capture is a live-router validation technique and is **not** part of endpoint-only testing during the unchanged-state observation window unless a capture was already planned and can be performed without altering the validated configuration. Prefer existing read-only logs for endpoint DNS-path corroboration during the stability gate.
 
 On the router:
 
@@ -90,7 +104,7 @@ dig +dnssec -p 53535 @127.0.0.1 cloudflare.com A
 
 ## Firewall counters
 
-Capture counters before and after each test:
+Capture counters before and after each live-router test:
 
 ```sh
 iptables -nvL EDGE_TS_INPUT --line-numbers
@@ -102,9 +116,38 @@ If test evidence is published, sanitize counters and captures first. Never commi
 
 Use `scripts/collect-evidence.sh` for a router-side snapshot and complete the remote results in the [live-validation template](../evidence/live-validation-template.md). The collector cannot prove WAN reachability or Tailscale identity decisions; those require separate clients. Follow the [publication checklist](evidence-collection.md) before committing any output.
 
+## Endpoint-filtering matrix
+
+Use the detailed procedure in [endpoint-filtering-validation.md](endpoint-filtering-validation.md). The minimum matrix for Zen, and later AdGuard for Windows if tested, is:
+
+| Test | Baseline | Filter enabled | Acceptance condition |
+|---|---|---|---|
+| Windows DNS resolver | record | record | expected router resolver remains authoritative |
+| Normal DNS lookup | record | record | succeeds without unintended external DNS takeover |
+| Normal HTTPS browsing | record | record | no unexpected certificate errors |
+| Defined YouTube session | record observations | record observations | report only what was observed in the defined window |
+| Representative websites | record | record | no unacceptable false positives/breakage |
+| CPU/RAM | record when measured | record when measured | report measured delta, not an estimate |
+| Disable/uninstall | n/a | verify | expected endpoint state/trust-store cleanup |
+
+Do not run Zen and AdGuard simultaneously in a comparison unless interaction between them is the explicit test question. Otherwise the result is confounded.
+
+## Mobile-telemetry matrix
+
+Each phone is its own case study. Suggested scenarios:
+
+| Scenario | Minimum record |
+|---|---|
+| Idle | duration, network state, relevant sanitized destinations/counts |
+| Reboot/startup | observation window and startup-related destinations |
+| Selected system app | app/action, duration, relevant destinations |
+| Normal use | defined actions, duration, relevant destinations/counts |
+
+Record model, OS/version, hardening/debloat state, network path, observation method, and limitations. Two Xiaomi devices with different OS versions are comparative cases, not a controlled before/after debloat experiment.
+
 ## Performance baseline
 
-Measure at idle and under three flows: direct WAN, Tailscale subnet routing, and exit-node routing.
+Measure router performance at idle and under three flows only when live-router performance testing is scheduled outside the unchanged-state stability gate: direct WAN, Tailscale subnet routing, and exit-node routing.
 
 ```sh
 top -b -n 1
@@ -115,3 +158,5 @@ iperf3 -c TARGET -t 30 -P 4
 ```
 
 Record median/p95 latency, loss, one/four-stream throughput, CPU, RAM, temperature, firmware, Tailscale version, and test direction. Consumer router CPU is expected to be the exit-node bottleneck; measure rather than estimate.
+
+Endpoint performance observations belong to the endpoint-filtering test and should be recorded separately from router throughput measurements.
