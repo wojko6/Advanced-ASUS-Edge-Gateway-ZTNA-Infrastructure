@@ -33,6 +33,11 @@ for value in "$COMPRESS_AFTER_MINUTES" "$DELETE_AFTER_MINUTES"; do
     fi
 done
 
+if [ "$DELETE_AFTER_MINUTES" -le "$COMPRESS_AFTER_MINUTES" ]; then
+    echo "ERROR: delete retention must be greater than compression retention" >&2
+    exit 2
+fi
+
 [ -d "$LOG_ROOT" ] || exit 0
 
 case "${1:---dry-run}" in
