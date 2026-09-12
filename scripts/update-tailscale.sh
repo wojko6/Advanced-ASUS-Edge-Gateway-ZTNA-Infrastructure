@@ -42,9 +42,15 @@ opkg list-upgradable | grep '^tailscale ' || { echo "No Tailscale update availab
 opkg upgrade tailscale || exit 1
 
 if [ -x /jffs/addons/asus-edge/bin/services-start ]; then
-    /jffs/addons/asus-edge/bin/services-start
+    /jffs/addons/asus-edge/bin/services-start || {
+        echo "ERROR: post-update service recovery failed" >&2
+        exit 1
+    }
 fi
 
 NEW_VERSION="$(tailscale version 2>/dev/null | head -n 1)"
 echo "Updated Tailscale: ${NEW_VERSION:-unknown}"
-/jffs/addons/asus-edge/bin/healthcheck.sh
+/jffs/addons/asus-edge/bin/healthcheck.sh || {
+    echo "ERROR: post-update health check failed" >&2
+    exit 1
+}
