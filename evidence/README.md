@@ -14,8 +14,58 @@ The [live-validation template](live-validation-template.md) distinguishes expect
 
 The 2026-09-08 Android remote-client test used a Tailscale beta client. The report does not claim that the previously observed stable-client DNS issue has been fixed in a stable Android release.
 
+## Evidence classes
+
+Keep evidence separated by what actually produced it:
+
+| Class | Examples | What it can demonstrate |
+|---|---|---|
+| CI / mock | shell syntax, config validation, mocked firewall behaviour, recovery tests | repository logic and expected policy behaviour in the test harness |
+| Router live | health check, mounts, processes, firewall counters, DNSSEC query | observed state of the reference ASUS deployment at a point in time |
+| Remote client | LTE/5G Tailscale path, DNS resolution, service reachability | observed end-to-end behaviour from a defined client |
+| Endpoint filter | Zen or AdGuard test on Windows/Chrome | endpoint-specific content filtering, DNS-path preservation, compatibility and overhead |
+| Mobile telemetry | sanitized DNS/traffic observations from a defined phone/scenario | traffic observed for that device, OS, configuration and test window |
+
+Do not merge these classes into a stronger claim than the underlying evidence supports. In particular, endpoint HTTPS/content filtering does not prove equivalent router-side filtering capability.
+
+## Endpoint-filter evidence
+
+Use the methodology in [endpoint filtering validation](../docs/endpoint-filtering-validation.md). A dated endpoint result should identify at minimum:
+
+- test date;
+- Windows and browser versions;
+- filter product/version and relevant settings;
+- baseline state and filtered state;
+- DNS-path result;
+- HTTPS/certificate result;
+- defined YouTube/browser test observations;
+- false positives or broken sites observed;
+- basic CPU/RAM observations when measured;
+- PASS, FAIL, INCONCLUSIVE, or NOT TESTED verdicts.
+
+Do not publish browser profiles, cookies, session identifiers, certificate private keys, exported trust stores, unrelated browsing history, or raw captures containing private sessions.
+
+## Mobile-telemetry evidence
+
+Mobile telemetry is device- and software-specific. Record the phone model, OS/version, relevant hardening/debloat state, network path, test duration, and scenario. Prefer controlled scenarios such as idle, reboot/startup, selected system-app use, and normal interactive use.
+
+A second Xiaomi device with a different model or OS version is an independent comparative case study, not a controlled before/after debloat baseline. Differences may be caused by hardware, OS version, region, installed applications, configuration, vendor services, or hardening choices. State those limitations next to the results.
+
+Historical individual DNS observations may provide context but must not be converted into an invented quantitative baseline.
+
 ## Evidence policy
 
-Published evidence must not contain authentication material, private keys, Tailscale identity details, public WAN addresses, device MAC addresses, router serial numbers, DDNS credentials, or raw authorization headers. Raw router logs require manual sanitization before publication.
+Published evidence must not contain authentication material, private keys, Tailscale identity details, public WAN addresses, device MAC addresses, router serial numbers, DDNS credentials, raw authorization headers, cookies, browser/session tokens, or certificate private material. Raw router logs and packet captures require manual sanitization before publication.
+
+Prefer the smallest artifact that proves the claim. Sanitized text output is usually preferable to a full packet capture or screenshot because it reduces accidental disclosure and makes the evidence easier to review.
+
+Use precise result language:
+
+- **Observed** — directly demonstrated during the documented test.
+- **Not observed** — not seen during the documented test window; not proof that it can never occur.
+- **Not tested** — no evidence collected.
+- **Inconclusive** — available evidence is insufficient or confounded.
 
 A successful controlled reboot and health check demonstrate reboot stability and functional recovery at that point in time. They do **not** by themselves prove long-term stability. The reference deployment entered a 14-day unchanged-state observation period on 2026-09-11; long-term stability should only be claimed after that observation is completed and documented.
+
+During that observation period, endpoint tests may be performed without router configuration changes. Any router-side corroboration must remain read-only so the unchanged-state stability gate is preserved.
