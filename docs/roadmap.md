@@ -32,6 +32,47 @@ Current validation controls:
 
 The deployment must not be described as long-term stable until that observation is completed and the resulting evidence has been reviewed and sanitized.
 
+### Work allowed during the no-touch observation window
+
+The router configuration remains unchanged, but project work can continue away from the router:
+
+- Improve repository structure, documentation, diagrams, threat-model notes, test methodology, and sanitized evidence organization.
+- Prepare future DNS/filtering rules and test cases offline without deploying them to the router.
+- Validate endpoint-side filtering on a Windows workstation without changing router services or policies.
+- Test Zen as a system-level endpoint content filter with Chrome, including YouTube ad blocking, HTTPS/certificate behaviour, CPU/RAM impact, false positives, and browser compatibility.
+- Confirm that endpoint filtering does not bypass the existing router DNS path. Router-side activity during this check must remain read-only, for example inspecting already-generated dnsmasq logs.
+- If useful, compare Zen with a trial of AdGuard for Windows using the same test methodology. AdGuard DNS protection should remain disabled for this comparison so the existing router DNS architecture remains authoritative.
+- Prepare, but do not yet deploy, the methodology for later mobile telemetry assessment.
+
+These activities are intentionally separated from router configuration changes so they do not invalidate the unchanged-state stability observation.
+
+## Planned endpoint filtering validation
+
+Endpoint filtering is an optional defense-in-depth layer, not a replacement for router-side DNS controls.
+
+Planned validation matrix:
+
+- Existing router DNS/filtering only — baseline.
+- Router DNS/filtering + Brave on supported endpoints.
+- Router DNS/filtering + Zen on Windows/Chrome.
+- Optional router DNS/filtering + AdGuard for Windows comparison if Zen does not provide sufficient coverage or if a controlled comparison is useful.
+
+Record blocking effectiveness, YouTube behaviour, HTTPS compatibility, DNS-path preservation, false positives, CPU/RAM impact, and operational issues. Only validated results should be promoted into portfolio evidence.
+
+## Planned mobile telemetry assessment
+
+A later phase will assess residual mobile telemetry without restoring applications or services that were intentionally removed from the hardened/debloated phone.
+
+- Treat the current hardened/debloated Xiaomi device as its own post-hardening case study.
+- A second Xiaomi device may be assessed as an additional independent case study even if it uses a different model or OS version.
+- Do not present different Xiaomi devices or OS versions as a strict before/after debloat experiment.
+- Use controlled scenarios such as idle periods, reboot/startup, selected system-app use, and normal interactive use.
+- Record relevant DNS destinations, request frequency, blocked destinations, and notable vendor/advertising/telemetry endpoints.
+- Clearly document device/OS differences and methodological limitations.
+- Publish only sanitized evidence.
+
+Full telemetry/capture changes that require modifying router configuration are deferred until after the current stability observation window.
+
 ## Near-term — Personal cloud / automated file sync
 
 - Create a workstation sync directory (for example `~/RouterCloud`) on Zorin OS.
@@ -54,6 +95,16 @@ The synchronization feature must only be documented as **Completed and validated
 - Keep the validated SSD/Entware deployment under normal operation and retain a later stability snapshot.
 - Review logs for recurring Tailscale memory failures, WAN/DNS recovery errors, storage/mount failures, and unexpected service restarts.
 - Publish only sanitized evidence; never publish raw router syslog or credentials.
+
+## Post-observation router filtering work
+
+After the unchanged-state stability gate is complete and its evidence is captured:
+
+- Review candidate stronger DNS/content-filtering lists and policies prepared offline.
+- Baseline false positives before enabling stricter filtering broadly.
+- Deploy changes incrementally with explicit rollback steps.
+- Re-run DNSSEC, resolution, firewall, service-health, and recovery validation after each material change.
+- Capture sanitized before/after evidence without overstating what DNS-level filtering can block.
 
 ## Phase 2 — dedicated x86 edge
 
