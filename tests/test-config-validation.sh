@@ -46,4 +46,32 @@ grep -F 'printer sources configured without EDGE_PRINTER_LAN_IP' "$MOCK_LOGGER_L
     exit 1
 }
 
+for flag_name in \
+    EDGE_ALLOW_ROUTER_HTTPS \
+    EDGE_ALLOW_ROUTER_SSH \
+    EDGE_INTERCEPT_DNS \
+    EDGE_ALLOW_LAN_ICMP \
+    EDGE_ENABLE_EXIT_NODE \
+    EDGE_LOG_DROPS
+do
+    boolean_config="$TMP_DIR/boolean-$flag_name.conf"
+    cp "$REPO_DIR/config/edge.conf.example" "$boolean_config"
+    printf '%s="2"\n' "$flag_name" >>"$boolean_config"
+    : >"$MOCK_LOGGER_LOG"
+
+    if EDGE_CONFIG_FILE="$boolean_config" \
+        EDGE_IPTABLES="$TEST_DIR/mocks/iptables" \
+        EDGE_IP6TABLES="$TEST_DIR/mocks/ip6tables" \
+        EDGE_LOGGER="$TEST_DIR/mocks/logger" \
+        sh "$REPO_DIR/router/scripts/firewall-start"; then
+        echo "FAIL: invalid boolean $flag_name was accepted" >&2
+        exit 1
+    fi
+
+    grep -F "invalid boolean $flag_name: 2" "$MOCK_LOGGER_LOG" >/dev/null || {
+        echo "FAIL: invalid-boolean rejection was not logged for $flag_name" >&2
+        exit 1
+    }
+done
+
 echo "PASS: invalid configuration rejected"
