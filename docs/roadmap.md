@@ -39,6 +39,7 @@ The router configuration remains unchanged, but project work can continue away f
 
 - Improve repository structure, documentation, diagrams, threat-model notes, test methodology, and sanitized evidence organization.
 - Prepare future DNS/filtering rules and test cases offline without deploying them to the router.
+- Audit third-party aggregate blocklists offline (including `hululu1068/AdGuard-Rule`) as candidate inputs rather than trusted policy: identify upstream sources, remove irrelevant or high-risk entries, estimate false positives, and extract a small project-owned candidate set for later validation. Do not subscribe the reference router directly to a large third-party aggregate during the stability gate.
 - Validate endpoint-side filtering on a Windows workstation without changing router services or policies.
 - Test Zen as a system-level endpoint content filter with Chrome, including YouTube ad blocking, HTTPS/certificate behaviour, CPU/RAM impact, false positives, and browser compatibility.
 - Confirm that endpoint filtering does not bypass the existing router DNS path. Router-side activity during this check must remain read-only, for example inspecting already-generated dnsmasq logs.
@@ -101,9 +102,9 @@ The synchronization feature must only be documented as **Completed and validated
 
 After the unchanged-state stability gate is complete and its evidence is captured:
 
-- Review candidate stronger DNS/content-filtering lists and policies prepared offline.
+- Review candidate stronger DNS/content-filtering lists and policies prepared offline, including the curated candidate set derived from the third-party aggregate-list assessment.
 - Baseline false positives before enabling stricter filtering broadly.
-- Deploy changes incrementally with explicit rollback steps.
+- Deploy changes incrementally with explicit rollback steps; do not make a large external aggregate list a single unreviewed point of policy.
 - Re-run DNSSEC, resolution, firewall, service-health, and recovery validation after each material change.
 - Capture sanitized before/after evidence without overstating what DNS-level filtering can block.
 
