@@ -172,10 +172,23 @@ if executable_exists tailscaled >/dev/null 2>&1; then
         set -- tailscale --socket="$EDGE_TS_SOCKET" up --netfilter-mode="$EDGE_TS_NETFILTER_MODE" --accept-dns="$EDGE_ACCEPT_DNS" --hostname="$EDGE_HOSTNAME"
         [ -n "$EDGE_ADVERTISE_ROUTES" ] && set -- "$@" --advertise-routes="$EDGE_ADVERTISE_ROUTES"
         [ "$EDGE_ENABLE_EXIT_NODE" = "1" ] && set -- "$@" --advertise-exit-node
-        "$@" >/tmp/asus-edge-tailscale-up.log 2>&1 || log "WARNING: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"
-    elif pidof tailscaled >/dev/null 2>&1; then log "WARNING: Tailscale is not authenticated or its local API is unavailable"
-    else log "ERROR: required Tailscale daemon failed to start"; startup_failed=1; fi
-else log "WARNING: tailscaled not installed"; fi
+        if "$@" >/tmp/asus-edge-tailscale-up.log 2>&1; then
+            log "Tailscale policy applied"
+        else
+            log "ERROR: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"
+            startup_failed=1
+        fi
+    elif pidof tailscaled >/dev/null 2>&1; then
+        log "ERROR: Tailscale local API unavailable or node not ready"
+        startup_failed=1
+    else
+        log "ERROR: required Tailscale daemon failed to start"
+        startup_failed=1
+    fi
+else
+    log "ERROR: tailscaled not installed"
+    startup_failed=1
+fi
 
 remove_stale_process_pidfile() {
     stale_process_name="$1"; stale_pidfile="$2"
