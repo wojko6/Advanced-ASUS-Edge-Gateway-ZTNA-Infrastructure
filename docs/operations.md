@@ -29,7 +29,9 @@ Use this workflow for a planned maintenance window outside an active unchanged-s
 sha256sum -c /opt/backups/asus-edge/BACKUP.tar.gz.sha256
 ```
 
-Move backups off the router-attached SSD and keep an independent copy on another trusted system. The script excludes Tailscale state but other configs can still contain internal data; encrypt backups at rest outside this repository.
+The backup is created with a restrictive umask and the resulting archive plus sidecar checksum are set to mode `0600`. The archive contains an internal `SHA256SUMS` manifest covering every backed-up payload file. This provides corruption/integrity checking for the backup contents, but neither the internal manifest nor the sidecar checksum authenticates a backup obtained from an untrusted source. The script intentionally excludes Tailscale state and authentication material.
+
+Move backups off the router-attached SSD and keep an independent copy on another trusted system. Other included configs can still contain internal data; encrypt backups at rest outside this repository.
 
 Do not treat the router-attached SSD as the only backup merely because it is now the persistent Entware/data device. A failure, filesystem corruption, operator error, or compromise affecting the router can affect locally attached storage at the same time.
 
@@ -51,6 +53,8 @@ underscore, dot, dollar sign, hyphen and slash) are accepted. A copy failure
 returns non-zero and reports a potentially partial restore. Review paths and
 maintain physical access; restore is not an atomic filesystem transaction.
 
+`--dry-run` validates the archive structure, accepted entry types, manifest coverage and file hashes without copying payload files into `/jffs` or `/opt`. Use it before every planned restore. `--apply` then copies only the `jffs` and `opt` trees present in the verified archive. It does not delete unrelated files that are absent from the backup, does not restore Tailscale state, and does not automatically restart services or reboot the router. Review the restored files before choosing the required recovery action.
+
 The installer snapshots the configuration, both hooks, managed binaries and
 preserved legacy hooks before changing live files. A failed copy or failed
 `--apply` restores that entire set, including removing files that did not exist
@@ -68,6 +72,8 @@ From a LAN/serial recovery session:
 ./scripts/uninstall.sh
 service restart_firewall
 ```
+
+`uninstall.sh` removes the project-owned IPv4 and IPv6 runtime chains/jumps and restores a preserved pre-project hook only when the current hook is marked as ASUS Edge managed. It intentionally leaves the project configuration and backups in place for review. It does **not** itself restart the firmware firewall, stop Tailscale/Unbound/syslog-ng, remove packages, erase Tailscale state, or delete unrelated router configuration. Treat `service restart_firewall` as a separate recovery action and verify the resulting state locally.
 
 If hooks cannot run, rename the managed hook files under `/jffs/scripts/`, restore the corresponding installer backup, and restart the router. The installer prints its timestamped backup path.
 
