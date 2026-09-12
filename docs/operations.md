@@ -1,6 +1,16 @@
 # Operations and recovery
 
+## Current reference-state gate
+
+The reference deployment completed its SSD migration and controlled reboot validation on 2026-09-11. A 14-day unchanged-state stability observation runs through 2026-09-25.
+
+Until that observation completes, the normal change workflow below is **not** an instruction to deploy routine changes to the reference router. Repository/documentation work, CI/mock testing, workstation-local endpoint tests, and read-only router observations may continue. Defer routine firewall, DNS, Unbound, Tailscale, startup-hook, filtering-list, service, package, and reboot changes until the gate ends.
+
+An active compromise or materially unsafe exposure takes priority. If an emergency router change is required, document the interruption and start a new unchanged-state observation after returning to a known-good state.
+
 ## Change workflow
+
+Use this workflow for a planned maintenance window outside an active unchanged-state observation:
 
 1. Back up JFFS and relevant Entware configuration.
 2. Edit the repository copy, not the live file first.
@@ -19,7 +29,9 @@
 sha256sum -c /opt/backups/asus-edge/BACKUP.tar.gz.sha256
 ```
 
-Move backups off the USB storage attached to the router. The script excludes Tailscale state but other configs can still contain internal data; encrypt at rest outside this repository.
+Move backups off the router-attached SSD and keep an independent copy on another trusted system. The script excludes Tailscale state but other configs can still contain internal data; encrypt backups at rest outside this repository.
+
+Do not treat the router-attached SSD as the only backup merely because it is now the persistent Entware/data device. A failure, filesystem corruption, operator error, or compromise affecting the router can affect locally attached storage at the same time.
 
 ## Restore
 
@@ -59,9 +71,11 @@ service restart_firewall
 
 If hooks cannot run, rename the managed hook files under `/jffs/scripts/`, restore the corresponding installer backup, and restart the router. The installer prints its timestamped backup path.
 
+An emergency rollback during the active stability observation interrupts that observation. Record why it was necessary and establish a new known-good baseline before restarting the observation period.
+
 ## Updates
 
-Never place `opkg update` or package upgrades in a boot hook. Use a maintenance window:
+Never place `opkg update` or package upgrades in a boot hook. Use a planned maintenance window outside the active stability gate:
 
 ```sh
 ./scripts/backup.sh /opt/backups/asus-edge
@@ -72,7 +86,7 @@ Entware may not retain a previous package version. Download/retain the known-goo
 
 ## Resolver ownership
 
-Use exactly one active upstream path behind dnsmasq. A supported deployment is `dnsmasq → Unbound:53535`. If NextDNS manages `dnsmasq.postconf`, verify whether it exits after configuring `127.0.0.1:5342`; in that state Unbound may be valid but unused.
+Use exactly one active upstream path behind dnsmasq. The validated reference path is `dnsmasq → Unbound:53535`. If another DNS component manages `dnsmasq.postconf`, verify whether it redirects dnsmasq to a different local listener; in that state Unbound may be healthy but unused by clients.
 
 For amtm Unbound Manager, treat `/opt/var/lib/unbound/unbound.conf` as the generated runtime configuration. Do not replace it with the standard Entware example. Back up and review both the manager hook and runtime configuration before changes.
 
@@ -80,17 +94,19 @@ With amtm, `post-mount` sources `mount-entware.mod`, which already runs `rc.unsl
 
 ## Tailscale OOM during boot
 
-On a low-memory 32-bit router, `tailscaled` can fail with `out of memory
-allocating heap arena map` even when its resident memory is modest. With strict
+On this low-memory 32-bit router, `tailscaled` has previously failed with `out of memory
+allocating heap arena map` even when its resident memory was modest. With strict
 kernel overcommit, the daemon's virtual-memory reservation can be rejected if
-USB-backed swap has not yet been activated by `post-mount`.
+swap has not yet been activated by `post-mount`.
+
+The current reference deployment uses SSD-backed persistent storage and active swap validated after the 2026-09-11 controlled reboot. The original failure mode remains relevant to startup ordering, but references to USB-flash-backed swap describe the pre-migration state rather than the current storage layout.
 
 Keep `EDGE_REQUIRE_SWAP="auto"` or set it explicitly to `1`. The managed
 `services-start` hook waits for active swap, removes an orphaned socket, and
 retries the daemon using the general service-attempt settings. It keeps the
 previous daemon log as `/opt/var/log/tailscaled.log.previous`.
 
-Verify recovery with:
+Verify recovery during a scheduled maintenance/validation window, not by intentionally rebooting the router during the active stability gate:
 
 ```sh
 cat /proc/swaps
@@ -112,7 +128,7 @@ submission. If packet capture shows UDP/161 request/response traffic but no TCP
 connection to the configured IPP or raw-print port, the job stopped inside the
 Android print stack. Opening more firewall ports will not correct that state.
 
-Use a header-only capture when diagnosis is required:
+Use a header-only capture when diagnosis is required and live-router capture is appropriate for the current validation phase:
 
 ```sh
 tcpdump -ni any -nn -s 96 \
