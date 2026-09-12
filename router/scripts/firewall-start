@@ -78,17 +78,18 @@ valid_boolean() {
     esac
 }
 
-for flag_name in \
-    EDGE_ALLOW_ROUTER_HTTPS \
-    EDGE_ALLOW_ROUTER_SSH \
-    EDGE_INTERCEPT_DNS \
-    EDGE_ALLOW_LAN_ICMP \
-    EDGE_ENABLE_EXIT_NODE \
-    EDGE_LOG_DROPS
-do
-    eval "flag_value=\${$flag_name}"
+validate_boolean() {
+    flag_name="$1"
+    flag_value="$2"
     valid_boolean "$flag_value" || die "invalid boolean $flag_name: $flag_value"
-done
+}
+
+validate_boolean EDGE_ALLOW_ROUTER_HTTPS "$EDGE_ALLOW_ROUTER_HTTPS"
+validate_boolean EDGE_ALLOW_ROUTER_SSH "$EDGE_ALLOW_ROUTER_SSH"
+validate_boolean EDGE_INTERCEPT_DNS "$EDGE_INTERCEPT_DNS"
+validate_boolean EDGE_ALLOW_LAN_ICMP "$EDGE_ALLOW_LAN_ICMP"
+validate_boolean EDGE_ENABLE_EXIT_NODE "$EDGE_ENABLE_EXIT_NODE"
+validate_boolean EDGE_LOG_DROPS "$EDGE_LOG_DROPS"
 
 for port in "$EDGE_ROUTER_HTTPS_PORT" "$EDGE_ROUTER_SSH_PORT" "$EDGE_DNS_PORT" $EDGE_ALLOWED_LAN_TCP_PORTS $EDGE_ALLOWED_LAN_UDP_PORTS $EDGE_PRINTER_TCP_PORTS $EDGE_PRINTER_UDP_PORTS; do
     valid_port "$port" || die "invalid port: $port"
