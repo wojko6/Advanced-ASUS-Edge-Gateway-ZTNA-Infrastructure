@@ -44,6 +44,8 @@ class RecoveryTests(unittest.TestCase):
         content = re.sub(r"(?<![A-Za-z0-9_}])/(?:jffs|opt|tmp)",
                          lambda match: str(self.root) + match.group(), content)
         content = content.replace('"/$destination/"', '"' + str(self.root) + '/$destination/"')
+        content = content.replace('live_path="/$relative_path"',
+                                  'live_path="' + str(self.root) + '/$relative_path"')
         content = content.replace('uid="$(current_uid)"', 'uid="0"')
         content = content.replace(
             'PATH="' + str(self.root) + '/opt/sbin:',
@@ -104,13 +106,44 @@ class RecoveryTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("regular files", result.stderr)
 
-    def test_restore_copy_failure_is_not_success(self):
+    def test_restore_snapshot_failure_does_not_start_apply(self):
         restore = self.script("restore.sh")
-        files = {"jffs/configs/asus-edge.conf": b"original\n"}
+        live = self.root / "jffs/configs/asus-edge.conf"
+        live.write_text("before\n")
+        files = {"jffs/configs/asus-edge.conf": b"after\n"}
         self.command("cp", "exit 1")
         result = self.run_script(restore, self.archive(files), "--apply")
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("restore copy failed", result.stderr)
+        self.assertIn("restore not started", result.stderr)
+        self.assertEqual(live.read_text(), "before\n")
+        self.assertNotIn("Restore completed", result.stdout)
+
+    def test_restore_partial_apply_rolls_back_all_previous_files(self):
+        restore = self.script("restore.sh")
+        jffs_file = self.root / "jffs/configs/asus-edge.conf"
+        opt_file = self.root / "opt/etc/unbound/unbound.conf"
+        jffs_file.write_text("old-jffs\n")
+        opt_file.write_text("old-opt\n")
+        files = {
+            "jffs/configs/asus-edge.conf": b"new-jffs\n",
+            "opt/etc/unbound/unbound.conf": b"new-opt\n",
+        }
+        counter = self.root / "cp-count"
+        self.command("cp", f'''count=0
+[ ! -f {shlex.quote(str(counter))} ] || count="$(cat {shlex.quote(str(counter))})"
+count=$((count + 1))
+printf '%s\\n' "$count" > {shlex.quote(str(counter))}
+if [ "$count" -eq 4 ]; then
+    exit 1
+fi
+exec /bin/cp "$@"
+''')
+        result = self.run_script(restore, self.archive(files), "--apply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("rolling back pre-restore state", result.stderr)
+        self.assertIn("Rollback completed", result.stderr)
+        self.assertEqual(jffs_file.read_text(), "old-jffs\n")
+        self.assertEqual(opt_file.read_text(), "old-opt\n")
         self.assertNotIn("Restore completed", result.stdout)
 
     def test_backup_restore_roundtrip(self):
