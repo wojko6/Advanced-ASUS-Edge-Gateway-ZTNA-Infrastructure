@@ -13,8 +13,8 @@ The purpose was to check practical browser compatibility, DNS-path preservation,
 - Zen: v0.25.1 in the captured application log.
 - Zen: enabled for the active-filter tests.
 - Brave Shields: disabled during the dedicated Zen/Brave load test so browser-native blocking would not be intentionally mixed with the Zen result.
-- Router DNS address configured on the Windows Wi-Fi interface: `192.168.50.1`.
-- Router identity returned by direct DNS queries: `TUF-AX5400-ABF8`.
+- Router DNS address configured on the Windows Wi-Fi interface: `<ROUTER_LAN_IP>`.
+- Router identity returned by direct DNS queries: `<ROUTER_HOSTNAME>`.
 
 ## Results
 
@@ -23,18 +23,18 @@ The purpose was to check practical browser compatibility, DNS-path preservation,
 `Get-DnsClientServerAddress -AddressFamily IPv4` showed the active Wi-Fi interface using:
 
 ```text
-Wi-Fi  {192.168.50.1}
+Wi-Fi  {<ROUTER_LAN_IP>}
 ```
 
-A first `nslookup example.com` used `192.168.50.1` and ultimately resolved successfully, but included two 2-second timeout messages. The timeout was not reproduced in the follow-up test.
+A first `nslookup example.com` used `<ROUTER_LAN_IP>` and ultimately resolved successfully, but included two 2-second timeout messages. The timeout was not reproduced in the follow-up test.
 
-Ten consecutive explicit queries to `192.168.50.1` completed successfully:
+Ten consecutive explicit queries to `<ROUTER_LAN_IP>` completed successfully:
 
 ```text
-nslookup example.com 192.168.50.1
+nslookup example.com <ROUTER_LAN_IP>
 ```
 
-All 10/10 responses identified the DNS server as `TUF-AX5400-ABF8` at `192.168.50.1` and returned addresses for `example.com` without a timeout.
+All 10/10 responses identified the DNS server as `<ROUTER_HOSTNAME>` at `<ROUTER_LAN_IP>` and returned addresses for `example.com` without a timeout.
 
 Conclusion: Zen did not replace the Windows IPv4 DNS server during this validation, and the endpoint continued to send the tested DNS queries to the router. This endpoint test does not by itself re-prove every downstream dnsmasq/Unbound property.
 
@@ -167,8 +167,8 @@ These upstream claims improve the architectural context for the endpoint test bu
 
 | Area | Result | Notes |
 | --- | --- | --- |
-| Windows DNS server preserved | PASS | Wi-Fi remained configured for `192.168.50.1` |
-| Repeated direct DNS queries | PASS | 10/10 to `192.168.50.1`; initial transient timeout was not reproduced |
+| Windows DNS server preserved | PASS | Wi-Fi remained configured for `<ROUTER_LAN_IP>` |
+| Repeated direct DNS queries | PASS | 10/10 to `<ROUTER_LAN_IP>`; initial transient timeout was not reproduced |
 | Facebook / Google / Xiaomi | PASS | Functional spot checks only |
 | WP Poczta | PARTIAL / COMPATIBILITY ISSUE | Standard filtering usable, but tested custom cosmetic ad rules removed the login form too |
 | YouTube ad blocking | INCONCLUSIVE A/B | No ad appeared in either Zen ON or Zen OFF control run; runtime logs independently confirm ad-object filter activity |
