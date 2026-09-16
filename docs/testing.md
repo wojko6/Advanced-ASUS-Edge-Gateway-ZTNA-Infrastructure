@@ -118,6 +118,50 @@ Validate Unbound directly on its configured loopback port:
 dig +dnssec -p 53535 @127.0.0.1 cloudflare.com A
 ```
 
+### Android/Fedora exit-node DNS datapath comparison
+
+A previous Android validation observed behaviour consistent with the intended
+router DNS path, while later read-only observations raised an unresolved question
+about the resolver path used by an Android exit-node client. Do not generalize
+either observation into a universal claim. The controlled comparison below is
+reserved for after the reference-router stability gate unless an equivalent
+read-only observation can answer the question without changing router state.
+
+Use the **same router configuration and exit node** for both clients. Record the
+client OS/version, Tailscale version, transport (for example cellular or external
+Wi-Fi), whether Android Private DNS or another encrypted resolver is enabled,
+and whether Tailscale DNS is enabled. Change only one client-side variable at a
+time.
+
+For each Fedora and Android case, perform three distinct DNS probes:
+
+1. a normal OS resolver lookup;
+2. an explicit classic DNS query to a known external resolver address on port 53;
+3. a query intended for the router resolver when the client configuration exposes
+   that resolver path.
+
+Correlate each probe with router-side observations on `tailscale0`, local dnsmasq
+logging/counters where already available, the Unbound loopback listener, and WAN.
+The goal is to distinguish these possibilities rather than assume one in advance:
+
+- classic DNS enters `tailscale0` and is redirected to router dnsmasq, then Unbound;
+- the client is using a different resolver supplied through Tailscale or the OS;
+- Android Private DNS / DoT, application DoH/DoQ, another VPN, or proxy bypasses
+  the classic port-53 path;
+- a client-specific configuration difference explains the Fedora/Android result.
+
+Acceptance evidence for the intended classic path requires correlation, not just
+a successful lookup: the query must be observable entering through Tailscale,
+the corresponding router-local resolver path must be observable, and the
+client's original plaintext DNS packet must not simply leave WAN unchanged.
+Encrypted DNS should be reported separately; the project's port-53 REDIRECT does
+not claim to intercept DoT, DoH, or DoQ.
+
+Do not publish raw packet captures, Tailscale addresses, real private hostnames,
+resolver account identifiers, or unrelated queried domains. Keep raw evidence
+private and publish only a sanitized result matrix with timestamps/scenario IDs
+sufficient to correlate the observations.
+
 ## Firewall counters
 
 Capture counters before and after each live-router test:
