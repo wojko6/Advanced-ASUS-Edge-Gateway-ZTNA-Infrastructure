@@ -114,12 +114,63 @@ find "$ROOT" -type f | sed "s#^$ROOT/##" | sort
 uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
 [ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 
-for destination in jffs opt; do
-    if [ -d "$ROOT/$destination" ]; then
-        cp -Rp "$ROOT/$destination/." "/$destination/" || {
-            echo "ERROR: restore copy failed for /$destination; restore may be partial" >&2
+ROLLBACK_DIR="$TMP_DIR/pre-restore"
+mkdir "$ROLLBACK_DIR" || exit 1
+
+# Snapshot every live path that the archive can overwrite. An absent marker is
+# recorded for paths that do not exist so rollback can remove newly created data.
+while IFS= read -r relative_path; do
+    case "$relative_path" in
+        jffs/*|opt/*) ;;
+        *) continue ;;
+    esac
+    live_path="/$relative_path"
+    rollback_path="$ROLLBACK_DIR/$relative_path"
+    marker="$ROLLBACK_DIR/.absent/$relative_path"
+    mkdir -p "$(dirname "$rollback_path")" "$(dirname "$marker")" || exit 1
+    if [ -e "$live_path" ] || [ -L "$live_path" ]; then
+        cp -Rp "$live_path" "$rollback_path" || {
+            echo "ERROR: cannot snapshot $live_path; restore not started" >&2
             exit 1
         }
+    else
+        : >"$marker" || exit 1
+    fi
+done <"$TMP_DIR/manifest-paths"
+
+rollback_restore() {
+    echo "ERROR: restore failed; rolling back pre-restore state" >&2
+    rollback_failed=0
+    while IFS= read -r relative_path; do
+        case "$relative_path" in
+            jffs/*|opt/*) ;;
+            *) continue ;;
+        esac
+        live_path="/$relative_path"
+        rollback_path="$ROLLBACK_DIR/$relative_path"
+        marker="$ROLLBACK_DIR/.absent/$relative_path"
+        if [ -f "$marker" ]; then
+            rm -rf "$live_path" || rollback_failed=1
+        else
+            rm -rf "$live_path" || rollback_failed=1
+            mkdir -p "$(dirname "$live_path")" || rollback_failed=1
+            cp -Rp "$rollback_path" "$live_path" || rollback_failed=1
+        fi
+    done <"$TMP_DIR/manifest-paths"
+    if [ "$rollback_failed" -ne 0 ]; then
+        echo "ERROR: rollback encountered errors; manual recovery may be required" >&2
+        return 1
+    fi
+    echo "Rollback completed; pre-restore state recovered." >&2
+    return 0
+}
+
+for destination in jffs opt; do
+    if [ -d "$ROOT/$destination" ]; then
+        if ! cp -Rp "$ROOT/$destination/." "/$destination/"; then
+            rollback_restore || true
+            exit 1
+        fi
     fi
 done
 echo "Restore completed. Reboot or restart services after reviewing files."
