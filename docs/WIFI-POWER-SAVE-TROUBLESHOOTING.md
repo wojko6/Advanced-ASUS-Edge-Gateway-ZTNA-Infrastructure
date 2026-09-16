@@ -19,7 +19,7 @@ This case study documents the troubleshooting process rather than claiming a har
 - Kernel driver: `rtw89_8852ae`
 - Ethernet interface: `eno1`
 - Router/LAN gateway used for testing: `<ROUTER_LAN_IP>`
-- External test endpoint: Cloudflare `1.1.1.1`
+- External test endpoint: `<EXTERNAL_TEST_IP>`
 - Workload: Counter-Strike 2
 
 Adapter/driver identification:
@@ -63,7 +63,7 @@ Two destinations were monitored simultaneously:
 
 ```bash
 ping -D -i 0.2 <ROUTER_LAN_IP> | tee ~/ping-router-cs2.log
-ping -D -i 0.2 1.1.1.1 | tee ~/ping-internet-cs2.log
+ping -D -i 0.2 <EXTERNAL_TEST_IP> | tee ~/ping-internet-cs2.log
 ```
 
 The local gateway measurement was used to observe the laptop-to-router path. The external endpoint measurement was used to observe the end-to-end path beyond the router.
@@ -90,7 +90,7 @@ Local gateway:
 - P99: ~5.62 ms
 - maximum: 41.9 ms
 
-External endpoint (`1.1.1.1`):
+External endpoint:
 
 - replies: 5,333
 - inferred packet loss: 0%
