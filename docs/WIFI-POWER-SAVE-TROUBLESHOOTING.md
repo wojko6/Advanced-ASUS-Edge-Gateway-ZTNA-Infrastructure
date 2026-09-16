@@ -6,7 +6,7 @@ A Fedora workstation experienced intermittent network instability during latency
 
 The investigation identified a strong relationship between Wi-Fi power saving and the observed instability. Disabling wireless power saving produced a clear subjective improvement and materially reduced high-percentile LAN latency and worst-case spikes. The setting was then made persistent with NetworkManager and verified after a system reboot.
 
-This case study documents the troubleshooting process rather than claiming a hardware defect in the wireless adapter.
+This case study documents the troubleshooting process rather than claiming a hardware defect in the wireless adapter. Deployment-specific network identifiers have been replaced with documentation placeholders.
 
 ## Environment
 
@@ -18,7 +18,7 @@ This case study documents the troubleshooting process rather than claiming a har
 - Lenovo subsystem: `17aa:4852`
 - Kernel driver: `rtw89_8852ae`
 - Ethernet interface: `eno1`
-- Router/LAN gateway used for testing: `192.168.50.1`
+- Router/LAN gateway used for testing: `<ROUTER_LAN_IP>`
 - External test endpoint: Cloudflare `1.1.1.1`
 - Workload: Counter-Strike 2
 
@@ -62,7 +62,7 @@ The investigation used controlled A/B comparisons rather than immediately replac
 Two destinations were monitored simultaneously:
 
 ```bash
-ping -D -i 0.2 192.168.50.1 | tee ~/ping-router-cs2.log
+ping -D -i 0.2 <ROUTER_LAN_IP> | tee ~/ping-router-cs2.log
 ping -D -i 0.2 1.1.1.1 | tee ~/ping-internet-cs2.log
 ```
 
@@ -80,7 +80,7 @@ The comparison focused on packet loss, median latency, P95/P99 latency and maxim
 
 ### Wi-Fi — Power Save ON
 
-Local gateway (`192.168.50.1`):
+Local gateway:
 
 - replies: 5,364
 - inferred packet loss: 0%
@@ -104,11 +104,11 @@ The baseline was good, but the local wireless path contained occasional high-lat
 
 ### Ethernet control
 
-Fedora selected Ethernet because it had the lower route metric:
+Fedora selected Ethernet because it had the lower route metric. Sanitized route structure:
 
 ```text
-default via 192.168.50.1 dev eno1 ... metric 100
-default via 192.168.50.1 dev wlp4s0 ... metric 600
+default via <ROUTER_LAN_IP> dev eno1 ... metric 100
+default via <ROUTER_LAN_IP> dev wlp4s0 ... metric 600
 ```
 
 For a clean control test, Wi-Fi was disabled and the same measurements were repeated over `eno1`.
@@ -233,16 +233,16 @@ The connection profile was identified with:
 nmcli connection show
 ```
 
-Power saving was disabled persistently for that profile:
+Power saving was disabled persistently for that profile. The real connection name is intentionally omitted from repository evidence:
 
 ```bash
-sudo nmcli connection modify "Orange_światłowód_5GHz" 802-11-wireless.powersave 2
+sudo nmcli connection modify "<WIFI_CONNECTION_NAME>" 802-11-wireless.powersave 2
 ```
 
 The stored value was verified:
 
 ```bash
-nmcli -f 802-11-wireless.powersave connection show "Orange_światłowód_5GHz"
+nmcli -f 802-11-wireless.powersave connection show "<WIFI_CONNECTION_NAME>"
 ```
 
 Result:
@@ -254,8 +254,8 @@ Result:
 The connection was then reactivated:
 
 ```bash
-sudo nmcli connection down "Orange_światłowód_5GHz"
-sudo nmcli connection up "Orange_światłowód_5GHz"
+sudo nmcli connection down "<WIFI_CONNECTION_NAME>"
+sudo nmcli connection up "<WIFI_CONNECTION_NAME>"
 ```
 
 Runtime state:
