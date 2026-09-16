@@ -55,6 +55,41 @@ During re-application, temporary interface-scoped IPv4 and IPv6 drop rules keep 
 6. Rate-limit security logging.
 7. Drop all remaining forwarding from `tailscale0`.
 
+### Exit-node NAT dependency
+
+`EDGE_ENABLE_EXIT_NODE=1` creates the project-owned **filter** permission from
+`tailscale0` to the selected WAN interface. It does not create a project-owned
+`MASQUERADE` or `SNAT` rule. Because Tailscale runs with `netfilter-mode=off`,
+this repository also does not rely on Tailscale's normal `ts-postrouting` NAT
+chain.
+
+A working IPv4 exit-node datapath therefore depends on the underlying Asuswrt /
+Asuswrt-Merlin WAN NAT policy translating forwarded Tailscale client traffic as
+it leaves the WAN interface. Successful client Internet access is useful
+functional evidence, but it must not be presented as proof of which NAT rule or
+chain performed that translation.
+
+The current health check validates the project-owned forwarding policy and the
+absence of unexpected native Tailscale netfilter chains; it does **not** yet
+prove the complete WAN NAT datapath. During the reference router stability gate,
+this dependency must be investigated read-only. A post-gate validation should
+identify the effective POSTROUTING/MASQUERADE or SNAT rule, confirm counters or
+packet flow for an authorized exit-node client, and record a sanitized result
+before the NAT dependency is described as fully validated.
+
+Read-only inspection candidates include:
+
+```sh
+iptables -t nat -S POSTROUTING
+iptables -t nat -nvL POSTROUTING --line-numbers
+iptables-save -t nat
+```
+
+Do not add or replace NAT rules merely to satisfy this documentation check. If
+read-only inspection shows that the platform NAT policy is insufficient, design
+and test the smallest explicit project-owned NAT change in a disposable or
+planned maintenance environment before touching the reference router.
+
 ## Source-scoped legacy printer access
 
 Some legacy Android print plugins probe a printer over HTTP and SNMP before sending a job over IPP or raw TCP. Enable only the ports confirmed by packet capture:
