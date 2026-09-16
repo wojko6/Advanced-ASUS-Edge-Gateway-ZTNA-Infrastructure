@@ -157,11 +157,11 @@ The artifact does **not** by itself prove syslog-ng recovery, end-to-end mTLS de
 
 Other dated repository evidence documents additional validation performed in the reference environment, including remote-client DNS behavior and earlier router/firewall checks. Keep those observations attached to their original dates and artifacts rather than folding them into the 2026-09-11 SSD evidence.
 
-Remote-client testing over LTE/5G previously confirmed the functional DNS path:
+The 2026-09-08 LTE/5G validation observed behavior consistent with the intended remote DNS path:
 
 `Android remote client -> Tailscale tunnel -> router dnsmasq/Diversion -> Unbound on loopback:53535 -> recursive DNS`
 
-That validation confirmed Internet connectivity with Tailscale DNS enabled, DNS traffic through the tunnel, normal resolution of allowed domains, Diversion blocking of a test advertising/tracking domain, DNSSEC validation, and equivalent home-Wi-Fi behavior.
+That dated test recorded Internet connectivity with Tailscale DNS enabled, DNS traffic through the tunnel, normal resolution of allowed domains, Diversion blocking of a test advertising/tracking domain, DNSSEC validation, and equivalent home-Wi-Fi behavior. Later read-only observations raised an unresolved question about the exact resolver/datapath used by an Android exit-node client in a separate scenario. Therefore the 2026-09-08 result remains valid as a bounded historical observation, but it is **not** treated as proof that every Android exit-node DNS flow always traverses dnsmasq/Diversion and Unbound. End-to-end Android/Fedora resolver-path comparison is deferred until after the stability gate so the reference router remains unchanged.
 
 See the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.md), the [SSD migration procedure](docs/ENTWARE-SSD-MIGRATION.md), and the sanitized [2026-09-11 reboot validation evidence](evidence/2026-09-11/entware-ssd-migration-validation.txt).
 
