@@ -421,4 +421,27 @@ done
 
 sh "$REPO_DIR/tests/test-usb-exposure.sh"
 
+# Firewall policy rebuilds must be serialized because Merlin may invoke
+# firewall-start concurrently from multiple startup/event paths.
+for firewall_lock_guard in \
+    'EDGE_FIREWALL_LOCK="/tmp/asus-edge-firewall.lock"' \
+    'exec 9>"$EDGE_FIREWALL_LOCK"' \
+    'flock -x 9'
+do
+    grep -F "$firewall_lock_guard" \
+        "$REPO_DIR/router/scripts/firewall-start" >/dev/null || {
+        echo "FAIL: firewall serialization guard missing: $firewall_lock_guard" >&2
+        exit 1
+    }
+done
+
+# WAN-connected handling must allow services-start enough time to recover
+# the local Unbound path. This is a maximum wait; the handler exits early
+# as soon as DNS becomes ready.
+grep -F 'EDGE_WAN_DNS_WAIT_SECONDS="90"' \
+    "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+    echo "FAIL: example config does not preserve the validated WAN DNS startup wait" >&2
+    exit 1
+}
+
 printf '%s\n' "Static tests passed."

@@ -28,7 +28,7 @@ log() {
 
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
-: "${EDGE_WAN_DNS_WAIT_SECONDS:=30}"
+: "${EDGE_WAN_DNS_WAIT_SECONDS:=90}"
 : "${EDGE_TAILSCALE_WAIT_SECONDS:=20}"
 
 validate_positive_integer() {

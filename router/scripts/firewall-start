@@ -3,6 +3,19 @@
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+# Serialize firewall policy rebuilds. Merlin can invoke firewall-start while
+# services-start is still running, so concurrent executions must not modify
+# the shared EDGE_TS_* chains at the same time.
+EDGE_FIREWALL_LOCK="/tmp/asus-edge-firewall.lock"
+exec 9>"$EDGE_FIREWALL_LOCK" || {
+    logger -t asus-edge "ERROR: cannot open firewall lock file"
+    exit 1
+}
+flock -x 9 || {
+    logger -t asus-edge "ERROR: cannot acquire firewall lock"
+    exit 1
+}
+
 # Resolve executables directly because older Asuswrt-Merlin BusyBox shells may
 # not implement "command -v". Keep this helper local so each script is standalone.
 executable_exists() {

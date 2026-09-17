@@ -242,7 +242,7 @@ exec /bin/cp "$@"
             self.command(name, "exit 0")
         self.command("pidof", r'''
 case "$1" in
-    tailscaled|syslog-ng) exit 0 ;;
+    tailscaled|unbound|syslog-ng) exit 0 ;;
     lpd|u2ec)
         case "$SCENARIO:$1" in
             lpd_running:lpd|u2ec_running:u2ec) exit 0 ;;

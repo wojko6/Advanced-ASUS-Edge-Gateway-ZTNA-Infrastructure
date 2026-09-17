@@ -27,6 +27,11 @@ EDGE_ROUTER_SSH_PORT="22"
 EDGE_INTERCEPT_DNS="1"
 EDGE_DNS_PORT="53"
 EDGE_UNBOUND_PORT="53535"
+
+# WAN-connected can race with services-start while Unbound is still recovering.
+# The handler exits as soon as the local DNS path is ready; this is only the
+# maximum startup wait, not an unconditional 90-second delay.
+EDGE_WAN_DNS_WAIT_SECONDS="90"
 # Leave empty to auto-detect amtm Unbound Manager first, then standard Entware.
 # Set an explicit path if more than one Unbound configuration is present.
 EDGE_UNBOUND_CONFIG=""
