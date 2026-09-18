@@ -64,6 +64,29 @@ and require local intervention. The snapshot directory must be new; if two
 installs begin within the same second, a name collision aborts before live
 files are changed. Do not run concurrent installations.
 
+## Fedora clean-room Disaster Recovery
+
+The repository also contains the host-side Fedora restore finalization helper used during clean-room recovery validation:
+
+```sh
+sudo ./scripts/fedora-dr-restore.sh /mnt/sysroot --dry-run
+sudo ./scripts/fedora-dr-restore.sh /mnt/sysroot --apply
+```
+
+Run it from Fedora Live/rescue after the restored Fedora root, `/boot`, and `/boot/efi` filesystems are mounted below the target root. **Do not point it at the running host.**
+
+The helper is dry-run by default. Before changing anything it:
+
+1. identifies the filesystem currently mounted as the target `/boot`;
+2. obtains its current filesystem UUID;
+3. checks the target `/etc/fstab` `/boot` entry;
+4. checks the Fedora GRUB configuration locations for a stale old `/boot` UUID;
+5. reports the SELinux relabel that will be performed.
+
+With `--apply`, it creates a private rollback copy under `/var/tmp`, updates the target `/boot` UUID references, and runs the restored system's `restorecon -RF /boot` through `chroot`. If the finalization step fails, it restores the configuration files from the private rollback copy.
+
+This procedure was validated in the 2026-09-18 clean-room VMware restore. The validation found that the restored target could have a different `/boot` filesystem identity and that the restored `/boot` tree initially carried `unlabeled_t` SELinux labels. The helper turns those observed recovery steps into an explicit, repeatable procedure. The detailed sanitized validation record is [FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md](FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md).
+
 ## Emergency rollback
 
 From a LAN/serial recovery session:
