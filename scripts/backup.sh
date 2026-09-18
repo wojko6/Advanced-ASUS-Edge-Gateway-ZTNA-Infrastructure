@@ -94,6 +94,10 @@ EOF
 tar -czf "$ARCHIVE" -C "$DESTINATION" "$WORK_NAME" || exit 1
 rm -rf "$WORK_DIR"
 trap - EXIT HUP INT TERM
-sha256sum_run "$ARCHIVE" >"$ARCHIVE.sha256" || exit 1
+ARCHIVE_NAME="$(basename "$ARCHIVE")"
+(
+    cd "$DESTINATION" || exit 1
+    sha256sum_run "$ARCHIVE_NAME"
+) >"$ARCHIVE.sha256" || exit 1
 chmod 0600 "$ARCHIVE" "$ARCHIVE.sha256"
 echo "$ARCHIVE"

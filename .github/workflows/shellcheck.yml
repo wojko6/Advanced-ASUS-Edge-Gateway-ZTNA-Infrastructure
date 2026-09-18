@@ -19,6 +19,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes shellcheck
       - name: Run static, recovery and evidence-redaction tests
         run: sh tests/test-static.sh
+      - name: Run Python recovery integration tests
+        run: python3 tests/test-recovery.py
+      - name: Run firewall mock policy test
+        run: sh tests/test-firewall-mock.sh
+      - name: Run firewall configuration rejection test
+        run: sh tests/test-config-validation.sh
+      - name: Run evidence collector test
+        run: sh tests/test-evidence-collector.sh
+      - name: Run collector log-retention test
+        run: sh tests/test-log-retention.sh
       - name: Run services-start configuration validation
         run: sh tests/test-services-config-validation.sh
       - name: Run services-start Tailscale policy guards

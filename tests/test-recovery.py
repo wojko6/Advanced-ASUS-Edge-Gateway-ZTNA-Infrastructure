@@ -152,6 +152,13 @@ exec /bin/cp "$@"
         backup = self.run_script(self.script("backup.sh"), self.root / "backups")
         self.assertEqual(backup.returncode, 0, backup.stderr)
         archive = backup.stdout.strip()
+        sidecar = Path(archive + ".sha256")
+        self.assertTrue(sidecar.is_file())
+        self.assertRegex(
+            sidecar.read_text(),
+            r"^[0-9a-f]{64}  " + re.escape(Path(archive).name) + r"\n$",
+        )
+        self.assertNotIn(str(Path(archive).parent), sidecar.read_text())
         config.write_text("changed\n")
         restore = self.run_script(self.script("restore.sh"), archive, "--apply")
         self.assertEqual(restore.returncode, 0, restore.stderr)

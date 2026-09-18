@@ -9,6 +9,11 @@ find "$REPO_DIR/router" "$REPO_DIR/scripts" "$REPO_DIR/tests" -type f \( -name '
     sh -n "$file"
 done
 
+[ -x "$REPO_DIR/scripts/fedora-dr-restore.sh" ] || {
+    echo "FAIL: Fedora DR finalization helper is not executable" >&2
+    exit 1
+}
+
 grep -F 'RELEASE_VERSION="$(cat "$REPO_DIR/VERSION")"' "$REPO_DIR/scripts/install.sh" >/dev/null || {
     echo "FAIL: installer does not read the release version from VERSION" >&2
     exit 1
