@@ -98,6 +98,19 @@ The synchronization feature must only be documented as **Completed and validated
 - Review logs for recurring Tailscale memory failures, WAN/DNS recovery errors, storage/mount failures, and unexpected service restarts.
 - Publish only sanitized evidence; never publish raw router syslog or credentials.
 
+## Stability-gate finding — LAN DNS policy bypass
+
+Read-only validation during the stability observation identified a DNS-enforcement gap that must remain unchanged until the gate is complete:
+
+- ASUS DNS Director is currently disabled (`dnsfilter_enable_x=0`) and no client-specific DNS Director rules are configured.
+- The project firewall currently redirects TCP/UDP port 53 arriving through `tailscale0` to the router DNS service, but the observed NAT PREROUTING policy does not contain an equivalent redirect for ordinary LAN/Wi-Fi clients.
+- A Fedora LAN client successfully resolved `example.com` directly through `8.8.8.8:53/UDP`, confirming that a client can deliberately bypass the router DNS path using a manually selected external resolver.
+- Normal Fedora DNS operation was separately verified to follow the intended Tailscale path: a query for `openai.com` was observed on the router as `100.82.222.105 -> 100.83.72.84:53`, with the router returning the DNS response.
+- Therefore the normal tested Fedora path reaches the ASUS DNS service, while explicit client-selected external DNS remains a policy bypass.
+- This bypass may contribute to inconsistent DNS-level ad/tracker blocking on clients that use external DNS, but it must not be treated as the sole explanation for residual advertising. DoH/DoT, application behavior, same-domain advertising, client configuration, and filtering-list coverage require separate validation.
+- Do not enable DNS Director or add LAN DNS interception rules during the unchanged-state stability gate.
+- After the gate, evaluate controlled LAN DNS enforcement, including TCP/UDP 53, DoT/853, IPv6, DoH limitations, exceptions/rollback, and false-positive/compatibility testing.
+
 ## Post-observation router filtering work
 
 After the unchanged-state stability gate is complete and its evidence is captured:
