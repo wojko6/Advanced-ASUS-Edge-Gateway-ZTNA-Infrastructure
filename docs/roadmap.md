@@ -108,6 +108,39 @@ After the unchanged-state stability gate is complete and its evidence is capture
 - Re-run DNSSEC, resolution, firewall, service-health, and recovery validation after each material change.
 - Capture sanitized before/after evidence without overstating what DNS-level filtering can block.
 
+## Post-observation — severity-aware alerting and phone notifications
+
+After the unchanged-state stability gate is complete and its evidence is captured:
+
+- Keep full operational logs separate from actionable notifications so routine firewall drops, filtering events, and other expected noise do not generate phone alerts.
+- Classify actionable events into at least `INFO`, `WARNING`, `CRITICAL`, and `RECOVERED` states.
+- Reserve immediate phone notifications for sustained or high-impact failures such as repeated health-check failures, DNS/Unbound failure, Tailscale recovery failure, firewall-policy load failure, persistent WAN loss, SSD/Entware storage loss, filesystem errors, OOM/crash loops, unexpected reboot, or backup-integrity failure.
+- Add persistence thresholds, deduplication, and per-event cooldowns so a transient failure or repeated identical log entry does not create alert storms.
+- Emit a distinct `RECOVERED` notification when a previously active incident returns to a validated healthy state.
+- Prefer alert evaluation and notification delivery on an external collector/NAS/workstation rather than adding unnecessary processing to the low-memory router.
+- Evaluate a privacy-preserving phone notification path such as self-hosted ntfy or Gotify.
+- Add an external heartbeat/dead-man check so complete router or WAN failure can still be detected when the router itself is unable to send an alert.
+- Validate alert severity, false-positive rate, duplicate suppression, recovery notifications, and loss-of-router scenarios before describing the feature as production-ready.
+
+Do not deploy router-side hooks, cron jobs, syslog changes, or other alerting changes during the active unchanged-state stability observation.
+
+## Post-observation — off-router backup and reproducible recovery
+
+Extend the existing project configuration backup/restore workflow after the stability gate:
+
+- Keep the current integrity-checked project backup as the configuration/application recovery layer.
+- Automatically copy completed backups away from the router-attached SSD to a trusted NAS or other independent system.
+- Retain multiple dated backup generations and define an explicit retention policy.
+- Encrypt off-router backups at rest and keep authentication material outside the public repository.
+- Verify the archive sidecar checksum and internal `SHA256SUMS` manifest after transfer rather than treating a successful copy as sufficient.
+- Add backup-result monitoring so a failed backup, failed transfer, or failed integrity check can become an actionable alert.
+- Document a bootstrap procedure for a clean compatible ASUSWRT-Merlin/Entware installation that restores the project configuration without pretending to be a firmware-level bare-metal image.
+- Test restore first in dry-run mode, then perform a controlled recovery drill with rollback and post-restore health validation.
+- Record measured recovery time and the expected data/configuration loss window so later project maturity work can define evidence-backed RTO/RPO.
+- Keep the router-attached SSD and the off-router copy as separate failure domains; neither should be described as sufficient on its own.
+
+Target end state: a versioned, integrity-verified, encrypted off-router recovery path that complements the repository and existing `backup.sh`/`restore.sh` workflow.
+
 ## Phase 2 — dedicated x86 edge
 
 - OPNsense on supported x86 hardware.
