@@ -11,7 +11,7 @@
 #
 set -eu
 
-PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+PATH="${FEDORA_DR_PATH:-/usr/sbin:/usr/bin:/sbin:/bin}"
 
 TARGET_ROOT="${1:-}"
 MODE="${2:---dry-run}"
