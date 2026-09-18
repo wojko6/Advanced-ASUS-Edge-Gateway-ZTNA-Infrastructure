@@ -36,6 +36,7 @@ sh tests/test-services-tailscale-policy-static.sh
 sh tests/test-healthcheck-config-validation.sh
 sh tests/test-update-tailscale-static.sh
 sh tests/test-restore-validation.sh
+sh tests/test-fedora-dr-restore.sh
 sh tests/test-wan-event-handler.sh
 sh tests/test-wan-config-validation.sh
 sh tests/test-install-rollback.sh
