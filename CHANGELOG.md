@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- Added Fedora clean-room Disaster Recovery validation and a guarded restore-finalization helper with dry-run/apply modes.
+- Added a post-stability-gate validation plan for exit-node NAT and Fedora/Android DNS datapath closure.
+- Added a case-study index and surfaced the uiDivStats and Zen integration investigations.
 - Added a dedicated Entware SSD migration runbook and sanitized reboot-validation evidence.
 - Added printer-hardening documentation and health-check coverage for disabling the router USB print server and TCP/515 exposure.
 - Added recruiter-facing portfolio highlights to the README.
@@ -10,6 +13,9 @@
 - Added evidence guidance for post-hardening mobile telemetry case studies without inventing a pre-debloat baseline.
 
 ### Changed
+- Expanded GitHub Actions to execute the existing Python recovery, firewall mock/configuration, evidence-collector, and log-retention tests directly.
+- Sanitized deployment-specific identifiers in the Fedora Zen case study while preserving technically relevant public service examples.
+- Standardized README architecture rendering on `docs/images/architecture-v2.png`.
 - Migrated the persistent Entware environment from USB flash storage to SSD with separate `ENTWARE` and `ROUTER_DATA` filesystems.
 - Added active swap on the SSD-backed Entware and data partitions to protect memory-constrained services such as Tailscale.
 - Refreshed the roadmap and README to reflect the validated 2026-09-11 deployment state.
@@ -19,6 +25,10 @@
 - Documented that repo/documentation work and workstation-local tests may continue during the 2026-09-11 through 2026-09-25 stability observation while router-side corroboration remains read-only.
 
 ### Fixed
+- Hardened Fedora DR target selection so the helper refuses the running root, same-root backing source, and missing separate `/boot` or `/boot/efi` mounts.
+- Made Fedora DR rollback directory creation collision-resistant with `mktemp -d`.
+- Made backup sidecar checksums portable by storing the archive basename instead of an absolute archive path.
+- Corrected IPv6 documentation so fail-closed enforcement is not claimed when `ip6tables` is unavailable.
 - Finalized WAN event handling and rollback tests, including recovery from DNS-path and Tailscale restart failures.
 - Hardened firewall, service-start, WAN-event, health-check, log-retention, USB-exposure, uninstall, and Tailscale-update failure handling with regression coverage for the repository-side behavior.
 - Removed stale ExpressVPN and NordVPN client configuration from the deployed reference environment.

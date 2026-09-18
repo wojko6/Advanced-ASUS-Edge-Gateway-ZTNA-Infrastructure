@@ -106,9 +106,9 @@ Raw recovery evidence remains private and is not published with deployment-speci
 
 ## 2026-09-18 repository validation update
 
-The Fedora clean-room restore findings have been converted into an automated recovery finalization helper (`scripts/fedora-dr-restore.sh`) with dry-run/apply modes, rollback protection, `/boot` UUID adaptation, GRUB UUID correction, and SELinux relabeling via `restorecon`. A focused regression test was added and integrated into CI. GitHub Actions run #462 completed successfully after correcting the test invocation. The router reference state was not modified by this work.
+The Fedora clean-room restore findings have been converted into a guarded recovery finalization helper (`scripts/fedora-dr-restore.sh`) with dry-run/apply modes, configuration-file rollback protection, `/boot` UUID adaptation, GRUB UUID correction, SELinux relabeling via `restorecon`, and explicit refusal of unsafe or missing target mounts. It is intentionally not described as a complete bare-metal restore engine. A focused regression test is integrated into CI. GitHub Actions run #462 completed successfully after correcting the test invocation. The router reference state was not modified by this work.
 
-The current CI validation run is green: GitHub Actions run #465 completed successfully after the README validation badge update.
+The repository validation workflow was green before this remediation batch (run #471). The current batch expands CI coverage so previously existing recovery, firewall/configuration, evidence-collector, and log-retention tests are executed directly; the batch is not considered complete until its new CI run is green.
 
 ## Current decision
 

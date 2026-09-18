@@ -31,6 +31,11 @@ GitHub Actions runs the main static/recovery/evidence suite plus focused regress
 checks for configuration validation and maintenance/recovery paths:
 
 ```sh
+python3 tests/test-recovery.py
+sh tests/test-firewall-mock.sh
+sh tests/test-config-validation.sh
+sh tests/test-evidence-collector.sh
+sh tests/test-log-retention.sh
 sh tests/test-services-config-validation.sh
 sh tests/test-services-tailscale-policy-static.sh
 sh tests/test-healthcheck-config-validation.sh
@@ -42,7 +47,7 @@ sh tests/test-wan-config-validation.sh
 sh tests/test-install-rollback.sh
 ```
 
-The configuration-validation tests reject invalid startup, healthcheck, firewall,
+The Python recovery integration tests exercise backup/restore round trips and rollback semantics. The firewall mock/configuration tests exercise rendered policy and pre-mutation rejection. Evidence-collector and retention tests verify sanitization, manifests, compression, expiry, and safety guards. The configuration-validation tests reject invalid startup, healthcheck, firewall,
 and WAN-event inputs before those values can reach runtime commands. The
 services-start Tailscale policy guard verifies that a failed `tailscale up`, an
 unavailable/not-ready local API, or a missing required `tailscaled` binary cannot

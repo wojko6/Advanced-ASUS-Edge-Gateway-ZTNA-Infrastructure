@@ -48,11 +48,13 @@ The router configuration remains unchanged, but project work can continue away f
 
 These activities are intentionally separated from router configuration changes so they do not invalidate the unchanged-state stability observation.
 
-## Planned endpoint filtering validation
+## Endpoint filtering validation status
 
 Endpoint filtering is an optional defense-in-depth layer, not a replacement for router-side DNS controls.
 
-Planned validation matrix:
+Completed evidence now includes the Windows Zen validation and the Fedora/GNOME Zen proxy-integration case study. Those results are endpoint-specific and do not prove equivalent router-side filtering. AdGuard for Windows remains an optional comparison rather than a completed result.
+
+Reference validation matrix:
 
 - Existing router DNS/filtering only — baseline.
 - Router DNS/filtering + Brave on supported endpoints.
