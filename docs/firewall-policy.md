@@ -122,7 +122,7 @@ firewall when packet capture shows no attempted print connection.
 ## Policy limitations
 
 - iptables sees source IPs, not Tailscale user identities. Enforce identities with Grants.
-- The granular service policy is IPv4. The installed IPv6 guard intentionally drops new Tailscale IPv6 input/forward traffic; do not remove it until an equivalent policy is tested.
+- The granular service policy is IPv4. Where `ip6tables` is available, the installed IPv6 guard intentionally drops new Tailscale IPv6 input/forward traffic. If `ip6tables` is unavailable, the scripts warn and IPv6 must be independently verified disabled; fail-closed IPv6 enforcement is not claimed in that state. Do not relax the guard until an equivalent granular IPv6 policy is tested.
 - `EDGE_ALLOWED_LAN_HOSTS` accepts IPv4 addresses/CIDRs, not hostnames, and combined with each listed port is a Cartesian product. Create separate chains if hosts need different service sets.
 - Printer HTTP, SNMPv1/v2, IPP, and raw TCP are not encrypted on the LAN segment. Tailscale protects the remote path only as far as the subnet router; keep the printer policy source-restricted and never expose these ports to the WAN.
 - Exit-node mode permits all protocols to the WAN interface; Tailscale Grants must restrict who may use `autogroup:internet`.

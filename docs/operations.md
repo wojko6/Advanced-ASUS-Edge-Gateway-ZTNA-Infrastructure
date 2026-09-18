@@ -69,11 +69,11 @@ files are changed. Do not run concurrent installations.
 The repository also contains the host-side Fedora restore finalization helper used during clean-room recovery validation:
 
 ```sh
-sudo ./scripts/fedora-dr-restore.sh /mnt/sysroot --dry-run
-sudo ./scripts/fedora-dr-restore.sh /mnt/sysroot --apply
+sudo sh ./scripts/fedora-dr-restore.sh /mnt/sysroot --dry-run
+sudo sh ./scripts/fedora-dr-restore.sh /mnt/sysroot --apply
 ```
 
-Run it from Fedora Live/rescue after the restored Fedora root, `/boot`, and `/boot/efi` filesystems are mounted below the target root. **Do not point it at the running host.**
+Run it from Fedora Live/rescue after the restored Fedora root, `/boot`, and `/boot/efi` filesystems are mounted below the target root. The helper refuses `/`, refuses a target backed by the same filesystem source as the running root, and requires the target root, `/boot`, and `/boot/efi` to be exact mountpoints rather than ordinary directories. **Do not point it at the running host.**
 
 The helper is dry-run by default. Before changing anything it:
 
@@ -83,7 +83,9 @@ The helper is dry-run by default. Before changing anything it:
 4. checks the Fedora GRUB configuration locations for a stale old `/boot` UUID;
 5. reports the SELinux relabel that will be performed.
 
-With `--apply`, it creates a private rollback copy under `/var/tmp`, updates the target `/boot` UUID references, and runs the restored system's `restorecon -RF /boot` through `chroot`. If the finalization step fails, it restores the configuration files from the private rollback copy.
+With `--apply`, it creates an atomically unique private rollback directory under `/var/tmp`, updates the target `/boot` UUID references, and runs the restored system's `restorecon -RF /boot` through `chroot`. If the finalization step fails, it restores the backed-up configuration files. SELinux relabel changes are policy-derived and are not reverse-applied by the rollback path.
+
+This helper is deliberately a **finalization helper**, not the complete restore engine. Partition creation, filesystem creation, Btrfs receive/snapshot work, restoring root/home/boot/EFI payloads, adapting non-`/boot` filesystem identities, regenerating kernel/initramfs/GRUB state where required, and creating/verifying the firmware boot entry remain explicit recovery steps until they receive equivalent automation and regression coverage.
 
 This procedure was validated in the 2026-09-18 clean-room VMware restore. The validation found that the restored target could have a different `/boot` filesystem identity and that the restored `/boot` tree initially carried `unlabeled_t` SELinux labels. The helper turns those observed recovery steps into an explicit, repeatable procedure. The detailed sanitized validation record is [FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md](FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md).
 

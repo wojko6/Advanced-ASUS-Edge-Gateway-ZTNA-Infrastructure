@@ -72,9 +72,9 @@ Used:           ~723 MiB
 Utilization:    1%
 ```
 
-## Required services
+## Reference-deployment services
 
-The following required processes were observed running:
+The following processes expected on the reference deployment were observed running:
 
 ```text
 tailscaled   RUNNING

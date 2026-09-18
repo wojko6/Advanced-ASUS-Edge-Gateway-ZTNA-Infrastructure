@@ -16,7 +16,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 
 ## Architecture
 
-![Current ASUS Edge Gateway architecture](docs/images/Architecture.png)
+![Current ASUS Edge Gateway architecture](docs/images/architecture-v2.png)
 
 Remote access is enforced at two layers:
 
@@ -169,7 +169,7 @@ See the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.
 
 The reference router is in a 14-day unchanged-state observation window from **2026-09-11 through 2026-09-25**. During this gate, router configuration changes and intentional reboots are avoided unless recovery is required. Repository/documentation work and endpoint-only experiments may continue without changing the router.
 
-The planned [endpoint filtering validation](docs/endpoint-filtering-validation.md) evaluates Zen on Windows/Chrome and, optionally, AdGuard for Windows while preserving the existing router DNS architecture. Results will only be promoted to evidence after real tests are completed.
+Endpoint-filtering validation now includes dated Zen evidence on Windows and a Fedora/GNOME proxy-integration case study. AdGuard for Windows remains an optional future comparison. These endpoint results are kept separate from router-side capability claims.
 
 ## Validation and recovery
 

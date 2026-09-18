@@ -16,18 +16,20 @@ Zen remains an optional endpoint-side defense-in-depth layer. It does not replac
 
 - Endpoint OS: Fedora Linux
 - Desktop environment: GNOME
-- Zen executable: `/home/wojciech/.local/bin/zen`
+- Zen executable: `/home/<user>/.local/bin/zen`
 - Installation method: standalone/user-local installation outside RPM
 - Zen autostart: enabled
 - Zen runtime PID during validation: `1797`
-- LAN address observed during validation: `192.168.50.254`
-- Router LAN address: `192.168.50.1`
+- LAN address observed during validation: `WORKSTATION_LAN_IP`
+- Router LAN address: `ROUTER_LAN_IP`
 - Tailscale interface: `tailscale0`
-- Fedora Tailscale address: `100.82.222.105`
-- ASUS TUF-AX5400 Tailscale address: `100.83.72.84`
+- Fedora Tailscale address: `FEDORA_TS_IP`
+- ASUS TUF-AX5400 Tailscale address: `ROUTER_TS_IP`
 - Tailscale DNS address: `100.100.100.100`
 
 The validation was observational and did not require changes to the router configuration.
+
+Deployment-specific LAN/Tailscale addresses and peer names are sanitized in this case study. The well-known Tailscale DNS service address `100.100.100.100` is retained because it is not deployment-specific.
 
 ## 1. Zen Installation and Runtime Identification
 
@@ -35,7 +37,7 @@ The shell resolved the Zen executable to:
 
 ```text
 ~/.local/bin/zen
-/home/wojciech/.local/bin/zen
+/home/<user>/.local/bin/zen
 ```
 
 File inspection identified it as a native 64-bit Linux executable:
@@ -47,7 +49,7 @@ ELF 64-bit LSB executable, x86-64
 RPM ownership validation returned:
 
 ```text
-file /home/wojciech/.local/bin/zen is not owned by any package
+file /home/<user>/.local/bin/zen is not owned by any package
 ```
 
 This confirms that the tested Zen installation was not managed by Fedora RPM.
@@ -55,7 +57,7 @@ This confirms that the tested Zen installation was not managed by Fedora RPM.
 The active process was observed as:
 
 ```text
-/home/wojciech/.local/bin/zen --start --hidden
+/home/<user>/.local/bin/zen --start --hidden
 ```
 
 The command-line flags matched the enabled Zen autostart configuration.
@@ -290,7 +292,7 @@ Zen PID 1797
 Although the Zen proxy was reachable through loopback, an explicit connection attempt was made through the Fedora workstation's LAN address:
 
 ```bash
-nc -vz -w 2 192.168.50.254 34569
+nc -vz -w 2 WORKSTATION_LAN_IP 34569
 ```
 
 Result:
@@ -305,7 +307,7 @@ Together with the socket binding to `127.0.0.1:34569`, this confirms that the te
 
 PASS for the tested configuration.
 
-The local proxy was bound to loopback and was not exposed as a TCP proxy service to other LAN hosts through `192.168.50.254`.
+The local proxy was bound to loopback and was not exposed as a TCP proxy service to other LAN hosts through `WORKSTATION_LAN_IP`.
 
 ## 10. Observed Application-to-Proxy Traffic
 
@@ -318,8 +320,8 @@ While a browser generated traffic, active Zen connections included localhost ses
 At the same time, Zen established external HTTPS connections from the Fedora workstation, including examples such as:
 
 ```text
-192.168.50.254:<ephemeral> -> 172.64.155.209:443
-192.168.50.254:<ephemeral> -> 104.18.42.153:443
+WORKSTATION_LAN_IP:<ephemeral> -> 172.64.155.209:443
+WORKSTATION_LAN_IP:<ephemeral> -> 104.18.42.153:443
 ```
 
 This provides runtime evidence consistent with:
@@ -371,7 +373,7 @@ This is an important limitation when describing Zen as an endpoint-wide filterin
 `resolvectl status` showed the Wi-Fi interface configured with:
 
 ```text
-DNS Server: 192.168.50.1
+DNS Server: ROUTER_LAN_IP
 ```
 
 while `tailscale0` exposed:
@@ -406,11 +408,11 @@ sudo tcpdump -ni any 'port 53'
 
 A previously unused test destination, `kernel.org`, was then opened.
 
-The capture showed DNS requests leaving through `tailscale0`, including queries from the Fedora Tailscale address `100.82.222.105` to:
+The capture showed DNS requests leaving through `tailscale0`, including queries from the Fedora Tailscale address `FEDORA_TS_IP` to:
 
 ```text
 100.100.100.100:53
-100.83.72.84:53
+ROUTER_TS_IP:53
 ```
 
 Observed queries included A and AAAA requests for `kernel.org` and `www.kernel.org`.
@@ -434,12 +436,12 @@ www.kernel.org
 `tailscale status` identified:
 
 ```text
-100.82.222.105  fedora
-100.97.87.31    poco-f8-pro-1
-100.83.72.84    tuf-ax5400-abf8
+FEDORA_TS_IP  fedora
+ANDROID_TS_IP    android-client
+ROUTER_TS_IP    router
 ```
 
-The `100.83.72.84` DNS destination observed in the packet capture therefore corresponded to the ASUS TUF-AX5400 Tailscale peer.
+The `ROUTER_TS_IP` DNS destination observed in the packet capture therefore corresponded to the ASUS TUF-AX5400 Tailscale peer.
 
 The router was also reported as offering an exit node.
 
@@ -483,10 +485,10 @@ tailscale0
     |
     +--> 100.100.100.100
     |
-    +--> 100.83.72.84 (ASUS TUF-AX5400 peer)
+    +--> ROUTER_TS_IP (ASUS TUF-AX5400 peer)
 ```
 
-No DNS request to `192.168.50.1:53` was observed during the captured `kernel.org` test.
+No DNS request to `ROUTER_LAN_IP:53` was observed during the captured `kernel.org` test.
 
 This is a bounded observation for the tested configuration and should not be generalized to every application or every Zen operating mode.
 
@@ -531,7 +533,7 @@ This is a bounded observation for the tested configuration and should not be gen
 | Browser proxy participation | CONFIRMED | localhost + Zen external sockets |
 | CLI curl automatic proxying | NOT OBSERVED | direct HTTPS connection |
 | Fedora DNS via Tailscale | CONFIRMED | `resolvectl` + `tcpdump` |
-| ASUS Tailscale DNS path | OBSERVED | `100.83.72.84` identified as router |
+| ASUS Tailscale DNS path | OBSERVED | `ROUTER_TS_IP` identified as router |
 | Router configuration changes | NONE | observational endpoint validation |
 
 ## 18. Conclusion
