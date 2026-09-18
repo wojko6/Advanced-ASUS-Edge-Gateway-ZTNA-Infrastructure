@@ -243,6 +243,7 @@ Tailscale updates are a separate planned-maintenance action:
 - [Printer setup through Tailscale](docs/printer-setup-tailscale-pl.md)
 - [Operations and recovery](docs/operations.md)
 - [Roadmap](docs/roadmap.md)
+- [Engineering worklog](docs/worklog/README.md)
 
 ## Validation evidence
 
