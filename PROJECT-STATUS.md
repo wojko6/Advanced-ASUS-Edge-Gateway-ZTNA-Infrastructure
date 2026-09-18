@@ -108,6 +108,8 @@ Raw recovery evidence remains private and is not published with deployment-speci
 
 The Fedora clean-room restore findings have been converted into an automated recovery finalization helper (`scripts/fedora-dr-restore.sh`) with dry-run/apply modes, rollback protection, `/boot` UUID adaptation, GRUB UUID correction, and SELinux relabeling via `restorecon`. A focused regression test was added and integrated into CI. GitHub Actions run #462 completed successfully after correcting the test invocation. The router reference state was not modified by this work.
 
+The current CI validation run is green: GitHub Actions run #465 completed successfully after the README validation badge update.
+
 ## Current decision
 
 As of 2026-09-18, no additional router-side remediation is justified during the active stability gate. The correct engineering action is to preserve the reference state, continue observation, improve repository/test/documentation quality offline where useful, and defer AUDIT-02/AUDIT-03 live closure until the gate has completed.
