@@ -27,7 +27,7 @@ EOF
 chmod +x "$FAKEBIN/findmnt" "$FAKEBIN/blkid"
 
 output="$(
-    PATH="$FAKEBIN:/usr/sbin:/usr/bin:/sbin:/bin"     FEDORA_DR_PATH="$FAKEBIN:/usr/sbin:/usr/bin:/sbin:/bin"     "$SCRIPT" "$TARGET" --dry-run
+    FEDORA_DR_FINDMNT="$FAKEBIN/findmnt"     FEDORA_DR_BLKID="$FAKEBIN/blkid"     "$SCRIPT" "$TARGET" --dry-run
 )"
 
 printf '%s\n' "$output" | grep -F 'Detected /boot UUID: NEW-BOOT-UUID' >/dev/null
