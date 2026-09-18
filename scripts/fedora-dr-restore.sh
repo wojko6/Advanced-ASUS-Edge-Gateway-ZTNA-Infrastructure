@@ -11,7 +11,9 @@
 #
 set -eu
 
-PATH="${FEDORA_DR_PATH:-/usr/sbin:/usr/bin:/sbin:/bin}"
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+FINDMNT_BIN="${FEDORA_DR_FINDMNT:-findmnt}"
+BLKID_BIN="${FEDORA_DR_BLKID:-blkid}"
 
 TARGET_ROOT="${1:-}"
 MODE="${2:---dry-run}"
@@ -29,7 +31,7 @@ case "$MODE" in
 esac
 
 findmnt_cmd() {
-    findmnt -no "$1" -T "$2"
+    $FINDMNT_BIN -no "$1" -T "$2"
 }
 
 boot_source="$(findmnt_cmd SOURCE "$TARGET_ROOT/boot" 2>/dev/null || true)"
@@ -41,7 +43,7 @@ boot_source="$(findmnt_cmd SOURCE "$TARGET_ROOT/boot" 2>/dev/null || true)"
 
 case "$boot_source" in
     /dev/*)
-        boot_uuid="$(blkid -s UUID -o value "$boot_source" 2>/dev/null || true)"
+        boot_uuid="$($BLKID_BIN -s UUID -o value "$boot_source" 2>/dev/null || true)"
         ;;
     UUID=*)
         boot_uuid="${boot_source#UUID=}"
