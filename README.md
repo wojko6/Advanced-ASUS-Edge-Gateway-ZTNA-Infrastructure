@@ -220,6 +220,10 @@ Tailscale updates are a separate planned-maintenance action:
 ./scripts/update-tailscale.sh
 ```
 
+## Case studies
+
+- [Case study index](docs/CASE-STUDIES.md) — troubleshooting and endpoint-integration investigations with explicit evidence, remediation, validation, and limitations.
+
 ## Documentation
 
 - [Polski przewodnik wdrożenia](docs/deployment-pl.md)
