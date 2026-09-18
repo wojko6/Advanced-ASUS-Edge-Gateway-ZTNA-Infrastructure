@@ -229,6 +229,7 @@ Observed exclusions included examples from authentication services, password man
 Examples observed in the generated PAC included:
 
 ```text
+auth.openai.com
 accounts.google.com
 appleid.apple.com
 1password.com
