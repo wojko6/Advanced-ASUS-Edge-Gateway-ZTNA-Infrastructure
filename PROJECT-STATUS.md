@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-09-16  
+**Status date:** 2026-09-18  
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin  
 **Current phase:** unchanged-state stability observation and audit remediation
 
@@ -82,6 +82,28 @@ Raw operational evidence remains private when it contains deployment-specific id
 
 Published evidence should contain only the minimum sanitized information required to reproduce or support the technical conclusion.
 
+
+## Fedora Disaster Recovery validation
+
+On 2026-09-18, the Fedora recovery set was validated in a clean-room VMware test VM.
+
+**Result: PASS.** The restored Fedora installation booted successfully from the recovered virtual NVMe disk to the graphical desktop after the recovery ISO was detached.
+
+Post-restore validation confirmed:
+
+- `/`, `/home`, `/boot`, and `/boot/efi` mounted from the recovered target layout;
+- the recovered user environment and project files were present;
+- `systemctl --failed` contained only the known VM-specific `mcelog.service` exception;
+- the initial `/boot` SELinux labeling problem was identified as `unlabeled_t`;
+- `restorecon -RFv /boot` restored the expected Fedora `boot_t` labels;
+- a subsequent boot-level error scan showed no new `boot`, `logind`, SELinux denial, or related errors.
+
+The clean-room restore also established three explicit recovery requirements: adapt `/boot` UUID references in `/etc/fstab` and Fedora EFI/GRUB configuration when the target partition identity differs, and relabel `/boot` with `restorecon` after restore.
+
+Detailed sanitized evidence: `docs/FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md`.
+
+Raw recovery evidence remains private and is not published with deployment-specific UUIDs or other infrastructure identifiers.
+
 ## Current decision
 
-As of 2026-09-16, no additional router-side remediation is justified during the active stability gate. The correct engineering action is to preserve the reference state, continue observation, improve repository/test/documentation quality offline where useful, and defer AUDIT-02/AUDIT-03 live closure until the gate has completed.
+As of 2026-09-18, no additional router-side remediation is justified during the active stability gate. The correct engineering action is to preserve the reference state, continue observation, improve repository/test/documentation quality offline where useful, and defer AUDIT-02/AUDIT-03 live closure until the gate has completed.
