@@ -31,6 +31,8 @@ jobs:
         run: sh tests/test-update-tailscale-static.sh
       - name: Run restore archive validation
         run: sh tests/test-restore-validation.sh
+      - name: Run Fedora DR restore finalization dry-run test
+        run: sh tests/test-fedora-dr-restore.sh
       - name: Run WAN prevalidation ordering guard
         run: sh tests/test-wan-prevalidation-static.sh
 
