@@ -100,22 +100,21 @@ The synchronization feature must only be documented as **Completed and validated
 - Review logs for recurring Tailscale memory failures, WAN/DNS recovery errors, storage/mount failures, and unexpected service restarts.
 - Publish only sanitized evidence; never publish raw router syslog or credentials.
 
-## Stability-gate finding — LAN DNS policy bypass
+## Resolved finding — LAN DNS policy bypass and DoT follow-up
 
-Read-only validation during the completed stability observation identified a DNS-enforcement gap:
+Read-only validation during the completed stability observation identified a DNS-enforcement gap. That specific classic-DNS bypass and the direct LAN DoT follow-up were both addressed through controlled maintenance on 2026-09-22.
 
-- ASUS DNS Director is currently disabled (`dnsfilter_enable_x=0`) and no client-specific DNS Director rules are configured.
-- The project firewall currently redirects TCP/UDP port 53 arriving through `tailscale0` to the router DNS service, but the observed NAT PREROUTING policy does not contain an equivalent redirect for ordinary LAN/Wi-Fi clients.
-- A Fedora LAN client successfully resolved `example.com` directly through `8.8.8.8:53/UDP`, confirming that a client can deliberately bypass the router DNS path using a manually selected external resolver.
-- Normal Fedora DNS operation was separately verified to follow the intended Tailscale path: a query for `openai.com` was observed on the router as `100.82.222.105 -> 100.83.72.84:53`, with the router returning the DNS response.
-- Therefore the normal tested Fedora path reaches the ASUS DNS service, while explicit client-selected external DNS remains a policy bypass.
-- This bypass may contribute to inconsistent DNS-level ad/tracker blocking on clients that use external DNS, but it must not be treated as the sole explanation for residual advertising. DoH/DoT, application behavior, same-domain advertising, client configuration, and filtering-list coverage require separate validation.
-- The observation period is now closed; any DNS Director or LAN DNS interception change must still be introduced as a controlled maintenance change with rollback.
-- Evaluate controlled LAN DNS enforcement, including TCP/UDP 53, DoT/853, IPv6, DoH limitations, exceptions/rollback, and false-positive/compatibility testing.
-- **2026-09-22 DoT prototype A/B/A:** Fedora on the normal LAN path successfully established TLS 1.3 to `8.8.8.8:853` before the test, proving a direct DoT bypass. A temporary `br0` FORWARD chain with `REJECT --reject-with tcp-reset` then blocked the connection; the rule recorded 1 packet / 60 bytes. After removing the test chain, TLS to `8.8.8.8:853` succeeded again. This validates the TCP/853 control mechanism only.
-- **2026-09-22 production deployment:** the opt-in `EDGE_BLOCK_LAN_DOT` implementation from PR #58 was deployed to the reference router and live-validated. The health check remained clean, a controlled Fedora TLS connection to `8.8.8.8:853` was rejected, and the managed production rule recorded 1 packet / 60 bytes. The claim remains limited to direct IPv4 DoT on TCP/853.
-- **2026-09-22 prototype validation:** with Fedora routed directly through the LAN gateway (Tailscale exit node disabled), a temporary `br0` test chain intercepted controlled UDP/53 and TCP/53 queries explicitly addressed to `8.8.8.8`. Normal DNS addressed to the router remained on the router-return path. The temporary chain was then removed cleanly. The subsequent PR #57 production implementation was deployed separately and live-validated on the reference router with healthy health-check results and observed UDP/TCP redirect counter growth.
-- Repository follow-up: implement the validated mechanism as opt-in `EDGE_ENFORCE_LAN_DNS` with a dedicated managed chain, health-check contract, rollback-by-disable, and regression coverage.
+Historical finding and closure:
+
+- At discovery time, ASUS DNS Director was disabled (`dnsfilter_enable_x=0`) and the project firewall redirected classic TCP/UDP 53 only on the validated Tailscale path, not for ordinary LAN/Wi-Fi clients.
+- A Fedora LAN client successfully resolved through an explicitly selected external resolver, proving a real classic-DNS bypass on the normal LAN path.
+- A temporary `br0` NAT prototype then intercepted controlled UDP/53 and TCP/53 traffic and was removed cleanly after validation.
+- **Production classic-DNS closure:** PR #57 introduced opt-in `EDGE_ENFORCE_LAN_DNS` and the managed `EDGE_LAN_DNS_PREROUTING` chain. The reference router was deployed with `EDGE_ENFORCE_LAN_DNS=1`; the live health check remained clean and controlled Fedora external UDP/TCP 53 queries incremented the production redirect counters.
+- A separate Fedora baseline confirmed that direct TLS to `8.8.8.8:853` was reachable before any DoT control, proving a direct LAN DNS-over-TLS bypass of the classic port-53 policy.
+- **DoT prototype A/B/A:** a temporary `br0` FORWARD rule rejected TCP/853 with `tcp-reset`, recorded the controlled packet, and rollback restored successful TLS/853 connectivity.
+- **Production DoT closure:** PR #58 introduced opt-in `EDGE_BLOCK_LAN_DOT` and the managed `EDGE_LAN_DOT_FORWARD` chain. The reference router was deployed with `EDGE_BLOCK_LAN_DOT=1`; a controlled Fedora production connection to `8.8.8.8:853` was rejected, the managed rule recorded 1 packet / 60 bytes, and the post-test health check remained clean.
+- The completed claims are deliberately scoped: classic IPv4 LAN TCP/UDP 53 enforcement and direct IPv4 LAN DoT/TCP 853 blocking are live validated. They do not establish control over DoH/HTTPS, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, application-specific encrypted DNS, or equivalent traffic entering through other interfaces.
+- **Next DNS-control milestone:** perform read-only assessment of DoH/HTTPS and DoQ/QUIC first, then design any enforcement only after compatibility, false-positive, rollback, and protocol-identification limits are understood. IPv6 and VPN-carried resolver paths remain separate assessment items.
 
 ## Post-observation router filtering work
 

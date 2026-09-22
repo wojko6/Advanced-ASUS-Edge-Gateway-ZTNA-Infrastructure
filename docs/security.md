@@ -8,7 +8,8 @@
 | Tailscale Grants | Excessive identity access | Local firewall validation |
 | Device-IP allowlist | Accidental broad tailnet management access | Identity lifecycle management |
 | Default-deny managed chains | Lateral movement through the subnet router | LAN segmentation/VLANs |
-| Unbound hardening + DNSSEC | Some spoofing, cache poisoning, rebinding patterns | DoH/DoT controls and endpoint policy |
+| Unbound hardening + DNSSEC | Some spoofing, cache poisoning, rebinding patterns | Encrypted-DNS transport controls and endpoint policy |
+| Project-owned LAN DNS enforcement | Direct classic-DNS bypass on TCP/UDP 53 and direct IPv4 LAN DoT on TCP 853 | DoH/DoQ, VPN-carried DNS, IPv6 resolver-path controls, endpoint policy |
 | Endpoint content filtering (optional) | Browser/app content that DNS filtering cannot reliably separate | Router DNS policy, endpoint patching, browser security |
 | TLS syslog forwarding | Passive log interception and basic transport tampering | SIEM correlation and immutable storage |
 | Backup hashes | Accidental/corrupt restore material | Encrypted/off-device backup protection |
@@ -36,7 +37,7 @@ The provided backup excludes Tailscale state. Store backups off-device and encry
 
 ## DNS caveats
 
-Classic DNS redirection is a visibility/control measure, not a comprehensive DNS security boundary. Browsers and applications can use DoH (TCP 443), DoT (TCP 853), DoQ (UDP 853), VPN tunnels, or hard-coded proxies. Manage these at the endpoint or a gateway capable of application-aware filtering.
+The reference deployment now enforces classic LAN DNS on TCP/UDP 53 and blocks direct IPv4 LAN DoT on TCP 853 with a project-owned `br0` FORWARD policy. Those controls are live validated, but they are not a comprehensive encrypted-DNS security boundary. DoH over HTTPS/443, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, application-specific encrypted resolvers, hard-coded proxies, and traffic entering through interfaces outside the documented LAN policy remain separate controls or assessment items. `EDGE_LAN_DOT_FORWARD` must therefore be described as a direct IPv4 LAN DoT control, not as a universal DoT block.
 
 Endpoint-side filtering must not be presented as proof that router DNS filtering can block the same content. Conversely, an endpoint filter that silently replaces the configured DNS resolver can reduce router visibility and invalidate DNS-path assumptions. The endpoint-filtering validation therefore checks that the existing router DNS path remains authoritative.
 
