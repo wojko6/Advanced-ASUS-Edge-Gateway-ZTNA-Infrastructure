@@ -124,7 +124,7 @@ cp config/unbound.conf.example /opt/etc/unbound/unbound.conf
 unbound-checkconf /opt/etc/unbound/unbound.conf
 ```
 
-For amtm Unbound Manager, do not overwrite its generated runtime file. Validate the manager-owned configuration instead. The restart command below is a maintenance action and should not be run on the reference router during the active unchanged-state observation:
+For amtm Unbound Manager, do not overwrite its generated runtime file. Validate the manager-owned configuration instead. The restart command below is a maintenance action and should be used only during a planned maintenance window:
 
 ```sh
 grep -E '^(port: 53535|interface: 127\.0\.0\.1@53535)' /opt/var/lib/unbound/unbound.conf
