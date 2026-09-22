@@ -109,15 +109,24 @@ The Fedora clean-room restore findings have been converted into a guarded recove
 
 GitHub Actions run #474 completed successfully after the remediation batch. The workflow now executes the previously unwired recovery, firewall/configuration, evidence-collector, and log-retention tests directly, in addition to the existing focused validation steps.
 
-## LAN classic-DNS enforcement — prototype validated / repository follow-up
+## LAN classic-DNS enforcement — LIVE VALIDATED
 
-A controlled temporary test on 2026-09-22 validated the LAN classic-DNS interception mechanism on the reference path. Fedora was first confirmed to route `8.8.8.8` through the LAN gateway rather than through the Tailscale exit node. A temporary `br0` NAT chain then intercepted one explicit UDP/53 query and one explicit TCP/53 query addressed to `8.8.8.8`, while DNS already addressed to the router followed the explicit router-return rule. The temporary chain was removed after the test.
+A controlled temporary test on 2026-09-22 first validated the LAN classic-DNS interception mechanism on the reference path. Fedora was confirmed to route `8.8.8.8` through the LAN gateway rather than through the Tailscale exit node. A temporary `br0` NAT chain intercepted controlled UDP/53 and TCP/53 queries addressed to `8.8.8.8`, while DNS already addressed to the router followed the explicit router-return rule. The temporary chain was removed after the prototype.
 
-The repository now carries an opt-in production implementation, `EDGE_ENFORCE_LAN_DNS`, using a separate managed `EDGE_LAN_DNS_PREROUTING` chain plus health-check and regression coverage. The example remains disabled by default. This repository implementation must not be described as deployed on the reference router until a separate controlled deployment and live validation are recorded.
+The production implementation was then merged through PR #57 as opt-in `EDGE_ENFORCE_LAN_DNS`, using the dedicated managed `EDGE_LAN_DNS_PREROUTING` chain plus health-check and regression coverage. The example remains disabled by default, but the reference router was explicitly enabled and deployed under controlled maintenance.
 
-The scope is deliberately limited to classic TCP/UDP port 53. DoH, DoT, DoQ, VPN-carried DNS, IPv6 resolver paths, and application-specific encrypted DNS remain separate controls/limitations.
+The deployed production files matched the tested repository revisions:
 
-Sanitized evidence: `evidence/2026-09-22/lan-dns-enforcement-prototype-validation.md`.
+```text
+firewall-start SHA-256: ae7f1e5794cbbcf6e1e9fc828bba1cdabe43a021ca518d6466cc44bec5997d6a
+healthcheck.sh SHA-256: ba78afe34ba27b582d6bbeb399d97e89e51f6199d11220805bbe2a71d791a9a1
+```
+
+The live health check reported `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`, including explicit PASS results for the LAN DNS parent jump and managed chain policy. A subsequent Fedora validation, with `8.8.8.8` routed through `192.168.50.1` over the LAN rather than Tailscale, increased the production `EDGE_LAN_DNS_PREROUTING` external redirect counters to 6 UDP packets / 480 bytes and 6 TCP packets / 360 bytes.
+
+The scope is deliberately limited to classic IPv4 TCP/UDP port 53. DoH, DoT, DoQ, VPN-carried DNS, IPv6 resolver paths, and application-specific encrypted DNS remain separate controls/limitations.
+
+Sanitized evidence: `evidence/2026-09-22/lan-dns-enforcement-production-validation.md`.
 
 ## DNS filtering validation — 2026-09-22
 

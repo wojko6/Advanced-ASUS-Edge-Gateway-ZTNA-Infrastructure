@@ -55,4 +55,4 @@ The temporary parent jump was deleted, the test chain was flushed and deleted, a
 
 This validates only the classic IPv4 DNS interception mechanism on the tested LAN path. It does not demonstrate interception of DoH, DoT, DoQ, VPN-carried DNS, application-specific encrypted resolver transports, or IPv6 DNS.
 
-The production repository implementation is a separate opt-in change and must be independently deployed and live-validated before being described as active on the reference router.
+The production repository implementation was subsequently deployed and live-validated as a separate controlled change. See `lan-dns-enforcement-production-validation.md`. The prototype artifact remains bounded to the temporary-chain test described above.
