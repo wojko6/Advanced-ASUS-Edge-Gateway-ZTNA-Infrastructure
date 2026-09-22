@@ -1,0 +1,2 @@
+default via 198.51.100.1 dev ppp0
+192.0.2.0/24 dev br0 proto kernel scope link src 192.0.2.1
