@@ -109,6 +109,22 @@ The Fedora clean-room restore findings have been converted into a guarded recove
 
 GitHub Actions run #474 completed successfully after the remediation batch. The workflow now executes the previously unwired recovery, firewall/configuration, evidence-collector, and log-retention tests directly, in addition to the existing focused validation steps.
 
+## LAN DNS-over-TLS (DoT/853) control — prototype validated / repository follow-up
+
+A controlled Fedora A/B/A test on 2026-09-22 confirmed that direct DNS-over-TLS is a real bypass of the classic port-53 enforcement on the tested IPv4 LAN path.
+
+Baseline: Fedora routed `8.8.8.8` through the normal LAN gateway and successfully established TLS 1.3 to `8.8.8.8:853` with a verified `dns.google` certificate.
+
+Test block: a temporary `EDGE_LAN_DOT_TEST` FORWARD chain on `br0` rejected TCP/853 with `tcp-reset`. The client received `Connection refused`, and the router rule recorded `1 packet / 60 bytes`.
+
+Rollback: after removing the temporary chain, the same TLS connection to `8.8.8.8:853` succeeded again.
+
+The repository now carries an opt-in production follow-up, `EDGE_BLOCK_LAN_DOT`, using a dedicated `EDGE_LAN_DOT_FORWARD` chain with exact parent ordering and health-check/test coverage. The example remains disabled by default and this repository implementation must not be described as deployed on the reference router until a separate controlled deployment is recorded.
+
+The claim is deliberately limited to direct IPv4 DoT on TCP/853. It does not control DoH/HTTPS, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, or application-specific encrypted DNS.
+
+Sanitized evidence: `evidence/2026-09-22/dot-853-block-prototype-validation.md`.
+
 ## LAN classic-DNS enforcement — LIVE VALIDATED
 
 A controlled temporary test on 2026-09-22 first validated the LAN classic-DNS interception mechanism on the reference path. Fedora was confirmed to route `8.8.8.8` through the LAN gateway rather than through the Tailscale exit node. A temporary `br0` NAT chain intercepted controlled UDP/53 and TCP/53 queries addressed to `8.8.8.8`, while DNS already addressed to the router followed the explicit router-return rule. The temporary chain was removed after the prototype.

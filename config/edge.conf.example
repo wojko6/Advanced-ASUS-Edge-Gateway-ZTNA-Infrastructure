@@ -32,6 +32,15 @@ EDGE_INTERCEPT_DNS="1"
 # or other encrypted/application-specific resolver transports.
 # Keep disabled until the deployment has been validated and rollback is ready.
 EDGE_ENFORCE_LAN_DNS="0"
+
+# Optional LAN DNS-over-TLS control. When enabled, block direct TCP/853 from
+# EDGE_LAN_IF with an immediate TCP reset. This is a DoT-specific control only:
+# it does not block DoH/HTTPS, DoQ/QUIC, VPN-carried DNS, or other encrypted
+# resolver transports. Strict/private-DNS clients may report DNS failure rather
+# than fall back, so validate client compatibility before enabling permanently.
+EDGE_BLOCK_LAN_DOT="0"
+EDGE_DOT_PORT="853"
+
 EDGE_DNS_PORT="53"
 EDGE_UNBOUND_PORT="53535"
 
