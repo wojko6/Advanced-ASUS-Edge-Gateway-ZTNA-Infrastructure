@@ -123,6 +123,21 @@ After the completed unchanged-state observation:
 - Re-run DNSSEC, resolution, firewall, service-health, and recovery validation after each material change.
 - Capture sanitized before/after evidence without overstating what DNS-level filtering can block.
 
+## Diversion Large normal-use acceptance criteria
+
+The current `Large + snbAdSupport=no` state is a controlled post-test configuration, not yet a permanent validated baseline. Promote it only after the following evidence is recorded:
+
+- at least five representative normal-use sessions across multiple days;
+- at least three clean router startup/power-on cycles with DNS and core-service checks passing;
+- no unresolved critical false positives affecting required sites, applications or local services;
+- no health-check failures attributable to the filtering policy;
+- representative LAN and Android-over-Tailscale classic-DNS checks remain functional;
+- a normal Diversion list refresh/update completes without breaking the validated resolver path;
+- RAM/swap behavior shows no sustained abnormal growth relative to the pre-change baseline;
+- rollback to the previous policy remains documented and practical.
+
+If any criterion fails, keep `Large` in evaluation, record the failure and either tune the policy or revert before describing it as the accepted baseline.
+
 ## Post-observation idea — Pi-hole + Unbound DNS filtering migration
 
 **Status: idea / design candidate only — not deployed.**
