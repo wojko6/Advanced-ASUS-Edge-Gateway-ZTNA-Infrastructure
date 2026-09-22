@@ -55,6 +55,6 @@ Evidence should describe what was observed, when, and under which version/config
 
 Apply changes only to devices you control or are authorized to administer. Preserve a physical/trusted-LAN recovery path and validate changes against the actual Asuswrt-Merlin/Entware target before relying on them remotely.
 
-The reference router is under an unchanged-state stability observation from 2026-09-11 through 2026-09-25. During that gate, do not modify router firewall, DNS, Unbound, Tailscale, startup hooks, filtering lists, services, or intentionally reboot the device merely to test a repository change. Documentation, CI/mock tests, workstation-local endpoint tests, and read-only router observations can continue without invalidating the intended unchanged-state observation.
+The unchanged-state reference-router observation was closed on 2026-09-22 after continuous operation from 2026-09-11 through 2026-09-22. Router-side changes may now proceed only as deliberate maintenance with a current backup, a defined rollback path, repository/CI validation where applicable, and post-change live verification.
 
-Security fixes that are necessary to address an active compromise or materially unsafe exposure take priority over the observation gate. If an emergency change is required, document that the stability observation was interrupted and start a new observation period after the deployment returns to a known-good state.
+Security fixes that are necessary to address an active compromise or materially unsafe exposure take priority over any future declared observation window. If a future observation is interrupted by an emergency change, document the intervention and establish a new known-good baseline before making further stability claims.
