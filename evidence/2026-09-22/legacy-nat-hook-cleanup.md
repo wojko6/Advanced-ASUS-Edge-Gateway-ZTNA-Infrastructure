@@ -45,12 +45,14 @@ HEALTHCHECK_RC=0
 
 ## Follow-up hardening
 
-The repository health check is being extended to detect:
+The repository health check was extended to detect:
 
 1. exact-interface Tailscale NAT rules in parent `PREROUTING` that bypass the project-owned `EDGE_TS_PREROUTING` chain;
 2. active JFFS hooks relevant to this deployment that are symlinks or group/world writable.
 
-Focused regression coverage is included with that repository change.
+Focused regression coverage passed in CI. The hardened health-check revision was subsequently deployed to the reference router and live-validated with SHA-256 `5d96555bad141c40191855e2f121de0412635cb7e5fe14d41b5ec73842db6233`, zero failures, zero warnings, and `HEALTHCHECK_RC=0`.
+
+See `healthcheck-drift-hardening-live-validation.md` for the separate deployment evidence.
 
 ## Claim boundary
 
