@@ -45,6 +45,7 @@ for backup_path in \
     '/opt/etc/unbound/unbound.conf "$WORK_DIR/opt/etc/unbound/"' \
     '/opt/var/lib/unbound/unbound.conf "$WORK_DIR/opt/var/lib/unbound/"' \
     '/jffs/scripts/dnsmasq.postconf "$WORK_DIR/jffs/scripts/"' \
+    '/jffs/scripts/wan-event "$WORK_DIR/jffs/scripts/"' \
     '/jffs/configs/dnsmasq.conf.add "$WORK_DIR/jffs/configs/"'
 do
     grep -F "$backup_path" "$REPO_DIR/scripts/backup.sh" >/dev/null || {
@@ -102,14 +103,20 @@ do
 done
 
 grep -F 'EDGE_TS_NETFILTER_MODE:=off' \
-    "$REPO_DIR/router/scripts/services-start" >/dev/null || {
-    echo "FAIL: services-start does not default Tailscale netfilter mode to off" >&2
+    "$REPO_DIR/router/scripts/tailscale-reconcile" >/dev/null || {
+    echo "FAIL: canonical Tailscale helper does not default netfilter mode to off" >&2
     exit 1
 }
 
 grep -F -- '--netfilter-mode="$EDGE_TS_NETFILTER_MODE"' \
+    "$REPO_DIR/router/scripts/tailscale-reconcile" >/dev/null || {
+    echo "FAIL: canonical Tailscale helper does not enforce the configured netfilter mode" >&2
+    exit 1
+}
+
+grep -F '"$EDGE_TAILSCALE_HELPER" ensure' \
     "$REPO_DIR/router/scripts/services-start" >/dev/null || {
-    echo "FAIL: services-start does not enforce the configured Tailscale netfilter mode" >&2
+    echo "FAIL: services-start does not use the canonical Tailscale helper" >&2
     exit 1
 }
 
@@ -139,16 +146,17 @@ done
 for tailscale_startup_guard in \
     'swap_is_required()' \
     'wait_for_required_swap()' \
-    'start_tailscaled_with_retry()' \
-    'wait_for_tailscale_api()' \
+    'start_daemon()' \
+    'wait_for_api()' \
+    'apply_policy()' \
+    'acquire_lock()' \
     'EDGE_REQUIRE_SWAP:=auto' \
     'EDGE_TS_READY_WAIT_SECONDS:=20' \
-    'failed to stabilize tailscaled' \
-    'required Tailscale daemon failed to start' \
-    'startup_failed=1'
+    'EDGE_TAILSCALE_LOCK_WAIT_SECONDS:=20' \
+    'Tailscale netfilter mode verification failed'
 do
-    grep -F "$tailscale_startup_guard" "$REPO_DIR/router/scripts/services-start" >/dev/null || {
-        echo "FAIL: guarded Tailscale startup missing: $tailscale_startup_guard" >&2
+    grep -F "$tailscale_startup_guard" "$REPO_DIR/router/scripts/tailscale-reconcile" >/dev/null || {
+        echo "FAIL: canonical Tailscale reconciliation guard missing: $tailscale_startup_guard" >&2
         exit 1
     }
 done
