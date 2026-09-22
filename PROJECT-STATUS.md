@@ -52,18 +52,18 @@ A full repository audit covered code, security, install/rollback, firewall/DNS/T
 | Finding | Status | Current state |
 |---|---|---|
 | AUDIT-01 — restore apply was not transactional | **CLOSED** | Restore now snapshots affected live paths and rolls back partial apply failures; regression coverage was added and CI passed. |
-| AUDIT-02 — exit-node NAT dependency not explicitly validated | **OPEN / GATED** | Documentation now states that project forwarding does not itself prove WAN SNAT/MASQUERADE ownership. Read-only inspection and post-gate live validation are required. |
-| AUDIT-03 — Android/Fedora exit-node DNS datapath validation gap | **OPEN / GATED** | A controlled comparison procedure is documented. Exact client-to-router resolver paths must be demonstrated after the stability gate rather than inferred from successful DNS resolution. |
+| AUDIT-02 — exit-node NAT dependency not explicitly validated | **OPEN / READY FOR LIVE VALIDATION** | Documentation states that project forwarding does not itself prove WAN SNAT/MASQUERADE ownership. The completed stability observation no longer blocks controlled live validation. |
+| AUDIT-03 — Android/Fedora exit-node DNS datapath validation gap | **OPEN / READY FOR LIVE VALIDATION** | A controlled comparison procedure is documented. Exact client-to-router resolver paths still must be demonstrated rather than inferred from successful DNS resolution. |
 | AUDIT-04 — unnecessary deployment identifiers in Zen evidence | **CLOSED** | Evidence was sanitized while preserving the technical result. |
 | AUDIT-05 — Android DNS datapath claim exceeded available evidence | **CLOSED** | README wording now preserves the historical observation while explicitly documenting the unresolved datapath question. |
 
 The two remaining findings are not documentation-only defects that should be closed by assumption. They require evidence from the actual reference datapath.
 
-## Post-gate validation plan
+## Post-observation validation plan
 
-After the unchanged-state window completes successfully:
+Now that the unchanged-state observation is closed:
 
-1. capture the final stability-gate evidence and produce a sanitized checkpoint/report;
+1. retain the 2026-09-22 closing stability checkpoint/report as the boundary for the completed observation;
 2. validate AUDIT-02 by identifying the effective IPv4 WAN NAT rule/chain used by authorized Tailscale exit-node traffic and correlating it with the real packet path;
 3. validate AUDIT-03 with a controlled Fedora/Android comparison using the same router state and exit node, separating classic DNS from encrypted/client-specific resolver paths;
 4. make no configuration change unless the evidence demonstrates a real defect;
