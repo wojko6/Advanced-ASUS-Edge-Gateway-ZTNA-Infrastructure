@@ -27,6 +27,8 @@ jobs:
         run: sh tests/test-config-validation.sh
       - name: Run evidence collector test
         run: sh tests/test-evidence-collector.sh
+      - name: Verify evidence manifests
+        run: sh tests/test-evidence-integrity.sh
       - name: Run collector log-retention test
         run: sh tests/test-log-retention.sh
       - name: Run router-local log-retention test
