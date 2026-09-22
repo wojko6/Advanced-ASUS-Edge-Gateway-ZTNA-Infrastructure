@@ -111,7 +111,14 @@ class RecoveryTests(unittest.TestCase):
         live = self.root / "jffs/configs/asus-edge.conf"
         live.write_text("before\n")
         files = {"jffs/configs/asus-edge.conf": b"after\n"}
-        self.command("cp", "exit 1")
+        counter = self.root / "cp-snapshot-count"
+        self.command("cp", f'''count=0
+[ ! -f {shlex.quote(str(counter))} ] || count="$(cat {shlex.quote(str(counter))})"
+count=$((count + 1))
+printf '%s\\n' "$count" > {shlex.quote(str(counter))}
+[ "$count" -ne 2 ] || exit 1
+exec /bin/cp "$@"
+''')
         result = self.run_script(restore, self.archive(files), "--apply")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("restore not started", result.stderr)
@@ -145,6 +152,58 @@ exec /bin/cp "$@"
         self.assertEqual(jffs_file.read_text(), "old-jffs\n")
         self.assertEqual(opt_file.read_text(), "old-opt\n")
         self.assertNotIn("Restore completed", result.stdout)
+
+    def test_restore_term_during_apply_rolls_back(self):
+        restore = self.script("restore.sh")
+        jffs_file = self.root / "jffs/configs/asus-edge.conf"
+        opt_file = self.root / "opt/etc/unbound/unbound.conf"
+        jffs_file.write_text("old-jffs\n")
+        opt_file.write_text("old-opt\n")
+        files = {
+            "jffs/configs/asus-edge.conf": b"new-jffs\n",
+            "opt/etc/unbound/unbound.conf": b"new-opt\n",
+        }
+        counter = self.root / "cp-term-count"
+        self.command("cp", f'''count=0
+[ ! -f {shlex.quote(str(counter))} ] || count="$(cat {shlex.quote(str(counter))})"
+count=$((count + 1))
+printf '%s\\n' "$count" > {shlex.quote(str(counter))}
+if [ "$count" -eq 4 ]; then
+    /bin/cp "$@" || exit 1
+    kill -TERM "$PPID"
+    exit 0
+fi
+exec /bin/cp "$@"
+''')
+        result = self.run_script(restore, self.archive(files), "--apply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("interrupted by TERM", result.stderr)
+        self.assertIn("Rollback completed", result.stderr)
+        self.assertEqual(jffs_file.read_text(), "old-jffs\n")
+        self.assertEqual(opt_file.read_text(), "old-opt\n")
+
+    def test_restore_recovers_persisted_applying_journal_before_new_apply(self):
+        restore = self.script("restore.sh")
+        live = self.root / "jffs/configs/asus-edge.conf"
+        live.write_text("partially-applied\n")
+
+        journal = self.root / "jffs/addons/asus-edge-recovery/current"
+        snapshot = journal / "pre-restore/jffs/configs"
+        snapshot.mkdir(parents=True)
+        (snapshot / "asus-edge.conf").write_text("pre-restore\n")
+        (journal / "manifest-paths").write_text("jffs/configs/asus-edge.conf\n")
+        (journal / "STATE").write_text("APPLYING\n")
+
+        result = self.run_script(
+            restore,
+            self.archive({"jffs/configs/asus-edge.conf": b"new-request\n"}),
+            "--apply",
+        )
+        self.assertEqual(result.returncode, 3, result.stderr)
+        self.assertIn("interrupted restore detected", result.stderr)
+        self.assertIn("Recovery completed", result.stderr)
+        self.assertEqual(live.read_text(), "pre-restore\n")
+        self.assertFalse(journal.exists())
 
     def test_backup_restore_roundtrip(self):
         config = self.root / "jffs/configs/asus-edge.conf"
