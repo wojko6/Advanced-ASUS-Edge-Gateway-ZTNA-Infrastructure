@@ -234,9 +234,20 @@ fi
     echo "- Complete the remote-client matrix separately; this local snapshot cannot prove WAN or identity-policy behavior."
 } >"$OUTPUT_DIR/README.md"
 
+# REPORT.txt is the immutable provenance record for the collected snapshot.
+# README.md is intentionally excluded from SHA256SUMS because repository
+# maintainers may later clarify the human-readable interpretation without
+# rewriting the hashes of already-published evidence.
+{
+    echo "ASUS Edge evidence bundle"
+    echo "generated=$TIMESTAMP"
+    echo "manifest_policy=v2"
+    echo "mutable_narrative=README.md"
+} >"$OUTPUT_DIR/REPORT.txt"
+
 if ! (
     cd "$OUTPUT_DIR" || exit 1
-    sha256sum_run README.md environment.md healthcheck.md firewall-counters.md dns-validation.md
+    sha256sum_run REPORT.txt environment.md healthcheck.md firewall-counters.md dns-validation.md
 ) >"$OUTPUT_DIR/SHA256SUMS"; then
     rm -f "$OUTPUT_DIR/SHA256SUMS"
     echo "WARNING: SHA-256 utility unavailable; manifest not created" >&2
