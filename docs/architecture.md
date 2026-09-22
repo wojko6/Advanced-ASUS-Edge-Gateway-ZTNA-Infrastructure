@@ -1,6 +1,6 @@
 # Architecture
 
-![Advanced ASUS Edge Gateway architecture](images/Architecture.png)
+![Advanced ASUS Edge Gateway architecture](images/architecture-v2.png)
 
 ## Logical components
 
