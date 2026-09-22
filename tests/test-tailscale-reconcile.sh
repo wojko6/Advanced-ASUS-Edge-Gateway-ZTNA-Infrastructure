@@ -94,6 +94,21 @@ run_helper ensure
 grep -F -- '--netfilter-mode=off' "$LOG" >/dev/null
 echo "PASS: stale Tailscale lock is reclaimed"
 
+mkdir "$LOCK_DIR"
+printf '%s\n' "$" >"$LOCK_DIR/owner"
+: >"$LOG"
+if run_helper ensure >/dev/null 2>&1; then
+    echo "FAIL: concurrent reconciliation unexpectedly acquired an active lock" >&2
+    exit 1
+fi
+[ ! -s "$LOG" ] || {
+    echo "FAIL: concurrent reconciliation mutated Tailscale before lock timeout" >&2
+    exit 1
+}
+rm -f "$LOCK_DIR/owner"
+rmdir "$LOCK_DIR"
+echo "PASS: concurrent reconciliation is bounded and does not mutate"
+
 if SCENARIO=bad_prefs run_helper ensure >/dev/null 2>&1; then
     echo "FAIL: helper accepted non-off NetfilterMode" >&2
     exit 1
