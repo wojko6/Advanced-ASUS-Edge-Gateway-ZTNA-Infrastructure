@@ -45,7 +45,7 @@ Record actual results in [the live-validation template](../evidence/live-validat
 
 ## Endpoint-filtering evidence
 
-Endpoint tests are collected on the workstation, not by the router evidence collector. Follow [endpoint-filtering-validation.md](endpoint-filtering-validation.md) and keep the router unchanged during the active stability gate.
+Endpoint tests are collected on the workstation, not by the router evidence collector. Follow [endpoint-filtering-validation.md](endpoint-filtering-validation.md). Router-side corroboration should remain read-only unless a defined test explicitly requires a planned maintenance change with rollback.
 
 For a Zen or AdGuard for Windows test, record only the minimum information needed to reproduce and evaluate the result:
 
@@ -60,7 +60,7 @@ For a Zen or AdGuard for Windows test, record only the minimum information neede
 - CPU/RAM observations when measured;
 - final verdict for each test case.
 
-If router dnsmasq logs are used to corroborate DNS-path preservation during the stability window, inspect them read-only and publish only a minimized sanitized extract. Do not enable new logging or change router configuration solely to create endpoint evidence.
+When router dnsmasq logs are used to corroborate DNS-path preservation, inspect existing data read-only when possible and publish only a minimized sanitized extract. Do not enable new logging or change router configuration solely to manufacture endpoint evidence; if a new capture is genuinely required, treat it as an explicit validation/maintenance action.
 
 ## Mobile-telemetry evidence
 
