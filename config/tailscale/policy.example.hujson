@@ -41,12 +41,12 @@
   "tests": [
     {
       "src": "admin@example.com",
-      "accept": ["router-lan:8443", "nas:443"]
+      "accept": ["router-lan:8443", "router-lan:22", "nas:443", "198.51.100.8:443"]
     },
     {
       "src": "user@example.com",
       "accept": ["router-lan:53", "nas:443"],
-      "deny": ["router-lan:22", "router-lan:8443"]
+      "deny": ["router-lan:22", "router-lan:8443", "198.51.100.8:443"]
     }
   ]
 }
