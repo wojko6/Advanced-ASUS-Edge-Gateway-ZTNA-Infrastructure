@@ -34,6 +34,30 @@ The provided backup excludes Tailscale state. Store backups off-device and encry
 - Remove stale devices and rotate compromised node credentials promptly.
 - Test from LAN before relying on remote access.
 
+## Tailscale Grants validation matrix
+
+The checked-in policy is an example and does not prove the active tailnet policy.
+Before live validation, adapt the example identities and addresses locally and use
+the policy test runner/visual editor to confirm both positive and negative cases.
+
+| Principal | Destination | Port / class | Expected result |
+|---|---|---|---|
+| edge administrator | router management | TCP 8443 / SSH when enabled | ALLOW |
+| ordinary edge user | router management | TCP 8443 / SSH | DENY |
+| ordinary edge user | router DNS | TCP/UDP 53 | ALLOW |
+| ordinary edge user | allowed LAN service | configured service port | ALLOW |
+| ordinary edge user | unrelated LAN service | non-allowlisted port | DENY |
+| exit-user member | public Internet through an exit node | Internet traffic | ALLOW |
+| non-exit ordinary user | public Internet through an exit node | Internet traffic | DENY |
+| unauthorized identity | management/LAN/exit-node classes | any tested protected class | DENY |
+
+The example policy includes an RFC 5737 public documentation address in its tests
+to exercise the `autogroup:internet` permission boundary without embedding a real
+destination. Structural policy tests do not replace a live two-identity check:
+one authorized identity and one deliberately unauthorized identity must be tested
+against the deployed tailnet policy before identity-enforcement claims are marked
+LIVE VALIDATED.
+
 ## DNS caveats
 
 Classic DNS redirection is a visibility/control measure, not a comprehensive DNS security boundary. Browsers and applications can use DoH (TCP 443), DoT (TCP 853), DoQ (UDP 853), VPN tunnels, or hard-coded proxies. Manage these at the endpoint or a gateway capable of application-aware filtering.
