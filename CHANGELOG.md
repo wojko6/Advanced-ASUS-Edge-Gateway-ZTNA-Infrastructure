@@ -17,6 +17,7 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Completed the post-audit documentation follow-up: removed residual active-gate wording from current runbooks, reconciled historical stability documents with the actual 2026-09-22 closure, and added an evidence-backed compatibility/revalidation policy.
 - Marked the unreleased development line as `2.1.4-dev` so installs from current `main` are not identified as the released `2.1.3` state.
 - Expanded GitHub Actions to execute the existing Python recovery, firewall mock/configuration, evidence-collector, and log-retention tests directly.
 - Sanitized deployment-specific identifiers in the Fedora Zen case study while preserving technically relevant public service examples.

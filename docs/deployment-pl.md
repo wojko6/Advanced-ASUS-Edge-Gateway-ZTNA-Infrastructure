@@ -78,7 +78,7 @@ tailscale --socket=/var/run/tailscale/tailscaled.sock up \
 
 ## 5. Zastosowanie firewalla
 
-Poniższe wykonuj z LAN wyłącznie podczas pierwszego wdrożenia, zaplanowanego maintenance albo odzyskiwania po awarii — nie jako rutynową czynność podczas aktywnej bramki stabilności:
+Poniższe wykonuj z LAN wyłącznie podczas pierwszego wdrożenia, zaplanowanego maintenance albo odzyskiwania po awarii:
 
 ```sh
 ./scripts/install.sh --apply
@@ -110,7 +110,7 @@ cp config/unbound.conf.example /opt/etc/unbound/unbound.conf
 unbound-checkconf /opt/etc/unbound/unbound.conf
 ```
 
-Jeżeli używasz amtm Unbound Manager, nie nadpisuj generowanego pliku runtime. Sprawdź konfigurację zarządzaną przez dodatek. Restart poniżej jest działaniem serwisowym i podczas aktywnej obserwacji niezmienionego stanu powinien zostać odłożony, chyba że jest potrzebny do odzyskania usługi:
+Jeżeli używasz amtm Unbound Manager, nie nadpisuj generowanego pliku runtime. Sprawdź konfigurację zarządzaną przez dodatek. Restart poniżej jest działaniem serwisowym i powinien być wykonywany wyłącznie podczas zaplanowanego maintenance albo gdy jest potrzebny do odzyskania usługi:
 
 ```sh
 grep -E '^(port: 53535|interface: 127\.0\.0\.1@53535)' /opt/var/lib/unbound/unbound.conf
@@ -124,7 +124,7 @@ Następnie zweryfikuj resolver:
 dig +dnssec -p 53535 @127.0.0.1 cloudflare.com A
 ```
 
-Jeżeli `/jffs/configs/dnsmasq.conf.add` już istnieje, scal `config/dnsmasq.conf.add.example` zamiast nadpisywać prywatne rekordy DDNS lub lokalne. Aktywna konfiguracja musi zawierać `interface=tailscale0`; dzięki `bind-dynamic` dnsmasq obsłuży adres interfejsu po jego utworzeniu. Po scaleniu, podczas zaplanowanego wdrożenia/maintenance, uruchom `service restart_dnsmasq` i potwierdź wpis w `/etc/dnsmasq.conf`. Podczas aktywnej bramki stabilności ogranicz się do odczytowej weryfikacji istniejącego stanu. Sprawdź również `/jffs/scripts/dnsmasq.postconf`: aktywny hook innego resolvera może zakończyć skrypt przed konfiguracją Unbound lub przejąć klasyczny ruch DNS; nie zakładaj konkretnego portu bez sprawdzenia bieżącej konfiguracji.
+Jeżeli `/jffs/configs/dnsmasq.conf.add` już istnieje, scal `config/dnsmasq.conf.add.example` zamiast nadpisywać prywatne rekordy DDNS lub lokalne. Aktywna konfiguracja musi zawierać `interface=tailscale0`; dzięki `bind-dynamic` dnsmasq obsłuży adres interfejsu po jego utworzeniu. Po scaleniu, podczas zaplanowanego wdrożenia/maintenance, uruchom `service restart_dnsmasq` i potwierdź wpis w `/etc/dnsmasq.conf`. Jeżeli w przyszłości zostanie ogłoszona nowa obserwacja niezmienionego stanu, jej ograniczenia muszą być zapisane w aktualnym `PROJECT-STATUS.md`. Sprawdź również `/jffs/scripts/dnsmasq.postconf`: aktywny hook innego resolvera może zakończyć skrypt przed konfiguracją Unbound lub przejąć klasyczny ruch DNS; nie zakładaj konkretnego portu bez sprawdzenia bieżącej konfiguracji.
 
 ## 7. Test dostępu
 
@@ -134,11 +134,11 @@ Z uprawnionego urządzenia administracyjnego uruchom test, wskazując adres zarz
 sh tests/test-live-client.sh 192.168.50.1 192.168.50.20
 ```
 
-Następnie wykonaj macierz z [testing.md](testing.md) dla urządzenia administratora i zwykłego użytkownika. Porównaj wyniki z licznikami iptables i — poza okresem obserwacji niezmienionego stanu — z kontrolowanym przechwyceniem ruchu, jeżeli jest ono rzeczywiście potrzebne. Podczas aktywnej bramki stabilności preferuj istniejące logi i odczytowe liczniki zamiast wprowadzania nowych mechanizmów telemetrycznych na routerze.
+Następnie wykonaj macierz z [testing.md](testing.md) dla urządzenia administratora i zwykłego użytkownika. Porównaj wyniki z licznikami iptables i, jeżeli jest to rzeczywiście potrzebne, z krótkim kontrolowanym przechwyceniem ruchu. Preferuj istniejące logi i odczytowe liczniki, gdy wystarczają do odpowiedzi na pytanie testowe; nowe mechanizmy telemetryczne traktuj jako osobną zmianę serwisową.
 
 ## 8. Backup i wycofanie zmian
 
-Poniższe polecenia są przeznaczone dla zaplanowanego maintenance lub odzyskiwania, a nie do rutynowego wykonywania podczas aktywnej obserwacji:
+Poniższe polecenia są przeznaczone dla zaplanowanego maintenance lub odzyskiwania:
 
 ```sh
 ./scripts/backup.sh /opt/backups/asus-edge

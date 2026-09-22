@@ -76,6 +76,6 @@ In particular:
 
 This snapshot proves the validated state at the time of the controlled reboot test. It does **not** by itself prove long-term stability.
 
-A 14-day unchanged-state observation period began on 2026-09-11 and runs through 2026-09-25. Long-term stability should only be claimed after that observation is completed and documented with final uptime, memory/swap, service, resolver, firewall, health-check, and error-log evidence.
+At the time of this 2026-09-11 snapshot, a longer unchanged-state observation was planned through 2026-09-25. That later observation was deliberately closed on 2026-09-22 after continuous operation from 2026-09-11 through 2026-09-22, so it must not be described as a completed 14-day endurance test.
 
-During the active observation window, do not create stronger evidence by intentionally changing router configuration, restarting services, re-applying the firewall, or rebooting merely to repeat these checks. Prefer read-only observation. If recovery from an active fault or security incident requires an intervention, document it and establish a new known-good baseline before restarting the observation period.
+This later outcome does not expand the claims of the 2026-09-11 snapshot itself. The snapshot remains point-in-time evidence for the checks above; the completed observation interval and its closing health/log review are documented separately in current project status and the dated 2026-09-22 worklog/evidence material.
