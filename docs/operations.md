@@ -102,7 +102,7 @@ If hook restoration or managed-hook removal fails, `uninstall.sh` returns non-ze
 
 If hooks cannot run, rename the managed hook files under `/jffs/scripts/`, restore the corresponding installer backup, and restart the router. The installer prints its timestamped backup path.
 
-An emergency rollback during the active stability observation interrupts that observation. Record why it was necessary and establish a new known-good baseline before restarting the observation period.
+An emergency rollback during any declared unchanged-state observation interrupts that observation. Record why it was necessary and establish a new known-good baseline before starting a new observation period.
 
 ## Updates
 
