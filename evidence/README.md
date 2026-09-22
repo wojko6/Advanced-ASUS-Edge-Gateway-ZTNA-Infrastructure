@@ -13,6 +13,7 @@ Both files are templates only. A template or unfilled placeholder is never valid
 
 ## Published validation timeline
 
+- **2026-09-22 — Diversion ad-blocking A/B/C validation:** compared Standard with SNBForums ad support enabled, Standard with that support disabled, and Large with support disabled. Disabling the SNBForums exception measurably improved DNS blocking, and the Large profile broadened DNS coverage, but visible ads still remained on representative sites despite multiple ad-tech domains returning `NXDOMAIN`. This documents the practical boundary between DNS-domain filtering and browser/content-level ad removal. See the [sanitized Diversion validation report](2026-09-22/diversion-ad-blocking-validation.md).
 - **2026-09-22 — AUDIT-02 exit-node NAT ownership:** live packet/counter correlation validated the reference exit-node boundary as project-owned Tailscale forwarding plus platform-owned Asuswrt-Merlin WAN NAT. Raw deployment identifiers were not published. See the [sanitized AUDIT-02 report](2026-09-22/audit-02-exit-node-nat-validation.md).
 - **2026-09-22 — AUDIT-03 classic DNS datapath:** controlled Fedora and Android exit-node tests validated classic DNS over UDP/TCP 53 through `tailscale0` -> `EDGE_TS_PREROUTING` REDIRECT -> dnsmasq -> Unbound on `127.0.0.1:53535`. The claim explicitly excludes DoH/DoT and application-specific encrypted resolver transports. See the [sanitized AUDIT-03 report](2026-09-22/audit-03-dns-datapath-validation.md).
 
