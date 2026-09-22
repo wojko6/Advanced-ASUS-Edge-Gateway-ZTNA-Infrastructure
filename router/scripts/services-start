@@ -31,12 +31,12 @@ log() { logger -t asus-edge "$*"; }
 : "${EDGE_SERVICE_STABILITY_SECONDS:=5}"
 : "${EDGE_SERVICE_START_ATTEMPTS:=6}"
 : "${EDGE_SERVICE_RETRY_SECONDS:=5}"
-: "${EDGE_UNBOUND_PIDFILE:=/opt/var/run/unbound.pid}"
+: "${EDGE_UNBOUND_PIDFILE=/opt/var/run/unbound.pid}"
 : "${EDGE_UNBOUND_BIN:=/opt/sbin/unbound}"
 : "${EDGE_UNBOUND_CONFIG:=}"
 : "${EDGE_ENTWARE_LD_LIBRARY_PATH:=/opt/lib:/opt/usr/lib}"
-: "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
-: "${EDGE_TS_STATE:=/opt/var/lib/tailscale/tailscaled.state}"
+: "${EDGE_TS_SOCKET=/var/run/tailscale/tailscaled.sock}"
+: "${EDGE_TS_STATE=/opt/var/lib/tailscale/tailscaled.state}"
 : "${EDGE_TS_NETFILTER_MODE:=off}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
@@ -45,12 +45,56 @@ log() { logger -t asus-edge "$*"; }
 : "${EDGE_REQUIRE_SWAP:=auto}"
 : "${EDGE_SWAP_WAIT_SECONDS:=60}"
 : "${EDGE_TS_READY_WAIT_SECONDS:=20}"
-: "${EDGE_TAILSCALED_LOG:=/opt/var/log/tailscaled.log}"
+: "${EDGE_TAILSCALED_LOG=/opt/var/log/tailscaled.log}"
 
 valid_positive_integer() {
     case "$1" in ''|*[!0-9]*) return 1 ;; esac
     [ "$1" -gt 0 ]
 }
+
+valid_absolute_path() {
+    candidate_path="$1"
+    case "$candidate_path" in
+        /*) ;;
+        *) return 1 ;;
+    esac
+    case "$candidate_path" in
+        /|*'//'*) return 1 ;;
+        */../*|*/..|*/./*|*/.) return 1 ;;
+    esac
+    return 0
+}
+
+path_below_prefix() {
+    candidate_path="$1"
+    allowed_prefix="$2"
+    valid_absolute_path "$candidate_path" || return 1
+    [ "$candidate_path" != "$allowed_prefix" ] || return 1
+    case "$candidate_path" in
+        "$allowed_prefix"/*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+validate_mutable_path() {
+    value_name="$1"
+    candidate_path="$2"
+    allowed_prefix="$3"
+    path_below_prefix "$candidate_path" "$allowed_prefix" || {
+        log "ERROR: $value_name must be an absolute path below $allowed_prefix"
+        return 1
+    }
+    [ ! -L "$candidate_path" ] || {
+        log "ERROR: $value_name must not reference a symlink: $candidate_path"
+        return 1
+    }
+    return 0
+}
+
+validate_mutable_path EDGE_TS_SOCKET "$EDGE_TS_SOCKET" /var/run/tailscale || exit 1
+validate_mutable_path EDGE_TS_STATE "$EDGE_TS_STATE" /opt/var/lib/tailscale || exit 1
+validate_mutable_path EDGE_TAILSCALED_LOG "$EDGE_TAILSCALED_LOG" /opt/var/log || exit 1
+validate_mutable_path EDGE_UNBOUND_PIDFILE "$EDGE_UNBOUND_PIDFILE" /opt/var/run || exit 1
 
 for timing_name in EDGE_OPT_WAIT_SECONDS EDGE_ENTWARE_START_WAIT_SECONDS EDGE_ENTWARE_QUIET_SECONDS EDGE_SERVICE_STABILITY_SECONDS EDGE_SERVICE_START_ATTEMPTS EDGE_SERVICE_RETRY_SECONDS EDGE_SWAP_WAIT_SECONDS EDGE_TS_READY_WAIT_SECONDS; do
     case "$timing_name" in
@@ -97,6 +141,8 @@ wait_for_required_swap() {
     log "required swap is active"
 }
 rotate_tailscaled_log() {
+    [ -L "$EDGE_TAILSCALED_LOG" ] && { log "ERROR: refusing symlink tailscaled log: $EDGE_TAILSCALED_LOG"; return 1; }
+    [ -L "$EDGE_TAILSCALED_LOG.previous" ] && { log "ERROR: refusing symlink rotated tailscaled log: $EDGE_TAILSCALED_LOG.previous"; return 1; }
     [ -s "$EDGE_TAILSCALED_LOG" ] || return 0
     cp -f "$EDGE_TAILSCALED_LOG" "$EDGE_TAILSCALED_LOG.previous" 2>/dev/null || return 1
     chmod 0600 "$EDGE_TAILSCALED_LOG.previous" 2>/dev/null || true
@@ -116,6 +162,8 @@ start_tailscaled_with_retry() {
             process_stays_running tailscaled && return 0
             log "WARNING: competing tailscaled process exited during startup"
         fi
+        [ ! -L "$EDGE_TS_SOCKET" ] || { log "ERROR: refusing to remove symlink socket path: $EDGE_TS_SOCKET"; return 1; }
+        [ ! -L "$EDGE_TAILSCALED_LOG" ] || { log "ERROR: refusing to write symlink tailscaled log: $EDGE_TAILSCALED_LOG"; return 1; }
         rm -f "$EDGE_TS_SOCKET"
         printf 'Attempt %s/%s: tailscaled startup\n' "$attempt" "$EDGE_SERVICE_START_ATTEMPTS" >>"$EDGE_TAILSCALED_LOG"
         tailscaled --state="$EDGE_TS_STATE" --socket="$EDGE_TS_SOCKET" >>"$EDGE_TAILSCALED_LOG" 2>&1 &
@@ -192,8 +240,12 @@ fi
 
 remove_stale_process_pidfile() {
     stale_process_name="$1"; stale_pidfile="$2"
-    [ -n "$stale_pidfile" ] || return 0; [ -f "$stale_pidfile" ] || return 0; pidof "$stale_process_name" >/dev/null 2>&1 && return 0
-    rm -f "$stale_pidfile" || return 1; log "removed stale $stale_process_name pidfile $stale_pidfile"
+    [ -n "$stale_pidfile" ] || return 0
+    [ ! -L "$stale_pidfile" ] || { log "ERROR: refusing symlink pidfile: $stale_pidfile"; return 1; }
+    [ -f "$stale_pidfile" ] || return 0
+    pidof "$stale_process_name" >/dev/null 2>&1 && return 0
+    rm -f "$stale_pidfile" || return 1
+    log "removed stale $stale_process_name pidfile $stale_pidfile"
 }
 resolve_unbound_config() {
     if [ -n "$EDGE_UNBOUND_CONFIG" ] && [ -r "$EDGE_UNBOUND_CONFIG" ]; then printf '%s\n' "$EDGE_UNBOUND_CONFIG"; return 0; fi
