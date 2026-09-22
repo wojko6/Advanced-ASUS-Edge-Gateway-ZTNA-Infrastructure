@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">ASUS Edge Gateway ZTNA Infrastructure — Current Validated Architecture</title>
+  <desc id="desc">Validated reference-router architecture showing Tailscale, project-managed iptables chains, classic LAN DNS enforcement, direct DoT TCP/853 blocking, dnsmasq, Unbound, logging and current scope boundaries.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f7fafc}
+      .panel{fill:#ffffff;stroke:#8fb7d8;stroke-width:2}
+      .subpanel{fill:#fbfdff;stroke:#b9d0e5;stroke-width:1.5}
+      .title{font:700 29px Arial,sans-serif;fill:#102a43}
+      .subtitle{font:500 16px Arial,sans-serif;fill:#486581}
+      .h1{font:700 23px Arial,sans-serif;fill:#102a43}
+      .h2{font:700 16px Arial,sans-serif;fill:#173f5f}
+      .h3{font:700 13px Arial,sans-serif;fill:#173f5f}
+      .txt{font:12px Arial,sans-serif;fill:#334e68}
+      .small{font:11px Arial,sans-serif;fill:#486581}
+      .tiny{font:10px Arial,sans-serif;fill:#627d98}
+      .mono{font:11px "Courier New",monospace;fill:#243b53}
+      .green{fill:#159447}
+      .blue{fill:#1478c9}
+      .red{fill:#d8342a}
+      .amber{fill:#b36b00}
+      .badge{fill:#17a34a}
+      .badgeText{font:700 9px Arial,sans-serif;fill:#ffffff}
+      .flowGreen{fill:none;stroke:#17a34a;stroke-width:4}
+      .flowBlue{fill:none;stroke:#1478c9;stroke-width:3}
+      .flowRed{fill:none;stroke:#d8342a;stroke-width:3;stroke-dasharray:8 6}
+      .divider{stroke:#d9e2ec;stroke-width:1}
+    </style>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#17a34a"/></marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#1478c9"/></marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#d8342a"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#102a43" flood-opacity=".10"/></filter>
+  </defs>
+
+  <rect class="bg" width="1600" height="900"/>
+
+  <text x="800" y="38" text-anchor="middle" class="title">ASUS Edge Gateway ZTNA Infrastructure — Current Validated Architecture</text>
+  <text x="800" y="64" text-anchor="middle" class="subtitle">Home/SMB security-edge lab on ASUS TUF-AX5400 / Asuswrt-Merlin</text>
+
+  <!-- CLIENTS -->
+  <rect x="20" y="90" width="285" height="650" rx="10" class="panel" filter="url(#shadow)"/>
+  <text x="38" y="122" class="h1">Clients</text>
+
+  <rect x="35" y="145" width="255" height="240" rx="8" class="subpanel"/>
+  <text x="50" y="171" class="h2">LAN clients (br0)</text>
+  <text x="50" y="192" class="small">Reference LAN: 192.168.50.0/24</text>
+
+  <rect x="55" y="225" width="68" height="46" rx="4" fill="#dbeafe" stroke="#6ba4cf"/>
+  <rect x="63" y="233" width="52" height="28" rx="2" fill="#ffffff" stroke="#486581"/>
+  <line x1="55" y1="276" x2="123" y2="276" stroke="#486581" stroke-width="4"/>
+  <text x="89" y="299" text-anchor="middle" class="txt">Fedora</text>
+  <text x="89" y="314" text-anchor="middle" class="txt">workstation</text>
+
+  <rect x="143" y="224" width="33" height="55" rx="5" fill="#dbeafe" stroke="#486581"/>
+  <rect x="148" y="230" width="23" height="40" rx="2" fill="#ffffff"/>
+  <text x="159" y="299" text-anchor="middle" class="txt">Android</text>
+  <text x="159" y="314" text-anchor="middle" class="txt">phone</text>
+
+  <rect x="204" y="228" width="65" height="42" rx="4" fill="#dbeafe" stroke="#486581"/>
+  <rect x="211" y="235" width="51" height="27" fill="#ffffff" stroke="#486581"/>
+  <line x1="236" y1="270" x2="236" y2="280" stroke="#486581" stroke-width="3"/>
+  <line x1="221" y1="280" x2="251" y2="280" stroke="#486581" stroke-width="3"/>
+  <text x="236" y="299" text-anchor="middle" class="txt">Other LAN</text>
+  <text x="236" y="314" text-anchor="middle" class="txt">clients</text>
+
+  <text x="50" y="348" class="small">Normal LAN path enters the gateway on br0.</text>
+
+  <rect x="35" y="405" width="255" height="240" rx="8" class="subpanel"/>
+  <text x="50" y="431" class="h2">Tailscale clients</text>
+  <text x="50" y="451" class="small">Remote / off-site</text>
+
+  <rect x="62" y="486" width="72" height="46" rx="4" fill="#dbeafe" stroke="#486581"/>
+  <rect x="70" y="494" width="56" height="28" rx="2" fill="#ffffff" stroke="#486581"/>
+  <line x1="62" y1="537" x2="134" y2="537" stroke="#486581" stroke-width="4"/>
+  <rect x="160" y="486" width="33" height="55" rx="5" fill="#dbeafe" stroke="#486581"/>
+  <rect x="165" y="492" width="23" height="40" rx="2" fill="#ffffff"/>
+  <circle cx="228" cy="497" r="7" fill="#6ba4cf"/>
+  <circle cx="250" cy="497" r="7" fill="#6ba4cf"/>
+  <circle cx="239" cy="519" r="7" fill="#6ba4cf"/>
+  <text x="162" y="572" text-anchor="middle" class="txt">Remote laptops / phones</text>
+  <text x="50" y="608" class="small">WireGuard-encrypted Tailscale overlay</text>
+
+  <!-- EDGE GATEWAY -->
+  <rect x="325" y="90" width="930" height="650" rx="10" class="panel" filter="url(#shadow)"/>
+  <text x="790" y="122" text-anchor="middle" class="h1">ASUS Edge Gateway</text>
+  <text x="790" y="144" text-anchor="middle" class="subtitle">ASUS TUF-AX5400 • Asuswrt-Merlin • Entware</text>
+
+  <!-- neutral router icon -->
+  <rect x="752" y="154" width="76" height="30" rx="7" fill="#334e68"/>
+  <circle cx="770" cy="169" r="3" fill="#61c36b"/><circle cx="783" cy="169" r="3" fill="#f2cc60"/><circle cx="796" cy="169" r="3" fill="#61c36b"/>
+  <line x1="764" y1="154" x2="756" y2="132" stroke="#334e68" stroke-width="5"/>
+  <line x1="782" y1="154" x2="780" y2="127" stroke="#334e68" stroke-width="5"/>
+  <line x1="802" y1="154" x2="805" y2="127" stroke="#334e68" stroke-width="5"/>
+  <line x1="820" y1="154" x2="829" y2="132" stroke="#334e68" stroke-width="5"/>
+
+  <!-- A tailscaled -->
+  <rect x="345" y="205" width="185" height="510" rx="8" class="subpanel"/>
+  <text x="362" y="232" class="h2">A. tailscaled</text>
+  <text x="362" y="252" class="small">netfilter-mode=off</text>
+  <circle cx="370" cy="282" r="5" fill="#1478c9"/><text x="384" y="286" class="txt">Tailscale overlay /</text><text x="384" y="301" class="txt">control plane</text>
+  <circle cx="370" cy="326" r="5" fill="#1478c9"/><text x="384" y="330" class="txt">tailscale0 interface</text>
+  <circle cx="370" cy="356" r="5" fill="#1478c9"/><text x="384" y="360" class="txt">remote access</text>
+  <circle cx="370" cy="386" r="5" fill="#1478c9"/><text x="384" y="390" class="txt">exit node capability</text>
+  <line x1="360" y1="420" x2="515" y2="420" class="divider"/>
+  <text x="362" y="445" class="h3">Interfaces</text>
+  <rect x="362" y="460" width="80" height="25" rx="12" fill="#d7f3e1"/><text x="402" y="477" text-anchor="middle" class="mono">tailscale0</text>
+  <rect x="362" y="496" width="80" height="25" rx="12" fill="#d7f3e1"/><text x="402" y="513" text-anchor="middle" class="mono">br0</text>
+  <text x="362" y="555" class="small">Project owns firewall</text>
+  <text x="362" y="571" class="small">policy; Tailscale does not</text>
+  <text x="362" y="587" class="small">manage netfilter chains.</text>
+
+  <!-- B firewall -->
+  <rect x="540" y="205" width="410" height="510" rx="8" class="subpanel"/>
+  <text x="557" y="232" class="h2">B. Firewall / iptables</text>
+  <text x="557" y="252" class="small">Managed by project scripts</text>
+
+  <rect x="557" y="270" width="375" height="64" rx="6" fill="#ffffff" stroke="#c7d8e8"/>
+  <text x="568" y="289" class="h3">EDGE_TS_INPUT (tailscale0)</text>
+  <rect x="837" y="276" width="85" height="18" rx="9" class="badge"/><text x="879" y="289" text-anchor="middle" class="badgeText">LIVE VALIDATED</text>
+  <text x="568" y="308" class="small">• source-scoped admin access  • default deny  • management plane</text>
+
+  <rect x="557" y="342" width="375" height="55" rx="6" fill="#ffffff" stroke="#c7d8e8"/>
+  <text x="568" y="361" class="h3">EDGE_TS_FORWARD (tailscale0)</text>
+  <rect x="837" y="348" width="85" height="18" rx="9" class="badge"/><text x="879" y="361" text-anchor="middle" class="badgeText">LIVE VALIDATED</text>
+  <text x="568" y="381" class="small">• exit-node forwarding  • default deny inside chain</text>
+
+  <rect x="557" y="405" width="375" height="58" rx="6" fill="#ffffff" stroke="#c7d8e8"/>
+  <text x="568" y="424" class="h3">EDGE_TS_PREROUTING</text>
+  <rect x="837" y="411" width="85" height="18" rx="9" class="badge"/><text x="879" y="424" text-anchor="middle" class="badgeText">LIVE VALIDATED</text>
+  <text x="568" y="444" class="small">• Tailscale DNS interception: TCP/UDP 53 → REDIRECT to dnsmasq:53</text>
+
+  <rect x="557" y="471" width="375" height="73" rx="6" fill="#ffffff" stroke="#c7d8e8"/>
+  <text x="568" y="490" class="h3">EDGE_LAN_DNS_PREROUTING (br0)</text>
+  <rect x="837" y="477" width="85" height="18" rx="9" class="badge"/><text x="879" y="490" text-anchor="middle" class="badgeText">LIVE VALIDATED</text>
+  <text x="568" y="510" class="small">• classic DNS enforcement  • RETURN for 192.168.50.1:53</text>
+  <text x="568" y="528" class="small">• REDIRECT external TCP/UDP 53 → dnsmasq:53</text>
+
+  <rect x="557" y="552" width="375" height="64" rx="6" fill="#ffffff" stroke="#c7d8e8"/>
+  <text x="568" y="571" class="h3">EDGE_LAN_DOT_FORWARD (br0)</text>
+  <rect x="837" y="558" width="85" height="18" rx="9" class="badge"/><text x="879" y="571" text-anchor="middle" class="badgeText">LIVE VALIDATED</text>
+  <text x="568" y="591" class="small">• direct DoT block: REJECT TCP/853 with tcp-reset</text>
+
+  <rect x="557" y="624" width="375" height="48" rx="6" fill="#ffffff" stroke="#c7d8e8"/>
+  <text x="568" y="643" class="h3">IPv6 guards</text>
+  <rect x="837" y="630" width="85" height="18" rx="9" class="badge"/><text x="879" y="643" text-anchor="middle" class="badgeText">LIVE VALIDATED</text>
+  <text x="568" y="661" class="small">• INPUT / FORWARD fail-closed</text>
+
+  <rect x="557" y="680" width="375" height="25" rx="5" fill="#e8f2fb"/>
+  <text x="568" y="697" class="tiny">LAN DoT control is evaluated before platform FORWARD rules.</text>
+
+  <!-- C DNS -->
+  <rect x="965" y="205" width="270" height="250" rx="8" class="subpanel"/>
+  <text x="982" y="232" class="h2">C. DNS stack</text>
+  <rect x="990" y="270" width="90" height="58" rx="7" fill="#e6f2ff" stroke="#1478c9"/>
+  <text x="1035" y="294" text-anchor="middle" class="h2">dnsmasq</text>
+  <text x="1035" y="315" text-anchor="middle" class="mono">:53</text>
+  <line x1="1080" y1="299" x2="1115" y2="299" class="flowBlue" marker-end="url(#arrowBlue)"/>
+  <rect x="1118" y="270" width="95" height="58" rx="7" fill="#eaf8ef" stroke="#17a34a"/>
+  <text x="1165" y="294" text-anchor="middle" class="h2">Unbound</text>
+  <text x="1165" y="315" text-anchor="middle" class="mono">:53535</text>
+  <text x="1118" y="351" class="small">• DNSSEC validation</text>
+  <text x="1118" y="369" class="small">• AD flag</text>
+  <text x="1118" y="387" class="small">• no-resolv</text>
+  <rect x="990" y="405" width="223" height="27" rx="5" fill="#e8f2fb"/>
+  <text x="1101" y="423" text-anchor="middle" class="tiny">Validated local DNS path: dnsmasq → Unbound</text>
+
+  <!-- D Ops -->
+  <rect x="965" y="470" width="270" height="245" rx="8" class="subpanel"/>
+  <text x="982" y="497" class="h2">D. Logging / Ops</text>
+  <rect x="985" y="520" width="110" height="55" rx="7" fill="#eef4f9" stroke="#c7d8e8"/>
+  <text x="1040" y="553" text-anchor="middle" class="h3">syslog-ng</text>
+  <rect x="1105" y="520" width="110" height="55" rx="7" fill="#eef4f9" stroke="#c7d8e8"/>
+  <text x="1160" y="553" text-anchor="middle" class="h3">healthcheck</text>
+  <rect x="985" y="590" width="110" height="70" rx="7" fill="#eef4f9" stroke="#c7d8e8"/>
+  <text x="1040" y="620" text-anchor="middle" class="h3">backup / restore</text>
+  <text x="1040" y="638" text-anchor="middle" class="h3">/ rollback</text>
+  <rect x="1105" y="590" width="110" height="70" rx="7" fill="#eef4f9" stroke="#c7d8e8"/>
+  <text x="1160" y="620" text-anchor="middle" class="h3">evidence</text>
+  <text x="1160" y="638" text-anchor="middle" class="h3">collection</text>
+  <text x="985" y="690" class="small">Operational support for validation, recovery and drift detection.</text>
+
+  <!-- WAN -->
+  <rect x="1275" y="90" width="305" height="650" rx="10" class="panel" filter="url(#shadow)"/>
+  <text x="1293" y="122" class="h1">WAN / Internet</text>
+
+  <path d="M1338 225
+           C1312 225 1297 207 1302 186
+           C1307 165 1327 154 1347 159
+           C1358 137 1383 127 1406 137
+           C1428 112 1471 118 1484 150
+           C1510 146 1532 163 1532 187
+           C1532 211 1513 225 1487 225 Z"
+        fill="#e7f3ff" stroke="#5b9bd5" stroke-width="3"/>
+  <text x="1417" y="188" text-anchor="middle" class="h1">WAN / Internet</text>
+
+  <text x="1300" y="269" class="h3">ppp0</text>
+  <text x="1300" y="288" class="small">platform WAN NAT present</text>
+
+  <rect x="1300" y="338" width="250" height="86" rx="8" fill="#eaf8ef" stroke="#17a34a"/>
+  <text x="1425" y="361" text-anchor="middle" class="h2">Exit node path</text>
+  <text x="1425" y="383" text-anchor="middle" class="small">Tailscale clients → router → Internet</text>
+  <text x="1425" y="404" text-anchor="middle" class="small">via platform WAN NAT</text>
+
+  <rect x="1310" y="500" width="230" height="105" rx="8" fill="#fff2f0" stroke="#d8342a" stroke-width="2"/>
+  <text x="1425" y="530" text-anchor="middle" class="h2">Public resolver / DoT endpoint</text>
+  <text x="1425" y="553" text-anchor="middle" class="mono">example: 8.8.8.8:853</text>
+  <text x="1425" y="582" text-anchor="middle" class="red" style="font:700 13px Arial,sans-serif">Blocked: TCP/853</text>
+
+  <!-- Flows -->
+  <path d="M290 250 H705" class="flowGreen" marker-end="url(#arrowGreen)"/>
+  <text x="350" y="238" class="green" style="font:700 12px Arial,sans-serif">LAN traffic (br0)</text>
+
+  <path d="M290 540 H690" class="flowGreen" marker-end="url(#arrowGreen)"/>
+  <text x="350" y="528" class="green" style="font:700 12px Arial,sans-serif">Tailscale tunnel (WireGuard)</text>
+
+  <path d="M828 169 H1305" class="flowBlue" marker-end="url(#arrowBlue)"/>
+  <text x="1130" y="158" class="blue" style="font:700 12px Arial,sans-serif">ppp0 / normal WAN flow</text>
+
+  <path d="M1213 299 H1325 V225" class="flowBlue" marker-end="url(#arrowBlue)"/>
+  <text x="1230" y="318" class="small">upstream DNS resolution</text>
+
+  <path d="M1235 380 H1285 V382 H1300" class="flowGreen" marker-end="url(#arrowGreen)"/>
+
+  <path d="M932 584 H1270 V552 H1310" class="flowRed" marker-end="url(#arrowRed)"/>
+  <circle cx="1265" cy="552" r="13" fill="#ffffff" stroke="#d8342a" stroke-width="3"/>
+  <line x1="1258" y1="545" x2="1272" y2="559" stroke="#d8342a" stroke-width="3"/>
+  <line x1="1272" y1="545" x2="1258" y2="559" stroke="#d8342a" stroke-width="3"/>
+  <text x="1080" y="571" class="red" style="font:700 12px Arial,sans-serif">EDGE_LAN_DOT_FORWARD → REJECT TCP/853</text>
+
+  <!-- bottom status -->
+  <rect x="20" y="760" width="535" height="110" rx="9" fill="#eefaf2" stroke="#17a34a" stroke-width="2"/>
+  <circle cx="50" cy="790" r="15" fill="#17a34a"/>
+  <path d="M43 790 l5 5 l10 -12" fill="none" stroke="#fff" stroke-width="3"/>
+  <text x="78" y="795" class="h2">Current reference-router state</text>
+  <text x="50" y="820" class="mono">• EDGE_ENFORCE_LAN_DNS = 1</text>
+  <text x="50" y="840" class="mono">• EDGE_BLOCK_LAN_DOT = 1</text>
+  <text x="50" y="860" class="mono">• Healthcheck: 0 failure(s), 0 warning(s)</text>
+
+  <rect x="575" y="760" width="705" height="110" rx="9" fill="#fff8e8" stroke="#d99500" stroke-width="2"/>
+  <polygon points="606,780 622,808 590,808" fill="#d99500"/>
+  <text x="606" y="802" text-anchor="middle" style="font:700 16px Arial,sans-serif;fill:#fff">!</text>
+  <text x="638" y="795" class="h2">Scope boundaries / pending assessment</text>
+  <text x="605" y="820" class="small">• DoH / HTTPS 443 — not currently enforced</text>
+  <text x="605" y="839" class="small">• DoQ / QUIC — not currently enforced</text>
+  <text x="900" y="820" class="small">• VPN-carried DNS — separate control</text>
+  <text x="900" y="839" class="small">• IPv6 resolver-path enforcement — separate assessment</text>
+  <text x="605" y="858" class="small">• Application-specific encrypted DNS — separate assessment</text>
+
+  <rect x="1300" y="760" width="280" height="110" rx="9" fill="#ffffff" stroke="#b9d0e5" stroke-width="1.5"/>
+  <text x="1318" y="786" class="h2">Legend</text>
+  <line x1="1318" y1="807" x2="1360" y2="807" class="flowGreen" marker-end="url(#arrowGreen)"/><text x="1370" y="811" class="tiny">validated / allowed</text>
+  <line x1="1318" y1="831" x2="1360" y2="831" class="flowBlue" marker-end="url(#arrowBlue)"/><text x="1370" y="835" class="tiny">normal network flow</text>
+  <line x1="1318" y1="855" x2="1360" y2="855" class="flowRed" marker-end="url(#arrowRed)"/><text x="1370" y="859" class="tiny">blocked path</text>
+
+  <text x="800" y="892" text-anchor="middle" class="tiny">Diagram reflects the validated current state of the reference router. Single-appliance lab design, not a high-availability enterprise architecture.</text>
+</svg>
