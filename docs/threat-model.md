@@ -55,6 +55,6 @@ Endpoint content filtering is a separate optional trust boundary. It is evaluate
 
 Endpoint-filtering results are date-, version-, browser-, and workload-specific. A successful YouTube or browser test demonstrates only what was observed during the defined test window. It does not establish permanent blocking effectiveness and does not prove equivalent router-side capability.
 
-During the router stability observation window, endpoint tests must remain workstation-local. Router-side checks are read-only so the unchanged-state observation is not invalidated.
+During the completed 2026-09-11 through 2026-09-22 stability observation, endpoint tests were kept workstation-local and router-side checks were read-only. Future observation windows must declare equivalent restrictions explicitly in `PROJECT-STATUS.md` rather than relying on this historical sentence.
 
 Review this model after every new exposed service, firmware upgrade, LAN addressing change, identity-policy change, or newly trusted endpoint interception component.
