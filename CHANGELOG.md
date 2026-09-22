@@ -11,18 +11,22 @@
 - Added recruiter-facing portfolio highlights to the README.
 - Added a controlled endpoint-filtering validation methodology for workstation-local Zen and optional AdGuard for Windows testing.
 - Added evidence guidance for post-hardening mobile telemetry case studies without inventing a pre-debloat baseline.
+- Added live AUDIT-02 evidence for exit-node NAT ownership and live AUDIT-03 evidence for Fedora/Android classic-DNS datapath validation.
+- Added focused exit-node runtime-contract checks and regression coverage for IPv4 forwarding, project WAN forwarding, platform WAN NAT, and established/related return traffic.
+- Added a controlled Diversion A/B/C validation record and documented the practical boundary of DNS-only advertising suppression.
+- Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
 - Expanded GitHub Actions to execute the existing Python recovery, firewall mock/configuration, evidence-collector, and log-retention tests directly.
 - Sanitized deployment-specific identifiers in the Fedora Zen case study while preserving technically relevant public service examples.
-- Standardized README architecture rendering on `docs/images/architecture-v2.png`.
+- Standardized active documentation on `docs/images/Architecture.png` as the canonical current-deployment diagram and retired the superseded `architecture-v2.png` asset from the active tree.
 - Migrated the persistent Entware environment from USB flash storage to SSD with separate `ENTWARE` and `ROUTER_DATA` filesystems.
 - Added active swap on the SSD-backed Entware and data partitions to protect memory-constrained services such as Tailscale.
 - Refreshed the roadmap and README to reflect the validated 2026-09-11 deployment state.
 - Updated the pinned `actions/checkout` dependency to v7.0.1 on its immutable commit SHA for the Node 24 GitHub Actions runtime.
 - Extended the security design and threat model to treat endpoint HTTPS interception, local CA trust, DNS-path preservation, and evidence privacy as explicit trust boundaries.
 - Split testing and evidence documentation into CI/mock, router-live, remote-client, endpoint-filtering, and mobile-telemetry validation tracks so results from one layer are not overstated as another layer's capability.
-- Documented that repo/documentation work and workstation-local tests may continue during the 2026-09-11 through 2026-09-25 stability observation while router-side corroboration remains read-only.
+- Closed the unchanged-state observation on 2026-09-22 after continuous operation from 2026-09-11 through 2026-09-22; current documentation now treats later router changes as controlled maintenance rather than an active Stability Gate.
 
 ### Fixed
 - Hardened Fedora DR target selection so the helper refuses the running root, same-root backing source, and missing separate `/boot` or `/boot/efi` mounts.
@@ -39,8 +43,9 @@
 - The sanitized 2026-09-11 SSD-migration artifact directly confirms automatic mounting of both SSD filesystems, activation of both swap files, successful Tailscale status with exit-node capability advertised, Unbound running, direct DNSSEC-validated resolution on `127.0.0.1:53535`, and dnsmasq configured to use the local Unbound resolver.
 - The 2026-09-11 SSD-migration artifact does not by itself prove syslog-ng recovery, end-to-end mTLS delivery, firewall/printer behavior, every exit-node traffic path, a complete health-check result, or long-term stability; those claims require their own dated evidence.
 - Printer regression checks and the repository static/recovery/configuration-validation suite pass in GitHub Actions; CI results are repository-level evidence, not a substitute for live-router validation.
-- A 14-day unchanged-state stability observation is in progress; long-term stability is not claimed until that observation completes.
-- Endpoint-filtering and mobile-telemetry results are not yet claimed as validated; the repository currently contains methodology and evidence rules for those future tests.
+- The unchanged-state observation completed for the bounded 2026-09-11 through 2026-09-22 interval with a healthy closing checkpoint; it is explicitly not described as a completed 14-day endurance test or proof of indefinite stability.
+- AUDIT-02 and AUDIT-03 are closed from live evidence within their documented claim boundaries.
+- Windows Zen and Fedora/GNOME endpoint-filtering evidence are documented as endpoint-specific results; mobile telemetry remains planned and must be evidenced independently.
 
 ## [2.1.3] - 2026-09-09
 
