@@ -39,6 +39,8 @@ jobs:
         run: sh tests/test-healthcheck-config-validation.sh
       - name: Run healthcheck exit-node contract test
         run: sh tests/test-healthcheck-exit-node-contract.sh
+      - name: Run healthcheck runtime-drift guard test
+        run: sh tests/test-healthcheck-drift-guards.sh
       - name: Run Tailscale update recovery-guard checks
         run: sh tests/test-update-tailscale-static.sh
       - name: Run restore archive validation
