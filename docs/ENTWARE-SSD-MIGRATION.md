@@ -6,7 +6,7 @@ Date: 2026-09-11
 
 Migrate the router's active Entware installation from a USB flash drive to a SATA SSD while preserving services, configuration, permissions and boot-time behavior.
 
-This document records a completed migration of the reference Home/SMB lab deployment. It is a historical procedure and validation record, not an instruction to repeat storage or reboot changes during the unchanged-state stability observation running through 2026-09-25.
+This document records a completed migration of the reference Home/SMB lab deployment. It is a historical procedure and validation record. The subsequent unchanged-state observation was deliberately closed on 2026-09-22 after continuous operation from 2026-09-11 through 2026-09-22; it did not run through the originally planned 2026-09-25 end date.
 
 ## Target storage layout
 
@@ -120,4 +120,4 @@ It does **not** by itself prove syslog-ng recovery, end-to-end mTLS collector de
 
 For the checks recorded in the 2026-09-11 validation artifact, the SSD-backed Entware environment mounted correctly after the controlled reboot, both swap files were active, Tailscale and Unbound were running, and the tested resolver configuration remained intact.
 
-The old flash drive is no longer required for the active Entware runtime. Long-term unchanged-state stability is being evaluated separately through 2026-09-25.
+The old flash drive is no longer required for the active Entware runtime. A separate unchanged-state observation later completed the bounded 2026-09-11 through 2026-09-22 interval; this migration document does not by itself prove indefinite long-term stability.

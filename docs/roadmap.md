@@ -181,13 +181,22 @@ LTE/5G:
 Android -> Tailscale -> ASUS/Pi-hole -> Unbound
 ```
 
-This should allow the same project-owned DNS policy to protect Android applications both at home and away from the LAN, provided the measured client DNS path actually traverses the router. Existing AUDIT-03 resolver-path work therefore remains a prerequisite for strong claims about remote-client enforcement.
+This should allow the same project-owned DNS policy to protect Android applications both at home and away from the LAN, provided the measured client DNS path actually traverses the router. The completed 2026-09-22 AUDIT-03 validation provides the classic-DNS baseline for Fedora and Android; any Pi-hole migration must repeat the affected datapath checks before equivalent claims are made for the new listener architecture.
 
 ### Required migration/acceptance plan
 
 The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22. Pi-hole work may now move from repository-only design into a controlled maintenance/test phase.
 
 Before deployment:
+
+Implementation prerequisites:
+
+- confirm that the selected Pi-hole/FTL build is supportable on the router CPU and Entware environment before treating it as an implementation candidate;
+- measure the current RAM/swap and storage-write baseline, then define a resource and retention budget for FTL databases/query logging;
+- document exact listener ownership and cutover order for Pi-hole `:53`, firmware dnsmasq `:8053`, and Unbound `:53535` so two services never compete for the same socket;
+- implement a rollback path that restores the current Diversion + dnsmasq + Unbound arrangement without depending on a functioning Pi-hole service;
+- define Pi-hole/FTL update ownership and maintenance procedure rather than introducing package mutation into the boot path;
+- define explicit firewall and administrative-UI exposure rules plus negative tests so the UI cannot become reachable from WAN or broadly from the tailnet.
 
 1. Capture a fresh pre-change health/evidence snapshot and back up the current Diversion/dnsmasq/Unbound state.
 2. Create a dedicated feature branch and implement Pi-hole integration, health checks, rollback and configuration validation before deployment.

@@ -48,7 +48,7 @@ router/scripts/     Asuswrt-Merlin firewall-start and services-start hooks
 scripts/            Install, update, health-check, backup, restore, uninstall
 tests/              Static, mock-firewall, and live-client tests
 docs/               Architecture, security, operations, testing, and roadmap
-evidence/           Live-validation procedure and report template
+evidence/           Sanitized dated validation artifacts, evidence policy and templates
 ```
 
 ## Requirements
@@ -68,6 +68,10 @@ opkg list | grep -E '^(tailscale|unbound|syslog-ng|coreutils-sha256sum) '
 ```
 
 Never commit auth keys, node state, private keys, collector credentials, router exports, or real private infrastructure data.
+
+### Reference compatibility
+
+The live-validated baseline uses an ASUS TUF-AX5400 running ASUSWRT-Merlin 3004.388.9_2-gnuton1. Component compatibility is defined by tested behaviour rather than an invented universal minimum version: Tailscale must preserve the configured socket/routing and intentional `netfilter-mode=off` ownership model; Unbound must validate the deployed configuration and expose the configured loopback listener; syslog-ng remains optional unless remote logging is configured. Record actual material package versions in dated evidence after upgrades. See [compatibility and revalidation](docs/compatibility.md).
 
 ## Quick start
 
@@ -261,6 +265,7 @@ Tailscale updates are a separate planned-maintenance action:
 - [Roadmap](docs/roadmap.md)
 - [Engineering worklog](docs/worklog/README.md)
 - [Documentation model and source-of-truth rules](docs/documentation-model.md)
+- [Compatibility and revalidation](docs/compatibility.md)
 
 ## Validation evidence
 
