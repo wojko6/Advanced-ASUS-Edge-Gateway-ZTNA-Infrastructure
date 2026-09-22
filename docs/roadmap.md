@@ -18,22 +18,22 @@ The 2026-09-11 SSD artifact does not independently prove syslog-ng recovery, end
 
 The SSD is now the router's persistent Entware storage. The separate `ROUTER_DATA` partition is reserved for data and future storage workflows rather than being mixed with Entware service files.
 
-## Current validation gate — stability observation
+## Completed validation observation — 2026-09-11 to 2026-09-22
 
-The 2026-09-11 deployment has passed controlled reboot validation for the checks recorded in the SSD migration artifact, and the repository validation suite passes for the current code/documentation state. Long-term stability is intentionally tracked separately from reboot success.
+The 2026-09-11 deployment passed controlled reboot validation for the checks recorded in the SSD migration artifact, and the repository validation suite passes for the current code/documentation state. A subsequent unchanged-state observation ran with the router continuously powered 24/7 from **2026-09-11 through 2026-09-22**.
 
-Current validation controls:
+Validation controls and closure:
 
 - GitHub Actions runs static, recovery, configuration, firewall, evidence-redaction, and log-retention checks.
 - A dedicated CI job runs WAN-event-handler mock scenarios and the isolated install/rollback test.
 - The current sanitized router-state snapshot is published in `evidence/ROUTER-STATE-2026-09-11.md`.
-- A 14-day unchanged-state observation window runs from 2026-09-11 through 2026-09-25 under normal use.
-- During the observation window, avoid intentional router reboots and major configuration changes unless recovery is required.
-- At the end of the window, review uptime, RAM/swap, SSD mounts, Tailscale, Unbound/DNSSEC, syslog-ng, project health checks, and logs for OOM, crashes, unexpected restarts, WAN/DNS recovery failures, or storage errors.
+- The originally planned observation end date was 2026-09-25, but the unchanged-state period was deliberately closed on 2026-09-22 to begin the next controlled project phase.
+- The closing read-only health check reported `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`.
+- At closure, Entware/SSD, swap, Tailscale, Unbound/DNSSEC, dnsmasq integration, syslog-ng and project firewall chains were healthy, and the inspected syslog contained no matching OOM, crash, filesystem-I/O or read-only-filesystem errors.
 
-The deployment must not be described as long-term stable until that observation is completed and the resulting evidence has been reviewed and sanitized.
+The correct claim is therefore a successful continuous 2026-09-11 → 2026-09-22 observation, not a completed 14-day endurance test and not proof of indefinite long-term stability.
 
-### Work allowed during the no-touch observation window
+### Work that was allowed during the no-touch observation window
 
 The router configuration remains unchanged, but project work can continue away from the router:
 
@@ -46,7 +46,7 @@ The router configuration remains unchanged, but project work can continue away f
 - If useful, compare Zen with a trial of AdGuard for Windows using the same test methodology. AdGuard DNS protection should remain disabled for this comparison so the existing router DNS architecture remains authoritative.
 - Prepare, but do not yet deploy, the methodology for later mobile telemetry assessment.
 
-These activities are intentionally separated from router configuration changes so they do not invalidate the unchanged-state stability observation.
+These activities were intentionally separated from router configuration changes so they did not invalidate the unchanged-state stability observation.
 
 ## Endpoint filtering validation status
 
@@ -75,7 +75,7 @@ A later phase will assess residual mobile telemetry without restoring applicatio
 - Clearly document device/OS differences and methodological limitations.
 - Publish only sanitized evidence.
 
-Full telemetry/capture changes that require modifying router configuration are deferred until after the current stability observation window.
+Full telemetry/capture changes that require modifying router configuration may now proceed as controlled post-observation work.
 
 ## Near-term — Personal cloud / automated file sync
 
@@ -102,7 +102,7 @@ The synchronization feature must only be documented as **Completed and validated
 
 ## Stability-gate finding — LAN DNS policy bypass
 
-Read-only validation during the stability observation identified a DNS-enforcement gap that must remain unchanged until the gate is complete:
+Read-only validation during the completed stability observation identified a DNS-enforcement gap:
 
 - ASUS DNS Director is currently disabled (`dnsfilter_enable_x=0`) and no client-specific DNS Director rules are configured.
 - The project firewall currently redirects TCP/UDP port 53 arriving through `tailscale0` to the router DNS service, but the observed NAT PREROUTING policy does not contain an equivalent redirect for ordinary LAN/Wi-Fi clients.
@@ -110,12 +110,12 @@ Read-only validation during the stability observation identified a DNS-enforceme
 - Normal Fedora DNS operation was separately verified to follow the intended Tailscale path: a query for `openai.com` was observed on the router as `100.82.222.105 -> 100.83.72.84:53`, with the router returning the DNS response.
 - Therefore the normal tested Fedora path reaches the ASUS DNS service, while explicit client-selected external DNS remains a policy bypass.
 - This bypass may contribute to inconsistent DNS-level ad/tracker blocking on clients that use external DNS, but it must not be treated as the sole explanation for residual advertising. DoH/DoT, application behavior, same-domain advertising, client configuration, and filtering-list coverage require separate validation.
-- Do not enable DNS Director or add LAN DNS interception rules during the unchanged-state stability gate.
-- After the gate, evaluate controlled LAN DNS enforcement, including TCP/UDP 53, DoT/853, IPv6, DoH limitations, exceptions/rollback, and false-positive/compatibility testing.
+- The observation period is now closed; any DNS Director or LAN DNS interception change must still be introduced as a controlled maintenance change with rollback.
+- Evaluate controlled LAN DNS enforcement, including TCP/UDP 53, DoT/853, IPv6, DoH limitations, exceptions/rollback, and false-positive/compatibility testing.
 
 ## Post-observation router filtering work
 
-After the unchanged-state stability gate is complete and its evidence is captured:
+After the completed unchanged-state observation:
 
 - Review candidate stronger DNS/content-filtering lists and policies prepared offline, including the curated candidate set derived from the third-party aggregate-list assessment.
 - Baseline false positives before enabling stricter filtering broadly.
@@ -170,9 +170,9 @@ This should allow the same project-owned DNS policy to protect Android applicati
 
 ### Required migration/acceptance plan
 
-Do not change the reference router during the active unchanged-state stability gate ending 2026-09-25. Repository-only design and test preparation are allowed.
+The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22. Pi-hole work may now move from repository-only design into a controlled maintenance/test phase.
 
-After the gate:
+Before deployment:
 
 1. Capture a fresh pre-change health/evidence snapshot and back up the current Diversion/dnsmasq/Unbound state.
 2. Create a dedicated feature branch and implement Pi-hole integration, health checks, rollback and configuration validation before deployment.
@@ -191,7 +191,7 @@ Post-migration acceptance should emphasize repeated successful cold/startup cycl
 
 ## Post-observation — severity-aware alerting and phone notifications
 
-After the unchanged-state stability gate is complete and its evidence is captured:
+After the completed unchanged-state observation:
 
 - Keep full operational logs separate from actionable notifications so routine firewall drops, filtering events, and other expected noise do not generate phone alerts.
 - Classify actionable events into at least `INFO`, `WARNING`, `CRITICAL`, and `RECOVERED` states.
@@ -203,7 +203,7 @@ After the unchanged-state stability gate is complete and its evidence is capture
 - Add an external heartbeat/dead-man check so complete router or WAN failure can still be detected when the router itself is unable to send an alert.
 - Validate alert severity, false-positive rate, duplicate suppression, recovery notifications, and loss-of-router scenarios before describing the feature as production-ready.
 
-Do not deploy router-side hooks, cron jobs, syslog changes, or other alerting changes during the active unchanged-state stability observation.
+Router-side alerting changes may now be tested only as deliberate maintenance changes with rollback and post-change validation.
 
 ## Post-observation — off-router backup and reproducible recovery
 
