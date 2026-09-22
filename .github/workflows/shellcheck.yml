@@ -29,6 +29,8 @@ jobs:
         run: sh tests/test-evidence-collector.sh
       - name: Run collector log-retention test
         run: sh tests/test-log-retention.sh
+      - name: Run router-local log-retention test
+        run: sh tests/test-router-log-retention.sh
       - name: Run services-start configuration validation
         run: sh tests/test-services-config-validation.sh
       - name: Run services-start Tailscale policy guards
