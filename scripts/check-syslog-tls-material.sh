@@ -27,8 +27,12 @@ key_uid="$(stat -c %u "$KEY" 2>/dev/null)" || {
     echo "ERROR: cannot read private-key owner" >&2
     exit 1
 }
-[ "$key_uid" = "0" ] || {
-    echo "ERROR: private key must be owned by root (uid 0), got uid $key_uid" >&2
+expected_uid=0
+if [ "${EDGE_SYSLOG_TLS_TEST_MODE:-0}" = "1" ]; then
+    expected_uid="${EDGE_SYSLOG_TLS_TEST_UID:-0}"
+fi
+[ "$key_uid" = "$expected_uid" ] || {
+    echo "ERROR: private key owner mismatch: expected uid $expected_uid, got uid $key_uid" >&2
     exit 1
 }
 
