@@ -16,8 +16,6 @@ executable_exists() {
 
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 LOCK_DIR="/var/run/asus-edge-services.lock"
-SWAPS_FILE="${EDGE_PROC_SWAPS:-/proc/swaps}"
-OVERCOMMIT_FILE="${EDGE_PROC_OVERCOMMIT_MEMORY:-/proc/sys/vm/overcommit_memory}"
 log() { logger -t asus-edge "$*"; }
 
 [ -r "$CONFIG_FILE" ] || { log "ERROR: missing $CONFIG_FILE"; exit 1; }
