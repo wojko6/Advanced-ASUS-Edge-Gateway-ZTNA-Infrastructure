@@ -217,7 +217,7 @@ Record model, OS/version, hardening/debloat state, network path, observation met
 
 ## Performance baseline
 
-Measure router performance at idle and under three flows only when live-router performance testing is scheduled outside the unchanged-state stability gate: direct WAN, Tailscale subnet routing, and exit-node routing.
+Measure router performance at idle and under three flows only during an explicit live-router performance validation window: direct WAN, Tailscale subnet routing, and exit-node routing.
 
 ```sh
 top -b -n 1
