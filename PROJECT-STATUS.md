@@ -109,21 +109,28 @@ The Fedora clean-room restore findings have been converted into a guarded recove
 
 GitHub Actions run #474 completed successfully after the remediation batch. The workflow now executes the previously unwired recovery, firewall/configuration, evidence-collector, and log-retention tests directly, in addition to the existing focused validation steps.
 
-## LAN DNS-over-TLS (DoT/853) control — prototype validated / repository follow-up
+## LAN DNS-over-TLS (DoT/853) control — LIVE VALIDATED
 
-A controlled Fedora A/B/A test on 2026-09-22 confirmed that direct DNS-over-TLS is a real bypass of the classic port-53 enforcement on the tested IPv4 LAN path.
+A controlled Fedora A/B/A test on 2026-09-22 first confirmed that direct DNS-over-TLS was a real bypass of the classic port-53 enforcement on the tested IPv4 LAN path.
 
 Baseline: Fedora routed `8.8.8.8` through the normal LAN gateway and successfully established TLS 1.3 to `8.8.8.8:853` with a verified `dns.google` certificate.
 
-Test block: a temporary `EDGE_LAN_DOT_TEST` FORWARD chain on `br0` rejected TCP/853 with `tcp-reset`. The client received `Connection refused`, and the router rule recorded `1 packet / 60 bytes`.
+Prototype block: a temporary `EDGE_LAN_DOT_TEST` FORWARD chain on `br0` rejected TCP/853 with `tcp-reset`. The client received `Connection refused`, the router rule recorded `1 packet / 60 bytes`, and rollback restored successful TLS/853 connectivity.
 
-Rollback: after removing the temporary chain, the same TLS connection to `8.8.8.8:853` succeeded again.
+The production implementation from PR #58 was then deployed to the reference router with `EDGE_BLOCK_LAN_DOT=1`. The deployed scripts matched the repository revisions:
 
-The repository now carries an opt-in production follow-up, `EDGE_BLOCK_LAN_DOT`, using a dedicated `EDGE_LAN_DOT_FORWARD` chain with exact parent ordering and health-check/test coverage. The example remains disabled by default and this repository implementation must not be described as deployed on the reference router until a separate controlled deployment is recorded.
+```text
+firewall-start SHA-256: 3b51ab285605d379c28552853331921f4f2afa58562e97772866ec243ff60667
+healthcheck.sh SHA-256: e1b9436a8aed5e7f16e725c0769e3f6275198ca1e6f7ed1d8d51ef504304045d
+```
+
+The live health check reported `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`, including PASS results for the single LAN DoT FORWARD jump, parent ordering before platform FORWARD rules, and the exact TCP/853 blocking policy.
+
+A subsequent Fedora production test, with `8.8.8.8` routed through `192.168.50.1` over the LAN, failed with `Connection refused`. The managed production `EDGE_LAN_DOT_FORWARD` rule simultaneously recorded `1 packet / 60 bytes`, tying the client failure to the deployed TCP/853 reject policy.
 
 The claim is deliberately limited to direct IPv4 DoT on TCP/853. It does not control DoH/HTTPS, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, or application-specific encrypted DNS.
 
-Sanitized evidence: `evidence/2026-09-22/dot-853-block-prototype-validation.md`.
+Sanitized evidence: `evidence/2026-09-22/dot-853-block-production-validation.md`.
 
 ## LAN classic-DNS enforcement — LIVE VALIDATED
 

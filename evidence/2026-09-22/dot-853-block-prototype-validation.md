@@ -66,4 +66,4 @@ A: direct DoT reachable again after rollback
 
 This validation covers direct IPv4 TCP/853 only. It does not establish control over DoH/HTTPS, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, or application-specific encrypted resolver transports.
 
-The production repository implementation is a separate opt-in change and must be independently deployed and live-validated before being described as active on the reference router.
+The production repository implementation was subsequently deployed and live-validated as a separate controlled change. See `dot-853-block-production-validation.md`. This prototype artifact remains bounded to the temporary-chain A/B/A test described above.
