@@ -18,6 +18,8 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 
 ![Current ASUS Edge Gateway architecture](docs/images/Architecture.png)
 
+`docs/images/Architecture.png` is the canonical diagram for the current deployed/reference architecture. Retired diagrams are kept out of the active documentation tree so readers do not have to choose between competing architecture views.
+
 Remote access is enforced at two layers:
 
 1. Tailscale Grants authorize identities and groups.
@@ -27,7 +29,7 @@ See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy
 
 ## Key controls
 
-- Default-deny `INPUT` and `FORWARD` policy for traffic arriving on `tailscale0`.
+- Project-owned Tailscale ingress chains are evaluated before competing parent rules and terminate in unconditional `DROP` for traffic arriving on `tailscale0` unless an explicit allow rule matches.
 - Idempotent project-owned chains with duplicate jump removal.
 - Device allowlist for router management and host/port allowlists for LAN access.
 - Fail-closed IPv6 guards until an equivalent granular IPv6 policy is implemented.
@@ -189,7 +191,7 @@ Endpoint-filtering validation includes dated Zen evidence on Windows and a Fedor
 
 The commands below are operational examples. The unchanged-state observation is complete; install/uninstall/restore/firewall-apply actions and deliberate live-client policy tests should still be treated as planned maintenance with a current backup and rollback path.
 
-Read-only router inspection during the gate can include:
+Read-only router inspection during planned validation can include:
 
 ```sh
 /jffs/addons/asus-edge/bin/healthcheck.sh
@@ -258,6 +260,7 @@ Tailscale updates are a separate planned-maintenance action:
 - [Operations and recovery](docs/operations.md)
 - [Roadmap](docs/roadmap.md)
 - [Engineering worklog](docs/worklog/README.md)
+- [Documentation model and source-of-truth rules](docs/documentation-model.md)
 
 ## Validation evidence
 
