@@ -42,6 +42,7 @@ fi
 
 : "${EDGE_TS_IF:=tailscale0}"
 : "${EDGE_LAN_IF:=br0}"
+: "${EDGE_ROUTER_LAN_IP:=192.168.50.1}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_NETFILTER_MODE:=off}"
 : "${EDGE_PRINTER_TS_SOURCES:=}"
@@ -54,6 +55,8 @@ fi
 : "${EDGE_WAN_IF:=}"
 : "${EDGE_REQUIRE_SWAP:=auto}"
 : "${EDGE_INTERCEPT_DNS:=1}"
+: "${EDGE_ENFORCE_LAN_DNS:=0}"
+: "${EDGE_DNS_PORT:=53}"
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_UNBOUND_CONFIG:=}"
 : "${EDGE_SYSLOG_HOST:=}"
@@ -99,8 +102,11 @@ valid_host() {
 valid_boolean "$EDGE_REQUIRE_USB_PRINTER_DISABLED" || fail "invalid EDGE_REQUIRE_USB_PRINTER_DISABLED value: $EDGE_REQUIRE_USB_PRINTER_DISABLED"
 valid_boolean "$EDGE_ENABLE_EXIT_NODE" || fail "invalid EDGE_ENABLE_EXIT_NODE value: $EDGE_ENABLE_EXIT_NODE"
 valid_boolean "$EDGE_INTERCEPT_DNS" || fail "invalid EDGE_INTERCEPT_DNS value: $EDGE_INTERCEPT_DNS"
+valid_boolean "$EDGE_ENFORCE_LAN_DNS" || fail "invalid EDGE_ENFORCE_LAN_DNS value: $EDGE_ENFORCE_LAN_DNS"
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
+valid_ipv4 "$EDGE_ROUTER_LAN_IP" || fail "invalid EDGE_ROUTER_LAN_IP value: $EDGE_ROUTER_LAN_IP"
+valid_port "$EDGE_DNS_PORT" || fail "invalid EDGE_DNS_PORT value: $EDGE_DNS_PORT"
 [ -z "$EDGE_WAN_IF" ] || valid_interface "$EDGE_WAN_IF" || fail "invalid EDGE_WAN_IF value: $EDGE_WAN_IF"
 valid_port "$EDGE_UNBOUND_PORT" || fail "invalid EDGE_UNBOUND_PORT value: $EDGE_UNBOUND_PORT"
 valid_port "$EDGE_SYSLOG_PORT" || fail "invalid EDGE_SYSLOG_PORT value: $EDGE_SYSLOG_PORT"
@@ -315,6 +321,10 @@ if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
     if grep -F -x "interface=$EDGE_TS_IF" /etc/dnsmasq.conf >/dev/null 2>&1; then ok "dnsmasq includes $EDGE_TS_IF"; else fail "dnsmasq does not include $EDGE_TS_IF"; fi
 fi
 
+if [ "$EDGE_ENFORCE_LAN_DNS" = "1" ]; then
+    if grep -F -x "interface=$EDGE_LAN_IF" /etc/dnsmasq.conf >/dev/null 2>&1; then ok "dnsmasq includes $EDGE_LAN_IF for LAN DNS enforcement"; else fail "dnsmasq does not include $EDGE_LAN_IF for LAN DNS enforcement"; fi
+fi
+
 for chain in EDGE_TS_INPUT EDGE_TS_FORWARD; do
     if iptables -t filter -S "$chain" >/dev/null 2>&1; then ok "firewall chain $chain"; else fail "missing firewall chain $chain"; fi
 done
@@ -368,6 +378,69 @@ if executable_exists ip6tables >/dev/null 2>&1; then
     check_filter_enforcement ip6tables FORWARD EDGE_TS6_FORWARD
 else warn "ip6tables unavailable; verify IPv6 is disabled"; fi
 
+lan_dns_parent_jump_count() {
+    iptables -t nat -S PREROUTING 2>/dev/null |
+        awk -v iface="$EDGE_LAN_IF" '
+            $1 == "-A" && $2 == "PREROUTING" {
+                incoming=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-i" && i < NF) incoming=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (incoming == iface && target == "EDGE_LAN_DNS_PREROUTING") count++
+            }
+            END { print count + 0 }
+        '
+}
+
+direct_parent_lan_dns_rule_count() {
+    iptables -t nat -S PREROUTING 2>/dev/null |
+        awk -v iface="$EDGE_LAN_IF" -v port="$EDGE_DNS_PORT" '
+            $1 == "-A" && $2 == "PREROUTING" {
+                incoming=""; proto=""; dport=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-i" && i < NF) incoming=$(i+1)
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (incoming == iface &&
+                    (proto == "udp" || proto == "tcp") &&
+                    dport == port &&
+                    (target == "REDIRECT" || target == "DNAT")) count++
+            }
+            END { print count + 0 }
+        '
+}
+
+lan_dns_chain_matches_policy() {
+    iptables -t nat -S EDGE_LAN_DNS_PREROUTING 2>/dev/null |
+        awk -v router="$EDGE_ROUTER_LAN_IP" -v port="$EDGE_DNS_PORT" '
+            $1 == "-A" && $2 == "EDGE_LAN_DNS_PREROUTING" {
+                rules++
+                dst=""; proto=""; dport=""; target=""; toports=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-d" && i < NF) dst=$(i+1)
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                    if ($i == "--to-ports" && i < NF) toports=$(i+1)
+                }
+                if (dst == router "/32" && proto == "udp" && dport == port && target == "RETURN") return_udp++
+                if (dst == router "/32" && proto == "tcp" && dport == port && target == "RETURN") return_tcp++
+                if (dst == "" && proto == "udp" && dport == port && target == "REDIRECT" && toports == port) redirect_udp++
+                if (dst == "" && proto == "tcp" && dport == port && target == "REDIRECT" && toports == port) redirect_tcp++
+            }
+            END {
+                exit !(rules == 4 &&
+                       return_udp == 1 &&
+                       return_tcp == 1 &&
+                       redirect_udp == 1 &&
+                       redirect_tcp == 1)
+            }
+        '
+}
+
 direct_parent_tailscale_nat_rule_count() {
     iptables -t nat -S PREROUTING 2>/dev/null |
         awk -v iface="$EDGE_TS_IF" '
@@ -398,6 +471,22 @@ active_jffs_hook_is_unsafe() {
             exit 1
         }'
 }
+
+lan_dns_jump_count="$(lan_dns_parent_jump_count)"
+direct_lan_dns_rules="$(direct_parent_lan_dns_rule_count)"
+
+if [ "$direct_lan_dns_rules" = "0" ]; then
+    ok "no direct LAN DNS NAT rules outside EDGE_LAN_DNS_PREROUTING"
+else
+    fail "direct LAN DNS NAT rules outside EDGE_LAN_DNS_PREROUTING: $direct_lan_dns_rules"
+fi
+
+if [ "$EDGE_ENFORCE_LAN_DNS" = "1" ]; then
+    if [ "$lan_dns_jump_count" = "1" ]; then ok "single LAN DNS PREROUTING jump"; else fail "LAN DNS PREROUTING jump count: $lan_dns_jump_count"; fi
+    if lan_dns_chain_matches_policy; then ok "LAN classic-DNS enforcement policy"; else fail "LAN classic-DNS enforcement policy missing or drifted"; fi
+else
+    if [ "$lan_dns_jump_count" = "0" ]; then ok "LAN DNS enforcement disabled without active jump"; else fail "LAN DNS enforcement disabled but jump count is $lan_dns_jump_count"; fi
+fi
 
 input_jumps="$(iptables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_INPUT")"
 forward_jumps="$(iptables -t filter -S FORWARD 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_FORWARD")"
