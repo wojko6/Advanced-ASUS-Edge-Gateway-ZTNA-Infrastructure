@@ -472,22 +472,6 @@ active_jffs_hook_is_unsafe() {
         }'
 }
 
-lan_dns_jump_count="$(lan_dns_parent_jump_count)"
-direct_lan_dns_rules="$(direct_parent_lan_dns_rule_count)"
-
-if [ "$direct_lan_dns_rules" = "0" ]; then
-    ok "no direct LAN DNS NAT rules outside EDGE_LAN_DNS_PREROUTING"
-else
-    fail "direct LAN DNS NAT rules outside EDGE_LAN_DNS_PREROUTING: $direct_lan_dns_rules"
-fi
-
-if [ "$EDGE_ENFORCE_LAN_DNS" = "1" ]; then
-    if [ "$lan_dns_jump_count" = "1" ]; then ok "single LAN DNS PREROUTING jump"; else fail "LAN DNS PREROUTING jump count: $lan_dns_jump_count"; fi
-    if lan_dns_chain_matches_policy; then ok "LAN classic-DNS enforcement policy"; else fail "LAN classic-DNS enforcement policy missing or drifted"; fi
-else
-    if [ "$lan_dns_jump_count" = "0" ]; then ok "LAN DNS enforcement disabled without active jump"; else fail "LAN DNS enforcement disabled but jump count is $lan_dns_jump_count"; fi
-fi
-
 input_jumps="$(iptables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_INPUT")"
 forward_jumps="$(iptables -t filter -S FORWARD 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_FORWARD")"
 prerouting_jumps="$(iptables -t nat -S PREROUTING 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_PREROUTING")"
@@ -519,6 +503,22 @@ for active_hook_name in firewall-start services-start wan-event nat-start; do
 done
 if [ "$unsafe_jffs_hooks" -eq 0 ]; then
     ok "active JFFS hooks are not group/world writable or symlinked"
+fi
+
+lan_dns_jump_count="$(lan_dns_parent_jump_count)"
+direct_lan_dns_rules="$(direct_parent_lan_dns_rule_count)"
+
+if [ "$direct_lan_dns_rules" = "0" ]; then
+    ok "no direct LAN DNS NAT rules outside EDGE_LAN_DNS_PREROUTING"
+else
+    fail "direct LAN DNS NAT rules outside EDGE_LAN_DNS_PREROUTING: $direct_lan_dns_rules"
+fi
+
+if [ "$EDGE_ENFORCE_LAN_DNS" = "1" ]; then
+    if [ "$lan_dns_jump_count" = "1" ]; then ok "single LAN DNS PREROUTING jump"; else fail "LAN DNS PREROUTING jump count: $lan_dns_jump_count"; fi
+    if lan_dns_chain_matches_policy; then ok "LAN classic-DNS enforcement policy"; else fail "LAN classic-DNS enforcement policy missing or drifted"; fi
+else
+    if [ "$lan_dns_jump_count" = "0" ]; then ok "LAN DNS enforcement disabled without active jump"; else fail "LAN DNS enforcement disabled but jump count is $lan_dns_jump_count"; fi
 fi
 
 if executable_exists ip6tables >/dev/null 2>&1; then
