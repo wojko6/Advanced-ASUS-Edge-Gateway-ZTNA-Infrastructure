@@ -134,6 +134,14 @@ unbound-checkconf /opt/var/lib/unbound/unbound.conf
 
 Merge `config/dnsmasq.conf.add.example` with any existing `/jffs/configs/dnsmasq.conf.add`; do not overwrite private DDNS or local records. Review `/jffs/scripts/dnsmasq.postconf` for NextDNS or other hooks that may take precedence. Do not run a second resolver on `192.168.50.1:53` while dnsmasq owns that socket.
 
+## DNS filtering validation
+
+A controlled 2026-09-22 Diversion comparison tested `Standard + snbAdSupport=yes`, `Standard + snbAdSupport=no`, and `Large + snbAdSupport=no`. Disabling the SNBForums support exception measurably improved blocking, and the Large profile broadened DNS coverage, but representative sites still rendered advertising even while many observed ad-tech hostnames returned `NXDOMAIN` from the Android Tailscale exit-node client.
+
+The current post-test state is `Large + snbAdSupport=no` with one focused denylist entry under normal-use observation. This is evidence that DNS filtering is useful but not equivalent to request-level/browser content blocking. Pi-hole remains a future observability and policy-management candidate, not a promise of complete visual-ad removal.
+
+See [the sanitized Diversion validation](evidence/2026-09-22/diversion-ad-blocking-validation.md).
+
 ## Centralized logging
 
 The optional logging design tails the firmware-owned `/tmp/syslog.log`, forwards it through Tailscale using mutually authenticated TLS, and can buffer messages on disk during collector outages. The checked-in examples require trusted peer certificates. Live mTLS delivery, buffer recovery, and post-reboot collector delivery should be described as observed only when the corresponding dated evidence exists; the presence of the example configuration alone is not operational proof.
