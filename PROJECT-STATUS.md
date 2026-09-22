@@ -52,23 +52,23 @@ A full repository audit covered code, security, install/rollback, firewall/DNS/T
 | Finding | Status | Current state |
 |---|---|---|
 | AUDIT-01 — restore apply was not transactional | **CLOSED** | Restore now snapshots affected live paths and rolls back partial apply failures; regression coverage was added and CI passed. |
-| AUDIT-02 — exit-node NAT dependency not explicitly validated | **OPEN / READY FOR LIVE VALIDATION** | Documentation states that project forwarding does not itself prove WAN SNAT/MASQUERADE ownership. The completed stability observation no longer blocks controlled live validation. |
+| AUDIT-02 — exit-node NAT dependency not explicitly validated | **CLOSED / LIVE VALIDATED** | Live correlation on 2026-09-22 identified Asuswrt-Merlin's WAN `POSTROUTING` `MASQUERADE` as the effective NAT for Tailscale exit-node traffic, confirmed `ip_forward=1`, verified the project WAN-forward rule, and correlated the same fixed-ID ICMP flow on `tailscale0` before NAT and the WAN interface after NAT. |
 | AUDIT-03 — Android/Fedora exit-node DNS datapath validation gap | **OPEN / READY FOR LIVE VALIDATION** | A controlled comparison procedure is documented. Exact client-to-router resolver paths still must be demonstrated rather than inferred from successful DNS resolution. |
 | AUDIT-04 — unnecessary deployment identifiers in Zen evidence | **CLOSED** | Evidence was sanitized while preserving the technical result. |
 | AUDIT-05 — Android DNS datapath claim exceeded available evidence | **CLOSED** | README wording now preserves the historical observation while explicitly documenting the unresolved datapath question. |
 
-The two remaining findings are not documentation-only defects that should be closed by assumption. They require evidence from the actual reference datapath.
+AUDIT-02 is now closed from live evidence on the reference datapath. AUDIT-03 remains open and still requires correlated live resolver-path evidence rather than inference from successful DNS resolution.
 
 ## Post-observation validation plan
 
 Now that the unchanged-state observation is closed:
 
 1. retain the 2026-09-22 closing stability checkpoint/report as the boundary for the completed observation;
-2. validate AUDIT-02 by identifying the effective IPv4 WAN NAT rule/chain used by authorized Tailscale exit-node traffic and correlating it with the real packet path;
+2. retain the sanitized AUDIT-02 live-validation artifact documenting the platform-owned Asuswrt-Merlin NAT dependency;
 3. validate AUDIT-03 with a controlled Fedora/Android comparison using the same router state and exit node, separating classic DNS from encrypted/client-specific resolver paths;
 4. make no configuration change unless the evidence demonstrates a real defect;
 5. if a change is required, design the smallest remediation, test it in an isolated/planned maintenance context, deploy it deliberately, then repeat affected validation;
-6. close the audit findings only when sanitized evidence supports the conclusion.
+6. close remaining audit findings only when sanitized evidence supports the conclusion.
 
 ## Evidence and privacy boundary
 
@@ -106,4 +106,4 @@ GitHub Actions run #474 completed successfully after the remediation batch. The 
 
 ## Current decision
 
-As of 2026-09-22, the unchanged-state observation is closed. Router-side follow-up, including AUDIT-02/AUDIT-03 live validation and planned DNS-filtering work, may proceed as controlled maintenance with explicit backup, rollback and post-change validation.
+As of 2026-09-22, the unchanged-state observation is closed and AUDIT-02 is live validated. Router-side follow-up now centers on AUDIT-03 and planned DNS-filtering work, with explicit backup, rollback and post-change validation for any state-changing maintenance.
