@@ -27,6 +27,7 @@ expect_rejected EDGE_ENABLE_EXIT_NODE yes 'invalid EDGE_ENABLE_EXIT_NODE value: 
 expect_rejected EDGE_INTERCEPT_DNS maybe 'invalid EDGE_INTERCEPT_DNS value: maybe'
 expect_rejected EDGE_TS_IF 'tailscale0;bad' 'invalid EDGE_TS_IF value: tailscale0;bad'
 expect_rejected EDGE_LAN_IF 'br0 bad' 'invalid EDGE_LAN_IF value: br0 bad'
+expect_rejected EDGE_WAN_IF 'ppp0;bad' 'invalid EDGE_WAN_IF value: ppp0;bad'
 expect_rejected EDGE_UNBOUND_PORT 70000 'invalid EDGE_UNBOUND_PORT value: 70000'
 expect_rejected EDGE_SYSLOG_PORT abc 'invalid EDGE_SYSLOG_PORT value: abc'
 expect_rejected EDGE_SYSLOG_HOST 'collector;reboot' 'invalid EDGE_SYSLOG_HOST value: collector;reboot'
