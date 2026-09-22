@@ -8,13 +8,20 @@ MAX_TOTAL_KB="${ASUS_EDGE_ROUTER_LOG_MAX_KB:-65536}"
 TODAY_LOG="$(date +%Y-%m-%d).log"
 MODE="${1:---dry-run}"
 
-case "$LOG_ROOT" in
-    /opt/var/log/asus-edge|/opt/var/log/asus-edge/*) ;;
-    *)
-        echo "ERROR: router log root must stay below /opt/var/log/asus-edge" >&2
-        exit 2
-        ;;
-esac
+if [ -n "${ASUS_EDGE_TEST_ROOT:-}" ]; then
+    case "$LOG_ROOT" in
+        "$ASUS_EDGE_TEST_ROOT"|"$ASUS_EDGE_TEST_ROOT"/*) ;;
+        *) echo "ERROR: test log root escaped ASUS_EDGE_TEST_ROOT" >&2; exit 2 ;;
+    esac
+else
+    case "$LOG_ROOT" in
+        /opt/var/log/asus-edge|/opt/var/log/asus-edge/*) ;;
+        *)
+            echo "ERROR: router log root must stay below /opt/var/log/asus-edge" >&2
+            exit 2
+            ;;
+    esac
+fi
 [ ! -L "$LOG_ROOT" ] || {
     echo "ERROR: refusing symlink router log root" >&2
     exit 2
