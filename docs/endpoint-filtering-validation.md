@@ -6,9 +6,9 @@ This test track evaluates endpoint-side content filtering as an optional defense
 
 The initial candidate is Zen on Windows with Chrome. AdGuard for Windows may be evaluated later with the same methodology if a controlled comparison is useful.
 
-## Stability-gate constraint
+## Historical stability-gate constraint
 
-During the 2026-09-11 through 2026-09-25 unchanged-state router observation window:
+During the completed 2026-09-11 through 2026-09-22 unchanged-state router observation, the following constraints applied:
 
 - do not modify router DNS, firewall, Tailscale, Unbound, dnsmasq, startup hooks, filtering lists, or service configuration for these tests;
 - router-side verification is read-only;
