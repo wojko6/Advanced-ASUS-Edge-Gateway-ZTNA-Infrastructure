@@ -2,7 +2,7 @@
 
 **Status date:** 2026-09-22  
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin  
-**Current phase:** post-stability observation / planned DNS-filtering and audit follow-up
+**Current phase:** post-stability DNS-filtering validation / audit follow-up
 
 ## Executive status
 
@@ -105,6 +105,35 @@ The Fedora clean-room restore findings have been converted into a guarded recove
 
 GitHub Actions run #474 completed successfully after the remediation batch. The workflow now executes the previously unwired recovery, firewall/configuration, evidence-collector, and log-retention tests directly, in addition to the existing focused validation steps.
 
+## DNS filtering validation — 2026-09-22
+
+A controlled Diversion comparison was completed after the unchanged-state observation closed.
+
+Tested states:
+
+```text
+A. Standard + snbAdSupport=yes
+B. Standard + snbAdSupport=no
+C. Large + snbAdSupport=no
+```
+
+Disabling SNBForums ad support removed a hard-coded exception that allowed `pagead2.googlesyndication.com` to bypass a broader `googlesyndication.com` block. The Android LTE/5G Tailscale exit-node classic-DNS path was re-checked after the change and remained healthy.
+
+The Large profile materially broadened DNS blocking, but visible advertising still remained on representative real-world sites even while many observed advertising/RTB hostnames returned `NXDOMAIN` from the Android client. One focused denylist experiment for `sdk-videoplayer.optad360.info` also did not remove the observed advertising by itself.
+
+Current post-test filtering state:
+
+```text
+Diversion: enabled
+profile: Large
+snbAdSupport=no
+focused denylist entry: sdk-videoplayer.optad360.info
+```
+
+The correct architectural conclusion is that DNS filtering remains useful for broad network-wide domain suppression, but it must not be presented as complete browser-content or in-app advertising removal. Pi-hole remains a policy/observability candidate rather than a guarantee of perfect ad removal.
+
+Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
+
 ## Current decision
 
-As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. The repository health check now verifies the platform-owned exit-node NAT/return-path prerequisites established by AUDIT-02, with focused CI fixtures covering missing and misordered dependencies. Router-side follow-up can now center on planned DNS-filtering work and any remaining non-datapath audit remediation, with explicit backup, rollback and post-change validation for state-changing maintenance.
+As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. The repository health check verifies the platform-owned exit-node NAT/return-path prerequisites established by AUDIT-02. A controlled Diversion A/B/C experiment has also established the current DNS-filtering boundary: `snbAdSupport=no` improves coverage, `Large` broadens the policy, but DNS blocking alone does not remove all rendered advertising. The Large profile is therefore in normal-use observation for false positives/resource impact rather than being treated as a proven complete ad-blocking solution.
