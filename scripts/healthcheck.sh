@@ -368,6 +368,37 @@ if executable_exists ip6tables >/dev/null 2>&1; then
     check_filter_enforcement ip6tables FORWARD EDGE_TS6_FORWARD
 else warn "ip6tables unavailable; verify IPv6 is disabled"; fi
 
+direct_parent_tailscale_nat_rule_count() {
+    iptables -t nat -S PREROUTING 2>/dev/null |
+        awk -v iface="$EDGE_TS_IF" '
+            $1 == "-A" && $2 == "PREROUTING" {
+                incoming=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-i" && i < NF) incoming=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (incoming == iface && target != "EDGE_TS_PREROUTING") count++
+            }
+            END { print count + 0 }
+        '
+}
+
+active_jffs_hook_is_unsafe() {
+    active_hook_path="$1"
+
+    [ -L "$active_hook_path" ] && return 0
+    [ -f "$active_hook_path" ] || return 1
+
+    active_hook_mode="$(ls -ld "$active_hook_path" 2>/dev/null | awk 'NR == 1 { print $1 }')"
+    [ -n "$active_hook_mode" ] || return 0
+
+    printf '%s\n' "$active_hook_mode" |
+        awk '{
+            if (substr($1, 6, 1) == "w" || substr($1, 9, 1) == "w") exit 0
+            exit 1
+        }'
+}
+
 input_jumps="$(iptables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_INPUT")"
 forward_jumps="$(iptables -t filter -S FORWARD 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_FORWARD")"
 prerouting_jumps="$(iptables -t nat -S PREROUTING 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS_PREROUTING")"
@@ -379,6 +410,27 @@ legacy_filter_rules="$({ iptables -t filter -S INPUT 2>/dev/null; iptables -t fi
 legacy_nat_rules="$(iptables -t nat -S PREROUTING 2>/dev/null | grep -c -- '-i tailscale+')"
 if [ "$legacy_filter_rules" = "0" ]; then ok "no legacy broad Tailscale ACCEPT rules"; else fail "legacy broad Tailscale ACCEPT rules: $legacy_filter_rules"; fi
 if [ "$legacy_nat_rules" = "0" ]; then ok "no legacy tailscale+ NAT rules"; else fail "legacy tailscale+ NAT rules: $legacy_nat_rules"; fi
+
+direct_parent_ts_nat_rules="$(direct_parent_tailscale_nat_rule_count)"
+if [ "$direct_parent_ts_nat_rules" = "0" ]; then
+    ok "no direct Tailscale NAT rules outside EDGE_TS_PREROUTING"
+else
+    fail "direct Tailscale NAT rules outside EDGE_TS_PREROUTING: $direct_parent_ts_nat_rules"
+fi
+
+unsafe_jffs_hooks=0
+for active_hook_name in firewall-start services-start wan-event nat-start; do
+    active_hook_path="/jffs/scripts/$active_hook_name"
+    if [ -e "$active_hook_path" ] || [ -L "$active_hook_path" ]; then
+        if active_jffs_hook_is_unsafe "$active_hook_path"; then
+            fail "unsafe active JFFS hook permissions or symlink: $active_hook_path"
+            unsafe_jffs_hooks=$((unsafe_jffs_hooks + 1))
+        fi
+    fi
+done
+if [ "$unsafe_jffs_hooks" -eq 0 ]; then
+    ok "active JFFS hooks are not group/world writable or symlinked"
+fi
 
 if executable_exists ip6tables >/dev/null 2>&1; then
     input6_jumps="$(ip6tables -t filter -S INPUT 2>/dev/null | grep -c -- "-i $EDGE_TS_IF -j EDGE_TS6_INPUT")"
