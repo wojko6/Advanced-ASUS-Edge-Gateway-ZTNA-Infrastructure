@@ -12,9 +12,9 @@ mkdir -p "$MOCK_BIN"
 
 CONFIG="$TMPDIR_TEST/asus-edge.conf"
 RESOLV="$TMPDIR_TEST/resolv.conf"
-TAILSCALED_INIT="$TMPDIR_TEST/S06tailscaled"
+TAILSCALE_HELPER="$TMPDIR_TEST/S06tailscaled"
 LOGFILE="$TMPDIR_TEST/logger.log"
-INIT_LOG="$TMPDIR_TEST/tailscaled-init.log"
+INIT_LOG="$TMPDIR_TEST/tailscale-helper.log"
 
 printf '%s\n' \
     'EDGE_UNBOUND_PORT=53535' \
@@ -40,6 +40,14 @@ printf '%s\n' \
 
 printf '%s\n' \
     '#!/bin/sh' \
+    'echo ";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1"' \
+    > "$MOCK_BIN/dig"
+
+printf '%s\n' \
+    '#!/bin/sh' \
+    'case " $* " in' \
+    '  *" debug prefs "*) echo "\"NetfilterMode\": 0," ;;' \
+    'esac' \
     'exit 0' \
     > "$MOCK_BIN/tailscale"
 
@@ -57,19 +65,20 @@ printf '%s\n' \
     '#!/bin/sh' \
     "printf '%s\n' \"\$*\" >> \"$INIT_LOG\"" \
     'exit 0' \
-    > "$TAILSCALED_INIT"
+    > "$TAILSCALE_HELPER"
 
 chmod +x \
     "$MOCK_BIN/pidof" \
     "$MOCK_BIN/netstat" \
+    "$MOCK_BIN/dig" \
     "$MOCK_BIN/tailscale" \
     "$MOCK_BIN/logger" \
     "$MOCK_BIN/sleep" \
-    "$TAILSCALED_INIT"
+    "$TAILSCALE_HELPER"
 
 EDGE_CONFIG_FILE="$CONFIG" \
 EDGE_RESOLV_CONF="$RESOLV" \
-EDGE_TAILSCALED_INIT="$TAILSCALED_INIT" \
+EDGE_TAILSCALE_HELPER="$TAILSCALE_HELPER" \
 EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
 "$HANDLER"
 
@@ -88,9 +97,9 @@ mkdir -p "$MOCK_BIN_FAIL"
 
 CONFIG_FAIL="$TMPDIR_FAIL/asus-edge.conf"
 RESOLV_FAIL="$TMPDIR_FAIL/resolv.conf"
-TAILSCALED_INIT_FAIL="$TMPDIR_FAIL/S06tailscaled"
+TAILSCALE_HELPER_FAIL="$TMPDIR_FAIL/S06tailscaled"
 LOGFILE_FAIL="$TMPDIR_FAIL/logger.log"
-INIT_LOG_FAIL="$TMPDIR_FAIL/tailscaled-init.log"
+INIT_LOG_FAIL="$TMPDIR_FAIL/tailscale-helper.log"
 
 printf '%s\n' \
     'EDGE_UNBOUND_PORT=53535' \
@@ -112,6 +121,9 @@ printf '%s\n' \
 
 printf '%s\n' \
     '#!/bin/sh' \
+    'case " $* " in' \
+    '  *" debug prefs "*) echo "\"NetfilterMode\": 0," ;;' \
+    'esac' \
     'exit 0' \
     > "$MOCK_BIN_FAIL/tailscale"
 
@@ -129,7 +141,7 @@ printf '%s\n' \
     '#!/bin/sh' \
     "printf '%s\n' \"\$*\" >> \"$INIT_LOG_FAIL\"" \
     'exit 0' \
-    > "$TAILSCALED_INIT_FAIL"
+    > "$TAILSCALE_HELPER_FAIL"
 
 chmod +x \
     "$MOCK_BIN_FAIL/pidof" \
@@ -137,11 +149,11 @@ chmod +x \
     "$MOCK_BIN_FAIL/tailscale" \
     "$MOCK_BIN_FAIL/logger" \
     "$MOCK_BIN_FAIL/sleep" \
-    "$TAILSCALED_INIT_FAIL"
+    "$TAILSCALE_HELPER_FAIL"
 
 if EDGE_CONFIG_FILE="$CONFIG_FAIL" \
    EDGE_RESOLV_CONF="$RESOLV_FAIL" \
-   EDGE_TAILSCALED_INIT="$TAILSCALED_INIT_FAIL" \
+   EDGE_TAILSCALE_HELPER="$TAILSCALE_HELPER_FAIL" \
    EDGE_TEST_PATH_PREFIX="$MOCK_BIN_FAIL" \
    "$HANDLER"
 then
@@ -152,7 +164,7 @@ fi
 grep -q 'local DNS path not ready' "$LOGFILE_FAIL"
 
 if [ -s "$INIT_LOG_FAIL" ]; then
-    echo "FAIL: tailscaled restart was attempted"
+    echo "FAIL: Tailscale reconciliation was attempted"
     exit 1
 fi
 
@@ -168,9 +180,9 @@ mkdir -p "$MOCK_BIN_RESOLV"
 
 CONFIG_RESOLV="$TMPDIR_RESOLV/asus-edge.conf"
 RESOLV_MISSING="$TMPDIR_RESOLV/resolv.conf"
-TAILSCALED_INIT_RESOLV="$TMPDIR_RESOLV/S06tailscaled"
+TAILSCALE_HELPER_RESOLV="$TMPDIR_RESOLV/S06tailscaled"
 LOGFILE_RESOLV="$TMPDIR_RESOLV/logger.log"
-INIT_LOG_RESOLV="$TMPDIR_RESOLV/tailscaled-init.log"
+INIT_LOG_RESOLV="$TMPDIR_RESOLV/tailscale-helper.log"
 
 printf '%s\n' \
     'EDGE_UNBOUND_PORT=53535' \
@@ -193,6 +205,14 @@ printf '%s\n' \
 
 printf '%s\n' \
     '#!/bin/sh' \
+    'echo ";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1"' \
+    > "$MOCK_BIN_RESOLV/dig"
+
+printf '%s\n' \
+    '#!/bin/sh' \
+    'case " $* " in' \
+    '  *" debug prefs "*) echo "\"NetfilterMode\": 0," ;;' \
+    'esac' \
     'exit 0' \
     > "$MOCK_BIN_RESOLV/tailscale"
 
@@ -210,19 +230,20 @@ printf '%s\n' \
     '#!/bin/sh' \
     "printf '%s\n' \"\$*\" >> \"$INIT_LOG_RESOLV\"" \
     'exit 0' \
-    > "$TAILSCALED_INIT_RESOLV"
+    > "$TAILSCALE_HELPER_RESOLV"
 
 chmod +x \
     "$MOCK_BIN_RESOLV/pidof" \
     "$MOCK_BIN_RESOLV/netstat" \
+    "$MOCK_BIN_RESOLV/dig" \
     "$MOCK_BIN_RESOLV/tailscale" \
     "$MOCK_BIN_RESOLV/logger" \
     "$MOCK_BIN_RESOLV/sleep" \
-    "$TAILSCALED_INIT_RESOLV"
+    "$TAILSCALE_HELPER_RESOLV"
 
 if EDGE_CONFIG_FILE="$CONFIG_RESOLV" \
    EDGE_RESOLV_CONF="$RESOLV_MISSING" \
-   EDGE_TAILSCALED_INIT="$TAILSCALED_INIT_RESOLV" \
+   EDGE_TAILSCALE_HELPER="$TAILSCALE_HELPER_RESOLV" \
    EDGE_TEST_PATH_PREFIX="$MOCK_BIN_RESOLV" \
    "$HANDLER"
 then
@@ -233,13 +254,13 @@ fi
 grep -q 'missing .*resolv.conf' "$LOGFILE_RESOLV"
 
 if [ -s "$INIT_LOG_RESOLV" ]; then
-    echo "FAIL: tailscaled restart was attempted"
+    echo "FAIL: Tailscale reconciliation was attempted"
     exit 1
 fi
 
 echo "PASS: missing resolv.conf is handled correctly"
 
-echo "=== TEST: tailscaled restart fails ==="
+echo "=== TEST: Tailscale reconciliation fails ==="
 
 TMPDIR_TSRESTART="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR_TEST" "$TMPDIR_FAIL" "$TMPDIR_RESOLV" "$TMPDIR_TSRESTART"' EXIT HUP INT TERM
@@ -249,7 +270,7 @@ mkdir -p "$MOCK_BIN_TSRESTART"
 
 CONFIG_TSRESTART="$TMPDIR_TSRESTART/asus-edge.conf"
 RESOLV_TSRESTART="$TMPDIR_TSRESTART/resolv.conf"
-TAILSCALED_INIT_TSRESTART="$TMPDIR_TSRESTART/S06tailscaled"
+TAILSCALE_HELPER_TSRESTART="$TMPDIR_TSRESTART/S06tailscaled"
 LOGFILE_TSRESTART="$TMPDIR_TSRESTART/logger.log"
 
 printf '%s\n' \
@@ -275,6 +296,14 @@ printf '%s\n' \
 
 printf '%s\n' \
     '#!/bin/sh' \
+    'echo ";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1"' \
+    > "$MOCK_BIN_TSRESTART/dig"
+
+printf '%s\n' \
+    '#!/bin/sh' \
+    'case " $* " in' \
+    '  *" debug prefs "*) echo "\"NetfilterMode\": 0," ;;' \
+    'esac' \
     'exit 0' \
     > "$MOCK_BIN_TSRESTART/tailscale"
 
@@ -291,19 +320,20 @@ printf '%s\n' \
 printf '%s\n' \
     '#!/bin/sh' \
     'exit 1' \
-    > "$TAILSCALED_INIT_TSRESTART"
+    > "$TAILSCALE_HELPER_TSRESTART"
 
 chmod +x \
     "$MOCK_BIN_TSRESTART/pidof" \
     "$MOCK_BIN_TSRESTART/netstat" \
+    "$MOCK_BIN_TSRESTART/dig" \
     "$MOCK_BIN_TSRESTART/tailscale" \
     "$MOCK_BIN_TSRESTART/logger" \
     "$MOCK_BIN_TSRESTART/sleep" \
-    "$TAILSCALED_INIT_TSRESTART"
+    "$TAILSCALE_HELPER_TSRESTART"
 
 if EDGE_CONFIG_FILE="$CONFIG_TSRESTART" \
    EDGE_RESOLV_CONF="$RESOLV_TSRESTART" \
-   EDGE_TAILSCALED_INIT="$TAILSCALED_INIT_TSRESTART" \
+   EDGE_TAILSCALE_HELPER="$TAILSCALE_HELPER_TSRESTART" \
    EDGE_TEST_PATH_PREFIX="$MOCK_BIN_TSRESTART" \
    "$HANDLER"
 then
@@ -311,6 +341,6 @@ then
     exit 1
 fi
 
-grep -q 'failed to restart tailscaled after WAN DNS update' "$LOGFILE_TSRESTART"
+grep -q 'canonical Tailscale restart/reconciliation failed after WAN DNS update' "$LOGFILE_TSRESTART"
 
 echo "PASS: tailscaled restart failure is handled correctly"
