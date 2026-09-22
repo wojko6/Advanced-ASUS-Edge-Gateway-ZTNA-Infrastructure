@@ -2,7 +2,7 @@
 
 This design forwards the Asuswrt local log to a Linux collector over Tailscale and mutually authenticated TLS (mTLS). The router authenticates the collector certificate, the collector authenticates the router certificate, and a reliable disk buffer preserves messages while the collector is unavailable.
 
-> **Reference-router stability gate:** the rollout, restart, outage and reboot procedures below are maintenance/validation procedures, not instructions to exercise against the current reference router during its unchanged-state observation through **2026-09-25**. During the gate, use existing configuration and read-only observations only. If recovery from an active logging fault or security incident requires a router-side change, document the intervention and restart the stability baseline after returning to a known-good state.
+> **Maintenance note:** the unchanged-state observation closed on **2026-09-22**. The rollout, restart, outage and reboot procedures below remain deliberate maintenance/validation actions and should be performed with backup, rollback criteria and sanitized evidence.
 
 ## Data path
 
@@ -62,7 +62,7 @@ Do not weaken peer verification as a normal rollout step. If certificate trouble
 
 ## Validation
 
-Configuration syntax checks are read-only, but a router-side restart is a maintenance action. During the stability gate, syntax-check the existing file only if useful and defer sender restarts and trust-policy changes unless recovery is required.
+Configuration syntax checks and TLS-material preflight are read-only; sender restart and trust-policy changes remain maintenance actions. Before enabling or restarting the sender, run `sh scripts/check-syslog-tls-material.sh` against the local key/certificate/CA material. The preflight checks private-key ownership/mode, certificate expiry/chain, and optionally a supplied collector certificate against its expected peer name.
 
 Validate configuration before every planned restart:
 
@@ -118,7 +118,7 @@ To validate the disk buffer:
 4. Start the collector.
 5. Verify that every buffered message arrives.
 
-A reboot test is also a planned maintenance test. After the stability gate, when a reboot is intentionally scheduled, verify all of the following:
+A reboot test is a planned maintenance test. When a reboot is intentionally scheduled, verify all of the following:
 
 - `syslog-ng` is running;
 - the TLS connection to port 6514 is established;
@@ -162,7 +162,7 @@ systemctl list-timers asus-edge-log-retention.timer
 
 The defaults provide at least 30 days of retained logs. Override `ASUS_EDGE_LOG_ROOT`, `ASUS_EDGE_COMPRESS_AFTER_MINUTES`, or `ASUS_EDGE_DELETE_AFTER_MINUTES` only for controlled testing or a deliberately different local policy. The script rejects relative roots and the filesystem root.
 
-Collector-only maintenance does not modify the router, but intentionally stopping the collector can still change the behavior being observed by exercising the router's reliable buffer. During the reference stability gate, avoid deliberate collector outages if the goal is to preserve an unchanged end-to-end logging state.
+Collector-only maintenance does not modify the router, but intentionally stopping the collector exercises the router's reliable buffer. Treat outage/reconnect tests as explicit validation events and record the buffer/reconnect result separately from simple process liveness.
 
 ## Operational boundaries
 
@@ -171,3 +171,24 @@ mTLS authenticates the sending router but does not replace Tailscale policy. Res
 The reliable buffer protects short outages, not unlimited collector downtime. Monitor storage under `/opt/var/lib/syslog-ng`, define a collector retention policy, and test recovery after configuration or package upgrades during planned maintenance.
 
 The example configuration demonstrates the intended architecture; successful end-to-end mTLS, buffering and post-reboot delivery must be claimed as **observed** only when dated evidence from the deployed environment exists. Configuration presence or CI syntax validation alone is not live operational evidence.
+
+
+## Router-local archive retention
+
+The daily router archive under `/opt/var/log/asus-edge` has a separate retention
+helper from the off-router collector:
+
+```sh
+sh scripts/router-log-retention.sh --dry-run
+sh scripts/router-log-retention.sh --apply
+```
+
+The helper operates only on managed date-named `.log`/`.log.gz` files below
+that dedicated directory, skips symlinks and foreign files, applies an age limit
+and a total managed-size cap, and never treats collector retention as router
+retention. The health check separately warns when free space backing `/opt`
+falls below the configured threshold.
+
+mTLS delivery, reliable-buffer outage behavior, reconnect and an optional canary
+event remain live validation items. A healthy `syslog-ng` PID alone is not
+evidence that the collector received the event.
