@@ -53,11 +53,11 @@ A full repository audit covered code, security, install/rollback, firewall/DNS/T
 |---|---|---|
 | AUDIT-01 — restore apply was not transactional | **CLOSED** | Restore now snapshots affected live paths and rolls back partial apply failures; regression coverage was added and CI passed. |
 | AUDIT-02 — exit-node NAT dependency not explicitly validated | **CLOSED / LIVE VALIDATED** | Live correlation on 2026-09-22 identified Asuswrt-Merlin's WAN `POSTROUTING` `MASQUERADE` as the effective NAT for Tailscale exit-node traffic, confirmed `ip_forward=1`, verified the project WAN-forward rule, and correlated the same fixed-ID ICMP flow on `tailscale0` before NAT and the WAN interface after NAT. |
-| AUDIT-03 — Android/Fedora exit-node DNS datapath validation gap | **OPEN / READY FOR LIVE VALIDATION** | A controlled comparison procedure is documented. Exact client-to-router resolver paths still must be demonstrated rather than inferred from successful DNS resolution. |
+| AUDIT-03 — Android/Fedora exit-node DNS datapath validation gap | **CLOSED / LIVE VALIDATED** | Controlled live tests on 2026-09-22 validated classic DNS over UDP/TCP 53 from Fedora and Android exit-node clients through `tailscale0` -> `EDGE_TS_PREROUTING` REDIRECT -> router-local dnsmasq -> Unbound on `127.0.0.1:53535`. Encrypted DNS (DoH/DoT) remains outside this claim. |
 | AUDIT-04 — unnecessary deployment identifiers in Zen evidence | **CLOSED** | Evidence was sanitized while preserving the technical result. |
 | AUDIT-05 — Android DNS datapath claim exceeded available evidence | **CLOSED** | README wording now preserves the historical observation while explicitly documenting the unresolved datapath question. |
 
-AUDIT-02 is now closed from live evidence on the reference datapath. AUDIT-03 remains open and still requires correlated live resolver-path evidence rather than inference from successful DNS resolution.
+AUDIT-02 and AUDIT-03 are now closed from live evidence on the reference datapath. AUDIT-03 closure is explicitly bounded to classic DNS over UDP/TCP port 53; DoH/DoT and application-specific encrypted resolver transports remain separate limitations.
 
 ## Post-observation validation plan
 
@@ -65,10 +65,10 @@ Now that the unchanged-state observation is closed:
 
 1. retain the 2026-09-22 closing stability checkpoint/report as the boundary for the completed observation;
 2. retain the sanitized AUDIT-02 live-validation artifact documenting the platform-owned Asuswrt-Merlin NAT dependency;
-3. validate AUDIT-03 with a controlled Fedora/Android comparison using the same router state and exit node, separating classic DNS from encrypted/client-specific resolver paths;
+3. retain the sanitized AUDIT-03 live-validation artifact documenting the Fedora/Android classic-DNS datapath and its encrypted-DNS limitation boundary;
 4. make no configuration change unless the evidence demonstrates a real defect;
 5. if a change is required, design the smallest remediation, test it in an isolated/planned maintenance context, deploy it deliberately, then repeat affected validation;
-6. close remaining audit findings only when sanitized evidence supports the conclusion.
+6. preserve the distinction between classic DNS interception and unvalidated encrypted/client-specific resolver transports.
 
 ## Evidence and privacy boundary
 
@@ -106,4 +106,4 @@ GitHub Actions run #474 completed successfully after the remediation batch. The 
 
 ## Current decision
 
-As of 2026-09-22, the unchanged-state observation is closed and AUDIT-02 is live validated. Router-side follow-up now centers on AUDIT-03 and planned DNS-filtering work, with explicit backup, rollback and post-change validation for any state-changing maintenance.
+As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. Router-side follow-up can now center on planned DNS-filtering work and any remaining non-datapath audit remediation, with explicit backup, rollback and post-change validation for state-changing maintenance.
