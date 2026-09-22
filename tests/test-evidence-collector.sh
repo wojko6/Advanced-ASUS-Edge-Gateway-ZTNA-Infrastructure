@@ -42,7 +42,7 @@ EVIDENCE_DIG="dig" \
 EVIDENCE_HEALTHCHECK="$TMP_DIR/healthcheck" \
 sh "$REPO_DIR/scripts/collect-evidence.sh" "$TMP_DIR/output" >/dev/null
 
-for file in README.md environment.md healthcheck.md firewall-counters.md dns-validation.md; do
+for file in README.md REPORT.txt environment.md healthcheck.md firewall-counters.md dns-validation.md; do
     [ -s "$TMP_DIR/output/$file" ] || {
         echo "FAIL: evidence collector did not create $file" >&2
         exit 1
@@ -66,6 +66,11 @@ if grep -E '192\.0\.2\.95|2001:db8|private-host|unexpected error' "$TMP_DIR/outp
 fi
 
 if [ -f "$TMP_DIR/output/SHA256SUMS" ]; then
+    grep -F 'REPORT.txt' "$TMP_DIR/output/SHA256SUMS" >/dev/null
+    if grep -F 'README.md' "$TMP_DIR/output/SHA256SUMS" >/dev/null; then
+        echo "FAIL: mutable README is still covered by the immutable manifest" >&2
+        exit 1
+    fi
     (cd "$TMP_DIR/output" && sha256sum -c SHA256SUMS >/dev/null)
 fi
 
