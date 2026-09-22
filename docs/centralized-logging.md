@@ -62,7 +62,7 @@ Do not weaken peer verification as a normal rollout step. If certificate trouble
 
 ## Validation
 
-Configuration syntax checks are read-only, but a router-side restart is a maintenance action. During the stability gate, syntax-check the existing file only if useful and defer sender restarts and trust-policy changes unless recovery is required.
+Configuration syntax checks are read-only, but a router-side restart is a maintenance action. On the current post-observation reference state, validate syntax first and perform sender restarts or trust-policy changes only in a planned maintenance window with rollback.
 
 Validate configuration before every planned restart:
 
@@ -108,7 +108,7 @@ grep -R "MTLS_END_TO_END_OK" /var/log/asus-edge
 
 ## Failure and persistence tests
 
-These are controlled fault-injection tests. Run them only in a planned validation window after the unchanged-state gate, or on a disposable/non-reference environment.
+These are controlled fault-injection tests. Run them only in a planned validation window, or on a disposable/non-reference environment.
 
 To validate the disk buffer:
 
@@ -118,7 +118,7 @@ To validate the disk buffer:
 4. Start the collector.
 5. Verify that every buffered message arrives.
 
-A reboot test is also a planned maintenance test. After the stability gate, when a reboot is intentionally scheduled, verify all of the following:
+A reboot test is also a planned maintenance test. When a reboot is intentionally scheduled, verify all of the following:
 
 - `syslog-ng` is running;
 - the TLS connection to port 6514 is established;
@@ -162,7 +162,7 @@ systemctl list-timers asus-edge-log-retention.timer
 
 The defaults provide at least 30 days of retained logs. Override `ASUS_EDGE_LOG_ROOT`, `ASUS_EDGE_COMPRESS_AFTER_MINUTES`, or `ASUS_EDGE_DELETE_AFTER_MINUTES` only for controlled testing or a deliberately different local policy. The script rejects relative roots and the filesystem root.
 
-Collector-only maintenance does not modify the router, but intentionally stopping the collector can still change the behavior being observed by exercising the router's reliable buffer. During the reference stability gate, avoid deliberate collector outages if the goal is to preserve an unchanged end-to-end logging state.
+Collector-only maintenance does not modify the router, but intentionally stopping the collector can still change the behavior being observed by exercising the router's reliable buffer. During any future declared unchanged-state observation, avoid deliberate collector outages if the goal is to preserve an unchanged end-to-end logging state.
 
 ## Operational boundaries
 
