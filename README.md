@@ -157,6 +157,8 @@ The artifact does **not** by itself prove syslog-ng recovery, end-to-end mTLS de
 
 Other dated repository evidence documents additional validation performed in the reference environment, including remote-client DNS behavior and earlier router/firewall checks. Keep those observations attached to their original dates and artifacts rather than folding them into the 2026-09-11 SSD evidence.
 
+On 2026-09-22, a separate live exit-node validation correlated the same fixed-ID ICMP flow on `tailscale0` before NAT and on the WAN interface after NAT. Together with `ip_forward=1`, the project WAN-forward rule, the Asuswrt-Merlin WAN `MASQUERADE`, and the parent established/related return rule, this validates the reference deployment's exit-node NAT boundary as **project-owned filtering + platform-owned WAN NAT**. See `evidence/2026-09-22/audit-02-exit-node-nat-validation.md`.
+
 The 2026-09-08 LTE/5G validation observed behavior consistent with the intended remote DNS path:
 
 `Android remote client -> Tailscale tunnel -> router dnsmasq/Diversion -> Unbound on loopback:53535 -> recursive DNS`
