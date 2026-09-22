@@ -33,6 +33,8 @@ jobs:
         run: sh tests/test-services-config-validation.sh
       - name: Run services-start Tailscale policy guards
         run: sh tests/test-services-tailscale-policy-static.sh
+      - name: Run canonical Tailscale reconciliation mocks
+        run: sh tests/test-tailscale-reconcile.sh
       - name: Run services-start managed firewall hook guard
         run: sh tests/test-services-firewall-hook-static.sh
       - name: Run healthcheck configuration validation
