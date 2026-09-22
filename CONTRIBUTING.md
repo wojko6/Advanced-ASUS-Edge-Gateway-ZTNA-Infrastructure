@@ -65,8 +65,10 @@ Evidence must:
 
 Prefer minimized, sanitized text evidence over screenshots, full packet captures, or complete logs. Only create a dated evidence directory after a real test has been performed and reviewed; empty templates are not validation evidence.
 
-## Stability observation gate
+## Reference-router observation status
 
-The reference router is in an unchanged-state stability observation from 2026-09-11 through 2026-09-25. During that period, documentation, repository work, CI/mock testing, and workstation-local endpoint experiments are acceptable. Do not use a contribution as a reason to change router firewall, DNS, Unbound, Tailscale, startup hooks, filtering lists, services, or to intentionally reboot the router before the observation completes.
+The unchanged-state observation was closed on 2026-09-22 after the bounded 2026-09-11 through 2026-09-22 interval. Contributions that require router-side state changes must now be handled as planned maintenance with backup, rollback and post-change live validation; repository/CI success alone is not evidence that a change is deployed on the reference router.
 
-Read-only router observations are acceptable when needed to corroborate a test without changing the validated state.
+If a future unchanged-state observation is declared, its start/end dates and restrictions must be recorded in `PROJECT-STATUS.md`. Read-only router observations remain preferable when they can answer the question without changing the validated state.
+
+For documentation lifecycle and source-of-truth precedence, follow `docs/documentation-model.md`.

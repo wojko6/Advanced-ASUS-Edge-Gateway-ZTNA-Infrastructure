@@ -1,10 +1,15 @@
 # Post-Stability Gate Validation Plan
 
+**Status:** COMPLETED / HISTORICAL  
+**Plan created:** 2026-09-18  
+**Observation actually closed:** 2026-09-22  
+**Outcome:** AUDIT-02 and AUDIT-03 were completed with live evidence on 2026-09-22.
+
+This document is retained as the historical execution plan. It is not the current project status or an active operational gate. Current status is maintained in `../PROJECT-STATUS.md`; completed results are recorded in `../evidence/2026-09-22/audit-02-exit-node-nat-validation.md` and `../evidence/2026-09-22/audit-03-dns-datapath-validation.md`.
+
 ## Scope
 
-This procedure is prepared for the first planned validation window after the reference router's unchanged-state observation completes on **2026-09-25**.
-
-It is intentionally documentation-only until the stability gate is closed. Do not execute the live-router commands in this document during the active unchanged-state window unless recovery or a security incident requires intervention.
+This procedure was prepared for the first planned validation window after an observation originally expected to continue through **2026-09-25**. The unchanged-state observation was instead deliberately closed on **2026-09-22**, after which the relevant live validation phases were executed.
 
 ## Phase 0 — close the observation window
 
@@ -165,9 +170,9 @@ The final audit report should distinguish:
 - remote-client evidence;
 - endpoint/mobile evidence.
 
-## Current repository state
+## Historical repository state at plan creation
 
-As of 2026-09-18:
+The following was the repository state on 2026-09-18, before the plan was executed:
 
 - GitHub Actions run **#465**: SUCCESS;
 - Fedora clean-room DR validation: PASS;

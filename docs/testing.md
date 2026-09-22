@@ -92,7 +92,7 @@ Run WAN scans only against addresses you own or are authorized to test.
 
 ## Packet capture
 
-Packet capture is a live-router validation technique and is **not** part of endpoint-only testing during the unchanged-state observation window unless a capture was already planned and can be performed without altering the validated configuration. Prefer existing read-only logs for endpoint DNS-path corroboration during the stability gate.
+Packet capture is a live-router validation technique. Prefer existing read-only counters/logs when they are sufficient; otherwise run captures as an explicit planned validation action and sanitize or delete raw captures after extracting the minimum evidence required.
 
 On the router:
 
@@ -131,11 +131,11 @@ dig +dnssec -p 53535 @127.0.0.1 cloudflare.com A
 ### Android/Fedora exit-node DNS datapath comparison
 
 A previous Android validation observed behaviour consistent with the intended
-router DNS path, while later read-only observations raised an unresolved question
-about the resolver path used by an Android exit-node client. Do not generalize
-either observation into a universal claim. The controlled comparison below is
-reserved for after the reference-router stability gate unless an equivalent
-read-only observation can answer the question without changing router state.
+router DNS path, while later read-only observations raised a resolver-path question.
+That question was closed for classic UDP/TCP port 53 by the controlled 2026-09-22
+AUDIT-03 live validation. The comparison below is retained as a repeatable
+revalidation method after material DNS, firewall or Tailscale changes; it must
+not be generalized to DoH, DoT, DoQ or application-specific encrypted resolvers.
 
 Use the **same router configuration and exit node** for both clients. Record the
 client OS/version, Tailscale version, transport (for example cellular or external
@@ -217,7 +217,7 @@ Record model, OS/version, hardening/debloat state, network path, observation met
 
 ## Performance baseline
 
-Measure router performance at idle and under three flows only when live-router performance testing is scheduled outside the unchanged-state stability gate: direct WAN, Tailscale subnet routing, and exit-node routing.
+Measure router performance at idle and under three flows only during an explicit live-router performance validation window: direct WAN, Tailscale subnet routing, and exit-node routing.
 
 ```sh
 top -b -n 1

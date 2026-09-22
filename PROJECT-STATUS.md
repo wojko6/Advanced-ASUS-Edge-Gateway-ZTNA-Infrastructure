@@ -28,13 +28,15 @@ Key validated areas include:
 - persistent SSD-backed Entware storage and swap;
 - Tailscale service availability and intended `netfilter-mode=off` architecture;
 - project-owned IPv4 filter/NAT chains and fail-closed IPv6 guards;
-- health-check enforcement of the validated exit-node runtime contract: IPv4 forwarding, project WAN-forward rule, platform WAN NAT, and established/related return path;
+- live validation of the exit-node runtime contract: IPv4 forwarding, project WAN-forward rule, platform WAN NAT, and established/related return path;
 - Unbound availability and DNSSEC validation;
 - dnsmasq integration with the intended local Unbound listener;
 - syslog-ng availability;
 - printer exposure hardening;
 - backup/recovery and evidence tooling;
 - CI/static/mock validation of configuration, firewall, WAN recovery, installer rollback, restore validation, and maintenance paths.
+
+The current repository implementation of `scripts/healthcheck.sh` also checks the AUDIT-02 exit-node runtime prerequisites when exit-node mode is enabled. That implementation was merged through repository-only PR #51 and must not be treated as deployed on the reference router until a separate live deployment/health-check run is recorded.
 
 ## Stability observation — closed 2026-09-22
 
@@ -56,7 +58,7 @@ A full repository audit covered code, security, install/rollback, firewall/DNS/T
 | AUDIT-02 — exit-node NAT dependency not explicitly validated | **CLOSED / LIVE VALIDATED** | Live correlation on 2026-09-22 identified Asuswrt-Merlin's WAN `POSTROUTING` `MASQUERADE` as the effective NAT for Tailscale exit-node traffic, confirmed `ip_forward=1`, verified the project WAN-forward rule, and correlated the same fixed-ID ICMP flow on `tailscale0` before NAT and the WAN interface after NAT. |
 | AUDIT-03 — Android/Fedora exit-node DNS datapath validation gap | **CLOSED / LIVE VALIDATED** | Controlled live tests on 2026-09-22 validated classic DNS over UDP/TCP 53 from Fedora and Android exit-node clients through `tailscale0` -> `EDGE_TS_PREROUTING` REDIRECT -> router-local dnsmasq -> Unbound on `127.0.0.1:53535`. Encrypted DNS (DoH/DoT) remains outside this claim. |
 | AUDIT-04 — unnecessary deployment identifiers in Zen evidence | **CLOSED** | Evidence was sanitized while preserving the technical result. |
-| AUDIT-05 — Android DNS datapath claim exceeded available evidence | **CLOSED** | README wording now preserves the historical observation while explicitly documenting the unresolved datapath question. |
+| AUDIT-05 — Android DNS datapath claim exceeded available evidence | **CLOSED** | README wording was corrected so the historical observation no longer overclaimed the resolver path. The remaining classic-DNS datapath question was subsequently closed by AUDIT-03 live validation on 2026-09-22. |
 
 AUDIT-02 and AUDIT-03 are now closed from live evidence on the reference datapath. AUDIT-03 closure is explicitly bounded to classic DNS over UDP/TCP port 53; DoH/DoT and application-specific encrypted resolver transports remain separate limitations.
 
@@ -136,4 +138,4 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 ## Current decision
 
-As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. The repository health check verifies the platform-owned exit-node NAT/return-path prerequisites established by AUDIT-02. A controlled Diversion A/B/C experiment has also established the current DNS-filtering boundary: `snbAdSupport=no` improves coverage, `Large` broadens the policy, but DNS blocking alone does not remove all rendered advertising. The Large profile is therefore in normal-use observation for false positives/resource impact rather than being treated as a proven complete ad-blocking solution.
+As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. The repository health-check code now verifies the platform-owned exit-node NAT/return-path prerequisites established by AUDIT-02, but that post-AUDIT code change remains a repository/CI result until its deployment on the reference router is separately evidenced. A controlled Diversion A/B/C experiment has also established the current DNS-filtering boundary: `snbAdSupport=no` improves coverage, `Large` broadens the policy, but DNS blocking alone does not remove all rendered advertising. The Large profile is therefore in normal-use observation for false positives/resource impact rather than being treated as a proven complete ad-blocking solution.

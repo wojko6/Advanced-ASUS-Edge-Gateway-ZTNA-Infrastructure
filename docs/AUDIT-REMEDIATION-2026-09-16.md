@@ -1,10 +1,14 @@
 # Audit remediation report — 2026-09-16
 
+**Status:** COMPLETED / HISTORICAL  
+**Snapshot date:** 2026-09-16  
+**Subsequent closure:** AUDIT-02 and AUDIT-03 were later closed with live evidence on 2026-09-22; current status is maintained in `../PROJECT-STATUS.md`.
+
 ## Scope
 
 This report records the remediation state of the repository audit performed against the ASUS Edge Gateway / ZTNA project. The review covered implementation, security boundaries, install/rollback behaviour, firewall/DNS/Tailscale design, logging, backup/recovery, CI/tests, documentation, evidence hygiene, and portfolio presentation.
 
-The reference router is inside the 2026-09-11 through 2026-09-25 unchanged-state stability gate. Repository changes described here do not imply corresponding router configuration changes.
+At the time of this report, the reference router was inside the then-planned 2026-09-11 through 2026-09-25 unchanged-state stability gate. The observation was later closed on 2026-09-22. Repository changes described in this historical report did not imply corresponding router configuration changes.
 
 ## AUDIT-01 — transactional restore
 

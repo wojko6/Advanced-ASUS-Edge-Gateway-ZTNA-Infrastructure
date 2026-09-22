@@ -2,7 +2,7 @@
 
 Ten przewodnik opisuje pierwsze, kontrolowane wdrożenie projektu na Asuswrt-Merlin. Pierwsze zastosowanie reguł wykonaj z komputera podłączonego do LAN i zachowaj dostęp do panelu routera.
 
-> **Aktualna bramka stabilności:** poniższe polecenia opisują wdrożenie lub zaplanowane okno serwisowe. Nie są instrukcją do ponownego zastosowania konfiguracji na referencyjnym routerze podczas obserwacji niezmienionego stanu trwającej do **2026-09-25**. W tym okresie nie wykonuj rutynowo `install.sh --apply`, restartów dnsmasq/Unbound, zmian firewalla/DNS/usług/pakietów ani celowego restartu routera. Dopuszczalne są odczytowe kontrole stanu; awaria lub aktywny incydent bezpieczeństwa ma pierwszeństwo przed obserwacją stabilności.
+> **Status referencyjnego routera:** obserwacja niezmienionego stanu została zakończona **2026-09-22** po ciągłej pracy od 2026-09-11 do 2026-09-22. Poniższe polecenia wykonuj wyłącznie podczas kontrolowanego wdrożenia lub okna serwisowego, z aktualnym backupem, drogą rollbacku i walidacją po zmianie. Sukces testów repozytorium/CI nie oznacza automatycznie, że dana zmiana została wdrożona na referencyjnym ASUS-ie.
 
 ## 1. Przygotowanie routera
 

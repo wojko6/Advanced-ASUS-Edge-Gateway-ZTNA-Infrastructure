@@ -2,6 +2,8 @@
 
 ![Advanced ASUS Edge Gateway architecture](images/Architecture.png)
 
+`images/Architecture.png` is the canonical diagram of the current reference deployment. Historical or proposed diagrams must be labeled explicitly and must not compete with this image as the active architecture view.
+
 ## Logical components
 
 | Layer | Component | Responsibility |
