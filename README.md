@@ -69,7 +69,7 @@ Never commit auth keys, node state, private keys, collector credentials, router 
 
 ## Quick start
 
-> **Reference-router stability gate:** the commands in this section describe a normal deployment or planned maintenance workflow. They are **not** instructions to re-run installation, firewall apply, resolver restart, package discovery/update, or an intentional reboot on the currently observed reference router during the unchanged-state window ending **2026-09-25**. During that gate, keep router-side checks read-only unless recovery from an active fault or security incident requires intervention. See [Current stability gate](#current-stability-gate) and [Operations and recovery](docs/operations.md).
+> **Reference-router stability observation:** the planned unchanged-state window was closed on **2026-09-22** after continuous 24/7 powered operation from **2026-09-11 through 2026-09-22**. This was not the originally planned full 14-day window through 2026-09-25, so the repository does not claim a completed 14-day endurance test. Subsequent router changes should still be performed as deliberate maintenance with backup, rollback and post-change validation. See [Stability observation](#stability-observation) and [Operations and recovery](docs/operations.md).
 
 Prepare and validate the configuration on a Linux workstation working copy
 with Python 3 available for the regression tests (not required on the router):
@@ -161,19 +161,21 @@ The 2026-09-08 LTE/5G validation observed behavior consistent with the intended 
 
 `Android remote client -> Tailscale tunnel -> router dnsmasq/Diversion -> Unbound on loopback:53535 -> recursive DNS`
 
-That dated test recorded Internet connectivity with Tailscale DNS enabled, DNS traffic through the tunnel, normal resolution of allowed domains, Diversion blocking of a test advertising/tracking domain, DNSSEC validation, and equivalent home-Wi-Fi behavior. Later read-only observations raised an unresolved question about the exact resolver/datapath used by an Android exit-node client in a separate scenario. Therefore the 2026-09-08 result remains valid as a bounded historical observation, but it is **not** treated as proof that every Android exit-node DNS flow always traverses dnsmasq/Diversion and Unbound. End-to-end Android/Fedora resolver-path comparison is deferred until after the stability gate so the reference router remains unchanged.
+That dated test recorded Internet connectivity with Tailscale DNS enabled, DNS traffic through the tunnel, normal resolution of allowed domains, Diversion blocking of a test advertising/tracking domain, DNSSEC validation, and equivalent home-Wi-Fi behavior. Later read-only observations raised an unresolved question about the exact resolver/datapath used by an Android exit-node client in a separate scenario. Therefore the 2026-09-08 result remains valid as a bounded historical observation, but it is **not** treated as proof that every Android exit-node DNS flow always traverses dnsmasq/Diversion and Unbound. The unchanged-state observation has now been closed, so the deferred Android/Fedora resolver-path comparison can be scheduled as a controlled post-observation test.
 
 See the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.md), the [SSD migration procedure](docs/ENTWARE-SSD-MIGRATION.md), and the sanitized [2026-09-11 reboot validation evidence](evidence/2026-09-11/entware-ssd-migration-validation.txt).
 
-## Current stability gate
+## Stability observation
 
-The reference router is in a 14-day unchanged-state observation window from **2026-09-11 through 2026-09-25**. During this gate, router configuration changes and intentional reboots are avoided unless recovery is required. Repository/documentation work and endpoint-only experiments may continue without changing the router.
+The unchanged-state observation was closed on **2026-09-22**. The reference router remained powered and in normal 24/7 operation from **2026-09-11 through 2026-09-22** without an intentional configuration-change cycle during that observation period. The originally planned end date was 2026-09-25, so this result must be described as the completed 2026-09-11 → 2026-09-22 continuous observation, **not** as a completed 14-day endurance test.
 
-Endpoint-filtering validation now includes dated Zen evidence on Windows and a Fedora/GNOME proxy-integration case study. AdGuard for Windows remains an optional future comparison. These endpoint results are kept separate from router-side capability claims.
+At the closing read-only check, the project health check reported `0 failure(s), 0 warning(s)` with `HEALTHCHECK_RC=0`; Entware/SSD storage, required swap, Tailscale, project firewall chains, Unbound/DNSSEC and syslog-ng were healthy, and the inspected syslog contained no matching OOM, crash, filesystem-I/O or read-only-filesystem errors.
+
+Endpoint-filtering validation includes dated Zen evidence on Windows and a Fedora/GNOME proxy-integration case study. AdGuard for Windows remains an optional future comparison. These endpoint results remain separate from router-side capability claims.
 
 ## Validation and recovery
 
-The commands below are operational examples. During the active stability gate, use only the read-only checks that are necessary for observation; defer install/uninstall/restore/firewall-apply actions and deliberate live-client policy tests to a maintenance window unless recovery is required.
+The commands below are operational examples. The unchanged-state observation is complete; install/uninstall/restore/firewall-apply actions and deliberate live-client policy tests should still be treated as planned maintenance with a current backup and rollback path.
 
 Read-only router inspection during the gate can include:
 
@@ -190,7 +192,7 @@ The repository regression suite remains safe to run on a workstation working cop
 sh tests/test-static.sh
 ```
 
-The live-client script actively probes management and LAN policy from an authorized remote client. Run it after the stability gate or during a planned validation/maintenance window, not merely as a routine unchanged-state observation:
+The live-client script actively probes management and LAN policy from an authorized remote client. Run it during a planned validation/maintenance window:
 
 ```sh
 sh tests/test-live-client.sh 192.168.50.1 192.168.50.20
@@ -198,7 +200,7 @@ sh tests/test-live-client.sh 192.168.50.1 192.168.50.20
 
 The second address is an optional LAN host on which SMB should be denied. See [testing](docs/testing.md) for the full security matrix and packet-capture procedure.
 
-Collecting a new evidence snapshot executes the project's collector and should be treated as an explicit validation action. During the unchanged-state gate, prefer existing logs and read-only inspection unless a dated snapshot is intentionally part of the observation plan:
+Collecting a new evidence snapshot executes the project's collector and should be treated as an explicit validation action:
 
 ```sh
 /jffs/addons/asus-edge/bin/collect-evidence.sh
