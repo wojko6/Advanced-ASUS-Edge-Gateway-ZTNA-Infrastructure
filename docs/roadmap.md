@@ -35,11 +35,11 @@ The correct claim is therefore a successful continuous 2026-09-11 → 2026-09-22
 
 ### Work that was allowed during the no-touch observation window
 
-The router configuration remains unchanged, but project work can continue away from the router:
+During that completed no-touch observation window, the router configuration remained unchanged while project work continued away from the router:
 
 - Improve repository structure, documentation, diagrams, threat-model notes, test methodology, and sanitized evidence organization.
 - Prepare future DNS/filtering rules and test cases offline without deploying them to the router.
-- Audit third-party aggregate blocklists offline (including `hululu1068/AdGuard-Rule`) as candidate inputs rather than trusted policy: identify upstream sources, remove irrelevant or high-risk entries, estimate false positives, and extract a small project-owned candidate set for later validation. Do not subscribe the reference router directly to a large third-party aggregate during the stability gate.
+- Audit third-party aggregate blocklists offline (including `hululu1068/AdGuard-Rule`) as candidate inputs rather than trusted policy: identify upstream sources, remove irrelevant or high-risk entries, estimate false positives, and extract a small project-owned candidate set for later validation. The reference router was not subscribed directly to a large third-party aggregate during the observation.
 - Validate endpoint-side filtering on a Windows workstation without changing router services or policies.
 - Test Zen as a system-level endpoint content filter with Chrome, including YouTube ad blocking, HTTPS/certificate behaviour, CPU/RAM impact, false positives, and browser compatibility.
 - Confirm that endpoint filtering does not bypass the existing router DNS path. Router-side activity during this check must remain read-only, for example inspecting already-generated dnsmasq logs.
