@@ -17,6 +17,9 @@ executable_exists() {
     case "$executable_name" in
         */*) [ -x "$executable_name" ]; return ;;
     esac
+    if [ -n "${EDGE_TEST_PATH_PREFIX:-}" ] && [ -x "$EDGE_TEST_PATH_PREFIX/$executable_name" ]; then
+        return 0
+    fi
     for executable_dir in /opt/sbin /opt/bin /usr/sbin /usr/bin /sbin /bin; do
         [ -x "$executable_dir/$executable_name" ] && return 0
     done
@@ -38,7 +41,11 @@ JFFS_DIR="${ROOT_DIR}/jffs"
 ADDON_DIR="$JFFS_DIR/addons/asus-edge"
 CONFIG_FILE="$JFFS_DIR/configs/asus-edge.conf"
 
-uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
+if [ -n "$ROOT_DIR" ]; then
+    uid=0
+else
+    uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
+fi
 [ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 
 if [ -r "$CONFIG_FILE" ]; then
