@@ -2,7 +2,7 @@
 
 ## Current reference-state gate
 
-The reference deployment completed its SSD migration and controlled reboot validation on 2026-09-11. A 14-day unchanged-state stability observation runs through 2026-09-25.
+The reference deployment completed its SSD migration and controlled reboot validation on 2026-09-11. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. This is not described as a completed 14-day endurance test.
 
 Until that observation completes, the normal change workflow below is **not** an instruction to deploy routine changes to the reference router. Repository/documentation work, CI/mock testing, workstation-local endpoint tests, and read-only router observations may continue. Defer routine firewall, DNS, Unbound, Tailscale, startup-hook, filtering-list, service, package, and reboot changes until the gate ends.
 
@@ -108,7 +108,7 @@ An emergency rollback during the active stability observation interrupts that ob
 
 ## Updates
 
-Never place `opkg update` or package upgrades in a boot hook. Use a planned maintenance window outside the active stability gate:
+Never place `opkg update` or package upgrades in a boot hook. Use a planned maintenance window with backup and rollback:
 
 ```sh
 ./scripts/backup.sh /opt/backups/asus-edge
@@ -141,7 +141,7 @@ Keep `EDGE_REQUIRE_SWAP="auto"` or set it explicitly to `1`. The managed
 retries the daemon using the general service-attempt settings. It keeps the
 previous daemon log as `/opt/var/log/tailscaled.log.previous`.
 
-Verify recovery during a scheduled maintenance/validation window, not by intentionally rebooting the router during the active stability gate:
+Verify recovery during a scheduled maintenance/validation window:
 
 ```sh
 cat /proc/swaps
