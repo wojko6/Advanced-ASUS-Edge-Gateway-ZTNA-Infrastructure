@@ -2,7 +2,7 @@
 
 This design forwards the Asuswrt local log to a Linux collector over Tailscale and mutually authenticated TLS (mTLS). The router authenticates the collector certificate, the collector authenticates the router certificate, and a reliable disk buffer preserves messages while the collector is unavailable.
 
-> **Reference-router stability gate:** the rollout, restart, outage and reboot procedures below are maintenance/validation procedures, not instructions to exercise against the current reference router during its unchanged-state observation through **2026-09-25**. During the gate, use existing configuration and read-only observations only. If recovery from an active logging fault or security incident requires a router-side change, document the intervention and restart the stability baseline after returning to a known-good state.
+> **Reference-router status:** the unchanged-state observation was closed on **2026-09-22**. The rollout, restart, outage and reboot procedures below are maintenance/validation procedures and should be executed only with backup, rollback and post-change verification. A repository configuration example or CI result is not evidence of live end-to-end logging on the reference router.
 
 ## Data path
 
