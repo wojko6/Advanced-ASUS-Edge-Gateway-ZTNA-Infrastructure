@@ -26,6 +26,8 @@ expect_rejected EDGE_REQUIRE_USB_PRINTER_DISABLED 2 'invalid EDGE_REQUIRE_USB_PR
 expect_rejected EDGE_ENABLE_EXIT_NODE yes 'invalid EDGE_ENABLE_EXIT_NODE value: yes'
 expect_rejected EDGE_INTERCEPT_DNS maybe 'invalid EDGE_INTERCEPT_DNS value: maybe'
 expect_rejected EDGE_ENFORCE_LAN_DNS maybe 'invalid EDGE_ENFORCE_LAN_DNS value: maybe'
+expect_rejected EDGE_BLOCK_LAN_DOT maybe 'invalid EDGE_BLOCK_LAN_DOT value: maybe'
+expect_rejected EDGE_DOT_PORT 70000 'invalid EDGE_DOT_PORT value: 70000'
 expect_rejected EDGE_ROUTER_LAN_IP '192.168.50.999' 'invalid EDGE_ROUTER_LAN_IP value: 192.168.50.999'
 expect_rejected EDGE_DNS_PORT 70000 'invalid EDGE_DNS_PORT value: 70000'
 expect_rejected EDGE_TS_IF 'tailscale0;bad' 'invalid EDGE_TS_IF value: tailscale0;bad'

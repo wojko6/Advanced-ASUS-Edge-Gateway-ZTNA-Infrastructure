@@ -56,6 +56,8 @@ fi
 : "${EDGE_REQUIRE_SWAP:=auto}"
 : "${EDGE_INTERCEPT_DNS:=1}"
 : "${EDGE_ENFORCE_LAN_DNS:=0}"
+: "${EDGE_BLOCK_LAN_DOT:=0}"
+: "${EDGE_DOT_PORT:=853}"
 : "${EDGE_DNS_PORT:=53}"
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_UNBOUND_CONFIG:=}"
@@ -103,10 +105,12 @@ valid_boolean "$EDGE_REQUIRE_USB_PRINTER_DISABLED" || fail "invalid EDGE_REQUIRE
 valid_boolean "$EDGE_ENABLE_EXIT_NODE" || fail "invalid EDGE_ENABLE_EXIT_NODE value: $EDGE_ENABLE_EXIT_NODE"
 valid_boolean "$EDGE_INTERCEPT_DNS" || fail "invalid EDGE_INTERCEPT_DNS value: $EDGE_INTERCEPT_DNS"
 valid_boolean "$EDGE_ENFORCE_LAN_DNS" || fail "invalid EDGE_ENFORCE_LAN_DNS value: $EDGE_ENFORCE_LAN_DNS"
+valid_boolean "$EDGE_BLOCK_LAN_DOT" || fail "invalid EDGE_BLOCK_LAN_DOT value: $EDGE_BLOCK_LAN_DOT"
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
 valid_ipv4 "$EDGE_ROUTER_LAN_IP" || fail "invalid EDGE_ROUTER_LAN_IP value: $EDGE_ROUTER_LAN_IP"
 valid_port "$EDGE_DNS_PORT" || fail "invalid EDGE_DNS_PORT value: $EDGE_DNS_PORT"
+valid_port "$EDGE_DOT_PORT" || fail "invalid EDGE_DOT_PORT value: $EDGE_DOT_PORT"
 [ -z "$EDGE_WAN_IF" ] || valid_interface "$EDGE_WAN_IF" || fail "invalid EDGE_WAN_IF value: $EDGE_WAN_IF"
 valid_port "$EDGE_UNBOUND_PORT" || fail "invalid EDGE_UNBOUND_PORT value: $EDGE_UNBOUND_PORT"
 valid_port "$EDGE_SYSLOG_PORT" || fail "invalid EDGE_SYSLOG_PORT value: $EDGE_SYSLOG_PORT"
@@ -441,6 +445,56 @@ lan_dns_chain_matches_policy() {
         '
 }
 
+lan_dot_parent_jump_count() {
+    iptables -t filter -S FORWARD 2>/dev/null |
+        awk -v iface="$EDGE_LAN_IF" '
+            $1 == "-A" && $2 == "FORWARD" {
+                incoming=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-i" && i < NF) incoming=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (incoming == iface && target == "EDGE_LAN_DOT_FORWARD") count++
+            }
+            END { print count + 0 }
+        '
+}
+
+lan_dot_parent_order_ok() {
+    iptables -t filter -S FORWARD 2>/dev/null |
+        awk -v ts="$EDGE_TS_IF" -v lan="$EDGE_LAN_IF" '
+            $1 == "-A" && $2 == "FORWARD" {
+                rule++
+                incoming=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-i" && i < NF) incoming=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (rule == 1 && incoming == ts && target == "EDGE_TS_FORWARD") first_ok=1
+                if (rule == 2 && incoming == lan && target == "EDGE_LAN_DOT_FORWARD") second_ok=1
+            }
+            END { exit !(first_ok && second_ok) }
+        '
+}
+
+lan_dot_chain_matches_policy() {
+    iptables -t filter -S EDGE_LAN_DOT_FORWARD 2>/dev/null |
+        awk -v port="$EDGE_DOT_PORT" '
+            $1 == "-A" && $2 == "EDGE_LAN_DOT_FORWARD" {
+                rules++
+                proto=""; dport=""; target=""; reject=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                    if ($i == "--reject-with" && i < NF) reject=$(i+1)
+                }
+                if (proto == "tcp" && dport == port && target == "REJECT" && reject == "tcp-reset") match++
+            }
+            END { exit !(rules == 1 && match == 1) }
+        '
+}
+
 direct_parent_tailscale_nat_rule_count() {
     iptables -t nat -S PREROUTING 2>/dev/null |
         awk -v iface="$EDGE_TS_IF" '
@@ -503,6 +557,15 @@ for active_hook_name in firewall-start services-start wan-event nat-start; do
 done
 if [ "$unsafe_jffs_hooks" -eq 0 ]; then
     ok "active JFFS hooks are not group/world writable or symlinked"
+fi
+
+dot_jump_count="$(lan_dot_parent_jump_count)"
+if [ "$EDGE_BLOCK_LAN_DOT" = "1" ]; then
+    if [ "$dot_jump_count" = "1" ]; then ok "single LAN DoT FORWARD jump"; else fail "LAN DoT FORWARD jump count: $dot_jump_count"; fi
+    if lan_dot_parent_order_ok; then ok "LAN DoT enforcement evaluated before platform FORWARD rules"; else fail "LAN DoT enforcement parent ordering invalid"; fi
+    if lan_dot_chain_matches_policy; then ok "LAN DoT TCP/853 blocking policy"; else fail "LAN DoT blocking policy missing or drifted"; fi
+else
+    if [ "$dot_jump_count" = "0" ]; then ok "LAN DoT blocking disabled without active jump"; else fail "LAN DoT blocking disabled but jump count is $dot_jump_count"; fi
 fi
 
 lan_dns_jump_count="$(lan_dns_parent_jump_count)"
