@@ -19,7 +19,7 @@ touch -d '3 days ago' "$LOGROOT/2026-01-01.log"
 ASUS_EDGE_ROUTER_LOG_ROOT="$LOGROOT" \
 ASUS_EDGE_ROUTER_LOG_MAX_AGE_DAYS=1 \
 ASUS_EDGE_ROUTER_LOG_MAX_KB=1024 \
-"$SCRIPT" --apply >/dev/null
+sh "$SCRIPT" --apply >/dev/null
 
 [ ! -e "$LOGROOT/2026-01-01.log" ]
 [ -f "$LOGROOT/$TODAY" ]
@@ -36,7 +36,7 @@ dd if=/dev/zero of="$LOGROOT/2026-02-02.log" bs=1024 count=8 status=none
 ASUS_EDGE_ROUTER_LOG_ROOT="$LOGROOT" \
 ASUS_EDGE_ROUTER_LOG_MAX_AGE_DAYS=3650 \
 ASUS_EDGE_ROUTER_LOG_MAX_KB=4 \
-"$SCRIPT" --apply >/dev/null
+sh "$SCRIPT" --apply >/dev/null
 
 [ ! -e "$LOGROOT/2026-02-01.log" ]
 [ ! -e "$LOGROOT/2026-02-02.log" ]
@@ -45,10 +45,10 @@ ASUS_EDGE_ROUTER_LOG_MAX_KB=4 \
 echo 'PASS: size cap removes oldest managed logs without touching current/foreign files'
 
 ASUS_EDGE_ROUTER_LOG_ROOT="$TMPROOT/missing/asus-edge" \
-"$SCRIPT" --dry-run >/dev/null
+sh "$SCRIPT" --dry-run >/dev/null
 echo 'PASS: missing router log directory is harmless'
 
-if ASUS_EDGE_ROUTER_LOG_ROOT=/tmp "$SCRIPT" --dry-run >/dev/null 2>&1; then
+if ASUS_EDGE_ROUTER_LOG_ROOT=/tmp sh "$SCRIPT" --dry-run >/dev/null 2>&1; then
     echo 'FAIL: unsafe router log root was accepted' >&2
     exit 1
 fi
