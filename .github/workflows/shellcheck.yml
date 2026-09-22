@@ -35,6 +35,8 @@ jobs:
         run: sh tests/test-log-retention.sh
       - name: Run router-local log-retention test
         run: sh tests/test-router-log-retention.sh
+      - name: Run syslog TLS material preflight tests
+        run: sh tests/test-syslog-tls-material.sh
       - name: Run services-start configuration validation
         run: sh tests/test-services-config-validation.sh
       - name: Run services-start Tailscale policy guards
