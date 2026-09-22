@@ -64,6 +64,7 @@ jobs:
         run: |
           sh tests/test-wan-event-handler.sh
           sh tests/test-wan-config-validation.sh
+          sh tests/test-unbound-readiness.sh
       - name: Run installer syntax-preflight coverage guard
         run: sh tests/test-install-preflight-static.sh
       - name: Run isolated install and rollback test
