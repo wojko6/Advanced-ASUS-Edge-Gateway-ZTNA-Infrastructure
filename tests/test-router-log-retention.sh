@@ -16,6 +16,7 @@ printf 'outside\n' >"$TMPROOT/outside"
 ln -s "$TMPROOT/outside" "$LOGROOT/2025-01-01.log"
 touch -d '3 days ago' "$LOGROOT/2026-01-01.log"
 
+ASUS_EDGE_TEST_ROOT="$TMPROOT" \
 ASUS_EDGE_ROUTER_LOG_ROOT="$LOGROOT" \
 ASUS_EDGE_ROUTER_LOG_MAX_AGE_DAYS=1 \
 ASUS_EDGE_ROUTER_LOG_MAX_KB=1024 \
@@ -33,6 +34,7 @@ dd if=/dev/zero of="$LOGROOT/2026-02-01.log" bs=1024 count=8 status=none
 sleep 1
 dd if=/dev/zero of="$LOGROOT/2026-02-02.log" bs=1024 count=8 status=none
 
+ASUS_EDGE_TEST_ROOT="$TMPROOT" \
 ASUS_EDGE_ROUTER_LOG_ROOT="$LOGROOT" \
 ASUS_EDGE_ROUTER_LOG_MAX_AGE_DAYS=3650 \
 ASUS_EDGE_ROUTER_LOG_MAX_KB=4 \
@@ -44,6 +46,7 @@ sh "$SCRIPT" --apply >/dev/null
 [ -f "$LOGROOT/notes.txt" ]
 echo 'PASS: size cap removes oldest managed logs without touching current/foreign files'
 
+ASUS_EDGE_TEST_ROOT="$TMPROOT" \
 ASUS_EDGE_ROUTER_LOG_ROOT="$TMPROOT/missing/asus-edge" \
 sh "$SCRIPT" --dry-run >/dev/null
 echo 'PASS: missing router log directory is harmless'
