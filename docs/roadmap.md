@@ -79,7 +79,7 @@ Full telemetry/capture changes that require modifying router configuration may n
 
 ## Near-term — Personal cloud / automated file sync
 
-- Create a workstation sync directory (for example `~/RouterCloud`) on Zorin OS.
+- Create a workstation sync directory (for example `~/RouterCloud`) on Fedora Workstation.
 - Implement incremental synchronization with `rsync` over SSH.
 - Store synchronized data on the dedicated `ROUTER_DATA` filesystem, isolated from Entware and router-service files.
 - Support secure remote synchronization through Tailscale without exposing file-sharing services to the public Internet.
@@ -90,7 +90,7 @@ Full telemetry/capture changes that require modifying router configuration may n
 - Document synchronization, failure handling, recovery, and rollback procedures.
 - Retain sanitized test evidence suitable for portfolio documentation.
 
-Target end state: the SSD remains the router's persistent storage for Entware and related services while `ROUTER_DATA` provides a separate private cloud-like data area synchronized automatically from Zorin OS.
+Target end state: the SSD remains the router's persistent storage for Entware and related services while `ROUTER_DATA` provides a separate private cloud-like data area synchronized automatically from Fedora Workstation.
 
 The synchronization feature must only be documented as **Completed and validated** after file synchronization, recovery, integrity, permissions, and reboot tests have actually been completed.
 
