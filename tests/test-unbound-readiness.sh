@@ -43,7 +43,7 @@ EOF
 
 cat >"$MOCK_BIN/tailscale" <<'EOF'
 #!/bin/sh
-case " $* " in *" debug prefs "*) echo '"'"'NetfilterMode'"'"': 0,' ;; esac
+case " $* " in *" debug prefs "*) echo '"NetfilterMode": 0,' ;; esac
 exit 0
 EOF
 
