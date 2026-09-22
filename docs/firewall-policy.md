@@ -140,6 +140,9 @@ firewall when packet capture shows no attempted print connection.
 - Printer HTTP, SNMPv1/v2, IPP, and raw TCP are not encrypted on the LAN segment. Tailscale protects the remote path only as far as the subnet router; keep the printer policy source-restricted and never expose these ports to the WAN.
 - Exit-node mode permits all protocols to the WAN interface; Tailscale Grants must restrict who may use `autogroup:internet`.
 - REDIRECT of classic DNS port 53 requires dnsmasq to include `tailscale0`; it does not block encrypted DNS protocols.
+- Optional `EDGE_ENFORCE_LAN_DNS=1` adds a separate managed `nat/EDGE_LAN_DNS_PREROUTING` chain on `EDGE_LAN_IF`. Traffic already addressed to the router's own DNS endpoint is returned unchanged; other TCP/UDP port-53 traffic is redirected to the router resolver.
+- LAN DNS enforcement is intentionally limited to classic TCP/UDP 53. It does not claim control over DoH/HTTPS, DoT/853, DoQ/QUIC, VPN-carried DNS, or application-specific encrypted resolver transports.
+- The feature is opt-in. Setting `EDGE_ENFORCE_LAN_DNS=0` and reapplying the managed firewall removes the LAN parent jump while keeping the managed chain empty for deterministic cleanup.
 - With Tailscale netfilter ownership disabled, the parent `nat/PREROUTING` path should contain the single project-owned `$EDGE_TS_IF -> EDGE_TS_PREROUTING` jump rather than parallel direct NAT rules for the same interface. The health check treats exact-interface direct NAT rules outside the managed chain as runtime drift.
 - Firmware-executed JFFS hooks relevant to this deployment (`firewall-start`, `services-start`, `wan-event`, and any residual `nat-start`) must not be symlinks or group/world writable. The health check reports these states as failures.
 

@@ -112,6 +112,8 @@ Read-only validation during the completed stability observation identified a DNS
 - This bypass may contribute to inconsistent DNS-level ad/tracker blocking on clients that use external DNS, but it must not be treated as the sole explanation for residual advertising. DoH/DoT, application behavior, same-domain advertising, client configuration, and filtering-list coverage require separate validation.
 - The observation period is now closed; any DNS Director or LAN DNS interception change must still be introduced as a controlled maintenance change with rollback.
 - Evaluate controlled LAN DNS enforcement, including TCP/UDP 53, DoT/853, IPv6, DoH limitations, exceptions/rollback, and false-positive/compatibility testing.
+- **2026-09-22 prototype validation:** with Fedora routed directly through the LAN gateway (Tailscale exit node disabled), a temporary `br0` test chain intercepted one controlled UDP/53 and one controlled TCP/53 query explicitly addressed to `8.8.8.8`. Normal DNS addressed to the router remained on the router-return path. The temporary chain was then removed cleanly. This validates the classic-DNS interception mechanism only; production deployment remains a separate controlled change.
+- Repository follow-up: implement the validated mechanism as opt-in `EDGE_ENFORCE_LAN_DNS` with a dedicated managed chain, health-check contract, rollback-by-disable, and regression coverage.
 
 ## Post-observation router filtering work
 

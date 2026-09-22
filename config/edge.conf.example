@@ -25,6 +25,13 @@ EDGE_ROUTER_SSH_PORT="22"
 # Force classic DNS from Tailscale clients through the router's resolver.
 # This does not intercept DoH, DoT, or DoQ; control those with endpoint policy.
 EDGE_INTERCEPT_DNS="1"
+
+# Optional LAN classic-DNS enforcement. When enabled, TCP/UDP port 53 arriving
+# from EDGE_LAN_IF is redirected to the router resolver even if a client targets
+# an external DNS server. This does not intercept DoH, DoT, DoQ, VPN-carried DNS,
+# or other encrypted/application-specific resolver transports.
+# Keep disabled until the deployment has been validated and rollback is ready.
+EDGE_ENFORCE_LAN_DNS="0"
 EDGE_DNS_PORT="53"
 EDGE_UNBOUND_PORT="53535"
 

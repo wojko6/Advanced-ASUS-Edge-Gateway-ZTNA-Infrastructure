@@ -51,6 +51,7 @@ die() { log "ERROR: $*"; exit 1; }
 : "${EDGE_ALLOW_ROUTER_SSH:=0}"
 : "${EDGE_ROUTER_SSH_PORT:=22}"
 : "${EDGE_INTERCEPT_DNS:=1}"
+: "${EDGE_ENFORCE_LAN_DNS:=0}"
 : "${EDGE_DNS_PORT:=53}"
 : "${EDGE_ALLOWED_LAN_HOSTS:=}"
 : "${EDGE_ALLOWED_LAN_TCP_PORTS:=}"
@@ -98,6 +99,7 @@ valid_ipv4_or_cidr() { valid_ipv4 "$1" || valid_ipv4_cidr "$1"; }
 validate_boolean EDGE_ALLOW_ROUTER_HTTPS "$EDGE_ALLOW_ROUTER_HTTPS"
 validate_boolean EDGE_ALLOW_ROUTER_SSH "$EDGE_ALLOW_ROUTER_SSH"
 validate_boolean EDGE_INTERCEPT_DNS "$EDGE_INTERCEPT_DNS"
+validate_boolean EDGE_ENFORCE_LAN_DNS "$EDGE_ENFORCE_LAN_DNS"
 validate_boolean EDGE_ALLOW_LAN_ICMP "$EDGE_ALLOW_LAN_ICMP"
 validate_boolean EDGE_ENABLE_EXIT_NODE "$EDGE_ENABLE_EXIT_NODE"
 validate_boolean EDGE_LOG_DROPS "$EDGE_LOG_DROPS"
@@ -180,12 +182,20 @@ remove_legacy_tailscale_rules
 flush_chain filter EDGE_TS_INPUT
 flush_chain filter EDGE_TS_FORWARD
 flush_chain nat EDGE_TS_PREROUTING
+flush_chain nat EDGE_LAN_DNS_PREROUTING
 "$IPTABLES" -A EDGE_TS_INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT || die "state rule failed"
 if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
     "$IPTABLES" -A EDGE_TS_INPUT -s "$EDGE_TAILNET_V4_CIDR" -p udp --dport "$EDGE_DNS_PORT" -j ACCEPT || die "DNS UDP input rule failed"
     "$IPTABLES" -A EDGE_TS_INPUT -s "$EDGE_TAILNET_V4_CIDR" -p tcp --dport "$EDGE_DNS_PORT" -j ACCEPT || die "DNS TCP input rule failed"
     "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p udp --dport "$EDGE_DNS_PORT" -j REDIRECT --to-ports "$EDGE_DNS_PORT" || die "DNS UDP redirect failed"
     "$IPTABLES" -t nat -A EDGE_TS_PREROUTING -p tcp --dport "$EDGE_DNS_PORT" -j REDIRECT --to-ports "$EDGE_DNS_PORT" || die "DNS TCP redirect failed"
+fi
+
+if [ "$EDGE_ENFORCE_LAN_DNS" = "1" ]; then
+    "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -d "$EDGE_ROUTER_LAN_IP/32" -p udp --dport "$EDGE_DNS_PORT" -j RETURN || die "LAN DNS UDP router-return rule failed"
+    "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -d "$EDGE_ROUTER_LAN_IP/32" -p tcp --dport "$EDGE_DNS_PORT" -j RETURN || die "LAN DNS TCP router-return rule failed"
+    "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -p udp --dport "$EDGE_DNS_PORT" -j REDIRECT --to-ports "$EDGE_DNS_PORT" || die "LAN DNS UDP redirect failed"
+    "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -p tcp --dport "$EDGE_DNS_PORT" -j REDIRECT --to-ports "$EDGE_DNS_PORT" || die "LAN DNS TCP redirect failed"
 fi
 add_admin_nat_rules
 add_admin_input_rules
@@ -200,6 +210,11 @@ if [ "$EDGE_LOG_DROPS" = "1" ]; then "$IPTABLES" -A EDGE_TS_FORWARD -m limit --l
 single_jump filter INPUT "$EDGE_TS_IF" EDGE_TS_INPUT
 single_jump filter FORWARD "$EDGE_TS_IF" EDGE_TS_FORWARD
 single_jump nat PREROUTING "$EDGE_TS_IF" EDGE_TS_PREROUTING
+if [ "$EDGE_ENFORCE_LAN_DNS" = "1" ]; then
+    single_jump nat PREROUTING "$EDGE_LAN_IF" EDGE_LAN_DNS_PREROUTING
+else
+    remove_all_rules nat PREROUTING -i "$EDGE_LAN_IF" -j EDGE_LAN_DNS_PREROUTING
+fi
 
 if executable_exists "$IP6TABLES" >/dev/null 2>&1; then
     "$IP6TABLES" -t filter -I INPUT 1 -i "$EDGE_TS_IF" -j DROP || die "cannot install temporary IPv6 INPUT guard"

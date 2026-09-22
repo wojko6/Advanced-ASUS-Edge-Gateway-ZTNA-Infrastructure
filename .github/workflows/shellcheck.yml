@@ -41,6 +41,8 @@ jobs:
         run: sh tests/test-healthcheck-exit-node-contract.sh
       - name: Run healthcheck runtime-drift guard test
         run: sh tests/test-healthcheck-drift-guards.sh
+      - name: Run LAN DNS enforcement healthcheck contract test
+        run: sh tests/test-healthcheck-lan-dns-contract.sh
       - name: Run Tailscale update recovery-guard checks
         run: sh tests/test-update-tailscale-static.sh
       - name: Run restore archive validation

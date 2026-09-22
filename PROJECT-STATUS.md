@@ -109,6 +109,16 @@ The Fedora clean-room restore findings have been converted into a guarded recove
 
 GitHub Actions run #474 completed successfully after the remediation batch. The workflow now executes the previously unwired recovery, firewall/configuration, evidence-collector, and log-retention tests directly, in addition to the existing focused validation steps.
 
+## LAN classic-DNS enforcement — prototype validated / repository follow-up
+
+A controlled temporary test on 2026-09-22 validated the LAN classic-DNS interception mechanism on the reference path. Fedora was first confirmed to route `8.8.8.8` through the LAN gateway rather than through the Tailscale exit node. A temporary `br0` NAT chain then intercepted one explicit UDP/53 query and one explicit TCP/53 query addressed to `8.8.8.8`, while DNS already addressed to the router followed the explicit router-return rule. The temporary chain was removed after the test.
+
+The repository now carries an opt-in production implementation, `EDGE_ENFORCE_LAN_DNS`, using a separate managed `EDGE_LAN_DNS_PREROUTING` chain plus health-check and regression coverage. The example remains disabled by default. This repository implementation must not be described as deployed on the reference router until a separate controlled deployment and live validation are recorded.
+
+The scope is deliberately limited to classic TCP/UDP port 53. DoH, DoT, DoQ, VPN-carried DNS, IPv6 resolver paths, and application-specific encrypted DNS remain separate controls/limitations.
+
+Sanitized evidence: `evidence/2026-09-22/lan-dns-enforcement-prototype-validation.md`.
+
 ## DNS filtering validation — 2026-09-22
 
 A controlled Diversion comparison was completed after the unchanged-state observation closed.
