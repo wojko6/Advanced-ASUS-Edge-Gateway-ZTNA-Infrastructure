@@ -123,6 +123,70 @@ After the unchanged-state stability gate is complete and its evidence is capture
 - Re-run DNSSEC, resolution, firewall, service-health, and recovery validation after each material change.
 - Capture sanitized before/after evidence without overstating what DNS-level filtering can block.
 
+## Post-observation idea — Pi-hole + Unbound DNS filtering migration
+
+**Status: idea / design candidate only — not deployed.**
+
+The current Diversion-based filtering is considered insufficient for some real-world mobile application flows, especially Android applications that render web content through WebView or browser Custom Tabs instead of a full browser session with its own strong content blocker. The purpose of this idea is therefore broader than improving browser ad blocking: it is to improve network-wide filtering for applications that do not provide an effective in-app blocker.
+
+The preferred target architecture is:
+
+```text
+LAN / authorized Tailscale clients
+              |
+              v
+        Pi-hole FTL :53
+          /        \
+         /          \
+        v            v
+Unbound 127.0.0.1:53535   firmware dnsmasq :8053
+recursive DNS + DNSSEC    DHCP / local names / reverse DNS
+```
+
+Design principles for this migration:
+
+- Treat Pi-hole as a potential **replacement for Diversion**, not an additional parallel filtering layer.
+- Keep Unbound as the recursive validating resolver and preserve DNSSEC validation.
+- Keep firmware dnsmasq for DHCP, local naming and reverse-DNS duties after moving it away from port 53.
+- Reuse the existing project-owned Tailscale/firewall policy so only authorized remote clients can use the router DNS service.
+- Keep the Pi-hole administrative UI restricted to trusted LAN management and explicitly authorized Tailscale administration sources; do not expose it to WAN or broad remote access.
+- Use Pi-hole query logging, per-client statistics, groups and API data to improve DNS observability and evidence quality.
+- Create a dedicated Android/mobile policy group only after baseline measurements show which advertising, tracking and telemetry domains are actually observed.
+- Preserve the existing privacy boundary: do not publish raw browsing history, private hostnames, client identifiers or unsanitized DNS logs.
+- Do not subscribe blindly to very large third-party blocklists. Prefer curated, attributable sources and small evidence-backed additions with rollback.
+- Do not claim that Pi-hole can block same-origin advertising, encrypted resolver bypasses, or all in-app advertising; WebView/Custom Tabs benefit must be measured rather than assumed.
+
+A key use case is remote mobile protection:
+
+```text
+home Wi-Fi:
+Android -> ASUS/Pi-hole -> Unbound
+
+LTE/5G:
+Android -> Tailscale -> ASUS/Pi-hole -> Unbound
+```
+
+This should allow the same project-owned DNS policy to protect Android applications both at home and away from the LAN, provided the measured client DNS path actually traverses the router. Existing AUDIT-03 resolver-path work therefore remains a prerequisite for strong claims about remote-client enforcement.
+
+### Required migration/acceptance plan
+
+Do not change the reference router during the active unchanged-state stability gate ending 2026-09-25. Repository-only design and test preparation are allowed.
+
+After the gate:
+
+1. Capture a fresh pre-change health/evidence snapshot and back up the current Diversion/dnsmasq/Unbound state.
+2. Create a dedicated feature branch and implement Pi-hole integration, health checks, rollback and configuration validation before deployment.
+3. Measure a Diversion baseline using representative Android app, WebView/Custom Tab, browser and telemetry scenarios.
+4. Stage Pi-hole without destroying the rollback path.
+5. Move firmware dnsmasq away from port 53 while preserving DHCP/local-name/reverse-DNS behavior.
+6. Bind Pi-hole to the intended LAN/Tailscale interfaces and forward upstream resolution to Unbound on loopback:53535.
+7. Disable Diversion only after Pi-hole has demonstrated equivalent or better DNS-layer coverage.
+8. Validate LAN DNS, Android WebView/Custom Tabs, LTE/5G over Tailscale, DNSSEC, reverse DNS, WAN reconnect, reboot recovery, Gravity updates, RAM/swap behavior, firewall exposure and administrative UI access.
+9. Compare before/after blocking effectiveness and false positives rather than accepting the migration on subjective appearance alone.
+10. Run a new 7-14 day unchanged-state observation period after acceptance before promoting Pi-hole into the validated baseline.
+
+Primary success criterion: improve advertising/tracking suppression in applications without strong browser-native blockers while preserving DNSSEC, local-network functionality, Tailscale policy, recoverability and an auditable DNS datapath.
+
 ## Post-observation — severity-aware alerting and phone notifications
 
 After the unchanged-state stability gate is complete and its evidence is captured:
