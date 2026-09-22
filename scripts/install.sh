@@ -66,6 +66,7 @@ for file in \
     "$REPO_DIR/router/scripts/services-start" \
     "$REPO_DIR/router/scripts/wan-event" \
     "$REPO_DIR/router/scripts/wan-event-handler" \
+    "$REPO_DIR/router/scripts/tailscale-reconcile" \
     "$REPO_DIR/scripts/healthcheck.sh" \
     "$REPO_DIR/scripts/check-usb-exposure.sh" \
     "$REPO_DIR/scripts/collect-evidence.sh" \
@@ -155,6 +156,7 @@ install_file "$REPO_DIR/router/scripts/firewall-start" "$ADDON_DIR/bin/firewall-
 install_file "$REPO_DIR/router/scripts/services-start" "$ADDON_DIR/bin/services-start" 0755
 install_file "$REPO_DIR/router/scripts/wan-event" "$ADDON_DIR/bin/wan-event" 0755
 install_file "$REPO_DIR/router/scripts/wan-event-handler" "$ADDON_DIR/bin/wan-event-handler" 0755
+install_file "$REPO_DIR/router/scripts/tailscale-reconcile" "$ADDON_DIR/bin/tailscale-reconcile" 0755
 install_file "$REPO_DIR/scripts/healthcheck.sh" "$ADDON_DIR/bin/healthcheck.sh" 0755
 install_file "$REPO_DIR/scripts/check-usb-exposure.sh" "$ADDON_DIR/bin/check-usb-exposure.sh" 0755
 install_file "$REPO_DIR/scripts/collect-evidence.sh" "$ADDON_DIR/bin/collect-evidence.sh" 0755
