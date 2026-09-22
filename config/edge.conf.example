@@ -1,4 +1,4 @@
-# Advanced ASUS Edge Gateway v2.0
+# Advanced ASUS Edge Gateway v2.1.3
 # Copy to /jffs/configs/asus-edge.conf and adapt before applying.
 
 EDGE_TS_IF="tailscale0"
@@ -27,6 +27,9 @@ EDGE_ROUTER_SSH_PORT="22"
 EDGE_INTERCEPT_DNS="1"
 EDGE_DNS_PORT="53"
 EDGE_UNBOUND_PORT="53535"
+# Functional Unbound readiness is bounded and checks process + listener +
+# local query before required startup/recovery is considered successful.
+EDGE_UNBOUND_READY_WAIT_SECONDS="10"
 
 # WAN-connected can race with services-start while Unbound is still recovering.
 # The handler exits as soon as the local DNS path is ready; this is only the
@@ -107,6 +110,9 @@ EDGE_UNBOUND_PIDFILE="/opt/var/run/unbound.pid"
 EDGE_REQUIRE_SWAP="auto"
 EDGE_SWAP_WAIT_SECONDS="60"
 EDGE_TS_READY_WAIT_SECONDS="20"
+# Bounded PID-owned locks serialize services-start and Tailscale reconciliation.
+EDGE_SERVICES_LOCK_WAIT_SECONDS="20"
+EDGE_TAILSCALE_LOCK_WAIT_SECONDS="20"
 EDGE_TAILSCALED_LOG="/opt/var/log/tailscaled.log"
 
 # Optional centralized logging health target used by healthcheck.sh.
