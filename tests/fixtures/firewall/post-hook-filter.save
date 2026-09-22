@@ -1,0 +1,16 @@
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:EDGE_TS_INPUT - [0:0]
+:EDGE_TS_FORWARD - [0:0]
+-A INPUT -i tailscale0 -j EDGE_TS_INPUT
+-A INPUT -i br0 -j ACCEPT
+-A FORWARD -i tailscale0 -j EDGE_TS_FORWARD
+-A FORWARD -i br0 -o ppp0 -j ACCEPT
+-A EDGE_TS_INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A EDGE_TS_INPUT -p udp --dport 53 -j ACCEPT
+-A EDGE_TS_INPUT -j DROP
+-A EDGE_TS_FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A EDGE_TS_FORWARD -i tailscale0 -o ppp0 -j ACCEPT
+-A EDGE_TS_FORWARD -j DROP
+COMMIT
