@@ -65,30 +65,43 @@ chain.
 
 A working IPv4 exit-node datapath therefore depends on the underlying Asuswrt /
 Asuswrt-Merlin WAN NAT policy translating forwarded Tailscale client traffic as
-it leaves the WAN interface. Successful client Internet access is useful
-functional evidence, but it must not be presented as proof of which NAT rule or
-chain performed that translation.
+it leaves the WAN interface.
 
-The current health check validates the project-owned forwarding policy and the
-absence of unexpected native Tailscale netfilter chains; it does **not** yet
-prove the complete WAN NAT datapath. During the reference router stability gate,
-this dependency must be investigated read-only. A post-gate validation should
-identify the effective POSTROUTING/MASQUERADE or SNAT rule, confirm counters or
-packet flow for an authorized exit-node client, and record a sanitized result
-before the NAT dependency is described as fully validated.
+That dependency was **live validated on 2026-09-22** on the reference router.
+Read-only inspection confirmed IPv4 forwarding enabled, the project-owned WAN
+forwarding rule in `EDGE_TS_FORWARD`, an Asuswrt-Merlin
+`nat/POSTROUTING` WAN `MASQUERADE` rule, and a parent `FORWARD`
+`RELATED,ESTABLISHED` accept rule for the return path. A controlled ICMP flow
+with a fixed identifier was captured on `tailscale0` before NAT and on the WAN
+interface after NAT with the same identifier and sequence numbers; replies were
+observed in both views.
 
-Read-only inspection candidates include:
+The validated ownership boundary is therefore:
+
+- project-owned: Tailscale ingress/forward filtering and authorization;
+- platform-owned: WAN source NAT and the parent established/related return path.
+
+The project must not duplicate the firmware NAT merely to claim ownership.
+Instead, when exit-node mode is enabled, health checking should treat the
+platform WAN NAT/return-path rules and `net.ipv4.ip_forward=1` as explicit
+runtime dependencies. A material firmware or firewall architecture change
+requires the packet-level validation to be repeated.
+
+Sanitized evidence: `evidence/2026-09-22/audit-02-exit-node-nat-validation.md`.
+
+Useful read-only inspection commands remain:
 
 ```sh
 iptables -t nat -S POSTROUTING
 iptables -t nat -nvL POSTROUTING --line-numbers
-iptables-save -t nat
+iptables -S FORWARD
+iptables -nvL FORWARD --line-numbers
 ```
 
-Do not add or replace NAT rules merely to satisfy this documentation check. If
-read-only inspection shows that the platform NAT policy is insufficient, design
-and test the smallest explicit project-owned NAT change in a disposable or
-planned maintenance environment before touching the reference router.
+Do not add or replace NAT rules merely to duplicate a working platform-owned
+mechanism. If a future firmware state no longer provides the validated contract,
+design and test the smallest explicit remediation in a disposable or planned
+maintenance environment before changing the reference router.
 
 ## Source-scoped legacy printer access
 
@@ -141,4 +154,4 @@ ip6tables -nvL EDGE_TS6_INPUT --line-numbers
 ip6tables -nvL EDGE_TS6_FORWARD --line-numbers
 ```
 
-To verify idempotency during a planned deployment or maintenance window, re-run `/jffs/scripts/firewall-start` and confirm that each project-owned parent jump remains singular. **Do not perform that re-apply merely for audit purposes during the reference router's unchanged-state observation window ending 2026-09-25.** During the active stability gate, use the read-only ruleset/counter inspection above instead. If recovery from an active fault or security incident requires firewall re-application, record the intervention and restart the stability baseline after the router returns to a known-good state.
+To verify idempotency during a planned deployment or maintenance window, re-run `/jffs/scripts/firewall-start` and confirm that each project-owned parent jump remains singular. The unchanged-state observation is now complete, but re-apply remains a deliberate maintenance action and should not be performed merely to satisfy documentation.

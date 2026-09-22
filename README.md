@@ -157,13 +157,17 @@ The artifact does **not** by itself prove syslog-ng recovery, end-to-end mTLS de
 
 Other dated repository evidence documents additional validation performed in the reference environment, including remote-client DNS behavior and earlier router/firewall checks. Keep those observations attached to their original dates and artifacts rather than folding them into the 2026-09-11 SSD evidence.
 
+On 2026-09-22, a separate live exit-node validation correlated the same fixed-ID ICMP flow on `tailscale0` before NAT and on the WAN interface after NAT. Together with `ip_forward=1`, the project WAN-forward rule, the Asuswrt-Merlin WAN `MASQUERADE`, and the parent established/related return rule, this validates the reference deployment's exit-node NAT boundary as **project-owned filtering + platform-owned WAN NAT**. See `evidence/2026-09-22/audit-02-exit-node-nat-validation.md`.
+
 The 2026-09-08 LTE/5G validation observed behavior consistent with the intended remote DNS path:
 
 `Android remote client -> Tailscale tunnel -> router dnsmasq/Diversion -> Unbound on loopback:53535 -> recursive DNS`
 
-That dated test recorded Internet connectivity with Tailscale DNS enabled, DNS traffic through the tunnel, normal resolution of allowed domains, Diversion blocking of a test advertising/tracking domain, DNSSEC validation, and equivalent home-Wi-Fi behavior. Later read-only observations raised an unresolved question about the exact resolver/datapath used by an Android exit-node client in a separate scenario. Therefore the 2026-09-08 result remains valid as a bounded historical observation, but it is **not** treated as proof that every Android exit-node DNS flow always traverses dnsmasq/Diversion and Unbound. The unchanged-state observation has now been closed, so the deferred Android/Fedora resolver-path comparison can be scheduled as a controlled post-observation test.
+That historical result remains bounded to what was measured on that date. On **2026-09-22**, the previously unresolved Fedora/Android exit-node DNS datapath was re-tested with unique classic-DNS queries sent intentionally to an external resolver address. Read-only packet captures and `EDGE_TS_PREROUTING` counters validated UDP/53 and TCP/53 interception from Fedora, forwarding from dnsmasq to Unbound on `127.0.0.1:53535`, and equivalent controlled classic-DNS behavior from an Android client on LTE/5G with the ASUS selected as exit node.
 
-See the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.md), the [SSD migration procedure](docs/ENTWARE-SSD-MIGRATION.md), and the sanitized [2026-09-11 reboot validation evidence](evidence/2026-09-11/entware-ssd-migration-validation.txt).
+The validated claim is intentionally limited to **classic DNS over UDP/TCP port 53**. It does not claim interception of DoH, DoT, QUIC-based encrypted DNS, or every application-specific resolver path.
+
+See the [2026-09-22 AUDIT-03 DNS datapath validation](evidence/2026-09-22/audit-03-dns-datapath-validation.md), the [2026-09-08 live validation report](evidence/2026-09-08/live-validation.md), the [SSD migration procedure](docs/ENTWARE-SSD-MIGRATION.md), and the sanitized [2026-09-11 reboot validation evidence](evidence/2026-09-11/entware-ssd-migration-validation.txt).
 
 ## Stability observation
 
