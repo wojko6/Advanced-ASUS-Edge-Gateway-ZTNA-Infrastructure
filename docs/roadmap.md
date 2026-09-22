@@ -207,7 +207,7 @@ Router-side alerting changes may now be tested only as deliberate maintenance ch
 
 ## Post-observation — off-router backup and reproducible recovery
 
-Extend the existing project configuration backup/restore workflow after the stability gate:
+Extend the existing project configuration backup/restore workflow in the post-observation phase:
 
 - Keep the current integrity-checked project backup as the configuration/application recovery layer.
 - Automatically copy completed backups away from the router-attached SSD to a trusted NAS or other independent system.
