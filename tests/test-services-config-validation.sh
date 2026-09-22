@@ -58,4 +58,17 @@ expect_rejected EDGE_ACCEPT_DNS yes
 expect_rejected EDGE_REQUIRE_SWAP maybe
 expect_rejected EDGE_TS_NETFILTER_MODE on
 
+for bad_path in "" "/" "/opt" "/tmp/edge.sock" "/jffs/configs/asus-edge.conf" "../edge.sock" "/var/run/tailscale/../edge.sock"; do
+    expect_rejected EDGE_TS_SOCKET "$bad_path"
+done
+for bad_path in "" "/" "/opt" "/tmp/tailscaled.state" "/jffs/configs/asus-edge.conf" "../tailscaled.state"; do
+    expect_rejected EDGE_TS_STATE "$bad_path"
+done
+for bad_path in "" "/" "/opt" "/tmp/tailscaled.log" "/jffs/configs/asus-edge.conf" "../tailscaled.log"; do
+    expect_rejected EDGE_TAILSCALED_LOG "$bad_path"
+done
+for bad_path in "" "/" "/opt" "/tmp/unbound.pid" "/jffs/configs/asus-edge.conf" "../unbound.pid"; do
+    expect_rejected EDGE_UNBOUND_PIDFILE "$bad_path"
+done
+
 echo "PASS: invalid services-start configuration rejected"
