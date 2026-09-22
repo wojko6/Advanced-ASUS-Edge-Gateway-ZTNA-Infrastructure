@@ -489,9 +489,9 @@ lan_dot_chain_matches_policy() {
                     if ($i == "-j" && i < NF) target=$(i+1)
                     if ($i == "--reject-with" && i < NF) reject=$(i+1)
                 }
-                if (proto == "tcp" && dport == port && target == "REJECT" && reject == "tcp-reset") match++
+                if (proto == "tcp" && dport == port && target == "REJECT" && reject == "tcp-reset") matched++
             }
-            END { exit !(rules == 1 && match == 1) }
+            END { exit !(rules == 1 && matched == 1) }
         '
 }
 
