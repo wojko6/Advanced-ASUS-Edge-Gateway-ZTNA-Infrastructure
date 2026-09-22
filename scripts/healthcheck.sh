@@ -51,6 +51,7 @@ fi
 : "${EDGE_REQUIRE_USB_PRINTER_DISABLED:=1}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
+: "${EDGE_WAN_IF:=}"
 : "${EDGE_REQUIRE_SWAP:=auto}"
 : "${EDGE_INTERCEPT_DNS:=1}"
 : "${EDGE_UNBOUND_PORT:=53535}"
@@ -100,6 +101,7 @@ valid_boolean "$EDGE_ENABLE_EXIT_NODE" || fail "invalid EDGE_ENABLE_EXIT_NODE va
 valid_boolean "$EDGE_INTERCEPT_DNS" || fail "invalid EDGE_INTERCEPT_DNS value: $EDGE_INTERCEPT_DNS"
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
+[ -z "$EDGE_WAN_IF" ] || valid_interface "$EDGE_WAN_IF" || fail "invalid EDGE_WAN_IF value: $EDGE_WAN_IF"
 valid_port "$EDGE_UNBOUND_PORT" || fail "invalid EDGE_UNBOUND_PORT value: $EDGE_UNBOUND_PORT"
 valid_port "$EDGE_SYSLOG_PORT" || fail "invalid EDGE_SYSLOG_PORT value: $EDGE_SYSLOG_PORT"
 [ -z "$EDGE_SYSLOG_HOST" ] || valid_ipv4 "$EDGE_SYSLOG_HOST" || valid_host "$EDGE_SYSLOG_HOST" || fail "invalid EDGE_SYSLOG_HOST value: $EDGE_SYSLOG_HOST"
@@ -190,6 +192,102 @@ iptables -t filter -S ts-forward >/dev/null 2>&1 && native_ts_chains=$((native_t
 iptables -t nat -S ts-postrouting >/dev/null 2>&1 && native_ts_chains=$((native_ts_chains + 1))
 
 if [ "$native_ts_chains" -eq 0 ]; then ok "no competing Tailscale netfilter chains"; else fail "competing Tailscale netfilter chains present: $native_ts_chains"; fi
+
+
+# BEGIN EXIT_NODE_RUNTIME_HEALTH_HELPERS
+detect_exit_wan_if() {
+    if [ -n "$EDGE_WAN_IF" ]; then
+        printf '%s\n' "$EDGE_WAN_IF"
+        return 0
+    fi
+
+    if executable_exists nvram >/dev/null 2>&1; then
+        detected_wan_if="$(nvram get wan0_gw_ifname 2>/dev/null)"
+        [ -n "$detected_wan_if" ] || detected_wan_if="$(nvram get wan0_ifname 2>/dev/null)"
+        if [ -n "$detected_wan_if" ]; then
+            valid_interface "$detected_wan_if" || return 1
+            printf '%s\n' "$detected_wan_if"
+            return 0
+        fi
+    fi
+
+    detected_wan_if="$(ip route 2>/dev/null | awk '/^default / { print $5; exit }')"
+    [ -n "$detected_wan_if" ] || return 1
+    valid_interface "$detected_wan_if" || return 1
+    printf '%s\n' "$detected_wan_if"
+}
+
+project_exit_rule_exists() {
+    exit_wan_if="$1"
+    iptables -t filter -S EDGE_TS_FORWARD 2>/dev/null |
+        grep -F -x -- "-A EDGE_TS_FORWARD -o $exit_wan_if -j ACCEPT" >/dev/null
+}
+
+platform_wan_nat_rule_exists() {
+    exit_wan_if="$1"
+    iptables -t nat -S POSTROUTING 2>/dev/null |
+        awk -v wan="$exit_wan_if" '
+            $1 == "-A" && $2 == "POSTROUTING" {
+                output_if=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-o") output_if=$(i+1)
+                    if ($i == "-j") target=$(i+1)
+                }
+                if (output_if == wan && (target == "MASQUERADE" || target == "SNAT")) found=1
+            }
+            END { exit !found }'
+}
+
+platform_return_path_exists() {
+    iptables -t filter -S FORWARD 2>/dev/null |
+        awk '
+            $1 == "-A" && $2 == "FORWARD" {
+                target=""; states=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-j") target=$(i+1)
+                    if ($i == "--state" || $i == "--ctstate") states=$(i+1)
+                }
+                if (target == "ACCEPT" &&
+                    states ~ /ESTABLISHED/ &&
+                    states ~ /RELATED/) found=1
+            }
+            END { exit !found }'
+}
+# END EXIT_NODE_RUNTIME_HEALTH_HELPERS
+
+if [ "$EDGE_ENABLE_EXIT_NODE" = "1" ]; then
+    EXIT_WAN_IF="$(detect_exit_wan_if 2>/dev/null)" || EXIT_WAN_IF=""
+
+    if [ -z "$EXIT_WAN_IF" ]; then
+        fail "cannot detect WAN interface for exit-node runtime validation"
+    else
+        ok "exit-node WAN interface resolved: $EXIT_WAN_IF"
+
+        if [ "$(cat /proc/sys/net/ipv4/ip_forward 2>/dev/null)" = "1" ]; then
+            ok "IPv4 forwarding enabled for exit node"
+        else
+            fail "IPv4 forwarding disabled for exit node"
+        fi
+
+        if project_exit_rule_exists "$EXIT_WAN_IF"; then
+            ok "project exit-node forwarding rule targets $EXIT_WAN_IF"
+        else
+            fail "project exit-node forwarding rule missing for $EXIT_WAN_IF"
+        fi
+
+        if platform_wan_nat_rule_exists "$EXIT_WAN_IF"; then
+            ok "platform WAN NAT dependency present for $EXIT_WAN_IF"
+        else
+            fail "platform WAN NAT dependency missing for $EXIT_WAN_IF"
+        fi
+
+        if platform_return_path_exists; then
+            ok "platform established/related return path present"
+        else
+            fail "platform established/related return path missing"
+        fi
+    fi
+fi
 
 if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
     if grep -F -x "interface=$EDGE_TS_IF" /etc/dnsmasq.conf >/dev/null 2>&1; then ok "dnsmasq includes $EDGE_TS_IF"; else fail "dnsmasq does not include $EDGE_TS_IF"; fi
