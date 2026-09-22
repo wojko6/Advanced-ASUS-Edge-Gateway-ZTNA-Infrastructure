@@ -74,7 +74,15 @@ case "$EDGE_REQUIRE_SWAP" in 0|1|auto) ;; *) log "ERROR: EDGE_REQUIRE_SWAP must 
 validate_mutable_path EDGE_TS_SOCKET "$EDGE_TS_SOCKET" /var/run/tailscale || exit 1
 validate_mutable_path EDGE_TS_STATE "$EDGE_TS_STATE" /opt/var/lib/tailscale || exit 1
 validate_mutable_path EDGE_TAILSCALED_LOG "$EDGE_TAILSCALED_LOG" /opt/var/log || exit 1
-case "$LOCK_DIR" in /var/run/asus-edge-tailscale.lock) ;; *) log "ERROR: unsupported Tailscale lock path"; exit 1 ;; esac
+if [ -n "${EDGE_TEST_PATH_PREFIX:-}" ]; then
+    valid_absolute_path "$LOCK_DIR" || { log "ERROR: test lock path must be absolute"; exit 1; }
+else
+    case "$LOCK_DIR" in
+        /var/run/asus-edge-tailscale.lock) ;;
+        *) log "ERROR: unsupported Tailscale lock path"; exit 1 ;;
+    esac
+fi
+[ ! -L "$LOCK_DIR" ] || { log "ERROR: Tailscale lock path must not be a symlink"; exit 1; }
 
 lock_owned=0
 release_lock() {
