@@ -1,16 +1,16 @@
 # Project status
 
-**Status date:** 2026-09-18  
+**Status date:** 2026-09-22  
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin  
-**Current phase:** unchanged-state stability observation and audit remediation
+**Current phase:** post-stability observation / planned DNS-filtering and audit follow-up
 
 ## Executive status
 
-The reference deployment is operational and is currently inside the 14-day unchanged-state stability observation window that began on 2026-09-11 and is scheduled to complete on 2026-09-25.
+The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
 The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Unbound/DNSSEC integration, dnsmasq integration, syslog-ng logging, project-owned least-privilege firewall chains, recovery tooling, health checks, evidence collection, and automated repository validation.
 
-The stability gate deliberately separates a successful point-in-time deployment from a claim of long-term stability. Until the observation window completes, the reference router is kept unchanged except for recovery or security intervention. Repository-only work, CI/static/mock validation, documentation, endpoint testing, and read-only router observations may continue.
+The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
 
 ## Current validated baseline
 
@@ -21,7 +21,7 @@ Summary: 0 failure(s), 0 warning(s)
 HEALTHCHECK_RC=0
 ```
 
-A later sanitized stability checkpoint retained a healthy router state without changing the reference configuration. These snapshots are point-in-time evidence and are not substitutes for completion of the stability gate.
+A later closing read-only checkpoint on 2026-09-22 retained a healthy router state without changing the reference configuration. The closing project health check reported `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`.
 
 Key validated areas include:
 
@@ -35,21 +35,15 @@ Key validated areas include:
 - backup/recovery and evidence tooling;
 - CI/static/mock validation of configuration, firewall, WAN recovery, installer rollback, restore validation, and maintenance paths.
 
-## Stability gate
+## Stability observation — closed 2026-09-22
 
-**Window:** 2026-09-11 through 2026-09-25.
+**Observed window:** 2026-09-11 through 2026-09-22.  
+**Operating mode:** continuous 24/7 powered operation during the observed window.  
+**Original plan:** continue through 2026-09-25; the observation was deliberately closed early to begin the next controlled project phase.
 
-During the gate:
+During the observed window the reference router remained unchanged except for read-only validation. At closure, the project health check reported zero failures and zero warnings. Entware/SSD availability, required swap, Tailscale connectivity, project firewall chains, Unbound/DNSSEC and syslog-ng were healthy; the inspected current syslog contained no matching OOM, crash, filesystem-I/O or read-only-filesystem errors.
 
-- no intentional router reboot unless recovery requires it;
-- no package, DNS, firewall, filtering-list, startup-hook, or service configuration changes;
-- no deployment of audit remediations to the reference router;
-- router-side corroboration is read-only;
-- endpoint and repository work may continue when it does not alter router state.
-
-The final gate review will evaluate uptime, memory/swap, SSD mounts, Tailscale, Unbound/DNSSEC, dnsmasq, syslog-ng, project health checks, and logs for crashes, OOM events, unexpected restarts, WAN/DNS recovery failures, and storage errors.
-
-If a recovery or security intervention changes the validated router state, record the intervention and restart the unchanged-state baseline after recovery.
+This supports a bounded claim of successful continuous operation over the exact 2026-09-11 → 2026-09-22 interval. It must not be described as a completed 14-day endurance test or as proof of indefinite long-term stability.
 
 ## Security/code audit remediation status
 
@@ -112,4 +106,4 @@ GitHub Actions run #474 completed successfully after the remediation batch. The 
 
 ## Current decision
 
-As of 2026-09-18, no additional router-side remediation is justified during the active stability gate. The correct engineering action is to preserve the reference state, continue observation, improve repository/test/documentation quality offline where useful, and defer AUDIT-02/AUDIT-03 live closure until the gate has completed.
+As of 2026-09-22, the unchanged-state observation is closed. Router-side follow-up, including AUDIT-02/AUDIT-03 live validation and planned DNS-filtering work, may proceed as controlled maintenance with explicit backup, rollback and post-change validation.
