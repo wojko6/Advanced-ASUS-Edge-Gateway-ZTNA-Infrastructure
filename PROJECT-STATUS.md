@@ -28,6 +28,7 @@ Key validated areas include:
 - persistent SSD-backed Entware storage and swap;
 - Tailscale service availability and intended `netfilter-mode=off` architecture;
 - project-owned IPv4 filter/NAT chains and fail-closed IPv6 guards;
+- health-check enforcement of the validated exit-node runtime contract: IPv4 forwarding, project WAN-forward rule, platform WAN NAT, and established/related return path;
 - Unbound availability and DNSSEC validation;
 - dnsmasq integration with the intended local Unbound listener;
 - syslog-ng availability;
@@ -106,4 +107,4 @@ GitHub Actions run #474 completed successfully after the remediation batch. The 
 
 ## Current decision
 
-As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. Router-side follow-up can now center on planned DNS-filtering work and any remaining non-datapath audit remediation, with explicit backup, rollback and post-change validation for state-changing maintenance.
+As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. The repository health check now verifies the platform-owned exit-node NAT/return-path prerequisites established by AUDIT-02, with focused CI fixtures covering missing and misordered dependencies. Router-side follow-up can now center on planned DNS-filtering work and any remaining non-datapath audit remediation, with explicit backup, rollback and post-change validation for state-changing maintenance.

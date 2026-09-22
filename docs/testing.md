@@ -10,7 +10,7 @@ This repository uses separate validation tracks. A PASS in one track must not be
 - **Endpoint filtering** validates workstation-local content filtering and DNS-path preservation.
 - **Mobile telemetry** records device-specific traffic observations under defined scenarios.
 
-During the 2026-09-11 through 2026-09-25 unchanged-state router observation window, endpoint tests may continue but router configuration, services, firewall, DNS settings, filtering lists, and startup hooks remain unchanged. Router-side corroboration during this period is read-only.
+The unchanged-state router observation was closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22. Subsequent state-changing router tests remain planned maintenance actions; read-only packet/counter inspection can be used independently when it is sufficient.
 
 ## Static and mock tests
 
@@ -39,6 +39,7 @@ sh tests/test-log-retention.sh
 sh tests/test-services-config-validation.sh
 sh tests/test-services-tailscale-policy-static.sh
 sh tests/test-healthcheck-config-validation.sh
+sh tests/test-healthcheck-exit-node-contract.sh
 sh tests/test-update-tailscale-static.sh
 sh tests/test-restore-validation.sh
 sh tests/test-fedora-dr-restore.sh
@@ -66,10 +67,13 @@ or modify the router.
 
 These checks do not prove the router kernel supports every match module; live
 validation remains required. The healthcheck requires managed filter jumps to
-be first in their parent chains and a terminal DROP in each managed chain. A
-failure can therefore indicate another component changed rule ordering. Review
-the active rules from LAN before reapplying the managed firewall. Packet tests
-remain necessary to verify actual access decisions.
+be first in their parent chains and a terminal DROP in each managed chain. When
+exit-node mode is enabled it also verifies the live runtime contract established
+by AUDIT-02: IPv4 forwarding, the project WAN-forward rule, a platform-owned WAN
+MASQUERADE/SNAT rule, and an established/related parent return path ordered before
+relevant WAN drops. The focused regression test feeds validated and broken rule
+fixtures through the healthcheck's parser functions. Packet tests remain necessary
+to establish the end-to-end datapath after a material firmware/firewall change.
 
 ## Router and remote-client security matrix
 
