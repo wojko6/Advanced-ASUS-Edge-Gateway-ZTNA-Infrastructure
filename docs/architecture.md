@@ -45,7 +45,7 @@ sequenceDiagram
     D-->>C: DNS response
 ```
 
-Classic UDP/TCP port 53 arriving on `tailscale0` is redirected to the router-local DNS listener. The firewall uses the netfilter `REDIRECT` target rather than DNAT to a configured LAN address, so DNS interception remains bound to the receiving router even if its LAN IPv4 address changes. Encrypted DNS does not use this flow and is not intercepted.
+Classic UDP/TCP port 53 arriving on `tailscale0` is redirected to the router-local DNS listener. The firewall uses the netfilter `REDIRECT` target rather than DNAT to a configured LAN address, so DNS interception remains bound to the receiving router even if its LAN IPv4 address changes. This classic-DNS path was live validated on 2026-09-22 with controlled Fedora and Android exit-node clients, including UDP/53 and TCP/53 forwarding from dnsmasq to Unbound on `127.0.0.1:53535`. Encrypted DNS does not use this flow and is not intercepted.
 
 The supplied IPv6 chains fail closed for new Tailscale input and forwarded traffic when `ip6tables` is available. If `ip6tables` is unavailable, the current scripts warn and the deployment must independently verify that IPv6 is disabled; the repository does not claim fail-closed IPv6 enforcement in that state. IPv6 access requires a separate granular policy and live validation before those guards are relaxed.
 
