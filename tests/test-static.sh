@@ -136,6 +136,23 @@ do
     }
 done
 
+
+for exit_node_runtime_guard in \
+    'detect_exit_wan_if()' \
+    'project_exit_rule_exists()' \
+    'platform_wan_nat_rule_exists()' \
+    'platform_return_path_exists()' \
+    'IPv4 forwarding enabled for exit node' \
+    'platform WAN NAT dependency present' \
+    'platform established/related return path present'
+do
+    grep -F "$exit_node_runtime_guard" \
+        "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: exit-node runtime health guard missing: $exit_node_runtime_guard" >&2
+        exit 1
+    }
+done
+
 for tailscale_startup_guard in \
     'swap_is_required()' \
     'wait_for_required_swap()' \
