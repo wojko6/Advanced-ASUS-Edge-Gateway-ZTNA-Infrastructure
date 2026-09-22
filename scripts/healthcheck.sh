@@ -57,10 +57,15 @@ fi
 : "${EDGE_UNBOUND_CONFIG:=}"
 : "${EDGE_SYSLOG_HOST:=}"
 : "${EDGE_SYSLOG_PORT:=6514}"
+: "${EDGE_OPT_MIN_FREE_KB:=262144}"
 
 valid_port() {
     case "$1" in ''|*[!0-9]*) return 1 ;; esac
     [ "$1" -ge 1 ] 2>/dev/null && [ "$1" -le 65535 ] 2>/dev/null
+}
+valid_positive_integer() {
+    case "$1" in ''|*[!0-9]*) return 1 ;; esac
+    [ "$1" -gt 0 ] 2>/dev/null
 }
 valid_boolean() { case "$1" in 0|1) return 0 ;; *) return 1 ;; esac; }
 valid_interface() {
@@ -102,6 +107,7 @@ valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
 valid_port "$EDGE_UNBOUND_PORT" || fail "invalid EDGE_UNBOUND_PORT value: $EDGE_UNBOUND_PORT"
 valid_port "$EDGE_SYSLOG_PORT" || fail "invalid EDGE_SYSLOG_PORT value: $EDGE_SYSLOG_PORT"
+valid_positive_integer "$EDGE_OPT_MIN_FREE_KB" || fail "invalid EDGE_OPT_MIN_FREE_KB value: $EDGE_OPT_MIN_FREE_KB"
 [ -z "$EDGE_SYSLOG_HOST" ] || valid_ipv4 "$EDGE_SYSLOG_HOST" || valid_host "$EDGE_SYSLOG_HOST" || fail "invalid EDGE_SYSLOG_HOST value: $EDGE_SYSLOG_HOST"
 for source in $EDGE_PRINTER_TS_SOURCES; do valid_ipv4_or_cidr "$source" || fail "invalid printer Tailscale source: $source"; done
 [ -z "$EDGE_PRINTER_LAN_IP" ] || valid_ipv4 "$EDGE_PRINTER_LAN_IP" || fail "invalid printer LAN IPv4: $EDGE_PRINTER_LAN_IP"
@@ -120,6 +126,17 @@ fi
 
 if opt_is_ready 2>/dev/null; then
     ok "Entware /opt ready"
+    opt_free_kb="$(df -Pk /opt 2>/dev/null | awk 'NR == 2 { print $4; exit }')"
+    case "$opt_free_kb" in
+        ''|*[!0-9]*) warn "unable to determine free space on /opt" ;;
+        *)
+            if [ "$opt_free_kb" -lt "$EDGE_OPT_MIN_FREE_KB" ]; then
+                warn "/opt free space low: ${opt_free_kb} KiB < ${EDGE_OPT_MIN_FREE_KB} KiB"
+            else
+                ok "/opt free space above configured minimum"
+            fi
+            ;;
+    esac
 else
     fail "Entware /opt not ready"
 fi
