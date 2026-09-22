@@ -84,6 +84,8 @@ EDGE_RUN_LEGACY_HOOKS="0"
 EDGE_LOG_DROPS="1"
 EDGE_LOG_PREFIX="ASUS-EDGE-DROP "
 EDGE_OPT_WAIT_SECONDS="90"
+# Warn when the filesystem backing /opt falls below this free-space threshold.
+EDGE_OPT_MIN_FREE_KB="262144"
 
 # Router-attached storage service hardening. Keep these enabled when the device
 # hosting /opt/Entware is infrastructure storage (for example the reference SSD)
