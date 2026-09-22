@@ -3,6 +3,8 @@
 set -u
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+JOURNAL_BASE="${EDGE_RESTORE_JOURNAL_DIR:-/jffs/addons/asus-edge-recovery}"
+JOURNAL_DIR="$JOURNAL_BASE/current"
 
 current_uid() {
     while read -r status_key status_uid _; do
@@ -55,7 +57,10 @@ TMP_DIR="$(secure_temp_dir /tmp/asus-edge-restore)" || {
     echo "ERROR: cannot create private restore workspace" >&2
     exit 1
 }
-trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
+cleanup_tmp() {
+    rm -rf "$TMP_DIR"
+}
+trap cleanup_tmp EXIT
 
 tar -tzf "$ARCHIVE" >"$TMP_DIR/paths" || exit 1
 if ! awk '
@@ -72,11 +77,13 @@ if ! awk '
     echo "ERROR: unsafe, duplicate, or multiple-root archive paths" >&2
     exit 1
 fi
+
 tar -tvzf "$ARCHIVE" >"$TMP_DIR/types" || exit 1
 if ! awk 'substr($1,1,1) != "-" && substr($1,1,1) != "d" { exit 1 }' "$TMP_DIR/types"; then
     echo "ERROR: only regular files and directories are accepted in backups" >&2
     exit 1
 fi
+
 mkdir "$TMP_DIR/payload" || exit 1
 tar -xzf "$ARCHIVE" -C "$TMP_DIR/payload" || exit 1
 ROOT="$(find "$TMP_DIR/payload" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
@@ -93,12 +100,14 @@ if ! awk '
         sub(/^\.\//, "", path)
         if (path !~ /^[A-Za-z0-9_.$\/-]+$/ || path ~ /^\// ||
             path ~ /(^|\/)\.\.?($|\/)/ || path == "SHA256SUMS" || seen[path]++) exit 1
+        if (path ~ /^jffs\/addons\/asus-edge-recovery(\/|$)/) exit 1
         print path
     }
 ' "$ROOT/SHA256SUMS" >"$TMP_DIR/manifest-paths"; then
     echo "ERROR: invalid manifest paths or records" >&2
     exit 1
 fi
+
 (cd "$ROOT" && find . -type f ! -path './SHA256SUMS' | sed 's#^\./##' | sort) >"$TMP_DIR/payload-paths" || exit 1
 sort "$TMP_DIR/manifest-paths" >"$TMP_DIR/sorted-manifest" || exit 1
 if ! cmp -s "$TMP_DIR/payload-paths" "$TMP_DIR/sorted-manifest"; then
@@ -114,8 +123,112 @@ find "$ROOT" -type f | sed "s#^$ROOT/##" | sort
 uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
 [ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
 
-ROLLBACK_DIR="$TMP_DIR/pre-restore"
+case "$JOURNAL_BASE" in
+    /jffs/addons/*|/opt/var/lib/*) ;;
+    *)
+        echo "ERROR: restore journal must be below /jffs/addons or /opt/var/lib" >&2
+        exit 1
+        ;;
+esac
+[ ! -L "$JOURNAL_BASE" ] || { echo "ERROR: restore journal base must not be a symlink" >&2; exit 1; }
+mkdir -p "$JOURNAL_BASE" || exit 1
+chmod 0700 "$JOURNAL_BASE" 2>/dev/null || true
+[ ! -L "$JOURNAL_DIR" ] || { echo "ERROR: restore journal must not be a symlink" >&2; exit 1; }
+
+state_write() {
+    state_value="$1"
+    printf '%s\n' "$state_value" >"$JOURNAL_DIR/STATE.new" || return 1
+    mv "$JOURNAL_DIR/STATE.new" "$JOURNAL_DIR/STATE" || return 1
+}
+
+rollback_from_journal() {
+    rollback_journal="$1"
+    rollback_dir="$rollback_journal/pre-restore"
+    rollback_manifest="$rollback_journal/manifest-paths"
+    [ -f "$rollback_manifest" ] || {
+        echo "ERROR: recovery journal is missing manifest-paths: $rollback_journal" >&2
+        return 1
+    }
+    [ -d "$rollback_dir" ] || {
+        echo "ERROR: recovery journal is missing pre-restore snapshot: $rollback_journal" >&2
+        return 1
+    }
+
+    rollback_failed=0
+    while IFS= read -r relative_path; do
+        case "$relative_path" in
+            jffs/*|opt/*) ;;
+            *) continue ;;
+        esac
+        live_path="/$relative_path"
+        rollback_path="$rollback_dir/$relative_path"
+        marker="$rollback_dir/.absent/$relative_path"
+
+        if [ -f "$marker" ]; then
+            rm -rf "$live_path" || rollback_failed=1
+        else
+            rm -rf "$live_path" || rollback_failed=1
+            mkdir -p "$(dirname "$live_path")" || rollback_failed=1
+            cp -Rp "$rollback_path" "$live_path" || rollback_failed=1
+        fi
+    done <"$rollback_manifest"
+
+    if [ "$rollback_failed" -ne 0 ]; then
+        echo "ERROR: rollback encountered errors; journal preserved at $rollback_journal" >&2
+        return 1
+    fi
+    echo "Rollback completed; pre-restore state recovered." >&2
+    return 0
+}
+
+recover_pending_journal() {
+    [ -d "$JOURNAL_DIR" ] || return 0
+    [ -f "$JOURNAL_DIR/STATE" ] || {
+        echo "ERROR: restore recovery directory exists without STATE: $JOURNAL_DIR" >&2
+        return 1
+    }
+
+    journal_state="$(cat "$JOURNAL_DIR/STATE" 2>/dev/null)"
+    case "$journal_state" in
+        PREPARED)
+            # No live mutation begins before APPLYING is persisted.
+            rm -rf "$JOURNAL_DIR" || return 1
+            return 0
+            ;;
+        APPLYING)
+            echo "WARNING: interrupted restore detected; recovering pre-restore state before any new apply" >&2
+            rollback_from_journal "$JOURNAL_DIR" || return 1
+            rm -rf "$JOURNAL_DIR" || return 1
+            echo "Recovery completed. Re-run the requested restore after reviewing the router state." >&2
+            return 10
+            ;;
+        COMMITTED)
+            rm -rf "$JOURNAL_DIR" || return 1
+            return 0
+            ;;
+        *)
+            echo "ERROR: unknown restore journal state: $journal_state" >&2
+            return 1
+            ;;
+    esac
+}
+
+recovery_rc=0
+recover_pending_journal || recovery_rc=$?
+if [ "$recovery_rc" -eq 10 ]; then
+    exit 3
+fi
+[ "$recovery_rc" -eq 0 ] || exit 1
+
+mkdir "$JOURNAL_DIR" || {
+    echo "ERROR: cannot create restore recovery journal: $JOURNAL_DIR" >&2
+    exit 1
+}
+chmod 0700 "$JOURNAL_DIR" 2>/dev/null || true
+cp "$TMP_DIR/manifest-paths" "$JOURNAL_DIR/manifest-paths" || exit 1
+ROLLBACK_DIR="$JOURNAL_DIR/pre-restore"
 mkdir "$ROLLBACK_DIR" || exit 1
+state_write PREPARED || exit 1
 
 # Snapshot every live path that the archive can overwrite. An absent marker is
 # recorded for paths that do not exist so rollback can remove newly created data.
@@ -131,6 +244,7 @@ while IFS= read -r relative_path; do
     if [ -e "$live_path" ] || [ -L "$live_path" ]; then
         cp -Rp "$live_path" "$rollback_path" || {
             echo "ERROR: cannot snapshot $live_path; restore not started" >&2
+            rm -rf "$JOURNAL_DIR"
             exit 1
         }
     else
@@ -138,39 +252,53 @@ while IFS= read -r relative_path; do
     fi
 done <"$TMP_DIR/manifest-paths"
 
-rollback_restore() {
-    echo "ERROR: restore failed; rolling back pre-restore state" >&2
-    rollback_failed=0
-    while IFS= read -r relative_path; do
-        case "$relative_path" in
-            jffs/*|opt/*) ;;
-            *) continue ;;
-        esac
-        live_path="/$relative_path"
-        rollback_path="$ROLLBACK_DIR/$relative_path"
-        marker="$ROLLBACK_DIR/.absent/$relative_path"
-        if [ -f "$marker" ]; then
-            rm -rf "$live_path" || rollback_failed=1
-        else
-            rm -rf "$live_path" || rollback_failed=1
-            mkdir -p "$(dirname "$live_path")" || rollback_failed=1
-            cp -Rp "$rollback_path" "$live_path" || rollback_failed=1
-        fi
-    done <"$TMP_DIR/manifest-paths"
-    if [ "$rollback_failed" -ne 0 ]; then
-        echo "ERROR: rollback encountered errors; manual recovery may be required" >&2
-        return 1
-    fi
-    echo "Rollback completed; pre-restore state recovered." >&2
-    return 0
+state_write APPLYING || {
+    echo "ERROR: cannot persist APPLYING restore state; restore not started" >&2
+    rm -rf "$JOURNAL_DIR"
+    exit 1
 }
+APPLY_ACTIVE=1
+
+interrupt_restore() {
+    signal_name="$1"
+    trap - HUP INT TERM
+    echo "ERROR: restore interrupted by $signal_name; attempting rollback" >&2
+    if [ "$APPLY_ACTIVE" = "1" ] && rollback_from_journal "$JOURNAL_DIR"; then
+        APPLY_ACTIVE=0
+        rm -rf "$JOURNAL_DIR" || true
+    else
+        echo "ERROR: automatic rollback incomplete; preserve $JOURNAL_DIR for next-run/manual recovery" >&2
+    fi
+    exit 1
+}
+trap 'interrupt_restore HUP' HUP
+trap 'interrupt_restore INT' INT
+trap 'interrupt_restore TERM' TERM
 
 for destination in jffs opt; do
     if [ -d "$ROOT/$destination" ]; then
         if ! cp -Rp "$ROOT/$destination/." "/$destination/"; then
-            rollback_restore || true
+            trap - HUP INT TERM
+            echo "ERROR: restore failed; rolling back pre-restore state" >&2
+            if rollback_from_journal "$JOURNAL_DIR"; then
+                APPLY_ACTIVE=0
+                rm -rf "$JOURNAL_DIR" || true
+            else
+                echo "ERROR: rollback incomplete; journal preserved at $JOURNAL_DIR" >&2
+            fi
             exit 1
         fi
     fi
 done
+
+if ! state_write COMMITTED; then
+    trap - HUP INT TERM
+    echo "ERROR: restore payload applied but COMMITTED state could not be persisted; journal preserved for safe recovery" >&2
+    exit 1
+fi
+APPLY_ACTIVE=0
+trap - HUP INT TERM
+rm -rf "$JOURNAL_DIR" || {
+    echo "WARNING: committed restore succeeded but journal cleanup failed: $JOURNAL_DIR" >&2
+}
 echo "Restore completed. Reboot or restart services after reviewing files."
