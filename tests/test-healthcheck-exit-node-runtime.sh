@@ -74,6 +74,7 @@ fail_test() {
 }
 
 EDGE_WAN_IF="ppp0"
+export EDGE_WAN_IF
 [ "$(detect_exit_wan_if)" = "ppp0" ] ||
     fail_test "configured WAN interface was not preferred"
 
