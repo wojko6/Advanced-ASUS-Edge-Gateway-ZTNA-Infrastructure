@@ -68,7 +68,7 @@ run_helper() {
     EDGE_CONFIG_FILE="$CONFIG" \
     EDGE_TAILSCALE_LOCK_DIR="$LOCK_DIR" \
     EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
-    "$HELPER" "$@"
+    sh "$HELPER" "$@"
 }
 
 run_helper ensure
@@ -118,7 +118,7 @@ echo "PASS: non-off NetfilterMode is rejected"
 if EDGE_CONFIG_FILE="$CONFIG" \
    EDGE_TAILSCALE_LOCK_DIR="$TMPROOT/relative/../bad" \
    EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
-   "$HELPER" ensure >/dev/null 2>&1
+   sh "$HELPER" ensure >/dev/null 2>&1
 then
     echo "FAIL: unsafe lock path accepted" >&2
     exit 1
