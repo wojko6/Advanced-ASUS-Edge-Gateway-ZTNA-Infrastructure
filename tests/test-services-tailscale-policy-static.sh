@@ -3,41 +3,41 @@ set -eu
 
 TEST_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 REPO_DIR="$(CDPATH='' cd -- "$TEST_DIR/.." && pwd)"
-SCRIPT="$REPO_DIR/router/scripts/services-start"
+SERVICES="$REPO_DIR/router/scripts/services-start"
+HELPER="$REPO_DIR/router/scripts/tailscale-reconcile"
 
-[ -r "$SCRIPT" ] || { echo "FAIL: missing services-start" >&2; exit 1; }
+[ -r "$SERVICES" ] || { echo "FAIL: missing services-start" >&2; exit 1; }
+[ -r "$HELPER" ] || { echo "FAIL: missing canonical Tailscale helper" >&2; exit 1; }
 
-grep -F 'if "$@" >/tmp/asus-edge-tailscale-up.log 2>&1; then' "$SCRIPT" >/dev/null || {
-    echo "FAIL: tailscale up is not checked explicitly" >&2
+grep -F '"$EDGE_TAILSCALE_HELPER" ensure' "$SERVICES" >/dev/null || {
+    echo "FAIL: services-start bypasses canonical Tailscale reconciliation" >&2
     exit 1
 }
-grep -F 'log "ERROR: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"' "$SCRIPT" >/dev/null || {
-    echo "FAIL: tailscale up failure is not logged as ERROR" >&2
+grep -F 'log "ERROR: Tailscale reconciliation failed"' "$SERVICES" >/dev/null || {
+    echo "FAIL: services-start does not propagate reconciliation failure" >&2
     exit 1
 }
-grep -F 'log "ERROR: Tailscale local API unavailable or node not ready"' "$SCRIPT" >/dev/null || {
-    echo "FAIL: local API/not-ready path is not fatal" >&2
-    exit 1
-}
-grep -F 'log "ERROR: tailscaled not installed"' "$SCRIPT" >/dev/null || {
-    echo "FAIL: missing tailscaled is not treated as required-service failure" >&2
+grep -F 'startup_failed=1' "$SERVICES" >/dev/null || {
+    echo "FAIL: services-start does not mark Tailscale reconciliation failure" >&2
     exit 1
 }
 
-failure_assignments="$(grep -c 'startup_failed=1' "$SCRIPT")"
-[ "$failure_assignments" -ge 5 ] || {
-    echo "FAIL: required startup failures are not aggregated" >&2
+for guard in \
+    '--netfilter-mode="$EDGE_TS_NETFILTER_MODE"' \
+    'tailscale --socket="$EDGE_TS_SOCKET" debug prefs' \
+    'Tailscale netfilter mode verification failed' \
+    'tailscale --socket="$EDGE_TS_SOCKET" status' \
+    'failed to apply or verify Tailscale policy'
+do
+    grep -F -- "$guard" "$HELPER" >/dev/null || {
+        echo "FAIL: canonical Tailscale policy guard missing: $guard" >&2
+        exit 1
+    }
+done
+
+grep -F '[ "$tailscale_netfilter_mode" = "0" ]' "$HELPER" >/dev/null || {
+    echo "FAIL: canonical helper does not verify netfilter-mode=off" >&2
     exit 1
 }
 
-grep -F 'if [ "$startup_failed" -ne 0 ]; then log "ERROR: required service startup failed"; exit 1; fi' "$SCRIPT" >/dev/null || {
-    echo "FAIL: aggregated startup failure does not exit non-zero" >&2
-    exit 1
-}
-
-if grep -F 'tailscale up failed' "$SCRIPT" | grep -F 'WARNING:' >/dev/null; then
-    echo "FAIL: tailscale up failure is still warning-only" >&2
-    exit 1
-fi
-
-echo "PASS: services-start propagates Tailscale policy application failures"
+echo "PASS: services-start delegates to canonical Tailscale policy reconciliation"
