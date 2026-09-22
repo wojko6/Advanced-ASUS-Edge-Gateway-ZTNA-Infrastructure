@@ -149,6 +149,10 @@ exec /bin/cp "$@"
     def test_backup_restore_roundtrip(self):
         config = self.root / "jffs/configs/asus-edge.conf"
         config.write_text("EDGE_ALLOW_ROUTER_SSH=0\n")
+        wan_hook = self.root / "jffs/scripts/wan-event"
+        wan_hook.write_text("#!/bin/sh\necho managed-wan-event\n")
+        wan_hook.chmod(0o755)
+
         backup = self.run_script(self.script("backup.sh"), self.root / "backups")
         self.assertEqual(backup.returncode, 0, backup.stderr)
         archive = backup.stdout.strip()
@@ -159,10 +163,19 @@ exec /bin/cp "$@"
             r"^[0-9a-f]{64}  " + re.escape(Path(archive).name) + r"\n$",
         )
         self.assertNotIn(str(Path(archive).parent), sidecar.read_text())
+
+        with tarfile.open(archive, "r:gz") as tar:
+            members = {member.name for member in tar.getmembers()}
+        self.assertTrue(any(name.endswith("/jffs/scripts/wan-event") for name in members))
+
         config.write_text("changed\n")
+        wan_hook.write_text("#!/bin/sh\necho changed\n")
+        wan_hook.chmod(0o600)
         restore = self.run_script(self.script("restore.sh"), archive, "--apply")
         self.assertEqual(restore.returncode, 0, restore.stderr)
         self.assertEqual(config.read_text(), "EDGE_ALLOW_ROUTER_SSH=0\n")
+        self.assertEqual(wan_hook.read_text(), "#!/bin/sh\necho managed-wan-event\n")
+        self.assertEqual(wan_hook.stat().st_mode & 0o777, 0o755)
 
     def test_backup_copy_failure_is_not_success(self):
         (self.root / "jffs/configs/asus-edge.conf").write_text("config\n")
