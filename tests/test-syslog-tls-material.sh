@@ -18,6 +18,7 @@ openssl req -newkey rsa:2048 -nodes     -subj '/CN=collector.example.invalid'   
 openssl x509 -req -days 1 -in "$TMPROOT/peer.csr"     -CA "$TMPROOT/ca.crt" -CAkey "$TMPROOT/ca.key" -CAcreateserial     -extfile "$TMPROOT/peer.ext" -out "$TMPROOT/peer.crt" >/dev/null 2>&1
 
 chmod 0600 "$TMPROOT/client.key"
+TEST_UID="$(id -u)"
 
 EDGE_SYSLOG_TLS_KEY="$TMPROOT/client.key" EDGE_SYSLOG_TLS_CERT="$TMPROOT/client.crt" EDGE_SYSLOG_TLS_CA="$TMPROOT/ca.crt" EDGE_SYSLOG_CERT_MIN_SECONDS=60 EDGE_SYSLOG_PEER_CERT="$TMPROOT/peer.crt" EDGE_SYSLOG_PEER_NAME="collector.example.invalid" sh "$SCRIPT" >/dev/null
 
