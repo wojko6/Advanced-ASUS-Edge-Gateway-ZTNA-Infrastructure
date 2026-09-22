@@ -183,9 +183,11 @@ After the gate:
 7. Disable Diversion only after Pi-hole has demonstrated equivalent or better DNS-layer coverage.
 8. Validate LAN DNS, Android WebView/Custom Tabs, LTE/5G over Tailscale, DNSSEC, reverse DNS, WAN reconnect, reboot recovery, Gravity updates, RAM/swap behavior, firewall exposure and administrative UI access.
 9. Compare before/after blocking effectiveness and false positives rather than accepting the migration on subjective appearance alone.
-10. Run a new 7-14 day unchanged-state observation period after acceptance before promoting Pi-hole into the validated baseline.
+10. Validate the accepted Pi-hole design across several normal-use sessions and multiple full router power-on/startup cycles before promoting it into the validated baseline; a continuous 7-14 day unchanged-state gate is not required for this deployment because the reference router is normally powered only for part of each day.
 
 Primary success criterion: improve advertising/tracking suppression in applications without strong browser-native blockers while preserving DNSSEC, local-network functionality, Tailscale policy, recoverability and an auditable DNS datapath.
+
+Post-migration acceptance should emphasize repeated successful cold/startup cycles, normal daily-use sessions, WAN reconnect handling, Gravity maintenance, RAM/swap behavior and clean health checks rather than continuous multi-day uptime.
 
 ## Post-observation — severity-aware alerting and phone notifications
 
