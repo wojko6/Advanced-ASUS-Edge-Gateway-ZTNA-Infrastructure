@@ -17,6 +17,7 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Marked the unreleased development line as `2.1.4-dev` so installs from current `main` are not identified as the released `2.1.3` state.
 - Expanded GitHub Actions to execute the existing Python recovery, firewall mock/configuration, evidence-collector, and log-retention tests directly.
 - Sanitized deployment-specific identifiers in the Fedora Zen case study while preserving technically relevant public service examples.
 - Standardized active documentation on `docs/images/Architecture.png` as the canonical current-deployment diagram and retired the superseded `architecture-v2.png` asset from the active tree.
