@@ -36,7 +36,7 @@ Key validated areas include:
 - backup/recovery and evidence tooling;
 - CI/static/mock validation of configuration, firewall, WAN recovery, installer rollback, restore validation, and maintenance paths.
 
-The current repository implementation of `scripts/healthcheck.sh` also checks the AUDIT-02 exit-node runtime prerequisites when exit-node mode is enabled. That implementation was merged through repository-only PR #51 and must not be treated as deployed on the reference router until a separate live deployment/health-check run is recorded.
+The current `scripts/healthcheck.sh` implementation checks the AUDIT-02 exit-node runtime prerequisites when exit-node mode is enabled. The implementation was merged through PR #51 and was subsequently deployed to the reference router on 2026-09-22. A live post-deployment run matched the repository SHA-256 (`e03d6abd7a740524ba5a2c6799a47559ef187b22bb1a3209eb94ffc4a30a7e47`) and completed with `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`. See `evidence/2026-09-22/healthcheck-deployment-validation.md`.
 
 ## Stability observation — closed 2026-09-22
 
@@ -138,4 +138,4 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 ## Current decision
 
-As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. The repository health-check code now verifies the platform-owned exit-node NAT/return-path prerequisites established by AUDIT-02, but that post-AUDIT code change remains a repository/CI result until its deployment on the reference router is separately evidenced. A controlled Diversion A/B/C experiment has also established the current DNS-filtering boundary: `snbAdSupport=no` improves coverage, `Large` broadens the policy, but DNS blocking alone does not remove all rendered advertising. The Large profile is therefore in normal-use observation for false positives/resource impact rather than being treated as a proven complete ad-blocking solution.
+As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. The health-check code that verifies the platform-owned exit-node NAT/return-path prerequisites established by AUDIT-02 is now deployed on the reference router and has passed a live post-deployment validation with the repository-matching SHA-256, zero failures, zero warnings, and `HEALTHCHECK_RC=0`. A controlled Diversion A/B/C experiment has also established the current DNS-filtering boundary: `snbAdSupport=no` improves coverage, `Large` broadens the policy, but DNS blocking alone does not remove all rendered advertising. The Large profile is therefore in normal-use observation for false positives/resource impact rather than being treated as a proven complete ad-blocking solution.
