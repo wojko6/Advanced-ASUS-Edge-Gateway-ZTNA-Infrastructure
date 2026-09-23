@@ -24,10 +24,11 @@ Use this workflow for a planned maintenance window outside an active unchanged-s
 
 ```sh
 ./scripts/backup.sh /opt/backups/asus-edge
-sha256sum -c /opt/backups/asus-edge/BACKUP.tar.gz.sha256
+BACKUP=/opt/backups/asus-edge/asus-edge-YYYYMMDD-HHMMSS.tar.gz
+(cd "$(dirname "$BACKUP")" && sha256sum -c "$(basename "$BACKUP").sha256")
 ```
 
-The backup is created with a restrictive umask and the resulting archive plus sidecar checksum are set to mode `0600`. The archive contains an internal `SHA256SUMS` manifest covering every backed-up payload file. This provides corruption/integrity checking for the backup contents, but neither the internal manifest nor the sidecar checksum authenticates a backup obtained from an untrusted source. The script intentionally excludes Tailscale state and authentication material.
+Replace the placeholder with the actual path printed by `backup.sh`. The sidecar records the archive basename, so run `sha256sum -c` from the archive's directory; the same rule applies after copying both files to independent storage. The backup is created with a restrictive umask and the resulting archive plus sidecar checksum are set to mode `0600`. The archive contains an internal `SHA256SUMS` manifest covering every backed-up payload file. This provides corruption/integrity checking for the backup contents, but neither the internal manifest nor the sidecar checksum authenticates a backup obtained from an untrusted source. The script intentionally excludes Tailscale state and authentication material.
 
 Move backups off the router-attached SSD and keep an independent copy on another trusted system. Other included configs can still contain internal data; encrypt backups at rest outside this repository.
 
@@ -47,9 +48,15 @@ entries and multiple top-level roots. It requires every payload file to appear
 exactly once in the internal SHA-256 manifest before copying anything to the
 router. Hashes detect corruption; they do not authenticate an untrusted backup.
 Only regular files and directories with simple path names (letters, digits,
-underscore, dot, dollar sign, hyphen and slash) are accepted. A copy failure
-returns non-zero and reports a potentially partial restore. Review paths and
-maintain physical access; restore is not an atomic filesystem transaction.
+underscore, dot, dollar sign, hyphen and slash) are accepted. Before `--apply`
+changes live paths, it snapshots every path covered by the archive into a
+private temporary workspace and records which paths were previously absent.
+If the snapshot fails, copying does not start. If copying fails, the script
+returns non-zero and attempts to remove newly created paths and restore the
+pre-restore state. A successful rollback is reported; a rollback error is
+reported separately and may leave a partial restore requiring manual recovery.
+This is a failure-recovery mechanism, not an atomic filesystem transaction.
+Keep local access and review the live paths and service state after any error.
 
 `--dry-run` validates the archive structure, accepted entry types, manifest coverage and file hashes without copying payload files into `/jffs` or `/opt`. Use it before every planned restore. `--apply` then copies only the `jffs` and `opt` trees present in the verified archive. It does not delete unrelated files that are absent from the backup, does not restore Tailscale state, and does not automatically restart services or reboot the router. Review the restored files before choosing the required recovery action.
 
