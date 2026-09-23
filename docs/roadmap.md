@@ -123,8 +123,8 @@ The GNUton `3004.388.11_1-gnuton1_tuf` upgrade changed the platform baseline. Ex
 Current order:
 
 1. **Completed — management authorization negative test:** a distinct unauthorized Windows tailnet client retained Tailscale peer reachability but could not establish TCP/8443. Five client SYN packets were correlated with a source-specific counter-only firewall rule before the unchanged production deny tail; cleanup and the final health check passed. See [sanitized evidence](../evidence/2026-09-23/unauthorized-tailnet-management-denial.md).
-2. **Next — exit-node datapath revalidation:** repeat the controlled before/after-NAT correlation on `tailscale0` and the active WAN interface, together with `ip_forward`, the project WAN-forward rule, platform WAN NAT, and the established/related return path.
-3. **Then — classic-DNS datapath refresh if a current-firmware AUDIT-03-equivalent claim is needed:** correlate controlled UDP/53 and TCP/53 traffic with `EDGE_TS_PREROUTING`, dnsmasq and Unbound on the upgraded firmware.
+2. **Completed — exit-node datapath revalidation:** on GNUton `3004.388.11_1-gnuton1_tuf`, a controlled fixed-ID ICMP flow was correlated on `tailscale0` before NAT and `ppp0` after source translation, with 5/5 client replies and a clean final health check. See [sanitized evidence](../evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md).
+3. **Next — classic-DNS datapath refresh if a current-firmware AUDIT-03-equivalent claim is needed:** correlate controlled UDP/53 and TCP/53 traffic with `EDGE_TS_PREROUTING`, dnsmasq and Unbound on the upgraded firmware.
 4. **In parallel — reboot/normal-use evidence:** accumulate the clean startup cycles and Diversion Large normal-use sessions required by the acceptance criteria below.
 
 These revalidations should not introduce broader policy changes. Keep them as bounded measurements with current backups, explicit cleanup for any temporary instrumentation, and sanitized evidence.
