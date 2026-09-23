@@ -19,6 +19,11 @@ grep -F 'RELEASE_VERSION="$(cat "$REPO_DIR/VERSION")"' "$REPO_DIR/scripts/instal
     exit 1
 }
 
+grep -F 'BACKUP_DIR="$ADDON_DIR/backups/install-$(date +%Y%m%d-%H%M%S)-$"' "$REPO_DIR/scripts/install.sh" >/dev/null || {
+    echo "FAIL: installer rollback snapshot name does not include the current PID" >&2
+    exit 1
+}
+
 grep -F 'Installed Advanced ASUS Edge Gateway v$RELEASE_VERSION' "$REPO_DIR/scripts/install.sh" >/dev/null || {
     echo "FAIL: installer does not report the release version from VERSION" >&2
     exit 1
