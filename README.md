@@ -18,7 +18,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 
 ![Current ASUS Edge Gateway architecture](docs/images/Architecture.png)
 
-`docs/images/Architecture.png` is the canonical diagram for the current deployed/reference architecture. It reflects the live-validated LAN classic-DNS enforcement and direct DoT/853 blocking state; DoH/HTTPS 443 and DoQ/QUIC remain explicitly outside the current enforcement claim. Retired diagrams are kept out of the active documentation tree so readers do not have to choose between competing architecture views.
+`docs/images/Architecture.png` is the canonical topology diagram for the current deployed/reference architecture. It reflects the live-validated LAN classic-DNS enforcement and direct DoT/853 blocking state; DoH/HTTPS 443 and DoQ/QUIC remain explicitly outside the current enforcement claim. Time-sensitive validation status is tracked in [PROJECT-STATUS.md](PROJECT-STATUS.md) and dated evidence; AUDIT-02 is now post-firmware live revalidated on GNUton 388.11, while the current-firmware AUDIT-03 classic-DNS packet-correlation refresh remains pending. Retired diagrams are kept out of the active documentation tree so readers do not have to choose between competing architecture views.
 
 Remote access is enforced at two layers:
 
