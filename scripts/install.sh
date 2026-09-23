@@ -38,7 +38,8 @@ ROOT_DIR="${EDGE_TEST_ROOT:-}"
 JFFS_DIR="${ROOT_DIR}/jffs"
 
 ADDON_DIR="$JFFS_DIR/addons/asus-edge"
-BACKUP_DIR="$ADDON_DIR/backups/install-$(date +%Y%m%d-%H%M%S)-$"
+BACKUP_PREFIX="$ADDON_DIR/backups/install-$(date +%Y%m%d-%H%M%S)"
+BACKUP_DIR=""
 INSTALL_BACKUP_KEEP="${EDGE_INSTALL_BACKUP_KEEP:-3}"
 APPLY=0
 
@@ -84,7 +85,24 @@ done
 
 umask 077
 mkdir -p "$ADDON_DIR/backups"
-mkdir "$BACKUP_DIR" || { echo "ERROR: backup directory already exists or is unavailable" >&2; exit 1; }
+
+create_install_backup_dir() {
+    backup_counter=0
+    while [ "$backup_counter" -lt 100 ]; do
+        backup_candidate="$BACKUP_PREFIX-$backup_counter"
+        if mkdir "$backup_candidate" 2>/dev/null; then
+            BACKUP_DIR="$backup_candidate"
+            return 0
+        fi
+        backup_counter=$((backup_counter + 1))
+    done
+    return 1
+}
+
+create_install_backup_dir || {
+    echo "ERROR: cannot create a unique installer rollback snapshot" >&2
+    exit 1
+}
 
 # Snapshot every path changed by installation, including absent paths on a
 # first install. Do not touch live files unless the entire snapshot succeeds.

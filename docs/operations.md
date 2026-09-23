@@ -67,9 +67,7 @@ newest three managed `install-YYYYMMDD-HHMMSS-PID` directories by default and
 removes older managed snapshots. Set the environment variable
 `EDGE_INSTALL_BACKUP_KEEP=N` to another positive integer for a planned
 installation. The current snapshot is never selected for pruning. A retention
-failure aborts before live changes. The snapshot directory must be new; if a
-name collision occurs, installation aborts before live files are changed. Do not
-run concurrent installations.
+failure aborts before live changes. Snapshot directories use a timestamp plus an atomically allocated numeric suffix; the installer tries up to 100 suffixes before aborting, and no live file is changed unless a unique snapshot directory has been created. Do not run concurrent installations.
 
 ## Fedora clean-room Disaster Recovery
 
