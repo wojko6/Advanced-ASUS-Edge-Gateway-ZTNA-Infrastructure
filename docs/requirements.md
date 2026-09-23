@@ -1,0 +1,37 @@
+# Requirements and acceptance map
+
+**Status:** CURRENT — reference deployment and planned validation
+
+**Reviewed:** 2026-09-23
+
+This map links the existing architecture and test procedures to the reference ASUS TUF-AX5400. The status applies only to the stated test date and path. It does not turn a roadmap proposal, a mock test, or an operator-reported observation into independently captured live evidence. For the latest deployment summary see [project status](../PROJECT-STATUS.md); for detailed test methods see [testing](testing.md).
+
+## Roles and use cases
+
+| Role | Intended use | Boundary |
+| --- | --- | --- |
+| Authorized admin device | Open the router HTTPS panel through Tailscale | Tailscale authorization, exact router firewall source rule and router login |
+| Ordinary tailnet device | Use only approved destinations or exit-node access if entitled | No router management; grants and project firewall remain separate checks |
+| LAN client | Resolve classic DNS through the router | Router dnsmasq and Unbound; direct DoT control applies to the documented IPv4 `br0` path |
+| Router operator | Back up, verify, deploy, check health and recover configuration | Local/LAN access and private recovery copies remain necessary |
+
+## Functional acceptance
+
+| ID | Requirement and observable pass condition | Method / current evidence | Current limit |
+| --- | --- | --- | --- |
+| F-01 | Only configured admin Tailscale IPv4 sources can reach router HTTPS; from an authorized client the panel loads with its DNS-name certificate verified. | Check exact input/DNAT rules and perform authorized/unauthorized client probes per [security matrix](testing.md#router-and-remote-client-security-matrix). Fedora verified TLS and Android operator-reported login after the 2026-09-23 reboot are in the [worklog](worklog/2026-09-23.md). | **Partial:** no post-change negative probe from a distinct unauthorized tailnet device; no phone-browser certificate verdict. |
+| F-02 | Classic IPv4 UDP/TCP 53 entering on the specified LAN/Tailscale interfaces follows the router DNS path; DNSSEC validation works at Unbound. | Correlate client query, managed NAT counter/packet, dnsmasq, Unbound and WAN. [2026-09-22 LAN](../evidence/2026-09-22/lan-dns-enforcement-production-validation.md) and [tailnet](../evidence/2026-09-22/audit-03-dns-datapath-validation.md) tests support their tested paths. | Post-2026-09-23 reboot DNS answers were observed, but no new redirect counter delta or full packet correlation was recorded. DoH/DoQ and other encrypted paths are outside this requirement. |
+| F-03 | An entitled Tailscale client can use exit-node IPv4 routing only through the selected WAN path, with platform NAT and return handling present. | [2026-09-22 fixed-flow correlation](../evidence/2026-09-22/audit-02-exit-node-nat-validation.md), live health check and post-change client test. | After the firmware upgrade the health check passed; a new packet-level correlation and a second post-reboot Android public-IP comparison are not recorded. |
+| F-04 | On a clean startup the required SSD mounts, swap and project services are available; WPS remains off and unnecessary USB-service listeners are closed. | [2026-09-23 reboot checkpoint](worklog/2026-09-23.md#same-day-router-reboot-and-persistence-check), project health and USB audit. | One same-day reboot is recorded; multiple cold starts and longer use are outstanding. |
+| F-05 | A project backup passes its sidecar hash and internal manifest checks; restore dry-run accepts it; a controlled failure during restore attempts rollback. | [Backup/restore procedure](operations.md#backup), [restore behavior](operations.md#restore) and repository recovery tests. Private copied archives and dry-runs passed on 2026-09-23. | The project archive excludes Tailscale state and is not a firmware image; an end-to-end clean-router recovery drill is not recorded. |
+
+## Nonfunctional acceptance and risks
+
+| ID | Goal / decision criterion | Current state |
+| --- | --- | --- |
+| N-01 | Treat credentials, node state and raw router evidence as private; only publish minimized, reviewed extracts. | [Publication checklist](evidence-collection.md#publication-checklist) applies; the 2026-09-23 raw backup/evidence copies remain private. |
+| N-02 | Keep recovery copies in a separate failure domain, encrypted and integrity checked; define retention, backup monitoring, then measure recovery time/data loss in a drill. | Manual private, verified off-router copies exist; automation, monitoring and measured RTO/RPO are [planned](roadmap.md). No target RTO/RPO is claimed. |
+| N-03 | Accept Diversion Large only after five normal-use sessions across multiple days, three clean startups and the remaining [roadmap criteria](roadmap.md#diversion-large-normal-use-acceptance-criteria). | In observation; a successful 2026-09-23 reboot alone does not complete acceptance. |
+| N-04 | Measure latency, loss, throughput and CPU/RAM before setting performance targets for this platform. | [Performance method](testing.md#performance-baseline) exists; no universal throughput, latency or availability objective has been measured or accepted for the upgraded firmware. |
+
+Future RouterCloud, Pi-hole, alerts and mobile telemetry are proposals in the [roadmap](roadmap.md); they require separate requirements, failure cases and acceptance evidence before being described as deployed capabilities.
