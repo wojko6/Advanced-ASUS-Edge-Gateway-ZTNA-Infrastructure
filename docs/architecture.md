@@ -2,7 +2,7 @@
 
 ![Advanced ASUS Edge Gateway architecture](images/Architecture.png)
 
-`images/Architecture.png` is the canonical diagram of the current reference deployment. Historical or proposed diagrams must be labeled explicitly and must not compete with this image as the active architecture view.
+`images/Architecture.png` is the canonical topology diagram of the current reference deployment. Historical or proposed diagrams must be labeled explicitly and must not compete with this image as the active architecture view. Time-sensitive validation status is governed by [PROJECT-STATUS](../PROJECT-STATUS.md) and the dated evidence timeline. As of 2026-09-23, AUDIT-02 has been post-firmware live revalidated on GNUton `3004.388.11_1-gnuton1_tuf`; the equivalent current-firmware AUDIT-03 classic-DNS packet-correlation refresh remains the next datapath validation.
 
 ## Logical components
 
