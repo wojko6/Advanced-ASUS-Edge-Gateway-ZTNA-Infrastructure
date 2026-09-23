@@ -123,10 +123,29 @@ snapshot_path "$ADDON_DIR/legacy" legacy
 
 is_managed_install_snapshot() {
     snapshot_name="$(basename "$1")"
-    case "$snapshot_name" in
-        install-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]-[0-9]*) return 0 ;;
-        *) return 1 ;;
+    snapshot_rest="${snapshot_name#install-}"
+    [ "$snapshot_rest" != "$snapshot_name" ] || return 1
+
+    snapshot_date="${snapshot_rest%%-*}"
+    snapshot_rest="${snapshot_rest#*-}"
+    [ "${#snapshot_date}" -eq 8 ] || return 1
+    case "$snapshot_date" in ''|*[!0-9]*) return 1 ;; esac
+
+    case "$snapshot_rest" in
+        *-*)
+            snapshot_time="${snapshot_rest%%-*}"
+            snapshot_suffix="${snapshot_rest#*-}"
+            [ -n "$snapshot_suffix" ] || return 1
+            case "$snapshot_suffix" in *[!0-9]*) return 1 ;; esac
+            ;;
+        *)
+            snapshot_time="$snapshot_rest"
+            ;;
     esac
+
+    [ "${#snapshot_time}" -eq 6 ] || return 1
+    case "$snapshot_time" in ''|*[!0-9]*) return 1 ;; esac
+    return 0
 }
 
 prune_install_backups() {

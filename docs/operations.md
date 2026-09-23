@@ -63,8 +63,10 @@ intervention.
 
 Installer rollback snapshots are bounded on JFFS. After a complete new snapshot
 has been created, but before any live file is changed, the installer retains the
-newest three managed `install-YYYYMMDD-HHMMSS-PID` directories by default and
-removes older managed snapshots. Set the environment variable
+newest three managed snapshots by default and removes older managed snapshots.
+Both the historical `install-YYYYMMDD-HHMMSS` format and the current
+`install-YYYYMMDD-HHMMSS-N` format are recognized, so existing deployments are
+cleaned up on the next controlled install. Set the environment variable
 `EDGE_INSTALL_BACKUP_KEEP=N` to another positive integer for a planned
 installation. The current snapshot is never selected for pruning. A retention
 failure aborts before live changes. Snapshot directories use a timestamp plus an atomically allocated numeric suffix; the installer tries up to 100 suffixes before aborting, and no live file is changed unless a unique snapshot directory has been created. Do not run concurrent installations.
