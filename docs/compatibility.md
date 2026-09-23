@@ -1,15 +1,17 @@
 # Compatibility and revalidation
 
-**Status:** CURRENT  
-**Last reviewed:** 2026-09-22  
-**Reference evidence:** 2026-09-11 baseline plus 2026-09-22 exit-node/DNS datapath validation
+**Status:** CURRENT
+
+**Last reviewed:** 2026-09-23
+
+**Reference evidence:** 2026-09-11 baseline, 2026-09-22 exit-node/DNS datapath validation, and the scoped [2026-09-23 firmware/reboot checks](worklog/2026-09-23.md)
 
 The project is validated against a specific reference deployment. It does not claim a universal minimum version for every Asuswrt-Merlin or Entware package combination.
 
 | Component | Reference / compatibility contract | Revalidation trigger |
 | --- | --- | --- |
 | Router | ASUS TUF-AX5400 | hardware/platform change |
-| Firmware | ASUSWRT-Merlin 3004.388.9_2-gnuton1 in the published 2026-09-11 baseline | firmware upgrade or firewall architecture change |
+| Firmware | ASUSWRT-Merlin 3004.388.9_2-gnuton1 in the published 2026-09-11 baseline; GNUton 3004.388.11_1-gnuton1_tuf in the 2026-09-23 reference-router health, reboot, DNS and HTTPS smoke checks | firmware upgrade or firewall architecture change |
 | Shell/runtime | BusyBox-compatible POSIX `sh` for deployed scripts | shell/tooling change |
 | Entware/storage | persistent `/opt` on the validated SSD-backed layout | storage migration, mount or startup-ownership change |
 | Tailscale | configured local socket, required subnet/exit routing and intentional `netfilter-mode=off` ownership model must remain functional | Tailscale update, socket/state-path or netfilter-mode change |
@@ -38,3 +40,5 @@ Repeat the affected live checks after:
 For exit-node changes, re-check IPv4 forwarding, project forwarding, platform NAT, established/related return handling and packet-level datapath correlation. For DNS changes, re-check classic UDP/TCP 53 from the relevant LAN/Tailscale clients and keep encrypted DNS outside the claim unless it is separately tested.
 
 Repository/CI success remains a separate evidence class: it does not prove that the same revision has been deployed on the reference router.
+
+The 2026-09-23 reboot check covered mounted storage, swap, WPS/USB exposure, project health, exact admin firewall rules, and Fedora DNS/HTTPS smoke tests. It does not replace packet-level exit-node correlation or establish phone-browser certificate status, multiple cold-start reliability, or a universal firmware support range.
