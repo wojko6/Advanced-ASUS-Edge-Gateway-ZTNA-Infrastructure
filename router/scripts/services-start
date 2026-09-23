@@ -150,12 +150,12 @@ release_services_lock() {
 
 acquire_services_lock() {
     if mkdir "$LOCK_DIR" 2>/dev/null; then
-        owner_start="$(services_lock_start_time "$")" || {
+        owner_start="$(services_lock_start_time "$$")" || {
             rmdir "$LOCK_DIR" 2>/dev/null || true
             log "ERROR: cannot determine services-start process start time"
             return 2
         }
-        if ! printf '%s %s\n' "$" "$owner_start" >"$LOCK_OWNER"; then
+        if ! printf '%s %s\n' "$$" "$owner_start" >"$LOCK_OWNER"; then
             rmdir "$LOCK_DIR" 2>/dev/null || true
             log "ERROR: cannot record services-start lock owner"
             return 2
@@ -193,12 +193,12 @@ acquire_services_lock() {
         log "services-start lock was acquired by another process; exiting"
         return 1
     fi
-    owner_start="$(services_lock_start_time "$")" || {
+    owner_start="$(services_lock_start_time "$$")" || {
         rmdir "$LOCK_DIR" 2>/dev/null || true
         log "ERROR: cannot determine services-start process start time"
         return 2
     }
-    if ! printf '%s %s\n' "$" "$owner_start" >"$LOCK_OWNER"; then
+    if ! printf '%s %s\n' "$$" "$owner_start" >"$LOCK_OWNER"; then
         rmdir "$LOCK_DIR" 2>/dev/null || true
         log "ERROR: cannot record services-start lock owner"
         return 2
