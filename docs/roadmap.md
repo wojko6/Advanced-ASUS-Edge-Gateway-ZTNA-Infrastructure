@@ -116,6 +116,19 @@ Historical finding and closure:
 - The completed claims are deliberately scoped: classic IPv4 LAN TCP/UDP 53 enforcement and direct IPv4 LAN DoT/TCP 853 blocking are live validated. They do not establish control over DoH/HTTPS, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, application-specific encrypted DNS, or equivalent traffic entering through other interfaces.
 - **Next DNS-control milestone:** perform read-only assessment of DoH/HTTPS and DoQ/QUIC first, then design any enforcement only after compatibility, false-positive, rollback, and protocol-identification limits are understood. IPv6 and VPN-carried resolver paths remain separate assessment items.
 
+## Post-firmware revalidation priorities — 2026-09-23
+
+The GNUton `3004.388.11_1-gnuton1_tuf` upgrade changed the platform baseline. Existing 2026-09-22 AUDIT-02/03 packet evidence remains valid for that earlier firmware, but current-firmware claims should be refreshed deliberately rather than inferred from successful smoke tests.
+
+Current order:
+
+1. **Completed — management authorization negative test:** a distinct unauthorized Windows tailnet client retained Tailscale peer reachability but could not establish TCP/8443. Five client SYN packets were correlated with a source-specific counter-only firewall rule before the unchanged production deny tail; cleanup and the final health check passed. See [sanitized evidence](../evidence/2026-09-23/unauthorized-tailnet-management-denial.md).
+2. **Next — exit-node datapath revalidation:** repeat the controlled before/after-NAT correlation on `tailscale0` and the active WAN interface, together with `ip_forward`, the project WAN-forward rule, platform WAN NAT, and the established/related return path.
+3. **Then — classic-DNS datapath refresh if a current-firmware AUDIT-03-equivalent claim is needed:** correlate controlled UDP/53 and TCP/53 traffic with `EDGE_TS_PREROUTING`, dnsmasq and Unbound on the upgraded firmware.
+4. **In parallel — reboot/normal-use evidence:** accumulate the clean startup cycles and Diversion Large normal-use sessions required by the acceptance criteria below.
+
+These revalidations should not introduce broader policy changes. Keep them as bounded measurements with current backups, explicit cleanup for any temporary instrumentation, and sanitized evidence.
+
 ## Post-observation router filtering work
 
 After the completed unchanged-state observation:
