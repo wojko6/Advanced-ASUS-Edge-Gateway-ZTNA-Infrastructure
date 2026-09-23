@@ -1,20 +1,24 @@
 # Project status
 
-**Status date:** 2026-09-22  
-**Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin  
-**Current phase:** post-stability DNS-filtering validation / audit follow-up
+**Status date:** 2026-09-23
+
+**Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
+
+**Current phase:** post-firmware validation and Diversion Large normal-use observation
 
 ## Executive status
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
+On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_tuf`. The project `v2.1.4-dev` scripts were deployed from source revision `de1cf10`, and a later private configuration change limited tailnet administration to the Fedora workstation and Android phone. A same-day reboot and bounded router/workstation/phone checks passed; see the [dated worklog](docs/worklog/2026-09-23.md). A worklog records operator-reported results and is not a substitute for a separately published, sanitized live-evidence artifact.
+
 The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Unbound/DNSSEC integration, dnsmasq integration, syslog-ng logging, project-owned least-privilege firewall chains, recovery tooling, health checks, evidence collection, and automated repository validation.
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
 
-## Current validated baseline
+## Historical baseline and subsequent live checks
 
-The 2026-09-11 controlled reboot and post-migration validation established the current baseline. The final health check for that session reported:
+The 2026-09-11 controlled reboot and post-migration validation established the historical SSD-backed baseline. The final health check for that session reported:
 
 ```text
 Summary: 0 failure(s), 0 warning(s)
@@ -40,6 +44,16 @@ The current `scripts/healthcheck.sh` implementation checks the AUDIT-02 exit-nod
 
 A later 2026-09-22 maintenance check also found and removed a legacy `/jffs/scripts/nat-start` hook that duplicated the managed Tailscale DNS redirects and was group/world writable. The runtime duplicates had zero counters because the project-owned parent jump was evaluated first. The hook was backed up privately, removed from the active hook directory, and the duplicate runtime rules were deleted; the deployed health check remained `0 failure(s), 0 warning(s)`. A follow-up repository revision added explicit detection for direct `tailscale0` NAT rules outside `EDGE_TS_PREROUTING` and unsafe active JFFS hook modes. That hardened revision was subsequently deployed to the reference router and live-validated with SHA-256 `5d96555bad141c40191855e2f121de0412635cb7e5fe14d41b5ec73842db6233`, `0 failure(s), 0 warning(s)`, and `HEALTHCHECK_RC=0`. See `evidence/2026-09-22/healthcheck-drift-hardening-live-validation.md`.
 
+## 2026-09-23 reference deployment checkpoint
+
+- Before the project and firmware changes, the operator verified independent, private backup copies and restore dry-runs. The project archive is scoped to selected JFFS/Entware files; separate encrypted backups cover router settings, full JFFS, NVRAM reference data and Tailscale state. These are different recovery layers, not a complete firmware image or a successful restore drill.
+- After the firmware upgrade and an operator-initiated same-day reboot, both SSD partitions and swap were available. WPS remained disabled; ports 1900 and 8200 had no listeners. The USB exposure audit and project health check each reported zero failures and warnings. The project health check verified the configured exit-node runtime prerequisites, DNS, managed firewall and core services at that point in time.
+- Both authorized Tailscale admin sources retained exact managed HTTPS input and DNAT rules after reboot. From Fedora, router-addressed and separately addressed external UDP/53 lookups answered; the after-reboot probe did not record a NAT redirect-counter delta. Fedora HTTPS using the router's DDNS name over the tailnet returned `HTTP=200` with certificate verification successful (`TLS_VERIFY=0`).
+- The operator reported that Android could load and log in to the admin panel over both cellular data and Wi-Fi with Tailscale enabled; the page did not load with Tailscale disabled in either tested condition. The phone browser's certificate indicator and exact packet path were not captured. These observations do not establish a general WAN-side block.
+- A second post-reboot Android exit-node public-IP test, a negative management test from an unauthorized tailnet device, packet-level correlation of the exit-node path on the new firmware, several cold starts and long-term normal-use observation were not recorded. The 2026-09-22 AUDIT-02/03 packet tests remain historical evidence on the earlier firmware, not independent proof of the same flows after the upgrade.
+
+The full chronology and claim limits are in [the 2026-09-23 worklog](docs/worklog/2026-09-23.md). Firmware compatibility is scoped in [compatibility and revalidation](docs/compatibility.md); test ownership and outstanding acceptance checks are mapped in [requirements and acceptance](docs/requirements.md).
+
 ## Stability observation — closed 2026-09-22
 
 **Observed window:** 2026-09-11 through 2026-09-22.  
@@ -64,16 +78,15 @@ A full repository audit covered code, security, install/rollback, firewall/DNS/T
 
 AUDIT-02 and AUDIT-03 are now closed from live evidence on the reference datapath. AUDIT-03 closure is explicitly bounded to classic DNS over UDP/TCP port 53; DoH/DoT and application-specific encrypted resolver transports remain separate limitations.
 
-## Post-observation validation plan
+## Post-observation validation status and next actions
 
-Now that the unchanged-state observation is closed:
+The 2026-09-22 closing observation and AUDIT-02/03 sanitized live-validation artifacts are retained as historical checkpoints. Following the 2026-09-23 firmware and policy changes:
 
-1. retain the 2026-09-22 closing stability checkpoint/report as the boundary for the completed observation;
-2. retain the sanitized AUDIT-02 live-validation artifact documenting the platform-owned Asuswrt-Merlin NAT dependency;
-3. retain the sanitized AUDIT-03 live-validation artifact documenting the Fedora/Android classic-DNS datapath and its encrypted-DNS limitation boundary;
-4. make no configuration change unless the evidence demonstrates a real defect;
-5. if a change is required, design the smallest remediation, test it in an isolated/planned maintenance context, deploy it deliberately, then repeat affected validation;
-6. preserve the distinction between classic DNS interception and unvalidated encrypted/client-specific resolver transports.
+1. Test management access from a tailnet device that is not one of the two authorized admin sources; record the device role and observed verdict without publishing its address.
+2. Repeat affected packet/counter correlation on the new firmware if an equivalent post-upgrade exit-node or DNS datapath claim is required. A successful lookup or health check alone does not establish every packet path.
+3. Observe Diversion Large across the sessions and starts specified in [the roadmap](docs/roadmap.md#diversion-large-normal-use-acceptance-criteria), including false positives and RAM/swap behavior. One successful reboot does not meet those acceptance criteria.
+4. Prepare a minimized, reviewed 2026-09-23 live-evidence artifact if public deployment proof is needed; keep raw backups, identifiers and unsanitized snapshots private.
+5. Treat any further router change as planned maintenance with a current backup, rollback path and affected live revalidation.
 
 ## Evidence and privacy boundary
 
@@ -182,4 +195,4 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 ## Current decision
 
-As of 2026-09-22, the unchanged-state observation is closed and both AUDIT-02 and AUDIT-03 are live validated within their documented claim boundaries. The health-check code that verifies the platform-owned exit-node NAT/return-path prerequisites established by AUDIT-02 is now deployed on the reference router and has passed a live post-deployment validation with the repository-matching SHA-256, zero failures, zero warnings, and `HEALTHCHECK_RC=0`. A controlled Diversion A/B/C experiment has also established the current DNS-filtering boundary: `snbAdSupport=no` improves coverage, `Large` broadens the policy, but DNS blocking alone does not remove all rendered advertising. The Large profile is therefore in normal-use observation for false positives/resource impact rather than being treated as a proven complete ad-blocking solution.
+As of 2026-09-23, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with the `v2.1.4-dev` project deployed. The same-day reboot, core health and USB audits, both admin rules, Fedora DNS/verified HTTPS, and operator-reported Android admin access passed within the documented limits. AUDIT-02/03 retain their 2026-09-22 live-validation scope; the new firmware has not received an equivalent full packet-correlation rerun. Diversion `Large + snbAdSupport=no` remains under normal-use observation rather than a permanently accepted filtering baseline. Next: test an unauthorized tailnet client's management access and collect the remaining acceptance evidence before promoting broader security or stability claims.
