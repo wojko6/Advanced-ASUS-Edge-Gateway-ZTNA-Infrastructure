@@ -431,6 +431,7 @@ sh "$REPO_DIR/tests/test-usb-exposure.sh"
 # firewall-start concurrently from multiple startup/event paths.
 for firewall_lock_guard in \
     'EDGE_FIREWALL_LOCK="/tmp/asus-edge-firewall.lock"' \
+    'executable_exists flock >/dev/null 2>&1 || die "flock not found; cannot serialize firewall policy rebuild"' \
     'exec 9>"$EDGE_FIREWALL_LOCK"' \
     'flock -x 9'
 do

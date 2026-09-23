@@ -32,6 +32,12 @@ opt_is_ready() {
     [ -x /opt/bin/opkg ] || [ -x /opt/sbin/opkg ]
 }
 
+if executable_exists flock >/dev/null 2>&1; then
+    ok "firewall serialization dependency available (flock)"
+else
+    fail "flock unavailable; managed firewall rebuild cannot be serialized safely"
+fi
+
 if [ -r "$CONFIG_FILE" ]; then
     # shellcheck disable=SC1090
     . "$CONFIG_FILE"

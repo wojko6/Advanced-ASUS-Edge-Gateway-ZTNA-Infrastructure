@@ -58,6 +58,7 @@ evidence/           Sanitized dated validation artifacts, evidence policy and te
 - Entware mounted at `/opt`.
 - Tailscale and Unbound installed; syslog-ng is optional.
 - A SHA-256 utility for verified backups; install Entware package `coreutils-sha256sum` when the firmware does not provide one.
+- A working `flock` utility on the router PATH; `firewall-start` requires it to serialize concurrent policy rebuilds and fails closed if it is unavailable.
 - A current router/JFFS backup and local recovery access for first deployment.
 
 Entware package names can differ by target. Confirm them before installation:
