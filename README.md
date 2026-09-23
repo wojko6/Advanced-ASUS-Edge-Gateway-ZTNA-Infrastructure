@@ -25,7 +25,7 @@ Remote access is enforced at two layers:
 1. Tailscale Grants authorize identities and groups.
 2. Managed iptables chains restrict router services, LAN destinations, ports, and optional exit-node forwarding.
 
-See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy.md), and [security limitations](docs/security.md) for the detailed design.
+See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy.md), [security limitations](docs/security.md), and the [requirements and acceptance map](docs/requirements.md) for the detailed design, test methods and current validation limits.
 
 ## Key controls
 
@@ -249,6 +249,7 @@ Tailscale updates are a separate planned-maintenance action:
 
 - [Polski przewodnik wdrożenia](docs/deployment-pl.md)
 - [Architecture](docs/architecture.md)
+- [Requirements and acceptance](docs/requirements.md)
 - [Firewall policy](docs/firewall-policy.md)
 - [Security model and limitations](docs/security.md)
 - [Threat model](docs/threat-model.md)
