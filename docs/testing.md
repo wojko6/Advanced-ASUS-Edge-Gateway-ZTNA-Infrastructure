@@ -80,15 +80,17 @@ to establish the end-to-end datapath after a material firmware/firewall change.
 | Source | Destination | Test | Expected |
 |---|---|---|---|
 | WAN | Router:8443 | `nmap -Pn -p 8443 PUBLIC_IP` | filtered/closed |
-| Admin tailnet device | Router:8443 | `nc -vz ROUTER_MANAGEMENT_IP 8443` | allowed |
-| User tailnet device | Router:8443 | same | denied |
-| Tailnet device | Router:22 | same | denied by default |
+| Authorized admin tailnet device | Router:8443 | `nc -vz ROUTER_TAILSCALE_IP 8443` | allowed by the managed source policy; verify HTTPS separately using the certificate's DNS name |
+| Unauthorized tailnet device | Router:8443 | `nc -vz ROUTER_TAILSCALE_IP 8443` from a separate, unauthorized device | denied |
+| Tailnet device | Router:`EDGE_ROUTER_SSH_PORT` | `nc -vz ROUTER_TAILSCALE_IP EDGE_ROUTER_SSH_PORT` | denied when `EDGE_ALLOW_ROUTER_SSH=0` |
 | Approved user | NAS:443 | `curl -kI https://NAS_IP/` | allowed |
 | Tailnet device | Unlisted host:445 | `nc -vz HOST 445` | denied |
 | Tailnet device | `1.1.1.1:53` | `dig @1.1.1.1 example.com` | answer via local resolver after REDIRECT |
 | Unauthorized exit user | Public IP | select exit node + `curl` | denied by Grants |
 
-Run WAN scans only against addresses you own or are authorized to test.
+Use the port from the *deployed* private configuration for the SSH row, rather than assuming that the router listens on port 22. `nc` tests TCP reachability, not HTTPS identity or certificate trust. For an authorized admin HTTPS check, use the certificate-matching router DNS name and verify TLS without `-k`; when testing a tailnet path explicitly, direct that DNS name to the router's tailnet address (for example with `curl --resolve`). Do not publish the actual address or private hostname.
+
+The expected column describes policy, not a completed test. The [2026-09-23 worklog](worklog/2026-09-23.md#same-day-router-reboot-and-persistence-check) records successful Fedora HTTPS with verified TLS, both managed admin rule matches, and operator-reported Android login over Tailscale after reboot. It does **not** record a negative management probe from a distinct unauthorized tailnet device. A phone failing to load the page after turning off Tailscale is not that negative test. Run WAN scans only against addresses you own or are authorized to test.
 
 ## Packet capture
 
