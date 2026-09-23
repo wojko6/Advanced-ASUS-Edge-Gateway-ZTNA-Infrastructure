@@ -38,7 +38,8 @@ ROOT_DIR="${EDGE_TEST_ROOT:-}"
 JFFS_DIR="${ROOT_DIR}/jffs"
 
 ADDON_DIR="$JFFS_DIR/addons/asus-edge"
-BACKUP_DIR="$ADDON_DIR/backups/install-$(date +%Y%m%d-%H%M%S)-$$"
+BACKUP_DIR="$ADDON_DIR/backups/install-$(date +%Y%m%d-%H%M%S)-$"
+INSTALL_BACKUP_KEEP="${EDGE_INSTALL_BACKUP_KEEP:-3}"
 APPLY=0
 
 usage() {
@@ -60,6 +61,13 @@ uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 
     echo "ERROR: create config/edge.conf from config/edge.conf.example first" >&2
     exit 1
 }
+
+case "$INSTALL_BACKUP_KEEP" in
+    ''|*[!0-9]*|0)
+        echo "ERROR: EDGE_INSTALL_BACKUP_KEEP must be a positive integer" >&2
+        exit 1
+        ;;
+esac
 
 for file in \
     "$REPO_DIR/router/scripts/firewall-start" \
@@ -94,6 +102,47 @@ snapshot_path "$JFFS_DIR/scripts/services-start" services-start
 snapshot_path "$JFFS_DIR/scripts/wan-event" wan-event
 snapshot_path "$ADDON_DIR/bin" bin
 snapshot_path "$ADDON_DIR/legacy" legacy
+
+is_managed_install_snapshot() {
+    snapshot_name="$(basename "$1")"
+    case "$snapshot_name" in
+        install-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]-[0-9]*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+prune_install_backups() {
+    backup_root="$ADDON_DIR/backups"
+    backup_count=0
+
+    for snapshot in "$backup_root"/install-*; do
+        [ -d "$snapshot" ] || continue
+        [ ! -L "$snapshot" ] || continue
+        is_managed_install_snapshot "$snapshot" || continue
+        backup_count=$((backup_count + 1))
+    done
+
+    remove_count=$((backup_count - INSTALL_BACKUP_KEEP))
+    [ "$remove_count" -gt 0 ] || return 0
+
+    for snapshot in "$backup_root"/install-*; do
+        [ "$remove_count" -gt 0 ] || break
+        [ -d "$snapshot" ] || continue
+        [ ! -L "$snapshot" ] || continue
+        is_managed_install_snapshot "$snapshot" || continue
+        [ "$snapshot" != "$BACKUP_DIR" ] || continue
+        rm -rf "$snapshot" || return 1
+        [ ! -e "$snapshot" ] || return 1
+        remove_count=$((remove_count - 1))
+    done
+
+    [ "$remove_count" -eq 0 ]
+}
+
+prune_install_backups || {
+    echo "ERROR: could not enforce installer snapshot retention before live changes" >&2
+    exit 1
+}
 
 restore_path() {
     # All targets below are fixed project paths, never supplied by the user.

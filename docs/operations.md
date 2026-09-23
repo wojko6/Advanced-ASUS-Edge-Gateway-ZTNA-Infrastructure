@@ -53,14 +53,23 @@ maintain physical access; restore is not an atomic filesystem transaction.
 
 `--dry-run` validates the archive structure, accepted entry types, manifest coverage and file hashes without copying payload files into `/jffs` or `/opt`. Use it before every planned restore. `--apply` then copies only the `jffs` and `opt` trees present in the verified archive. It does not delete unrelated files that are absent from the backup, does not restore Tailscale state, and does not automatically restart services or reboot the router. Review the restored files before choosing the required recovery action.
 
-The installer snapshots the configuration, both hooks, managed binaries and
-preserved legacy hooks before changing live files. A failed copy or failed
-`--apply` restores that entire set, including removing files that did not exist
-before a first install. After a failed firewall apply it restarts the firmware
-firewall only if file rollback succeeds. Recovery errors retain the snapshot
-and require local intervention. The snapshot directory must be new; if two
-installs begin within the same second, a name collision aborts before live
-files are changed. Do not run concurrent installations.
+The installer snapshots the configuration, all three managed hooks (`firewall-start`,
+`services-start`, and `wan-event`), managed binaries and preserved legacy hooks
+before changing live files. A failed copy or failed `--apply` restores that entire
+set, including removing files that did not exist before a first install. After a
+failed firewall apply it restarts the firmware firewall only if file rollback
+succeeds. Recovery errors retain the current snapshot and require local
+intervention.
+
+Installer rollback snapshots are bounded on JFFS. After a complete new snapshot
+has been created, but before any live file is changed, the installer retains the
+newest three managed `install-YYYYMMDD-HHMMSS-PID` directories by default and
+removes older managed snapshots. Set the environment variable
+`EDGE_INSTALL_BACKUP_KEEP=N` to another positive integer for a planned
+installation. The current snapshot is never selected for pruning. A retention
+failure aborts before live changes. The snapshot directory must be new; if a
+name collision occurs, installation aborts before live files are changed. Do not
+run concurrent installations.
 
 ## Fedora clean-room Disaster Recovery
 
