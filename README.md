@@ -72,7 +72,7 @@ Never commit auth keys, node state, private keys, collector credentials, router 
 
 ### Reference compatibility
 
-The live-validated baseline uses an ASUS TUF-AX5400 running ASUSWRT-Merlin 3004.388.9_2-gnuton1. Component compatibility is defined by tested behaviour rather than an invented universal minimum version: Tailscale must preserve the configured socket/routing and intentional `netfilter-mode=off` ownership model; Unbound must validate the deployed configuration and expose the configured loopback listener; syslog-ng remains optional unless remote logging is configured. Record actual material package versions in dated evidence after upgrades. See [compatibility and revalidation](docs/compatibility.md).
+The original 2026-09-11 SSD/reboot baseline used an ASUS TUF-AX5400 running ASUSWRT-Merlin 3004.388.9_2-gnuton1. The reference router was upgraded on 2026-09-23 to GNUton 3004.388.11_1-gnuton1_tuf; the [same-day worklog](docs/worklog/2026-09-23.md) records a subsequent reboot, clean project health and USB exposure audits, persisted admin firewall rules, and Fedora DNS/verified HTTPS smoke tests. These results do not establish universal firmware compatibility or long-term stability. Component compatibility is defined by tested behaviour: Tailscale must preserve the configured socket/routing and intentional `netfilter-mode=off` ownership model; Unbound must validate the deployed configuration and expose the configured loopback listener; syslog-ng remains optional unless remote logging is configured. Record actual material package versions in dated evidence after upgrades. See [compatibility and revalidation](docs/compatibility.md).
 
 ## Quick start
 
