@@ -15,7 +15,8 @@ executable_exists() {
 }
 
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
-LOCK_DIR="/var/run/asus-edge-services.lock"
+LOCK_DIR="${EDGE_SERVICES_LOCK_DIR:-/var/run/asus-edge-services.lock}"
+LOCK_OWNER="$LOCK_DIR/owner"
 SWAPS_FILE="${EDGE_PROC_SWAPS:-/proc/swaps}"
 OVERCOMMIT_FILE="${EDGE_PROC_OVERCOMMIT_MEMORY:-/proc/sys/vm/overcommit_memory}"
 log() { logger -t asus-edge "$*"; }
@@ -135,8 +136,86 @@ wait_for_tailscale_api() {
     return 1
 }
 
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then log "services-start already running; exiting"; exit 0; fi
-trap 'rmdir "$LOCK_DIR" 2>/dev/null' EXIT HUP INT TERM
+# BEGIN services-start lock helpers
+services_lock_start_time() {
+    lock_pid="$1"
+    [ -r "/proc/$lock_pid/stat" ] || return 1
+    awk '{print $22}' "/proc/$lock_pid/stat" 2>/dev/null
+}
+
+release_services_lock() {
+    rm -f "$LOCK_OWNER" 2>/dev/null || true
+    rmdir "$LOCK_DIR" 2>/dev/null || true
+}
+
+acquire_services_lock() {
+    if mkdir "$LOCK_DIR" 2>/dev/null; then
+        owner_start="$(services_lock_start_time "$")" || {
+            rmdir "$LOCK_DIR" 2>/dev/null || true
+            log "ERROR: cannot determine services-start process start time"
+            return 2
+        }
+        if ! printf '%s %s\n' "$" "$owner_start" >"$LOCK_OWNER"; then
+            rmdir "$LOCK_DIR" 2>/dev/null || true
+            log "ERROR: cannot record services-start lock owner"
+            return 2
+        fi
+        return 0
+    fi
+
+    lock_pid=""
+    lock_start=""
+    if [ -r "$LOCK_OWNER" ]; then
+        read -r lock_pid lock_start <"$LOCK_OWNER" || true
+    fi
+    case "$lock_pid" in ''|*[!0-9]*) lock_pid="" ;; esac
+    case "$lock_start" in ''|*[!0-9]*) lock_start="" ;; esac
+
+    if [ -n "$lock_pid" ] && [ -n "$lock_start" ]; then
+        live_start="$(services_lock_start_time "$lock_pid" 2>/dev/null || true)"
+        if [ -n "$live_start" ] && [ "$live_start" = "$lock_start" ]; then
+            log "services-start already running; exiting"
+            return 1
+        fi
+    fi
+
+    log "WARNING: reclaiming stale services-start lock"
+    rm -f "$LOCK_OWNER" 2>/dev/null || {
+        log "ERROR: cannot remove stale services-start lock owner"
+        return 2
+    }
+    if ! rmdir "$LOCK_DIR" 2>/dev/null; then
+        log "ERROR: stale services-start lock directory is not empty or cannot be removed"
+        return 2
+    fi
+
+    if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+        log "services-start lock was acquired by another process; exiting"
+        return 1
+    fi
+    owner_start="$(services_lock_start_time "$")" || {
+        rmdir "$LOCK_DIR" 2>/dev/null || true
+        log "ERROR: cannot determine services-start process start time"
+        return 2
+    }
+    if ! printf '%s %s\n' "$" "$owner_start" >"$LOCK_OWNER"; then
+        rmdir "$LOCK_DIR" 2>/dev/null || true
+        log "ERROR: cannot record services-start lock owner"
+        return 2
+    fi
+    return 0
+}
+# END services-start lock helpers
+
+acquire_services_lock
+lock_rc="$?"
+case "$lock_rc" in
+    0) ;;
+    1) exit 0 ;;
+    *) exit 1 ;;
+esac
+trap 'release_services_lock' EXIT
+trap 'exit 1' HUP INT TERM
 elapsed=0
 while ! opt_is_ready 2>/dev/null; do
     elapsed=$((elapsed + 1))

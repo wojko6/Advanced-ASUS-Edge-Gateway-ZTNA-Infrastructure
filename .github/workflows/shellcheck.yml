@@ -31,6 +31,8 @@ jobs:
         run: sh tests/test-log-retention.sh
       - name: Run services-start configuration validation
         run: sh tests/test-services-config-validation.sh
+      - name: Run services-start crash-safe lock test
+        run: sh tests/test-services-lock.sh
       - name: Run services-start Tailscale policy guards
         run: sh tests/test-services-tailscale-policy-static.sh
       - name: Run services-start managed firewall hook guard
