@@ -34,6 +34,24 @@ A Fedora/GNOME endpoint validation covering:
 
 This case study is observational and does not claim that every Linux application is intercepted by Zen.
 
+## 3. Tailscale Android DNS and routing failure
+
+**File:** [Tailscale Android DNS and Routing Troubleshooting](tailscale-android-dns-routing-case-study.md)
+
+An Android/Tailscale troubleshooting case study covering:
+
+- separation of IP connectivity from DNS resolution failure;
+- an overlapping `192.168.50.0/24` local Wi-Fi and Tailscale subnet route;
+- Android Private DNS state and `PrivateDnsBroken`;
+- DNS Toggle automation using `WRITE_SECURE_SETTINGS`;
+- conflict between strict NextDNS DoT and the router's intentional TCP/853 policy;
+- direct `dig` testing to separate DNS transport from the Android system resolver;
+- a reproducible side-by-side post-fix Tailscale Android build;
+- controlled A/B handoff testing against official Tailscale 1.102.3;
+- explicit rejection of an unproven attribution to upstream issue #21155.
+
+The case demonstrates how multiple valid-looking network controls can interact and create a failure that initially resembles an upstream VPN client defect.
+
 ## How to read these cases
 
 Each case separates:
