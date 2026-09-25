@@ -234,6 +234,32 @@ The GeForce NOW overlay displayed `WiFi 5.0` as its transport label, but
 the operating system directly reported HE/802.11ax. The link-layer
 classification in this evidence therefore follows `iw`.
 
+## Later same-day observational follow-up
+
+After the controlled comparison, the wired path was used for approximately
+one hour of normal GeForce NOW play.
+
+Operator-observed state during that period:
+
+```text
+transport:              Ethernet
+application packet loss: 0
+ping:                   stable
+```
+
+The endpoint Zen filter was toggled on/off without an observed change in
+GeForce NOW loss or latency behaviour.
+
+This is retained as a bounded normal-use observation rather than a
+controlled filter benchmark.
+
+A same-day Exit Node overlay comparison is not used as acceptance evidence.
+Route verification after the screenshots showed that the nominal final
+return-to-baseline segment still had the ASUS exit node selected, so the
+intended A/B/A sequence was confounded. The client was subsequently
+returned to the normal Ethernet/LAN route and that route state was
+explicitly verified.
+
 ## Verdict
 
 **Observed:**

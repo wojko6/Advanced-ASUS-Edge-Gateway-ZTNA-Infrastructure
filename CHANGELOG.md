@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Added a sanitized 2026-09-25 router live-checkpoint artifact and dated engineering worklog covering health, current-firmware DNS/DoT counter correlation, Exit Node diagnostic boundaries and GeForce NOW follow-up.
 - Added an Xbox Cloud Gaming browser/WebRTC case study with sanitized H.264 stream, RTP loss/frame, jitter, ICE candidate-pair, bitrate and decoder-path evidence from Microsoft Edge on Fedora.
 - Added a GeForce NOW Ethernet-versus-Wi-Fi 6 stability case study with sanitized latency, Wi-Fi link, application-overlay and packet-capture evidence for both transports.
 - Mapped reference-deployment use cases, functional checks and nonfunctional acceptance limits to dated evidence without promoting untested paths to validated status.
@@ -50,6 +51,8 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Reconfirmed the reference router on 2026-09-25 with `0 failure(s), 0 warning(s)`, DNSSEC-validating Unbound, exact LAN UDP/TCP 53 redirect deltas, a correlated direct DoT/853 reject, and a Tailscale UDP/53 redirect delta; the incomplete same-day Exit Node capture was explicitly not promoted over the existing 2026-09-23 evidence.
+- Recorded an approximately one-hour wired GeForce NOW normal-use follow-up with stable latency and zero application-reported packet loss; toggling Zen produced no observed difference in that window, while a confounded Exit Node A/B/A attempt was excluded from performance claims.
 - Recorded a bounded Xbox Cloud Gaming WebRTC session in Edge: 1920 x 1080 H.264, 935/1000 samples at 58–62 FPS, zero receiver-reported video packet loss/dropped frames/freezes, and a nominated UDP ICE path with 30–34 ms WebRTC RTT.
 - Compared the same GeForce NOW Warsaw service location over Gigabit Ethernet and 5 GHz 802.11ax; both captured application snapshots reported zero packet/frame loss, while the Wi-Fi run exposed rare high-latency excursions despite zero ICMP loss.
 - The sanitized 2026-09-11 SSD-migration artifact directly confirms automatic mounting of both SSD filesystems, activation of both swap files, successful Tailscale status with exit-node capability advertised, Unbound running, direct DNSSEC-validated resolution on `127.0.0.1:53535`, and dnsmasq configured to use the local Unbound resolver.
