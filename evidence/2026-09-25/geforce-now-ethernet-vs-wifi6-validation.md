@@ -119,6 +119,40 @@ rx drop misc:        743
 The `rx drop misc` counter is not interpreted as GeForce NOW packet
 loss.
 
+## Wi-Fi GeForce NOW capture
+
+The Wi-Fi capture was recovered after the initial documentation pass.
+`capinfos` and `tshark` could read 3,675,119 complete packets before
+reporting that the file had been cut short in the middle of the next
+packet.
+
+```text
+Number of complete packets: 3,675,119
+File size:                  approximately 4.432 GB
+Data size:                  approximately 4.308 GB
+Capture duration:           678.771553 s
+Average packet size:        1172.23 bytes
+Average packet rate:        approximately 5,414 packets/s
+```
+
+UDP/5004 traffic in the readable capture prefix:
+
+```text
+Frames:                     3,649,546
+Bytes:                      4,304,608,129
+Share of readable packets:  approximately 99.3%
+Average filtered rate:      approximately 50.7 Mb/s
+```
+
+Two UDP/5004 conversations dominated the stream traffic. Public service
+and private client addresses are omitted from this sanitized record.
+
+The capture file was not cleanly finalized because the client `/tmp`
+tmpfs reached capacity. The readable prefix is used only for bounded
+flow-, volume-, and timing-level observations. It is not used to derive
+GeForce NOW packet-loss counts or to claim complete capture coverage of
+the session.
+
 ## Wi-Fi short baseline
 
 ```text
@@ -210,7 +244,9 @@ classification in this evidence therefore follows `iw`.
   overlay snapshots;
 - Wi-Fi average latency remained close to Ethernet;
 - Wi-Fi produced materially higher short-baseline jitter and rare long-run
-  latency spikes, including spikes visible to the LAN gateway.
+  latency spikes, including spikes visible to the LAN gateway;
+- the recovered Wi-Fi capture contained 3,675,119 readable packets across
+  678.772 s, with UDP/5004 accounting for approximately 99.3% of them.
 
 **Not observed during this run:**
 
@@ -220,8 +256,9 @@ classification in this evidence therefore follows `iw`.
 **Not tested / unavailable:**
 
 - symmetric long-duration Ethernet ping sampling;
-- Wi-Fi packet-level stream analysis, because the intended Wi-Fi capture
-  file was not created.
+- packet-level derivation of GeForce NOW application loss from UDP/5004;
+- a cleanly finalized full-session Wi-Fi capture, because the recovered
+  file was truncated when the capture tmpfs reached capacity.
 
 The evidence supports a bounded conclusion that Wi-Fi 6 was functional and
 loss-free in the documented window but less deterministic in latency than
