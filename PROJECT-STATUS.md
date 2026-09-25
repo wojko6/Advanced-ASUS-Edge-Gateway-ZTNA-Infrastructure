@@ -2,7 +2,7 @@
 
 **Status date:** 2026-09-25
 
-**Latest live router checkpoint:** 2026-09-23
+**Latest live router checkpoint:** 2026-09-25
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
@@ -10,7 +10,7 @@
 
 ## Executive status
 
-This status document was reviewed on 2026-09-25. The latest live reference-router checkpoint remains the 2026-09-23 firmware/revalidation session; later documentation and client-side case-study work does not imply a newer router-state observation.
+This status document was reviewed on 2026-09-25. A fresh read-only reference-router checkpoint was completed on 2026-09-25 after the 2026-09-23 firmware/revalidation session. The new checkpoint reconfirmed a clean project health check, SSD/swap/service state, current-firmware LAN classic-DNS interception, direct DoT/853 blocking and Tailscale UDP/53 interception. It did not replace the deeper 2026-09-23 exit-node packet-correlation evidence.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
@@ -47,6 +47,18 @@ Key validated areas include:
 The current `scripts/healthcheck.sh` implementation checks the AUDIT-02 exit-node runtime prerequisites when exit-node mode is enabled. The implementation was merged through PR #51 and was subsequently deployed to the reference router on 2026-09-22. A live post-deployment run matched the repository SHA-256 (`e03d6abd7a740524ba5a2c6799a47559ef187b22bb1a3209eb94ffc4a30a7e47`) and completed with `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`. See `evidence/2026-09-22/healthcheck-deployment-validation.md`.
 
 A later 2026-09-22 maintenance check also found and removed a legacy `/jffs/scripts/nat-start` hook that duplicated the managed Tailscale DNS redirects and was group/world writable. The runtime duplicates had zero counters because the project-owned parent jump was evaluated first. The hook was backed up privately, removed from the active hook directory, and the duplicate runtime rules were deleted; the deployed health check remained `0 failure(s), 0 warning(s)`. A follow-up repository revision added explicit detection for direct `tailscale0` NAT rules outside `EDGE_TS_PREROUTING` and unsafe active JFFS hook modes. That hardened revision was subsequently deployed to the reference router and live-validated with SHA-256 `5d96555bad141c40191855e2f121de0412635cb7e5fe14d41b5ec73842db6233`, `0 failure(s), 0 warning(s)`, and `HEALTHCHECK_RC=0`. See `evidence/2026-09-22/healthcheck-drift-hardening-live-validation.md`.
+
+## 2026-09-25 reference deployment checkpoint
+
+- The router remained on GNUton `3004.388.11_1-gnuton1_tuf`. Both SSD-backed filesystems were mounted read/write, both swap files were active, and `tailscaled`, Unbound, dnsmasq and syslog-ng were running.
+- Tailscale reported version `1.102.3`. The router continued to advertise exit-node capability and the project health check confirmed the intended `netfilter-mode=off` ownership model, IPv4/IPv6 managed chains, exit-node runtime prerequisites, printer hardening, DNS policy and resolver health.
+- A direct Unbound query on loopback port 53535 returned `NOERROR` with the DNSSEC `AD` flag. The final project health result was `0 failure(s), 0 warning(s)` with `HEALTHCHECK_RC=0`; the bounded kernel/system error scan found no matching OOM, panic, filesystem-I/O, read-only-filesystem or EXT4 error entries.
+- Controlled Fedora tests reconfirmed the production LAN classic-DNS policy on the current firmware: one external UDP/53 query increased the managed UDP redirect counter by one packet and one TCP/53 query increased the managed TCP redirect counter by one packet. A direct TCP/853 attempt failed with `Connection refused` while the production DoT reject rule increased by exactly one packet / 60 bytes.
+- A UDP/53 query sent through the router's Tailscale address succeeded and increased the managed `EDGE_TS_PREROUTING` UDP redirect counter by one packet. This reconfirms current-firmware interception and resolver health, but is not presented as a full replacement for the 2026-09-22 packet-by-packet AUDIT-03 correlation.
+- A new same-day exit-node packet-correlation attempt was not accepted as evidence: the first controlled flow ran while the Fedora client had no exit node selected, and a later router capture attempt could not start because the router shell lacked the expected `timeout` utility. The published 2026-09-23 fixed-flow `tailscale0`/WAN capture remains the authoritative current-firmware AUDIT-02 evidence.
+- A later normal-use GeForce NOW Ethernet observation remained stable for approximately one hour with zero application-reported packet loss and stable latency. Toggling the endpoint Zen filter did not produce an observed difference in that window. An attempted Exit Node A/B/A overlay comparison was rejected as symmetric evidence after route verification showed the nominal final A segment still used the exit node.
+
+See the [2026-09-25 worklog](docs/worklog/2026-09-25.md) and [sanitized router checkpoint](evidence/2026-09-25/router-live-checkpoint.md).
 
 ## 2026-09-23 reference deployment checkpoint
 
@@ -88,7 +100,7 @@ AUDIT-02 and AUDIT-03 are closed from live evidence on the reference datapath. A
 The 2026-09-22 closing observation and AUDIT-02/03 sanitized live-validation artifacts are retained as historical checkpoints. Following the 2026-09-23 firmware and policy changes:
 
 1. **Completed:** post-firmware exit-node packet correlation on GNUton `3004.388.11_1-gnuton1_tuf` confirmed the same fixed-flow datapath before NAT on `tailscale0` and after NAT on `ppp0`; see the [sanitized revalidation](evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md).
-2. **Next:** repeat the classic-DNS Tailscale datapath correlation on the new firmware if a current-firmware AUDIT-03-equivalent claim is required. A successful lookup or health check alone does not establish the complete packet path.
+2. **Partially refreshed on 2026-09-25:** current-firmware Tailscale UDP/53 interception and resolver health were reconfirmed with a successful controlled query, an exact +1 managed redirect-counter delta and a clean resolver/health check. Repeat the full packet-by-packet `tailscale0 -> REDIRECT -> dnsmasq -> Unbound` correlation only if a current-firmware AUDIT-03-equivalent claim is required; the 2026-09-25 checkpoint does not overstate the narrower evidence.
 3. Observe Diversion Large across the sessions and starts specified in [the roadmap](docs/roadmap.md#diversion-large-normal-use-acceptance-criteria), including false positives and RAM/swap behavior. One successful reboot does not meet those acceptance criteria.
 4. Record additional clean startup/power-on cycles and re-check storage, swap, Tailscale, DNS and project health after each cycle so reboot persistence is supported by more than one same-day restart.
 5. Keep new live evidence minimized and sanitized, and treat any further router change as planned maintenance with a current backup, rollback path and affected live revalidation.
