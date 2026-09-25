@@ -52,6 +52,23 @@ An Android/Tailscale troubleshooting case study covering:
 
 The case demonstrates how multiple valid-looking network controls can interact and create a failure that initially resembles an upstream VPN client defect.
 
+## 4. GeForce NOW Ethernet vs Wi-Fi 6 stability
+
+**File:** [GeForce NOW Ethernet vs Wi-Fi 6 Stability](geforce-now-ethernet-vs-wifi6-case-study.md)
+
+A real-time network stability case study covering:
+
+- controlled removal of a Tailscale exit-node confounder before testing;
+- Gigabit Ethernet versus 5 GHz 802.11ax/80 MHz from the same client and gateway;
+- short matched latency/jitter baselines;
+- a long Wi-Fi latency sample with rare local-path spikes but zero ICMP loss;
+- GeForce NOW application statistics from the same Warsaw service location;
+- wired packet-capture analysis of the dominant UDP stream;
+- explicit limitations where the Wi-Fi packet capture was unavailable.
+
+The case distinguishes average latency from tail latency and does not
+reinterpret interface counters as application packet loss.
+
 ## How to read these cases
 
 Each case separates:

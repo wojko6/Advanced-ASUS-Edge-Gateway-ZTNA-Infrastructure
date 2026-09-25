@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Added a GeForce NOW Ethernet-versus-Wi-Fi 6 stability case study with sanitized latency, Wi-Fi link, application-overlay and wired packet-capture evidence.
 - Mapped reference-deployment use cases, functional checks and nonfunctional acceptance limits to dated evidence without promoting untested paths to validated status.
 - Added Fedora clean-room Disaster Recovery validation and a guarded restore-finalization helper with dry-run/apply modes.
 - Added a post-stability-gate validation plan for exit-node NAT and Fedora/Android DNS datapath closure.
@@ -44,6 +45,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Compared the same GeForce NOW Warsaw service location over Gigabit Ethernet and 5 GHz 802.11ax; both captured application snapshots reported zero packet/frame loss, while the Wi-Fi run exposed rare high-latency excursions despite zero ICMP loss.
 - The sanitized 2026-09-11 SSD-migration artifact directly confirms automatic mounting of both SSD filesystems, activation of both swap files, successful Tailscale status with exit-node capability advertised, Unbound running, direct DNSSEC-validated resolution on `127.0.0.1:53535`, and dnsmasq configured to use the local Unbound resolver.
 - The 2026-09-11 SSD-migration artifact does not by itself prove syslog-ng recovery, end-to-end mTLS delivery, firewall/printer behavior, every exit-node traffic path, a complete health-check result, or long-term stability; those claims require their own dated evidence.
 - Printer regression checks and the repository static/recovery/configuration-validation suite pass in GitHub Actions; CI results are repository-level evidence, not a substitute for live-router validation.
