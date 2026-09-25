@@ -14,3 +14,4 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-09-18](2026-09-18.md) — Fedora clean-room DR, recovery/CI hardening, Zen Linux case study, repository cleanup.
 - [2026-09-22](2026-09-22.md) — Stability Gate closure, AUDIT-02/AUDIT-03 live validation, exit-node health contract, Diversion A/B/C filtering validation.
 - [2026-09-23](2026-09-23.md) — backup and installer hardening, off-router recovery checkpoint, controlled `v2.1.4-dev` deployment, LAN DNS and cellular exit-node smoke tests.
+- [2026-09-25](2026-09-25.md) — fresh router health checkpoint, current-firmware DNS/DoT counter correlation, bounded Exit Node diagnostic and GeForce NOW normal-use follow-up.
