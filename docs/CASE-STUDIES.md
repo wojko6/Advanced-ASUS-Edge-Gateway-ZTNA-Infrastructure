@@ -63,11 +63,31 @@ A real-time network stability case study covering:
 - short matched latency/jitter baselines;
 - a long Wi-Fi latency sample with rare local-path spikes but zero ICMP loss;
 - GeForce NOW application statistics from the same Warsaw service location;
-- wired packet-capture analysis of the dominant UDP stream;
-- explicit limitations where the Wi-Fi packet capture was unavailable.
+- packet-capture analysis of the dominant UDP stream on both transports;
+- explicit truncation and claim boundaries for the recovered Wi-Fi capture.
 
 The case distinguishes average latency from tail latency and does not
 reinterpret interface counters as application packet loss.
+
+## 5. Xbox Cloud Gaming in Microsoft Edge / WebRTC
+
+**File:** [Xbox Cloud Gaming in Microsoft Edge — WebRTC](xbox-cloud-edge-webrtc-case-study.md)
+
+A browser-native real-time streaming case study covering:
+
+- WebRTC transport discovery from an actual Xbox Cloud Gaming browser session;
+- H.264 1920 x 1080 inbound video and Opus audio;
+- approximately 1000 seconds of WebRTC receiver statistics;
+- RTP loss, frame-drop, freeze, jitter and bitrate analysis;
+- selected ICE candidate-pair state, UDP transport and RTT;
+- xCloud input/control/QoS WebRTC data channels;
+- the distinction between generic browser hardware-decode capability and
+  stream-specific decoder telemetry;
+- privacy-driven sanitization of the raw WebRTC dump.
+
+The case treats browser capability, per-stream RTP telemetry and ICE metrics as
+separate evidence layers and does not convert WebRTC RTT into an input-latency
+claim.
 
 ## How to read these cases
 
