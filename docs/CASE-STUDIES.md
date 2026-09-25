@@ -91,11 +91,11 @@ claim.
 
 ## How to read these cases
 
-Each case separates:
+Where applicable, case studies separate:
 
 1. **Observed evidence** — commands, process state, socket state, counters, or other directly recorded observations.
-2. **Remediation** — changes actually made after the observation.
-3. **Validation** — evidence collected after the change.
+2. **Remediation** — changes made when the case involved a fault or configuration issue.
+3. **Validation** — evidence collected after a change, or direct workload validation when no remediation was required.
 4. **Interpretation and limitations** — what the evidence supports and what it does not prove.
 
 These case studies are intended to demonstrate troubleshooting methodology, evidence handling, least-privilege/security reasoning, and disciplined distinction between observation and inference.
