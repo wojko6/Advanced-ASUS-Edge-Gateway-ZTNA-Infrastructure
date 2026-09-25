@@ -275,6 +275,41 @@ The important application-level observation is that both snapshots showed
 zero packet loss and zero frame loss, with only a 1 ms difference in the
 displayed GeForce NOW ping.
 
+## Later same-day normal-use follow-up
+
+A later 2026-09-25 wired session extended the observational window beyond
+the controlled baseline.
+
+The operator reported approximately one hour of normal GeForce NOW use over
+Gigabit Ethernet with:
+
+```text
+application-reported packet loss: 0
+ping: stable
+transport: Ethernet
+```
+
+The Zen endpoint filter was toggled on and off during normal use without an
+observed difference in GeForce NOW loss or latency behaviour. This makes
+Zen a weaker explanation for the earlier intermittent symptom in that
+specific window, but it is not a proof that the endpoint filter can never
+affect the application.
+
+A separate same-day attempt to compare GeForce NOW with the ASUS selected
+as a Tailscale Exit Node produced overlay snapshots with low latency and
+zero reported packet/frame loss. The intended A/B/A experiment was not
+accepted as symmetric evidence because subsequent route verification
+showed that the nominal final A segment still had the exit node selected.
+
+Accordingly, this case study does **not** claim a measured Exit Node latency
+effect from those three snapshots. The client was later returned to the
+normal wired LAN route and the route state was verified explicitly.
+
+This follow-up strengthens the practical wired normal-use observation while
+preserving the original conclusion: the earlier controlled Wi-Fi run was
+loss-free in its measured window but showed materially less deterministic
+latency than Ethernet.
+
 ## Interpretation
 
 The experiment demonstrates why average ping alone is insufficient for
