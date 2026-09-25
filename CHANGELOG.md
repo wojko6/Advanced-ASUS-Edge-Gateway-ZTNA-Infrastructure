@@ -20,6 +20,7 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Refreshed documentation review/status metadata and clarified that remediation is optional for observational/performance case studies.
 - Expanded evidence-collection guidance for browser/WebRTC telemetry and surfaced the GeForce NOW and Xbox Cloud real-time validation work in the main portfolio highlights.
 - Corrected the GeForce NOW validation record after recovering the Wi-Fi capture: 3,675,119 complete packets across 678.772 s are now documented, with the tmpfs truncation and claim boundaries stated explicitly.
 - Reconciled the project status after the 2026-09-23 firmware/reboot checkpoint and corrected the documented backup-sidecar and restore-failure procedures; clarified the remaining unauthorized-client test gap.
