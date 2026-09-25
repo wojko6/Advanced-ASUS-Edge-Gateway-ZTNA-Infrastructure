@@ -12,6 +12,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 - Integrated dnsmasq with local Unbound on loopback:53535 and validated DNSSEC with the AD flag after controlled reboots.
 - Added install, backup, restore, uninstall, health-check, evidence-collection, WAN-event recovery, and rollback workflows.
 - Migrated the persistent Entware environment from USB flash storage to SSD, restored swap-backed service startup, and directly validated SSD mounts, swap activation, Tailscale, Unbound, and resolver configuration after the controlled reboot.
+- Extended validation into latency-sensitive cloud workloads: compared GeForce NOW over Gigabit Ethernet and Wi-Fi 6, and analyzed an Xbox Cloud Gaming session with browser-native WebRTC RTP, jitter, ICE RTT, frame-delivery, bitrate, and decoder telemetry.
 - Captured sanitized live evidence instead of presenting expected behavior as observed results.
 
 ## Architecture

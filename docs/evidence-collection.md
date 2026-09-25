@@ -1,6 +1,6 @@
 # Evidence collection
 
-This project separates automated checks from live deployment evidence. Static analysis and mock tests run in GitHub Actions. Router, WAN, Tailscale identity, endpoint-filtering, mobile-telemetry, and performance results must come from the relevant target environment.
+This project separates automated checks from live deployment evidence. Static analysis and mock tests run in GitHub Actions. Router, WAN, Tailscale identity, endpoint-filtering, browser/WebRTC, mobile-telemetry, and performance results must come from the relevant target environment.
 
 ## Router snapshot
 
@@ -62,6 +62,43 @@ For a Zen or AdGuard for Windows test, record only the minimum information neede
 
 When router dnsmasq logs are used to corroborate DNS-path preservation, inspect existing data read-only when possible and publish only a minimized sanitized extract. Do not enable new logging or change router configuration solely to manufacture endpoint evidence; if a new capture is genuinely required, treat it as an explicit validation/maintenance action.
 
+## Browser / WebRTC evidence
+
+Browser-native real-time telemetry is an endpoint evidence class. Collect it on
+the client that actually runs the workload, and keep it separate from router
+health, packet-capture, or service-provider claims.
+
+For a Chromium/Edge WebRTC case, record only the minimum data needed to
+support the documented result:
+
+- test date, browser version, operating system, desktop/session type, and
+  relevant GPU/driver information;
+- the defined test window and whether cumulative counters were already
+  non-zero at the first retained sample;
+- inbound media codec, frame dimensions, frame-rate samples, and receive-rate
+  statistics when exposed by the browser;
+- WebRTC receiver counters such as `packetsLost`, `framesDropped`,
+  `freezeCount`, `nackCount`, `pliCount`, and `firCount`;
+- RTP jitter and selected ICE candidate-pair state/RTT when available;
+- sanitized transport properties such as protocol and candidate types, without
+  publishing addresses or ports;
+- decoder implementation/capability observations with explicit separation
+  between generic browser/GPU capability and per-stream telemetry;
+- limitations and alternative explanations for any bitrate, frame-rate, RTT,
+  or decoder-path observation.
+
+Treat the raw `webrtc-internals` dump as private by default. It can contain
+session URLs, ICE candidate addresses and ports, certificate fingerprints,
+track/SSRC identifiers, browser/session identifiers, and other metadata that
+is unnecessary for a public evidence claim. Publish a derived sanitized
+summary instead.
+
+Do not convert ICE/WebRTC RTT into controller-to-photon or total input latency
+without an independent end-to-end measurement. Do not infer CPU-only decode
+solely from a decoder implementation label, and do not infer that a specific
+stream used hardware decode solely because the browser reports generic
+hardware-video-decode capability.
+
 ## Mobile-telemetry evidence
 
 Mobile telemetry requires a separate test record for each phone. Capture at minimum:
@@ -109,6 +146,8 @@ evidence/
     │   ├── README.md
     │   ├── environment.txt
     │   ├── dns-path-sanitized.txt
+    │   └── results.md
+    ├── browser-webrtc/          # derived/sanitized browser real-time telemetry
     │   └── results.md
     ├── mobile-telemetry/        # only after a real phone test
     │   └── DEVICE-CASE-STUDY.md
