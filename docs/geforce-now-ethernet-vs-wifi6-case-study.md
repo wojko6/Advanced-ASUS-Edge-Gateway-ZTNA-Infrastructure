@@ -88,13 +88,16 @@ The Wi-Fi run used:
 
 - `iw` link/station telemetry;
 - continuous 100 ms ICMP sampling to the LAN gateway;
-- continuous 100 ms ICMP sampling to the public Internet target; and
-- a GeForce NOW statistics overlay snapshot.
+- continuous 100 ms ICMP sampling to the public Internet target;
+- a GeForce NOW statistics overlay snapshot; and
+- a client-side packet capture.
 
-A Wi-Fi packet capture was intended but was not written successfully.
-Accordingly, packet-level stream analysis is available only for the wired
-run and is not presented as a symmetric Ethernet-versus-Wi-Fi capture
-comparison.
+The Wi-Fi capture was later recovered and remained readable through
+3,675,119 complete packets. The file was truncated in the middle of the
+next packet when the client `/tmp` tmpfs reached capacity, so it is used
+for bounded flow-, volume-, and timing-level observations only. It is not
+treated as a cleanly completed full-session capture or as an independent
+source of GeForce NOW application packet-loss counts.
 
 ## Short baseline results
 
@@ -215,6 +218,42 @@ reached the destination network edge at approximately 11–12 ms before
 later hops stopped responding. The lack of ICMP replies from the streaming
 host is not evidence of stream packet loss.
 
+## Wi-Fi GeForce NOW packet capture
+
+The recovered Wi-Fi capture remained readable for:
+
+```text
+Capture duration: 678.772 s
+Complete packets: 3,675,119
+Captured data:    approximately 4.308 GB
+File size:        approximately 4.432 GB
+```
+
+Traffic filtered to UDP/5004 contained:
+
+```text
+Frames:           3,649,546
+Bytes:            4,304,608,129
+Share of packets: approximately 99.3% of readable capture packets
+Average rate:     approximately 50.7 Mb/s across the capture window
+```
+
+Two UDP/5004 conversations to the GeForce NOW service dominated the
+capture. Their deployment-specific endpoint addresses are intentionally
+omitted from the public evidence.
+
+Ten-second UDP/5004 I/O statistics showed non-zero stream traffic from the
+start of the active game stream through the final readable interval. The
+changing byte rate is consistent with a variable-bitrate real-time stream
+and is not, by itself, evidence of network instability.
+
+The file ended mid-packet because the tmpfs used for capture storage
+reached capacity. Wireshark/tshark and `capinfos` both reported the
+truncation after the 3,675,119 readable packets. Measurements above are
+therefore bounded to the readable prefix of the file. The capture is not
+used to infer application packet loss; that metric remains sourced from
+the GeForce NOW statistics overlay.
+
 ## GeForce NOW overlay observations
 
 | Metric | Ethernet snapshot | Wi-Fi snapshot |
@@ -261,8 +300,10 @@ For this tested location, signal level and workload:
 - The long-duration ping sampling was collected for Wi-Fi, not Ethernet,
   so the 247/311 ms Wi-Fi maxima must not be compared as if they came from
   equal-duration Ethernet samples.
-- The Wi-Fi packet capture failed to save; packet-level stream behaviour
-  is documented only for Ethernet.
+- The Wi-Fi capture was truncated when the client tmpfs reached capacity.
+  The 3,675,119 complete packets preceding the truncation are usable for
+  bounded flow/volume analysis, but the file is not treated as a cleanly
+  completed full-session capture.
 - GeForce NOW overlay values are snapshots, not a full-session time
   series.
 - The tested Wi-Fi result applies to this client position, signal level,
