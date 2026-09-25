@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- Added a GeForce NOW Ethernet-versus-Wi-Fi 6 stability case study with sanitized latency, Wi-Fi link, application-overlay and wired packet-capture evidence.
+- Added a GeForce NOW Ethernet-versus-Wi-Fi 6 stability case study with sanitized latency, Wi-Fi link, application-overlay and packet-capture evidence for both transports.
 - Mapped reference-deployment use cases, functional checks and nonfunctional acceptance limits to dated evidence without promoting untested paths to validated status.
 - Added Fedora clean-room Disaster Recovery validation and a guarded restore-finalization helper with dry-run/apply modes.
 - Added a post-stability-gate validation plan for exit-node NAT and Fedora/Android DNS datapath closure.
@@ -19,6 +19,7 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Corrected the GeForce NOW validation record after recovering the Wi-Fi capture: 3,675,119 complete packets across 678.772 s are now documented, with the tmpfs truncation and claim boundaries stated explicitly.
 - Reconciled the project status after the 2026-09-23 firmware/reboot checkpoint and corrected the documented backup-sidecar and restore-failure procedures; clarified the remaining unauthorized-client test gap.
 - Completed the post-audit documentation follow-up: removed residual active-gate wording from current runbooks, reconciled historical stability documents with the actual 2026-09-22 closure, and added an evidence-backed compatibility/revalidation policy.
 - Marked the unreleased development line as `2.1.4-dev` so installs from current `main` are not identified as the released `2.1.3` state.
