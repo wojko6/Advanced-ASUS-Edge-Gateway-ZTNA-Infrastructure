@@ -1,12 +1,16 @@
 # Project status
 
-**Status date:** 2026-09-23
+**Status date:** 2026-09-25
+
+**Latest live router checkpoint:** 2026-09-23
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
 **Current phase:** post-firmware validation and Diversion Large normal-use observation
 
 ## Executive status
+
+This status document was reviewed on 2026-09-25. The latest live reference-router checkpoint remains the 2026-09-23 firmware/revalidation session; later documentation and client-side case-study work does not imply a newer router-state observation.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
