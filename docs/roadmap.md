@@ -96,7 +96,9 @@ The synchronization feature must only be documented as **Completed and validated
 
 ## Stability follow-up
 
-- Keep the validated SSD/Entware deployment under normal operation and retain a later stability snapshot.
+A later read-only live checkpoint was retained on 2026-09-25 with both SSD filesystems, swap, core services, DNSSEC and the project health check healthy; see [the sanitized checkpoint](../evidence/2026-09-25/router-live-checkpoint.md). This is a point-in-time normal-operation checkpoint, not a replacement for explicit cold-start acceptance.
+
+- Keep the validated SSD/Entware deployment under normal operation and retain later bounded stability snapshots.
 - Review logs for recurring Tailscale memory failures, WAN/DNS recovery errors, storage/mount failures, and unexpected service restarts.
 - Publish only sanitized evidence; never publish raw router syslog or credentials.
 
@@ -124,7 +126,7 @@ Current order:
 
 1. **Completed — management authorization negative test:** a distinct unauthorized Windows tailnet client retained Tailscale peer reachability but could not establish TCP/8443. Five client SYN packets were correlated with a source-specific counter-only firewall rule before the unchanged production deny tail; cleanup and the final health check passed. See [sanitized evidence](../evidence/2026-09-23/unauthorized-tailnet-management-denial.md).
 2. **Completed — exit-node datapath revalidation:** on GNUton `3004.388.11_1-gnuton1_tuf`, a controlled fixed-ID ICMP flow was correlated on `tailscale0` before NAT and `ppp0` after source translation, with 5/5 client replies and a clean final health check. See [sanitized evidence](../evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md).
-3. **Next — classic-DNS datapath refresh if a current-firmware AUDIT-03-equivalent claim is needed:** correlate controlled UDP/53 and TCP/53 traffic with `EDGE_TS_PREROUTING`, dnsmasq and Unbound on the upgraded firmware.
+3. **Partially refreshed on 2026-09-25 — classic-DNS current-firmware check:** controlled LAN UDP/TCP 53 traffic produced exact managed redirect-counter deltas, a Tailscale UDP/53 query produced an exact `EDGE_TS_PREROUTING` delta, and Unbound/DNSSEC plus the project health check remained clean. A full current-firmware AUDIT-03-equivalent packet correlation through dnsmasq and Unbound remains optional if that stronger claim is required.
 4. **In parallel — reboot/normal-use evidence:** accumulate the clean startup cycles and Diversion Large normal-use sessions required by the acceptance criteria below.
 
 These revalidations should not introduce broader policy changes. Keep them as bounded measurements with current backups, explicit cleanup for any temporary instrumentation, and sanitized evidence.
