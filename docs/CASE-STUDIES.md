@@ -89,6 +89,26 @@ The case treats browser capability, per-stream RTP telemetry and ICE metrics as
 separate evidence layers and does not convert WebRTC RTT into an input-latency
 claim.
 
+## 6. Wi-Fi 6 HE160 interoperability – MediaTek MT7922 vs ASUS/Broadcom
+
+**File:** [Wi-Fi 6 HE160 Interoperability](wifi6-he160-mt7922-interoperability-case-study.md)
+
+A controlled Wi-Fi interoperability investigation covering:
+
+- configured-versus-runtime HE160 verification on the ASUS 5 GHz radio;
+- HE80 versus HE160 A/B testing on a MediaTek MT7922 client;
+- two MT7922 driver revisions;
+- both TCP traffic directions with 120-second, four-stream iperf3 runs;
+- router-side `wl sta_info` PHY, RSSI and retry-related telemetry;
+- an independent Android 2x2 HE160 reference client;
+- separation of negotiated PHY rate from usable TCP throughput;
+- explicit limits on interpreting Broadcom retry counters as application loss;
+- bounded root-cause assessment without assigning an unproven vendor defect.
+
+The case narrows severe HE160 degradation to the tested MT7922 ↔
+ASUS/Broadcom interaction while preserving the distinction between observed
+evidence and root-cause inference.
+
 ## How to read these cases
 
 Where applicable, case studies separate:
