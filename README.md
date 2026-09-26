@@ -13,6 +13,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 - Added install, backup, restore, uninstall, health-check, evidence-collection, WAN-event recovery, and rollback workflows.
 - Migrated the persistent Entware environment from USB flash storage to SSD, restored swap-backed service startup, and directly validated SSD mounts, swap activation, Tailscale, Unbound, and resolver configuration after the controlled reboot.
 - Extended validation into latency-sensitive cloud workloads: compared GeForce NOW over Gigabit Ethernet and Wi-Fi 6, and analyzed an Xbox Cloud Gaming session with browser-native WebRTC RTP, jitter, ICE RTT, frame-delivery, bitrate, and decoder telemetry.
+- Isolated a Wi-Fi 6 HE160 interoperability problem by comparing HE80/HE160 on a MediaTek MT7922, repeating the matrix across two Windows drivers, and using an independent Android 2x2 HE160 client to separate AP-wide capability from client/pair-specific behavior.
 - Captured sanitized live evidence instead of presenting expected behavior as observed results.
 
 ## Architecture
@@ -266,6 +267,7 @@ Tailscale updates are a separate planned-maintenance action:
 - [Entware SSD migration](docs/ENTWARE-SSD-MIGRATION.md)
 - [Printer hardening](docs/PRINTER-HARDENING.md)
 - [uiDivStats high-load case study](docs/uidivstats-high-load-case-study.md)
+- [Wi-Fi 6 HE160 interoperability case study](docs/wifi6-he160-mt7922-interoperability-case-study.md)
 - [Printer setup from LAN](docs/printer-setup-lan-pl.md)
 - [Printer setup through Tailscale](docs/printer-setup-tailscale-pl.md)
 - [Operations and recovery](docs/operations.md)

@@ -1,16 +1,16 @@
 # Project status
 
-**Status date:** 2026-09-25
+**Status date:** 2026-09-26
 
 **Latest live router checkpoint:** 2026-09-25
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** post-firmware validation and Diversion Large normal-use observation
+**Current phase:** post-firmware validation, completed HE160 interoperability case study, and Diversion Large normal-use observation
 
 ## Executive status
 
-This status document was reviewed on 2026-09-25. A fresh read-only reference-router checkpoint was completed on 2026-09-25 after the 2026-09-23 firmware/revalidation session. The new checkpoint reconfirmed a clean project health check, SSD/swap/service state, current-firmware LAN classic-DNS interception, direct DoT/853 blocking and Tailscale UDP/53 interception. It did not replace the deeper 2026-09-23 exit-node packet-correlation evidence.
+This status document was reviewed on 2026-09-26. The 2026-09-25 read-only reference-router checkpoint remains the latest broad health/security checkpoint. On 2026-09-26, a separate Wi-Fi 6 HE160 troubleshooting session completed a controlled HE80/HE160 client-interoperability comparison on the ASUS 5 GHz radio. That session is documented as a performance/interoperability case study and does not replace the router security-validation evidence.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
@@ -47,6 +47,42 @@ Key validated areas include:
 The current `scripts/healthcheck.sh` implementation checks the AUDIT-02 exit-node runtime prerequisites when exit-node mode is enabled. The implementation was merged through PR #51 and was subsequently deployed to the reference router on 2026-09-22. A live post-deployment run matched the repository SHA-256 (`e03d6abd7a740524ba5a2c6799a47559ef187b22bb1a3209eb94ffc4a30a7e47`) and completed with `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`. See `evidence/2026-09-22/healthcheck-deployment-validation.md`.
 
 A later 2026-09-22 maintenance check also found and removed a legacy `/jffs/scripts/nat-start` hook that duplicated the managed Tailscale DNS redirects and was group/world writable. The runtime duplicates had zero counters because the project-owned parent jump was evaluated first. The hook was backed up privately, removed from the active hook directory, and the duplicate runtime rules were deleted; the deployed health check remained `0 failure(s), 0 warning(s)`. A follow-up repository revision added explicit detection for direct `tailscale0` NAT rules outside `EDGE_TS_PREROUTING` and unsafe active JFFS hook modes. That hardened revision was subsequently deployed to the reference router and live-validated with SHA-256 `5d96555bad141c40191855e2f121de0412635cb7e5fe14d41b5ec73842db6233`, `0 failure(s), 0 warning(s)`, and `HEALTHCHECK_RC=0`. See `evidence/2026-09-22/healthcheck-drift-hardening-live-validation.md`.
+
+## 2026-09-26 HE160 interoperability investigation
+
+A controlled Wi-Fi 6 performance investigation isolated a severe HE160-specific
+throughput problem on the tested Windows client equipped with a MediaTek MT7922.
+
+Key bounded observations:
+
+- the MT7922 performed strongly at HE80, with approximately 850–880 Mb/s in the
+  validated current-driver runs;
+- at HE160 the same client degraded sharply and asymmetrically, including
+  approximately 74.7 Mb/s receiver throughput in the most affected direction
+  and approximately 401 Mb/s in the reverse direction;
+- updating the Windows MT7922 driver improved the HE160 symptom but did not
+  remove the large HE80/HE160 gap;
+- an independent Android 2x2 HE160 client on the same ASUS 5 GHz radio achieved
+  approximately 706 Mb/s in one direction and approximately 671 Mb/s in the
+  other, strongly weakening the hypothesis that the ASUS radio is globally
+  incapable of useful HE160 throughput;
+- high negotiated PHY rate did not guarantee high application throughput;
+- Broadcom `wl sta_info` retry-related counters were retained as
+  station-associated telemetry and were not equated one-to-one with TCP
+  retransmissions.
+
+The router-side 160 MHz enablement experiment was deliberately temporary. The
+`bw_switch_160` family was changed together without `nvram commit`, so the
+evidence establishes involvement of that mechanism family but does not identify
+one individual key as causal or promote the temporary test state into permanent
+configuration.
+
+The final fault-domain assessment is intentionally bounded to HE160 behavior in
+the tested MT7922 ↔ ASUS/Broadcom combination. The evidence does not assign a
+universal defect to MediaTek, Broadcom, ASUS firmware or Windows.
+
+See the [HE160 interoperability case study](docs/wifi6-he160-mt7922-interoperability-case-study.md)
+and the [2026-09-26 worklog](docs/worklog/2026-09-26.md).
 
 ## 2026-09-25 reference deployment checkpoint
 
