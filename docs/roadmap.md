@@ -36,8 +36,10 @@ with mutual TLS, source-restricted firewalld policy, an end-to-end unique
 message, and a short collector-outage recovery test that delivered 3/3 queued
 messages after collector restoration.
 
-**Next execution focus:** encrypted-DNS bypass assessment and remaining
-hardening research in issue #82.
+**Next execution focus:** measurement-first encrypted-DNS bypass assessment
+(DoH, DoQ/QUIC, application-specific encrypted resolvers and relevant IPv6
+paths), followed by remaining hardening research in issue #82. No enforcement
+change is implied until the bypass paths are measured and documented.
 
 ## Completed and validated — SSD migration
 

@@ -104,6 +104,17 @@ certificate warning.
 This remains a local-only frontend; it is not a design for remote Grafana
 exposure.
 
+## Grafana interface language
+
+Grafana 13 provides a built-in Polish interface option. The application UI
+itself therefore does not require a custom translation patch.
+
+This is separate from dashboard content: panel titles, descriptions, legends
+and other strings stored in the project dashboard JSON are project-owned
+content and were localized explicitly. The reference deployment therefore uses
+the native Polish Grafana UI together with the project-localized Polish
+TUF-AX5400 dashboard.
+
 ## Dashboard adaptation
 
 The upstream dashboard was cleaned for the reference deployment: RT-BE88U/SNMP
