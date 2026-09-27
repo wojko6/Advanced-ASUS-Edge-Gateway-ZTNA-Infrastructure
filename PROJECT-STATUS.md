@@ -1,12 +1,12 @@
 # Project status
 
-**Status date:** 2026-09-26
+**Status date:** 2026-09-27
 
-**Latest live router checkpoint:** 2026-09-25
+**Latest live router checkpoint:** 2026-09-27
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** post-firmware validation, completed HE160 interoperability case study, and Diversion Large normal-use observation
+**Current phase:** post-firmware validation; current-firmware classic DNS datapath revalidated; startup/persistence and Diversion Large acceptance remain open
 
 ## Executive status
 
@@ -125,18 +125,18 @@ A full repository audit covered code, security, install/rollback, firewall/DNS/T
 |---|---|---|
 | AUDIT-01 — restore apply was not transactional | **CLOSED** | Restore now snapshots affected live paths and rolls back partial apply failures; regression coverage was added and CI passed. |
 | AUDIT-02 — exit-node NAT dependency not explicitly validated | **CLOSED / POST-FIRMWARE LIVE REVALIDATED** | The 2026-09-22 correlation established the ownership model, and the 2026-09-23 GNUton `3004.388.11_1-gnuton1_tuf` rerun reconfirmed `ip_forward=1`, the project WAN-forward rule, platform `ppp0` `MASQUERADE`, the established/related return path, and the same fixed-ID ICMP flow on `tailscale0` before NAT and `ppp0` after NAT. See [current-firmware evidence](evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md). |
-| AUDIT-03 — Android/Fedora exit-node DNS datapath validation gap | **CLOSED / LIVE VALIDATED** | Controlled live tests on 2026-09-22 validated classic DNS over UDP/TCP 53 from Fedora and Android exit-node clients through `tailscale0` -> `EDGE_TS_PREROUTING` REDIRECT -> router-local dnsmasq -> Unbound on `127.0.0.1:53535`. Encrypted DNS (DoH/DoT) remains outside this claim. |
+| AUDIT-03 — Android/Fedora exit-node DNS datapath validation gap | **CLOSED / CURRENT-FIRMWARE FEDORA REVALIDATED** | Controlled live tests on 2026-09-22 validated classic DNS over UDP/TCP 53 from Fedora and Android exit-node clients. On 2026-09-27 the Fedora path was revalidated on GNUton `3004.388.11_1-gnuton1_tuf` after the Unbound 1.26.1 update: unique UDP/TCP queries were captured on `tailscale0`, the managed REDIRECT counters increased by exactly +1/+1, matching loopback traffic was observed to `127.0.0.1:53535`, temporary instrumentation was removed, and the final health check was clean. See [current-firmware DNS evidence](evidence/2026-09-27/audit-03-current-firmware-dns-datapath-revalidation.md). Encrypted DNS remains outside this claim. |
 | AUDIT-04 — unnecessary deployment identifiers in Zen evidence | **CLOSED** | Evidence was sanitized while preserving the technical result. |
 | AUDIT-05 — Android DNS datapath claim exceeded available evidence | **CLOSED** | README wording was corrected so the historical observation no longer overclaimed the resolver path. The remaining classic-DNS datapath question was subsequently closed by AUDIT-03 live validation on 2026-09-22. |
 
-AUDIT-02 and AUDIT-03 are closed from live evidence on the reference datapath. AUDIT-02 has additionally been revalidated on the 2026-09-23 GNUton firmware for the tested IPv4 ICMP exit-node flow. AUDIT-03 remains live-validated on the 2026-09-22 firmware and is explicitly bounded to classic DNS over UDP/TCP port 53; DoH/DoT and application-specific encrypted resolver transports remain separate limitations.
+AUDIT-02 and AUDIT-03 are closed from live evidence on the reference datapath. AUDIT-02 has additionally been revalidated on the 2026-09-23 GNUton firmware for the tested IPv4 ICMP exit-node flow. The Fedora portion of AUDIT-03 was revalidated on 2026-09-27 on GNUton `3004.388.11_1-gnuton1_tuf` after the Unbound 1.26.1 deployment and remains explicitly bounded to classic DNS over UDP/TCP port 53; Android-specific post-reboot behavior and encrypted resolver transports remain separate items.
 
 ## Post-observation validation status and next actions
 
 The 2026-09-22 closing observation and AUDIT-02/03 sanitized live-validation artifacts are retained as historical checkpoints. Following the 2026-09-23 firmware and policy changes:
 
 1. **Completed:** post-firmware exit-node packet correlation on GNUton `3004.388.11_1-gnuton1_tuf` confirmed the same fixed-flow datapath before NAT on `tailscale0` and after NAT on `ppp0`; see the [sanitized revalidation](evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md).
-2. **Partially refreshed on 2026-09-25:** current-firmware Tailscale UDP/53 interception and resolver health were reconfirmed with a successful controlled query, an exact +1 managed redirect-counter delta and a clean resolver/health check. Repeat the full packet-by-packet `tailscale0 -> REDIRECT -> dnsmasq -> Unbound` correlation only if a current-firmware AUDIT-03-equivalent claim is required; the 2026-09-25 checkpoint does not overstate the narrower evidence.
+2. **Completed on 2026-09-27:** current-firmware Fedora classic-DNS UDP/TCP 53 was revalidated end to end. Unique controlled queries were captured on `tailscale0`, the managed UDP/TCP REDIRECT counters each increased by exactly one, matching dnsmasq -> Unbound loopback traffic was observed on `127.0.0.1:53535`, temporary capture instrumentation was removed, and the final project health check returned `0 failure(s), 0 warning(s)`. See [current-firmware AUDIT-03 evidence](evidence/2026-09-27/audit-03-current-firmware-dns-datapath-revalidation.md).
 3. Observe Diversion Large across the sessions and starts specified in [the roadmap](docs/roadmap.md#diversion-large-normal-use-acceptance-criteria), including false positives and RAM/swap behavior. One successful reboot does not meet those acceptance criteria.
 4. Record additional clean startup/power-on cycles and re-check storage, swap, Tailscale, DNS and project health after each cycle so reboot persistence is supported by more than one same-day restart.
 5. Keep new live evidence minimized and sanitized, and treat any further router change as planned maintenance with a current backup, rollback path and affected live revalidation.
@@ -248,4 +248,4 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 ## Current decision
 
-As of 2026-09-23, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with the `v2.1.4-dev` project deployed. The same-day reboot, core health and USB audits, both admin rules, Fedora DNS/verified HTTPS, operator-reported Android admin access, the distinct unauthorized-tailnet management denial, and the post-firmware Exit Node fixed-flow packet correlation all passed within their documented limits. Requirement F-01 has authorized and unauthorized role evidence for the tested deployment, and AUDIT-02 is now post-firmware live revalidated on the current GNUton build. AUDIT-03 retains its 2026-09-22 live-validation scope and still needs an equivalent current-firmware packet-correlation rerun if that stronger claim is required. Diversion `Large + snbAdSupport=no` remains under normal-use observation rather than a permanently accepted filtering baseline. Next: refresh the classic-DNS Tailscale datapath on the current firmware, then continue reboot and normal-use acceptance evidence.
+As of 2026-09-27, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with Unbound 1.26.1 on the active resolver path. AUDIT-02 remains post-firmware live revalidated, and the Fedora classic-DNS portion of AUDIT-03 is now also current-firmware revalidated with synchronized UDP/TCP packet capture, exact managed REDIRECT deltas and a clean final health check. Diversion `Large + snbAdSupport=no` remains under normal-use observation rather than a permanently accepted filtering baseline. Next: accumulate clean startup/persistence evidence and complete the remaining post-firmware client-validation items.
