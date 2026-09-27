@@ -123,6 +123,20 @@ This helper is deliberately a **finalization helper**, not the complete restore 
 
 This procedure was validated in the 2026-09-18 clean-room VMware restore. The validation found that the restored target could have a different `/boot` filesystem identity and that the restored `/boot` tree initially carried `unlabeled_t` SELinux labels. The helper turns those observed recovery steps into an explicit, repeatable procedure. The detailed sanitized validation record is [FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md](FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md).
 
+## Router post-restore acceptance
+
+After any actual router restore, do not treat file copy success as service recovery. Validate, in order:
+
+- intended storage mounts and `/opt`;
+- required swap in `/proc/swaps`;
+- Tailscale daemon/runtime version and intentional `netfilter-mode=off`;
+- Unbound runtime ownership, configuration, loopback:53535 listener and direct DNSSEC resolution;
+- dnsmasq-to-Unbound forwarding;
+- project firewall chain ownership/default-deny behavior;
+- final `/jffs/addons/asus-edge/bin/healthcheck.sh`.
+
+The detailed recovery contract, including the reference Unbound runtime-directory ownership reconstruction, is maintained in [router-disaster-recovery.md](router-disaster-recovery.md).
+
 ## Emergency rollback
 
 From a LAN/serial recovery session:
