@@ -54,9 +54,29 @@ Clean-room restore target: /tmp/asus-edge-dr-cleanroom
 Restore completed. Reboot or restart services after reviewing files.
 ```
 
+## Post-restore content and mode verification
+
+A fresh extraction of the same source archive was compared against the disposable restore target.
+
+Observed results:
+
+```text
+CLEANROOM_JFFS_CONTENT_OK
+CLEANROOM_OPT_CONTENT_OK
+CLEANROOM_MODES_OK
+```
+
+This confirms:
+
+- restored JFFS file contents matched the source archive byte-for-byte;
+- restored /opt file contents matched the source archive byte-for-byte;
+- regular-file permission modes matched the source archive.
+
+UID/GID ownership is not claimed by this workstation test because the clean-room restore ran under the Fedora user context rather than router runtime identities.
+
 ## Claim boundary
 
-This validates the archive structure, content integrity and actual restore/copy path into a disposable filesystem target.
+This validates archive structure, content integrity, permission-mode preservation and the actual restore/copy path into a disposable filesystem target.
 
 It does **not** by itself prove:
 
