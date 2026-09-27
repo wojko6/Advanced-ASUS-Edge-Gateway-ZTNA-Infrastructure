@@ -92,6 +92,18 @@ The temporary test directory was removed immediately after validation. The live 
 
 This proves that the documented recovery ownership step (`uid=65534`, `gid=0`, mode `0755`) is executable on the reference router platform.
 
+## Final restore-safety review
+
+A later final PR review identified that the first #100 backup layout placed `post-mount` directly under the live JFFS restore tree. Although the clean-room test proved byte-for-byte restoration, automatically overwriting this partly AMTM-managed hook is not an acceptable default recovery behavior.
+
+The final #101 design therefore:
+
+- stores `post-mount` under `recovery-reference/jffs/scripts/post-mount`;
+- keeps that reference outside the automatically restored `jffs/` and `opt/` trees;
+- explicitly makes `restore.sh` skip `jffs/scripts/post-mount` when validating/applying an older archive that still contains the live-path copy.
+
+The archived hook remains recovery evidence for manual comparison/merge of the validated pre-Entware swap ordering; it is not an automatic restore payload.
+
 ## Claim boundary
 
 This validates archive structure, content integrity, permission-mode preservation and the actual restore/copy path into a disposable filesystem target.
