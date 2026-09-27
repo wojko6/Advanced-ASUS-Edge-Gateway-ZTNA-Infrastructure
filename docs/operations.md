@@ -34,6 +34,8 @@ Move backups off the router-attached SSD and keep an independent copy on another
 
 Do not treat the router-attached SSD as the only backup merely because it is now the persistent Entware/data device. A failure, filesystem corruption, operator error, or compromise affecting the router can affect locally attached storage at the same time.
 
+The project backup is deliberately **not** a complete router image. NVRAM, addon ownership, Entware/package reconstruction, storage layout and intentionally excluded authentication state are tracked in the [router disaster-recovery baseline](router-disaster-recovery.md). Keep the private native ASUS/Merlin settings export and at least one verified project archive off-router before a material experiment.
+
 ## Restore
 
 Restore is dry-run by default:
