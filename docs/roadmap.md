@@ -1,5 +1,33 @@
 # Roadmap
 
+## Current execution focus — observability
+
+**Status: active next phase as of 2026-09-27.**
+
+The post-firmware validation set (#64, #65, #66, #67, #70) and the router
+disaster-recovery baseline (#100) are complete. Before adding more router-side
+functionality, the next engineering phase is observability.
+
+Preferred direction:
+
+```text
+ASUS TUF-AX5400
+   -> read-only collection
+   -> external collectors/exporters
+   -> VictoriaMetrics
+   -> Grafana
+```
+
+Keep time-series storage, dashboarding and other heavy analytics off the
+512 MiB router where practical. Start with a read-only capability/preflight
+review; evaluate SNMP extensions only when they add metrics that are not
+available through the lower-impact collection path.
+
+After observability, the current prioritized backlog proceeds to logging,
+encrypted-DNS bypass assessment and the remaining hardening research. The
+canonical ordering is maintained in issue #82.
+
+
 ## Completed and validated — SSD migration
 
 The persistent router storage migration was completed and reboot-validated on 2026-09-11.
@@ -118,7 +146,7 @@ Historical finding and closure:
 - The completed claims are deliberately scoped: classic IPv4 LAN TCP/UDP 53 enforcement and direct IPv4 LAN DoT/TCP 853 blocking are live validated. They do not establish control over DoH/HTTPS, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, application-specific encrypted DNS, or equivalent traffic entering through other interfaces.
 - **Next DNS-control milestone:** perform read-only assessment of DoH/HTTPS and DoQ/QUIC first, then design any enforcement only after compatibility, false-positive, rollback, and protocol-identification limits are understood. IPv6 and VPN-carried resolver paths remain separate assessment items.
 
-## Post-firmware revalidation priorities — 2026-09-23
+## Completed post-firmware revalidation — 2026-09-27
 
 The GNUton `3004.388.11_1-gnuton1_tuf` upgrade changed the platform baseline. Existing 2026-09-22 AUDIT-02/03 packet evidence remains valid for that earlier firmware, but current-firmware claims should be refreshed deliberately rather than inferred from successful smoke tests.
 
@@ -126,8 +154,8 @@ Current order:
 
 1. **Completed — management authorization negative test:** a distinct unauthorized Windows tailnet client retained Tailscale peer reachability but could not establish TCP/8443. Five client SYN packets were correlated with a source-specific counter-only firewall rule before the unchanged production deny tail; cleanup and the final health check passed. See [sanitized evidence](../evidence/2026-09-23/unauthorized-tailnet-management-denial.md).
 2. **Completed — exit-node datapath revalidation:** on GNUton `3004.388.11_1-gnuton1_tuf`, a controlled fixed-ID ICMP flow was correlated on `tailscale0` before NAT and `ppp0` after source translation, with 5/5 client replies and a clean final health check. See [sanitized evidence](../evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md).
-3. **Partially refreshed on 2026-09-25 — classic-DNS current-firmware check:** controlled LAN UDP/TCP 53 traffic produced exact managed redirect-counter deltas, a Tailscale UDP/53 query produced an exact `EDGE_TS_PREROUTING` delta, and Unbound/DNSSEC plus the project health check remained clean. A full current-firmware AUDIT-03-equivalent packet correlation through dnsmasq and Unbound remains optional if that stronger claim is required.
-4. **In parallel — reboot/normal-use evidence:** accumulate the clean startup cycles and Diversion Large normal-use sessions required by the acceptance criteria below.
+3. **Completed 2026-09-27 — classic-DNS current-firmware revalidation:** controlled Fedora UDP/53 and TCP/53 probes were correlated through `tailscale0 -> EDGE_TS_PREROUTING -> dnsmasq -> Unbound`, with exact managed redirect-counter deltas and matching loopback resolver traffic. See [sanitized evidence](../evidence/2026-09-27/audit-03-current-firmware-dns-datapath-revalidation.md).
+4. **Completed 2026-09-27 — reboot/normal-use acceptance:** #66 recorded three clean startup cycles after the pre-Entware swap-order correction, and #65 completed the Diversion Large normal-use acceptance criteria. The Android exit-node public-IP check was also repeated under #67.
 
 These revalidations should not introduce broader policy changes. Keep them as bounded measurements with current backups, explicit cleanup for any temporary instrumentation, and sanitized evidence.
 
@@ -141,9 +169,9 @@ After the completed unchanged-state observation:
 - Re-run DNSSEC, resolution, firewall, service-health, and recovery validation after each material change.
 - Capture sanitized before/after evidence without overstating what DNS-level filtering can block.
 
-## Diversion Large normal-use acceptance criteria
+## Completed Diversion Large normal-use acceptance
 
-The current `Large + snbAdSupport=no` state is a controlled post-test configuration, not yet a permanent validated baseline. Promote it only after the following evidence is recorded:
+**Status: completed 2026-09-27.** The current `Large + snbAdSupport=no` state completed the defined normal-use acceptance gate. The retained criteria are listed below as the basis of that acceptance:
 
 - at least five representative normal-use sessions across multiple days;
 - at least three clean router startup/power-on cycles with DNS and core-service checks passing;
@@ -154,7 +182,7 @@ The current `Large + snbAdSupport=no` state is a controlled post-test configurat
 - RAM/swap behavior shows no sustained abnormal growth relative to the pre-change baseline;
 - rollback to the previous policy remains documented and practical.
 
-If any criterion fails, keep `Large` in evaluation, record the failure and either tune the policy or revert before describing it as the accepted baseline.
+The 2026-09-27 acceptance evidence records completion of these criteria. Future list/profile changes require a new bounded validation rather than inheriting this result automatically. See [issue-65 acceptance evidence](../evidence/2026-09-27/issue-65-diversion-large-normal-use-acceptance.md).
 
 ## Post-observation idea — Pi-hole + Unbound DNS filtering migration
 
@@ -247,20 +275,32 @@ After the completed unchanged-state observation:
 
 Router-side alerting changes may now be tested only as deliberate maintenance changes with rollback and post-change validation.
 
-## Post-observation — off-router backup and reproducible recovery
+## Completed baseline — off-router backup and reproducible recovery
 
-Extend the existing project configuration backup/restore workflow in the post-observation phase:
+**Baseline completed 2026-09-27 under #100.** The project now has:
 
-- Keep the current integrity-checked project backup as the configuration/application recovery layer.
-- Automatically copy completed backups away from the router-attached SSD to a trusted NAS or other independent system.
-- Retain multiple dated backup generations and define an explicit retention policy.
-- Encrypt off-router backups at rest and keep authentication material outside the public repository.
-- Verify the archive sidecar checksum and internal `SHA256SUMS` manifest after transfer rather than treating a successful copy as sufficient.
-- Add backup-result monitoring so a failed backup, failed transfer, or failed integrity check can become an actionable alert.
-- Document a bootstrap procedure for a clean compatible ASUSWRT-Merlin/Entware installation that restores the project configuration without pretending to be a firmware-level bare-metal image.
-- Test restore first in dry-run mode, then perform a controlled recovery drill with rollback and post-restore health validation.
-- Record measured recovery time and the expected data/configuration loss window so later project maturity work can define evidence-backed RTO/RPO.
-- Keep the router-attached SSD and the off-router copy as separate failure domains; neither should be described as sufficient on its own.
+- a sanitized router rebuild inventory;
+- a separate private native ASUS/Merlin settings export encrypted off-router;
+- a verified off-router project backup and sidecar checksum;
+- internal payload-manifest validation;
+- `restore.sh --dry-run` validation;
+- a successful alternate-root clean-room restore;
+- byte-for-byte JFFS/opt content comparison and permission-mode comparison;
+- explicit Unbound runtime ownership reconstruction;
+- review-only handling for addon-managed `post-mount`, including safe behavior
+  for older backups that stored it under the live JFFS path.
+
+See [router disaster recovery](router-disaster-recovery.md) and the
+[clean-room restore evidence](../evidence/2026-09-27/issue-100-dr-cleanroom-restore-validation.md).
+
+Remaining recovery-maturity work:
+
+- Automate copying completed project backups to an independent system without making the router-attached SSD the only recovery location.
+- Retain multiple dated generations and define explicit retention/rotation.
+- Add backup-result monitoring so failed creation, transfer or integrity verification becomes observable.
+- Extend the documented bootstrap sequence for a clean compatible Asuswrt-Merlin/Entware installation as future recovery testing justifies it.
+- Measure recovery time and expected configuration-loss window in a future timed drill before defining evidence-backed RTO/RPO.
+- Continue to keep router-attached storage and off-router recovery copies as separate failure domains.
 
 Target end state: a versioned, integrity-verified, encrypted off-router recovery path that complements the repository and existing `backup.sh`/`restore.sh` workflow.
 
