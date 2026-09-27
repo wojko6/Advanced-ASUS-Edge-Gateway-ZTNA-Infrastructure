@@ -1,0 +1,51 @@
+# Tailscale Management and Exit-Node Flow
+
+## Purpose
+
+This diagram separates Tailscale router-management traffic, selected LAN forwarding and exit-node forwarding. DNS interception is deliberately excluded so that management and forwarding claims are not visually conflated with the resolver path.
+
+```mermaid
+flowchart LR
+    U["Remote identity + device"] --> G["Tailscale Grants"]
+    G --> O["Tailscale overlay"]
+    O --> T["tailscale0"]
+
+    subgraph MGMT["Router management plane"]
+        T --> NP["nat PREROUTING<br/>EDGE_TS_PREROUTING"]
+        NP -->|"configured admin source + HTTPS enabled"| DN["source-scoped DNAT<br/>to router LAN IP :8443"]
+        DN --> IN["filter INPUT<br/>EDGE_TS_INPUT"]
+        IN -->|"EDGE_ADMIN_TS_SOURCES + configured port"| MS["Router management service"]
+        IN -->|"unauthorized / unmatched"| MD["Default DROP"]
+    end
+
+    subgraph FWD["Forwarding plane"]
+        T --> FF["filter FORWARD<br/>EDGE_TS_FORWARD"]
+        FF -->|"allowlisted LAN host + port"| LAN["Selected LAN service<br/>via br0"]
+        FF -->|"exit node enabled<br/>output = detected WAN"| WAN["Reference WAN egress<br/>ppp0 in current evidence"]
+        FF -->|"unmatched"| FD["Default DROP"]
+    end
+
+    WAN --> PN["Platform-owned NAT / MASQUERADE"]
+    PN --> NET["Internet"]
+    NET --> RET["Platform ESTABLISHED/RELATED return path"]
+    RET --> FF
+```
+
+## Validated scope and limitations
+
+- Tailscale is configured with **netfilter-mode=off**; project-owned EDGE_TS_* chains provide local firewall enforcement.
+- Router-management access is source-scoped. In the reference policy, HTTPS management is enabled on port 8443 while router SSH is disabled.
+- The HTTPS management DNAT rule in EDGE_TS_PREROUTING is created only for configured admin Tailscale sources. EDGE_TS_INPUT independently requires an allowed source and service port, then ends in DROP.
+- A 2026-09-23 negative test confirmed that a distinct tailnet client outside the admin source set retained peer reachability but could not establish TCP/8443 management access.
+- EDGE_TS_FORWARD permits only explicit selected-LAN rules plus the optional exit-node rule to the detected WAN interface; unmatched forwarded traffic reaches the default DROP.
+- Exit-node source NAT is **platform-owned**. Current-firmware live evidence correlated the Tailscale-side flow with ppp0 egress after platform source translation.
+- Return traffic relies on the platform established/related path and the EDGE_TS_FORWARD ESTABLISHED,RELATED rule.
+- DNS interception is documented separately in [DNS Enforcement Flow](dns-enforcement-flow.md).
+
+## Traceability
+
+- [router/scripts/firewall-start](../../router/scripts/firewall-start)
+- [config/edge.conf.example](../../config/edge.conf.example)
+- [Unauthorized tailnet management denial — 2026-09-23](../../evidence/2026-09-23/unauthorized-tailnet-management-denial.md)
+- [Post-firmware exit-node revalidation — 2026-09-23](../../evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md)
+- [Android exit-node public-IP validation — 2026-09-27](../../evidence/2026-09-27/issue-67-android-exit-node-public-ip-validation.md)

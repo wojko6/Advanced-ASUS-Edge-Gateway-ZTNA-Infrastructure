@@ -1,80 +1,92 @@
 # Architecture
 
-![Advanced ASUS Edge Gateway architecture](images/Architecture.png)
+The current architecture is documented as a **source-controlled canonical diagram set** rather than a single raster image. Each diagram has one purpose, explicit claim boundaries and links back to current implementation or dated live evidence.
 
-`images/Architecture.png` is the canonical topology diagram of the current reference deployment. Historical or proposed diagrams must be labeled explicitly and must not compete with this image as the active architecture view. Time-sensitive validation status is governed by [PROJECT-STATUS](../PROJECT-STATUS.md) and the dated evidence timeline. As of 2026-09-23, AUDIT-02 has been post-firmware live revalidated on GNUton `3004.388.11_1-gnuton1_tuf`; the equivalent current-firmware AUDIT-03 classic-DNS packet-correlation refresh remains the next datapath validation.
+## Canonical architecture diagrams
+
+1. [High-Level Architecture and Trust Boundaries](architecture/high-level-trust-boundaries.md)  
+   Identity/policy, Tailscale overlay, project-owned firewall boundary, router management, selected LAN forwarding and optional exit-node egress.
+
+2. [DNS Enforcement Flow](architecture/dns-enforcement-flow.md)  
+   Exact LAN/br0 and Tailscale/tailscale0 classic-DNS paths, EDGE_LAN_DNS_PREROUTING, EDGE_TS_PREROUTING, dnsmasq, Unbound, direct LAN DoT/TCP 853 rejection and explicit encrypted-DNS scope limits.
+
+3. [Tailscale Management and Exit-Node Flow](architecture/tailscale-management-exit-node-flow.md)  
+   Source-scoped management, default-deny behavior, selected LAN forwarding, EDGE_TS_FORWARD, WAN egress and platform-owned NAT.
+
+4. [Boot and Service Dependency Flow](architecture/boot-service-dependency-flow.md)  
+   Current reference post-mount/AMTM ordering, pre-Entware swap evidence, repository services-start recovery behavior, Unbound/dnsmasq interaction, firewall apply and WAN-DNS-driven Tailscale restart.
+
+The old [Architecture.png](images/Architecture.png) is retained only as a historical/illustrative artifact. It is not a source of truth for current ports, interfaces, chain ownership or validation status. See [docs/images/README.md](images/README.md).
 
 ## Logical components
 
 | Layer | Component | Responsibility |
 |---|---|---|
 | Identity/policy | Tailscale Grants | User/group/device authorization and exit-node entitlement |
-| Overlay | Tailscale | Encrypted connectivity, subnet advertisement, optional exit routing |
-| Local enforcement | iptables | Router service, LAN destination, port, and WAN-interface policy |
-| DNS | dnsmasq + Unbound | Project-owned classic-DNS interception, LAN listener, recursive resolution, DNSSEC validation, cache |
-| Observability | syslog-ng | Local archive and optional TLS forwarding |
-| Operations | Merlin hooks + scripts | Deterministic startup, health checks, backup, restore, update |
+| Overlay | Tailscale | Encrypted connectivity, subnet advertisement and optional exit routing |
+| Local enforcement | project-owned iptables/ip6tables | Router-service policy, selected LAN access, default-deny forwarding, LAN DNS/DoT controls and fail-closed Tailscale IPv6 guards |
+| DNS | dnsmasq + Unbound | Local port-53 ownership, classic-DNS interception, recursive resolution and DNSSEC validation |
+| Observability | syslog-ng | Local logging and optional remote forwarding |
+| Operations | Merlin hooks + project scripts | Startup/recovery coordination, health checks, backup/restore, evidence collection and controlled updates |
 
-## Trust boundaries and flows
+## Ownership boundaries
 
-```mermaid
-flowchart TD
-    U["Remote identity + device"] -->|Tailnet policy| TS["Tailscale overlay"]
-    TS -->|tailscale0| FW["EDGE_TS_INPUT / FORWARD"]
-    FW -->|Admin device IP + port| MGMT["Router management"]
-    FW -->|Host + port allowlist| LAN["Selected LAN service"]
-    FW -->|Output interface = WAN| NET["Optional exit node"]
-    FW -->|Default| DROP["Drop + rate-limited log"]
-```
+### Tailscale versus local firewall
 
-Tailscale is the first authorization boundary. The router firewall is a second, independent boundary. Router login and service authentication remain required after network access is granted.
+Tailscale is intentionally configured with **netfilter-mode=off**. The project owns the local EDGE_TS_* iptables policy instead of relying on Tailscale-managed ts-* chains.
 
-## DNS enforcement and resolver flow
+Tailscale Grants and local firewall rules are independent boundaries:
 
-```mermaid
-flowchart LR
-    LAN53["LAN client on br0<br/>TCP/UDP 53"] --> LDNS["EDGE_LAN_DNS_PREROUTING"]
-    LDNS -->|Router destination :53| RET["RETURN"]
-    LDNS -->|External destination :53| D["dnsmasq :53"]
+- Grants decide which identities/devices are entitled to reach a resource or use the exit node.
+- EDGE_TS_INPUT and EDGE_TS_FORWARD enforce local source, destination, port and WAN-interface policy.
+- Router or service authentication still applies after network reachability is granted.
 
-    TS53["Tailscale client on tailscale0<br/>TCP/UDP 53"] --> TDNS["EDGE_TS_PREROUTING"]
-    TDNS --> D
+### Project forwarding versus platform NAT
 
-    D --> U["Unbound 127.0.0.1:53535"]
-    U --> A["Authoritative / upstream DNS"]
+The project owns exit-node forwarding policy in EDGE_TS_FORWARD. It does **not** add its own exit-node MASQUERADE rule. Current-firmware live evidence validates the reference ownership model as:
 
-    LANDOT["LAN client on br0<br/>TCP 853"] --> DOT["EDGE_LAN_DOT_FORWARD"]
-    DOT --> REJECT["REJECT with tcp-reset"]
+**project-owned filtering + platform-owned WAN NAT**
 
-    PENDING["DoH / HTTPS 443<br/>DoQ / QUIC<br/>VPN-carried DNS<br/>IPv6 resolver paths"] --> SCOPE["Separate assessment / controls"]
-```
+### DNS ownership
 
-Classic TCP/UDP port 53 is now enforced on both validated entry paths. Traffic arriving through `tailscale0` is redirected by `EDGE_TS_PREROUTING` to the router-local dnsmasq listener. Ordinary LAN/Wi-Fi traffic arriving on `br0` is handled by `EDGE_LAN_DNS_PREROUTING`: queries already addressed to the router on port 53 are returned to the normal local path, while client-selected external TCP/UDP 53 destinations are redirected to dnsmasq. dnsmasq then forwards to Unbound on `127.0.0.1:53535` for recursive resolution and DNSSEC validation.
+dnsmasq owns port 53 and forwards ordinary queries to Unbound on 127.0.0.1:53535.
 
-The classic LAN enforcement path was deployed and live-validated on 2026-09-22 with `EDGE_ENFORCE_LAN_DNS=1`. Controlled Fedora UDP and TCP queries explicitly addressed to an external resolver traversed the normal LAN gateway and incremented the managed production redirect counters, while the post-change health check remained clean.
+Current validated IPv4 controls are intentionally scoped:
 
-Direct IPv4 DNS-over-TLS from LAN clients is controlled separately. With `EDGE_BLOCK_LAN_DOT=1`, `EDGE_LAN_DOT_FORWARD` is evaluated for `br0` before platform FORWARD rules and rejects TCP/853 with `tcp-reset`. A controlled Fedora production test to `8.8.8.8:853` failed with `Connection refused` while the managed rule recorded the matching packet; the post-test health check remained at zero failures and zero warnings.
+- LAN/br0 classic TCP/UDP 53: enforced through EDGE_LAN_DNS_PREROUTING.
+- Tailscale/tailscale0 classic TCP/UDP 53: enforced through EDGE_TS_PREROUTING.
+- Direct LAN/br0 DoT TCP/853: rejected through EDGE_LAN_DOT_FORWARD.
+- DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted DNS and IPv6 resolver paths: **not covered by a universal enforcement claim**.
 
-These controls do not create a universal encrypted-DNS boundary. DoH over HTTPS, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, application-specific encrypted resolvers, and equivalent traffic entering through other interfaces require separate assessment and policy. In particular, `EDGE_LAN_DOT_FORWARD` is scoped to direct IPv4 LAN traffic on `br0`; it must not be described as a blanket DoT block for every possible client path.
+### Boot ownership
 
-The supplied IPv6 chains fail closed for new Tailscale input and forwarded traffic when `ip6tables` is available. If `ip6tables` is unavailable, the current scripts warn and the deployment must independently verify that IPv6 is disabled; the repository does not claim fail-closed IPv6 enforcement in that state. IPv6 access requires a separate granular policy and live validation before those guards are relaxed.
+On the reference router, AMTM owns normal Entware startup from post-mount. The project services-start hook detects that ownership, waits for /opt and external Entware startup to settle, then preserves stable services or performs bounded recovery.
 
-## Boot sequence
+The 2026-09-27 #66 evidence also records a current reference-router post-mount correction that activates swap **before** AMTM starts Entware. That live correction is not currently installed by this repository and must not be confused with the repository's own swap guard before Tailscale recovery.
 
-```mermaid
-flowchart TD
-    B["Merlin services-start"] --> W["Wait for /opt with timeout"]
-    W --> A["Let amtm/Entware startup settle"]
-    A --> S["Require active swap when policy/platform needs it"]
-    S --> T["Preserve or start/retry Tailscale"]
-    T --> U["Preserve or recover Unbound"]
-    U --> L["Preserve or start optional syslog-ng"]
-    L --> F["Apply idempotent firewall"]
-    F --> H["Health check available"]
-```
+## Current reference validation
 
-The project does not blindly restart all Entware services at boot. On the reference deployment, amtm owns the normal Entware startup path; ASUS Edge waits for that startup to settle, preserves services that are already stable, and performs bounded recovery only when required. `EDGE_RUN_RC_UNSLUNG=1` is an explicit alternative for deployments where no external hook owns `rc.unslung`.
+Reference router: **ASUS TUF-AX5400**  
+Reference firmware: **GNUton / Asuswrt-Merlin 3004.388.11_1-gnuton1_tuf**
 
-On low-memory 32-bit systems with strict kernel overcommit, the startup path waits for active swap before launching the Go-based Tailscale daemon. Failed daemon starts are retried and propagated as a required-service failure without preventing the fail-closed firewall from being applied. Unbound is likewise preserved when stable and recovered directly only when needed; dnsmasq is restarted after successful Unbound recovery so the resolver chain returns to a known state. syslog-ng is optional and its absence does not make required service startup fail.
+Current architecture claims are anchored to dated evidence:
 
-The startup path uses installed package versions. Package and Tailscale updates remain separate planned-maintenance operations and are not performed automatically during boot.
+- **2026-09-23:** management negative test confirmed that tailnet membership alone does not grant TCP/8443 router management.
+- **2026-09-23:** AUDIT-02 revalidated exit-node forwarding plus platform-owned WAN NAT on the current firmware.
+- **2026-09-27:** AUDIT-03 revalidated the current-firmware Fedora classic-DNS datapath through tailscale0 → EDGE_TS_PREROUTING → dnsmasq → Unbound for both UDP and TCP 53.
+- **2026-09-27:** #66 recorded 3/3 clean startup cycles after the reference pre-Entware swap-order correction.
+- **2026-09-27:** #67 reconfirmed Android exit-node public-IP behavior after reboot with a clean router health check.
+- **2026-09-27:** #65 accepted Diversion Large as the current filtering baseline after multi-day use, refresh, DNS-path and resource checks.
+
+These dated results do not establish universal firmware compatibility or enforcement outside their stated protocol/interface scope. Time-sensitive project status remains governed by [PROJECT-STATUS.md](../PROJECT-STATUS.md) and the dated [evidence](../evidence/) tree.
+
+## Primary implementation sources
+
+- [router/scripts/firewall-start](../router/scripts/firewall-start)
+- [router/scripts/services-start](../router/scripts/services-start)
+- [router/scripts/wan-event-handler](../router/scripts/wan-event-handler)
+- [scripts/healthcheck.sh](../scripts/healthcheck.sh)
+- [config/edge.conf.example](../config/edge.conf.example)
+- [config/dnsmasq.conf.add.example](../config/dnsmasq.conf.add.example)
+- [config/unbound.conf.example](../config/unbound.conf.example)
+- [config/tailscale/policy.example.hujson](../config/tailscale/policy.example.hujson)

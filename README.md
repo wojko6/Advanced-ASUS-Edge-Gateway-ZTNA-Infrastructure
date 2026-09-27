@@ -18,14 +18,21 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 
 ## Architecture
 
-![Current ASUS Edge Gateway architecture](docs/images/Architecture.png)
+The current reference architecture is documented as four focused, source-controlled Mermaid diagrams instead of one canonical raster image:
 
-`docs/images/Architecture.png` is the canonical topology diagram for the current deployed/reference architecture. It reflects the live-validated LAN classic-DNS enforcement and direct DoT/853 blocking state; DoH/HTTPS 443 and DoQ/QUIC remain explicitly outside the current enforcement claim. Time-sensitive validation status is tracked in [PROJECT-STATUS.md](PROJECT-STATUS.md) and dated evidence; AUDIT-02 is now post-firmware live revalidated on GNUton 388.11, while the current-firmware AUDIT-03 classic-DNS packet-correlation refresh remains pending. Retired diagrams are kept out of the active documentation tree so readers do not have to choose between competing architecture views.
+- [High-Level Architecture / Trust Boundaries](docs/architecture/high-level-trust-boundaries.md)
+- [DNS Enforcement Flow](docs/architecture/dns-enforcement-flow.md)
+- [Tailscale Management + Exit-Node Flow](docs/architecture/tailscale-management-exit-node-flow.md)
+- [Boot & Service Dependency Flow](docs/architecture/boot-service-dependency-flow.md)
+
+The previous `docs/images/Architecture.png` is retained only as a historical/illustrative artifact and is no longer the source of truth.
 
 Remote access is enforced at two layers:
 
 1. Tailscale Grants authorize identities and groups.
-2. Managed iptables chains restrict router services, LAN destinations, ports, and optional exit-node forwarding.
+2. Managed iptables chains restrict router services, LAN destinations, ports and optional exit-node forwarding.
+
+Current-firmware validation is tied to dated evidence rather than inferred from the diagrams. AUDIT-02 exit-node forwarding/NAT ownership was revalidated on GNUton 388.11 on 2026-09-23, and AUDIT-03 classic IPv4 UDP/TCP port-53 packet correlation was revalidated on the same reference firmware on 2026-09-27. DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted DNS and IPv6 resolver paths remain outside any universal DNS-enforcement claim.
 
 See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy.md), [security limitations](docs/security.md), and the [requirements and acceptance map](docs/requirements.md) for the detailed design, test methods and current validation limits.
 
@@ -147,7 +154,7 @@ Merge `config/dnsmasq.conf.add.example` with any existing `/jffs/configs/dnsmasq
 
 A controlled 2026-09-22 Diversion comparison tested `Standard + snbAdSupport=yes`, `Standard + snbAdSupport=no`, and `Large + snbAdSupport=no`. Disabling the SNBForums support exception measurably improved blocking, and the Large profile broadened DNS coverage, but representative sites still rendered advertising even while many observed ad-tech hostnames returned `NXDOMAIN` from the Android Tailscale exit-node client.
 
-The current post-test state is `Large + snbAdSupport=no` with one focused denylist entry under normal-use observation. This is evidence that DNS filtering is useful but not equivalent to request-level/browser content blocking. Pi-hole remains a future observability and policy-management candidate, not a promise of complete visual-ad removal.
+The accepted current filtering baseline is `Large + snbAdSupport=no` with one focused denylist entry. Issue #65 closed the normal-use acceptance on 2026-09-27 after multi-day representative use, three clean startup cycles, a normal list refresh, LAN and Android-over-Tailscale classic-DNS checks, clean health checks and stable RAM/swap observations. DNS filtering remains useful but is not equivalent to request-level/browser content blocking. Pi-hole remains a future observability and policy-management candidate, not a promise of complete visual-ad removal.
 
 See [the sanitized Diversion validation](evidence/2026-09-22/diversion-ad-blocking-validation.md).
 
