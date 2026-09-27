@@ -63,6 +63,8 @@ EDGE_RESTORE_ROOT=/tmp/asus-edge-dr-cleanroom \
 
 Do not set `EDGE_RESTORE_ROOT` during an actual router restore. The default live behavior remains `/jffs` and `/opt`.
 
+The current `post-mount` hook is backed up only as a review reference. It is not automatically restored because AMTM can own/regenerate part of that file. `restore.sh` also refuses to auto-apply `jffs/scripts/post-mount` from older archives; merge the validated swap-order logic manually after rebuilding the AMTM baseline.
+
 The restore rejects links, special files, unsafe paths, duplicate archive
 entries and multiple top-level roots. It requires every payload file to appear
 exactly once in the internal SHA-256 manifest before copying anything to the
