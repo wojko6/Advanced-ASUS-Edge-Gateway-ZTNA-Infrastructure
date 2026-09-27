@@ -42,10 +42,29 @@ sha256sum_run() {
 
 ARCHIVE="${1:-}"
 MODE="${2:---dry-run}"
+RESTORE_TARGET_ROOT="${EDGE_RESTORE_ROOT:-}"
 
 usage() {
     echo "Usage: $0 BACKUP.tar.gz [--dry-run|--apply]"
 }
+
+if [ -n "$RESTORE_TARGET_ROOT" ]; then
+    case "$RESTORE_TARGET_ROOT" in
+        /*) ;;
+        *) echo "ERROR: EDGE_RESTORE_ROOT must be an absolute path" >&2; exit 2 ;;
+    esac
+    case "$RESTORE_TARGET_ROOT" in
+        /|*/../*|*/..|*/./*|*/.) echo "ERROR: unsafe EDGE_RESTORE_ROOT" >&2; exit 2 ;;
+    esac
+    [ -d "$RESTORE_TARGET_ROOT" ] || {
+        echo "ERROR: EDGE_RESTORE_ROOT must already exist as a directory" >&2
+        exit 1
+    }
+    [ ! -L "$RESTORE_TARGET_ROOT" ] || {
+        echo "ERROR: EDGE_RESTORE_ROOT must not be a symlink" >&2
+        exit 1
+    }
+fi
 
 [ -n "$ARCHIVE" ] || { usage; exit 2; }
 [ -f "$ARCHIVE" ] || { echo "ERROR: backup not found" >&2; exit 1; }
@@ -111,8 +130,18 @@ echo "Verified backup contents:"
 find "$ROOT" -type f | sed "s#^$ROOT/##" | sort
 
 [ "$MODE" = "--apply" ] || { echo "Dry-run only. Re-run with --apply to restore."; exit 0; }
-uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
-[ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
+
+if [ -z "$RESTORE_TARGET_ROOT" ]; then
+    uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
+    [ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
+else
+    [ -w "$RESTORE_TARGET_ROOT" ] || {
+        echo "ERROR: EDGE_RESTORE_ROOT is not writable" >&2
+        exit 1
+    }
+    mkdir -p "$RESTORE_TARGET_ROOT/jffs" "$RESTORE_TARGET_ROOT/opt" || exit 1
+    echo "Clean-room restore target: $RESTORE_TARGET_ROOT"
+fi
 
 ROLLBACK_DIR="$TMP_DIR/pre-restore"
 mkdir "$ROLLBACK_DIR" || exit 1
@@ -125,6 +154,7 @@ while IFS= read -r relative_path; do
         *) continue ;;
     esac
     live_path="/$relative_path"
+    [ -z "$RESTORE_TARGET_ROOT" ] || live_path="$RESTORE_TARGET_ROOT/$relative_path"
     rollback_path="$ROLLBACK_DIR/$relative_path"
     marker="$ROLLBACK_DIR/.absent/$relative_path"
     mkdir -p "$(dirname "$rollback_path")" "$(dirname "$marker")" || exit 1
@@ -147,6 +177,7 @@ rollback_restore() {
             *) continue ;;
         esac
         live_path="/$relative_path"
+    [ -z "$RESTORE_TARGET_ROOT" ] || live_path="$RESTORE_TARGET_ROOT/$relative_path"
         rollback_path="$ROLLBACK_DIR/$relative_path"
         marker="$ROLLBACK_DIR/.absent/$relative_path"
         if [ -f "$marker" ]; then
@@ -167,7 +198,9 @@ rollback_restore() {
 
 for destination in jffs opt; do
     if [ -d "$ROOT/$destination" ]; then
-        if ! cp -Rp "$ROOT/$destination/." "/$destination/"; then
+        target_destination="/$destination/"
+        [ -z "$RESTORE_TARGET_ROOT" ] || target_destination="$RESTORE_TARGET_ROOT/$destination/"
+        if ! cp -Rp "$ROOT/$destination/." "$target_destination"; then
             rollback_restore || true
             exit 1
         fi
