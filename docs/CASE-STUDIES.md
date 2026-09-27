@@ -109,6 +109,26 @@ The case narrows severe HE160 degradation to the tested MT7922 ↔
 ASUS/Broadcom interaction while preserving the distinction between observed
 evidence and root-cause inference.
 
+
+## 7. ASUS TUF-AX5400 external observability
+
+**File:** [ASUS TUF-AX5400 External Observability](asus-tuf-ax5400-observability-case-study.md)
+
+A read-only router observability integration covering:
+
+- a Broadcom chanspec incompatibility discovered during live exporter collection;
+- a bounded TUF-AX5400 channel parsing adaptation;
+- external VictoriaMetrics storage and Grafana visualization;
+- Blackbox HTTPS, ICMP and router-DNS probes;
+- scheduled Traffic Analyzer history import;
+- localhost-only service exposure and least-privilege Blackbox capabilities;
+- a Fedora systemd/OpenSSH namespace interaction found during service hardening;
+- real reboot/persistence validation of the complete monitoring stack.
+
+The case keeps time-series and dashboard workloads off the 512 MiB router and
+retains explicit limits around host downtime, remote exposure and cross-model
+compatibility.
+
 ## How to read these cases
 
 Where applicable, case studies separate:

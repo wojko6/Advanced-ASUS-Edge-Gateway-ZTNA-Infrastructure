@@ -1,0 +1,9 @@
+[Unit]
+Description=Import ASUS Traffic Analyzer history into VictoriaMetrics
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/asus-traffic-importer.env
+ExecStart=%h/.local/bin/asus-traffic-importer
+NoNewPrivileges=true

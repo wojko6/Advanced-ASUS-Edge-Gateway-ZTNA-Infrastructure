@@ -1,32 +1,33 @@
 # Roadmap
 
-## Current execution focus — observability
+## Completed and validated — observability baseline
 
-**Status: active next phase as of 2026-09-27.**
+**Status: completed 2026-09-27.**
 
-The post-firmware validation set (#64, #65, #66, #67, #70) and the router
-disaster-recovery baseline (#100) are complete. Before adding more router-side
-functionality, the next engineering phase is observability.
+The first external observability baseline is live-validated on the reference
+ASUS TUF-AX5400. Time-series storage, probes and visualization remain off the
+512 MiB router. The validated path combines read-only SSH collection, scheduled
+Traffic Analyzer import, VictoriaMetrics, Blackbox Exporter and Grafana.
 
-Preferred direction:
+The TUF-AX5400 required one model-specific collector adaptation because the
+Broadcom `chanim_stats` output returned hexadecimal chanspec values rather than
+a directly parseable decimal channel. The patch uses read-only `wl channel`
+output for the primary channel.
 
-```text
-ASUS TUF-AX5400
-   -> read-only collection
-   -> external collectors/exporters
-   -> VictoriaMetrics
-   -> Grafana
-```
+The Fedora host passed a real reboot/persistence validation: system and user
+monitoring units returned automatically, user linger was enabled, all HTTP
+listeners remained loopback-only, the SSH scrape converged to `up=1`, and the
+Traffic Analyzer timer imported the next completed hourly bucket.
 
-Keep time-series storage, dashboarding and other heavy analytics off the
-512 MiB router where practical. Start with a read-only capability/preflight
-review; evaluate SNMP extensions only when they add metrics that are not
-available through the lower-impact collection path.
+SNMP was not required for this baseline.
 
-After observability, the current prioritized backlog proceeds to logging,
-encrypted-DNS bypass assessment and the remaining hardening research. The
-canonical ordering is maintained in issue #82.
+See:
+- [observability case study](asus-tuf-ax5400-observability-case-study.md)
+- [sanitized live validation](../evidence/2026-09-27/observability-stack-validation.md)
+- [reproducible monitoring files](../monitoring/README.md)
 
+**Next execution focus:** centralized logging / alerting improvements, followed
+by encrypted-DNS bypass assessment and remaining hardening research in issue #82.
 
 ## Completed and validated — SSD migration
 
