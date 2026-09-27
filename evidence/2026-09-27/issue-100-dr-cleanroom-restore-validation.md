@@ -104,6 +104,19 @@ The final #101 design therefore:
 
 The archived hook remains recovery evidence for manual comparison/merge of the validated pre-Entware swap ordering; it is not an automatic restore payload.
 
+## Backward-compatible post-mount safety validation
+
+The final `restore.sh` was tested against the earlier #100 backup artifact that still contained `jffs/scripts/post-mount` at the live-path location.
+
+Observed result:
+
+```text
+Review-only: archived jffs/scripts/post-mount will not be applied automatically.
+POST_MOUNT_NOT_AUTO_RESTORED_OK
+```
+
+The restore still verified the older archive and completed the clean-room apply, but the archived `post-mount` file was deliberately excluded from the target. This confirms backward-compatible safety for previously created project backups: older archives remain readable, while the partly AMTM-managed hook is not overwritten automatically.
+
 ## Claim boundary
 
 This validates archive structure, content integrity, permission-mode preservation and the actual restore/copy path into a disposable filesystem target.
