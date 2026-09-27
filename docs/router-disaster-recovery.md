@@ -140,6 +140,20 @@ The present decision is therefore:
 
 **project-native recovery first; BACKUPMON as a design/reference comparator.**
 
+## Safe clean-room restore
+
+The production restore script supports an explicit alternate-root validation mode through `EDGE_RESTORE_ROOT`. The default remains the live router paths; the alternate root exists only to exercise the same archive validation, snapshot, copy and rollback logic against a disposable directory.
+
+Example on a workstation:
+
+```sh
+mkdir -p /tmp/asus-edge-dr-cleanroom
+EDGE_RESTORE_ROOT=/tmp/asus-edge-dr-cleanroom \
+  ./scripts/restore.sh BACKUP.tar.gz --apply
+```
+
+The alternate root must already exist, be writable, be absolute, must not be `/`, and must not be a symlink. This mode is intended for safe recovery validation; it does not prove router service startup or runtime ownership that depends on firmware/addon installation.
+
 ## Validation gates
 
 Before #100 can close:
