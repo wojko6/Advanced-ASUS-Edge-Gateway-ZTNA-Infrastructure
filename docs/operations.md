@@ -53,6 +53,16 @@ Restore is dry-run by default:
 ./scripts/restore.sh BACKUP.tar.gz --apply
 ```
 
+For a non-destructive clean-room acceptance test on a workstation, use an existing disposable directory as an alternate root:
+
+```sh
+mkdir -p /tmp/asus-edge-dr-cleanroom
+EDGE_RESTORE_ROOT=/tmp/asus-edge-dr-cleanroom \
+  ./scripts/restore.sh BACKUP.tar.gz --apply
+```
+
+Do not set `EDGE_RESTORE_ROOT` during an actual router restore. The default live behavior remains `/jffs` and `/opt`.
+
 The restore rejects links, special files, unsafe paths, duplicate archive
 entries and multiple top-level roots. It requires every payload file to appear
 exactly once in the internal SHA-256 manifest before copying anything to the
