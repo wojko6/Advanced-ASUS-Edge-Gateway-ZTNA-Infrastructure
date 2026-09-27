@@ -29,6 +29,8 @@ jobs:
         run: sh tests/test-config-validation.sh
       - name: Run evidence collector test
         run: sh tests/test-evidence-collector.sh
+      - name: Run sanitized DR rebuild-manifest test
+        run: sh tests/test-dr-manifest.sh
       - name: Run collector log-retention test
         run: sh tests/test-log-retention.sh
       - name: Run services-start configuration validation
