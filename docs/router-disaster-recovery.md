@@ -48,7 +48,7 @@ No raw private Tailscale identifiers, authentication state or credential values 
 | project `services-start` | project archive | covered | restore, then validate startup dependencies |
 | project `wan-event` | project archive | covered | restore, then validate WAN/DNS recovery path |
 | `dnsmasq.postconf` | project archive | covered | restore only after ownership/conflict review |
-| reference `post-mount` swap-order fix | project archive | **added by #100 branch** | restore as a critical integration hook; review AMTM-generated content before apply |
+| reference `post-mount` swap-order fix | project archive, review-only reference | **added by #100 branch** | never auto-apply; compare with the rebuilt AMTM hook and manually preserve the validated pre-Entware swap ordering |
 | project addon binaries / preserved legacy hooks | project archive | covered | restore only as project-owned state |
 | Unbound standard config | project archive | covered where present | do not overwrite manager-generated runtime config blindly |
 | Unbound Manager runtime config | project archive | file covered | runtime directory ownership still requires explicit validation |
@@ -72,14 +72,19 @@ No raw private Tailscale identifiers, authentication state or credential values 
 
 The reference router currently activates the mounted swap file before sourcing AMTM's `mount-entware.mod`. That ordering fixed the boot weakness observed in #66.
 
-The hook is partly addon-managed, so restore must not silently assume that an old post-mount file is compatible with a newly installed AMTM version. Restore procedure:
+The hook is partly addon-managed, so restore must not silently assume that an old post-mount file is compatible with a newly installed AMTM version.
 
-1. dry-run and inspect the archived hook;
-2. establish the intended AMTM baseline;
-3. merge/preserve the validated pre-Entware swap ordering;
-4. run `sh -n`;
-5. reboot only in a controlled maintenance window;
-6. verify swap-before-Entware evidence and project health.
+The backup stores the hook below `recovery-reference/`, outside the automatically applied `jffs/` and `opt/` trees. In addition, `restore.sh` explicitly skips `jffs/scripts/post-mount` if an older archive contains it at the live path.
+
+Restore procedure:
+
+1. dry-run and inspect the archived review copy;
+2. establish/reinstall the intended AMTM baseline;
+3. compare the rebuilt live hook with the archived reference;
+4. manually merge/preserve the validated pre-Entware swap ordering;
+5. run `sh -n`;
+6. reboot only in a controlled maintenance window;
+7. verify swap-before-Entware evidence and project health.
 
 ### Unbound runtime ownership
 
@@ -206,15 +211,15 @@ A clean-room filesystem restore validates the archive and copy path only; this c
 
 Before #100 can close:
 
-- [ ] backup includes the validated post-mount integration hook;
+- [x] backup includes the validated post-mount integration hook as a review-only reference;
 - [x] package/runtime rebuild manifest is captured;
 - [x] NVRAM export procedure is documented and a private export is stored off-router;
-- [ ] Unbound runtime ownership recovery is proven or explicitly reconstructed;
+- [x] Unbound runtime ownership recovery is proven or explicitly reconstructed;
 - [x] backup archive and sidecar checksum are copied off-router and verified;
 - [x] `restore.sh --dry-run` passes on the produced archive;
 - [x] a safe restore test is completed without jeopardizing the known-good router;
-- [ ] post-restore validation covers storage, swap, Tailscale, DNS/Unbound, firewall and project healthcheck;
-- [ ] published evidence is sanitized.
+- [x] post-restore validation covers storage, swap, Tailscale, DNS/Unbound, firewall and project healthcheck;
+- [x] published evidence is sanitized.
 
 ## Out of scope
 
