@@ -83,3 +83,27 @@ rights. The validated procedure is documented in
 
 Never commit the Caddy CA private key or other files from the live Caddy storage
 directory.
+
+
+## Grafana alerting
+
+Four live-validated Grafana alert rules are provisioned from
+[`grafana/provisioning/alerting/asus-tuf-alerts.yml`](grafana/provisioning/alerting/asus-tuf-alerts.yml):
+
+- SSH collector unavailable;
+- router-reported WAN down;
+- failed HTTPS / ICMP / router-DNS blackbox probe;
+- stale router telemetry.
+
+A controlled collector outage drove the collector and telemetry rules through
+`Pending -> Firing`, while the independent blackbox rule remained healthy.
+After the collector restarted, all rules returned to normal.
+
+The same test identified an important dependency boundary: loss of collector
+data must not masquerade as a WAN failure. The WAN rule therefore uses
+`noDataState: OK`; collector and telemetry loss are handled by their dedicated
+rules.
+
+No external notification contact point is part of this baseline yet.
+
+See [the alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md).

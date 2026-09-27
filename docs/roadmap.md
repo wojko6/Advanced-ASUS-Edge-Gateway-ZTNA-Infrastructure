@@ -26,8 +26,13 @@ See:
 - [sanitized live validation](../evidence/2026-09-27/observability-stack-validation.md)
 - [reproducible monitoring files](../monitoring/README.md)
 
-**Next execution focus:** centralized logging / alerting improvements, followed
-by encrypted-DNS bypass assessment and remaining hardening research in issue #82.
+The initial Grafana alerting baseline is also live-validated: collector loss and
+stale telemetry reached firing state in a controlled Fedora-only fault test,
+recovered after service restoration, and the WAN no-data policy was corrected
+so missing collector data does not masquerade as WAN-down evidence.
+
+**Next execution focus:** centralized logging, followed by encrypted-DNS bypass
+assessment and remaining hardening research in issue #82.
 
 ## Completed and validated — SSD migration
 
