@@ -149,6 +149,9 @@ exec /bin/cp "$@"
     def test_backup_restore_roundtrip(self):
         config = self.root / "jffs/configs/asus-edge.conf"
         config.write_text("EDGE_ALLOW_ROUTER_SSH=0\n")
+        post_mount = self.root / "jffs/scripts/post-mount"
+        post_mount.write_text("#!/bin/sh\n# validated pre-Entware swap ordering\n")
+        post_mount.chmod(0o755)
         backup = self.run_script(self.script("backup.sh"), self.root / "backups")
         self.assertEqual(backup.returncode, 0, backup.stderr)
         archive = backup.stdout.strip()
@@ -160,9 +163,14 @@ exec /bin/cp "$@"
         )
         self.assertNotIn(str(Path(archive).parent), sidecar.read_text())
         config.write_text("changed\n")
+        post_mount.write_text("# changed\n")
         restore = self.run_script(self.script("restore.sh"), archive, "--apply")
         self.assertEqual(restore.returncode, 0, restore.stderr)
         self.assertEqual(config.read_text(), "EDGE_ALLOW_ROUTER_SSH=0\n")
+        self.assertEqual(
+            post_mount.read_text(),
+            "#!/bin/sh\n# validated pre-Entware swap ordering\n",
+        )
 
     def test_backup_copy_failure_is_not_success(self):
         (self.root / "jffs/configs/asus-edge.conf").write_text("config\n")
