@@ -71,3 +71,47 @@ up{job="asus_wifi_clients"} = 1
 ```
 
 **Result: PASS — external observability baseline live-validated.**
+
+
+## Local HTTPS frontend validation
+
+Caddy package/version:
+
+```text
+caddy-2.11.4-2.fc44.x86_64
+Caddy v2.11.4
+```
+
+Validated listeners:
+
+```text
+127.0.0.1:443   caddy
+127.0.0.1:3000  grafana
+```
+
+No `0.0.0.0:443` or `[::]:443` listener was observed.
+
+The first HTTPS reverse-proxy test returned:
+
+```text
+HTTP/2 302
+location: /login
+via: 1.1 Caddy
+```
+
+Caddy logged that automatic system trust installation failed because the
+unprivileged `caddy` service account is not in sudoers. The local CA public
+root was therefore installed manually into the Fedora trust store. The tested
+Brave/Chromium profile additionally received the public root CA through the
+user NSS database.
+
+Final browser validation loaded:
+
+```text
+https://grafana.home.arpa/login
+```
+
+without the certificate warning.
+
+The private CA key was not copied into public evidence. The validation remains
+strictly local and does not claim LAN, Tailscale or WAN exposure.

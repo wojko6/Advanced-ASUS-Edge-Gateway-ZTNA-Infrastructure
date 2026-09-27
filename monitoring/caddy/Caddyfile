@@ -1,0 +1,9 @@
+{
+	auto_https disable_redirects
+}
+
+https://grafana.home.arpa {
+	bind 127.0.0.1
+	tls internal
+	reverse_proxy 127.0.0.1:3000
+}
