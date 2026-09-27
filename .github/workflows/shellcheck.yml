@@ -55,6 +55,8 @@ jobs:
         run: sh tests/test-update-tailscale-static.sh
       - name: Run restore archive validation
         run: sh tests/test-restore-validation.sh
+      - name: Run clean-room alternate-root restore
+        run: sh tests/test-cleanroom-restore.sh
       - name: Run uninstall cleanup regression
         run: sh tests/test-uninstall.sh
       - name: Run Fedora DR restore finalization dry-run test
