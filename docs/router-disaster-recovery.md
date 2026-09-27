@@ -154,6 +154,54 @@ EDGE_RESTORE_ROOT=/tmp/asus-edge-dr-cleanroom \
 
 The alternate root must already exist, be writable, be absolute, must not be `/`, and must not be a symlink. This mode is intended for safe recovery validation; it does not prove router service startup or runtime ownership that depends on firmware/addon installation.
 
+## Unbound runtime ownership reconstruction
+
+The live reference router uses this directory ownership contract for the manager-generated runtime tree:
+
+```text
+/opt/var/lib/unbound  uid=65534 gid=0 mode=0755
+```
+
+The project backup preserves the runtime configuration file but does not treat the whole runtime directory as an opaque payload. On a clean rebuild, recreate the runtime directory before starting/recovering Unbound:
+
+```sh
+mkdir -p /opt/var/lib/unbound
+chown 65534:0 /opt/var/lib/unbound
+chmod 0755 /opt/var/lib/unbound
+```
+
+Do not treat the currently observed world-writable modes on `unbound.conf`, `root.key` or `dnsmasq.conf.add` as a required recovery contract. Those modes require a separate compatibility/hardening review. The trust-anchor file remains manager/runtime-owned and is not a primary project-backup payload.
+
+## Post-restore validation checklist
+
+After an actual router restore/rebuild, validate the recovered state in this order before relying on remote-only access:
+
+1. **Storage**
+   - confirm the intended ENTWARE and ROUTER_DATA filesystems are mounted read/write;
+   - confirm `/opt` resolves to the intended Entware environment.
+2. **Swap**
+   - inspect `/proc/swaps`;
+   - confirm the required swap is active before Tailscale recovery.
+3. **Tailscale**
+   - confirm `tailscaled` is running;
+   - record the live binary version locally;
+   - re-enroll/re-authenticate when node state was intentionally not restored;
+   - confirm project `netfilter-mode=off` ownership.
+4. **DNS / Unbound**
+   - confirm the runtime directory owner/mode contract;
+   - validate the active Unbound configuration;
+   - confirm TCP/UDP listener on `127.0.0.1:53535`;
+   - run a direct DNSSEC-validating query;
+   - confirm dnsmasq forwards to the local Unbound listener.
+5. **Firewall**
+   - confirm project-owned IPv4/IPv6 chains are present in the expected parent-rule positions;
+   - confirm the terminal default-deny policy and any enabled LAN DNS/DoT controls.
+6. **Project health**
+   - run `/jffs/addons/asus-edge/bin/healthcheck.sh`;
+   - do not declare recovery complete unless required checks pass or any warning is explicitly understood and documented.
+
+A clean-room filesystem restore validates the archive and copy path only; this checklist is the runtime acceptance procedure for a real router recovery.
+
 ## Validation gates
 
 Before #100 can close:
