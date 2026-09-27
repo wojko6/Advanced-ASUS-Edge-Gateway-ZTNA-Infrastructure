@@ -74,6 +74,36 @@ scraped and `up{job="asus_wifi_clients"} = 1`.
 This validates restart persistence for the tested Fedora host, not high
 availability while the workstation is powered off.
 
+## Local HTTPS frontend
+
+After the monitoring stack and dashboard were validated, the local Grafana
+frontend was hardened/polished with Caddy.
+
+Grafana remains bound to `127.0.0.1:3000`. Caddy 2.11.4 listens only on
+`127.0.0.1:443` and serves the local operator URL:
+
+```text
+https://grafana.home.arpa/
+```
+
+The local name resolves to loopback. Caddy uses `tls internal` and proxies only
+to the local Grafana listener. HTTP-to-HTTPS redirect handling is disabled so no
+port-80 listener is required.
+
+The packaged service could not automatically install its internal CA because
+the unprivileged `caddy` account is not a sudoer. The public root certificate
+was installed manually into Fedora's trust store. Brave/Chromium on the tested
+profile also required the same public root certificate in the user's NSS
+database. No CA private key was copied or published.
+
+Live validation confirmed `127.0.0.1:443` for Caddy and
+`127.0.0.1:3000` for Grafana. The HTTPS frontend returned HTTP/2 302 to
+`/login`, and the browser subsequently loaded the local URL without a
+certificate warning.
+
+This remains a local-only frontend; it is not a design for remote Grafana
+exposure.
+
 ## Dashboard adaptation
 
 The upstream dashboard was cleaned for the reference deployment: RT-BE88U/SNMP
@@ -86,8 +116,9 @@ uptime display were polished.
 
 This case supports the tested TUF-AX5400/GNUton read-only collection path,
 external storage/dashboard operation, the tested probes, historical Traffic
-Analyzer import and the tested Fedora reboot recovery. It does not establish
-cross-model compatibility, ISP billing-grade traffic accounting, secure remote
-dashboard exposure or monitoring availability while the Fedora host is off.
+Analyzer import, the tested Fedora reboot recovery, and the tested loopback-only
+Caddy HTTPS frontend. It does not establish cross-model compatibility, ISP
+billing-grade traffic accounting, secure remote dashboard exposure or
+monitoring availability while the Fedora host is off.
 
 See [sanitized execution evidence](../evidence/2026-09-27/observability-stack-validation.md).
