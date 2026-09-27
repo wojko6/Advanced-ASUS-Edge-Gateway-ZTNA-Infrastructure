@@ -149,24 +149,25 @@ second_jump() { table="$1"; parent="$2"; interface="$3"; chain="$4"; while "$IPT
 remove_all_rules() { table="$1"; chain="$2"; shift 2; while "$IPTABLES" -t "$table" -D "$chain" "$@" 2>/dev/null; do :; done; }
 remove_temp_ingress_drop_guards() {
     guard_tool="$1"; guard_chain="$2"; guard_interface="$3"
+    guard_rule="-A $guard_chain -i $guard_interface -j DROP"
 
     # The current apply inserted one fail-closed guard, so one delete must
-    # succeed. Count and remove any older exact guards left by interrupted or
-    # failed applies without opening a fail-open window during the rebuild.
+    # succeed. Then remove any older exact duplicates left by interrupted or
+    # failed applies. Avoid awk here because the router BusyBox awk rejected
+    # the previous dynamic-string expression used by this cleanup path.
     "$guard_tool" -t filter -D "$guard_chain" -i "$guard_interface" -j DROP 2>/dev/null ||
         die "cannot remove temporary $guard_chain guard"
 
-    remaining_guards="$(
-        "$guard_tool" -t filter -S "$guard_chain" 2>/dev/null |
-            awk -v chain="$guard_chain" -v iface="$guard_interface" '
-                $0 == "-A " chain " -i " iface " -j DROP { count++ }
-                END { print count + 0 }'
-    )"
+    guard_rules="$("$guard_tool" -t filter -S "$guard_chain" 2>/dev/null)" ||
+        die "cannot inspect $guard_chain after temporary guard removal"
 
-    while [ "$remaining_guards" -gt 0 ]; do
+    while printf '%s\n' "$guard_rules" |
+        grep -F -x -e "$guard_rule" >/dev/null 2>&1
+    do
         "$guard_tool" -t filter -D "$guard_chain" -i "$guard_interface" -j DROP 2>/dev/null ||
             die "cannot remove stale temporary $guard_chain guard"
-        remaining_guards=$((remaining_guards - 1))
+        guard_rules="$("$guard_tool" -t filter -S "$guard_chain" 2>/dev/null)" ||
+            die "cannot re-inspect $guard_chain after stale guard removal"
     done
 }
 remove_legacy_tailscale_rules() {
