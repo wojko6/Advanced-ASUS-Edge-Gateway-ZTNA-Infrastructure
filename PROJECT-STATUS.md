@@ -6,11 +6,11 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** post-firmware validation; current-firmware classic DNS datapath revalidated; startup/persistence and Diversion Large acceptance remain open
+**Current phase:** recovery baseline completed; next execution phase is observability / external monitoring
 
 ## Executive status
 
-This status document was reviewed on 2026-09-26. The 2026-09-25 read-only reference-router checkpoint remains the latest broad health/security checkpoint. On 2026-09-26, a separate Wi-Fi 6 HE160 troubleshooting session completed a controlled HE80/HE160 client-interoperability comparison on the ASUS 5 GHz radio. That session is documented as a performance/interoperability case study and does not replace the router security-validation evidence.
+This status document was reviewed on 2026-09-27. The post-firmware validation set is now complete: current-firmware classic DNS, Diversion Large normal-use acceptance, clean startup/persistence, Android exit-node behavior, and the canonical architecture diagrams all have their required evidence. The same day, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The next planned phase is observability, with heavy collection/storage/visualization kept off-router where practical.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
@@ -47,6 +47,40 @@ Key validated areas include:
 The current `scripts/healthcheck.sh` implementation checks the AUDIT-02 exit-node runtime prerequisites when exit-node mode is enabled. The implementation was merged through PR #51 and was subsequently deployed to the reference router on 2026-09-22. A live post-deployment run matched the repository SHA-256 (`e03d6abd7a740524ba5a2c6799a47559ef187b22bb1a3209eb94ffc4a30a7e47`) and completed with `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`. See `evidence/2026-09-22/healthcheck-deployment-validation.md`.
 
 A later 2026-09-22 maintenance check also found and removed a legacy `/jffs/scripts/nat-start` hook that duplicated the managed Tailscale DNS redirects and was group/world writable. The runtime duplicates had zero counters because the project-owned parent jump was evaluated first. The hook was backed up privately, removed from the active hook directory, and the duplicate runtime rules were deleted; the deployed health check remained `0 failure(s), 0 warning(s)`. A follow-up repository revision added explicit detection for direct `tailscale0` NAT rules outside `EDGE_TS_PREROUTING` and unsafe active JFFS hook modes. That hardened revision was subsequently deployed to the reference router and live-validated with SHA-256 `5d96555bad141c40191855e2f121de0412635cb7e5fe14d41b5ec73842db6233`, `0 failure(s), 0 warning(s)`, and `HEALTHCHECK_RC=0`. See `evidence/2026-09-22/healthcheck-drift-hardening-live-validation.md`.
+
+## 2026-09-27 post-firmware closure and disaster-recovery baseline
+
+The remaining post-firmware validation debt was closed on the current GNUton
+reference firmware:
+
+- #64 revalidated the classic UDP/TCP 53 Tailscale DNS datapath through
+  `EDGE_TS_PREROUTING -> dnsmasq -> Unbound`;
+- #65 completed Diversion `Large + snbAdSupport=no` normal-use acceptance;
+- #66 completed three clean startup cycles after correcting pre-Entware swap
+  ordering in the reference `post-mount`;
+- #67 repeated the Android exit-node public-IP validation after reboot;
+- #70 replaced the canonical raster architecture with four source-controlled
+  Mermaid diagrams.
+
+Issue #100 then established the current disaster-recovery baseline. The project
+now has a sanitized rebuild manifest, a separate private native ASUS/Merlin
+settings export, verified off-router project backup artifacts, dry-run restore,
+an alternate-root clean-room restore, content/mode comparison, and a documented
+post-restore validation sequence.
+
+The clean-room restore was additionally hardened after final review: the
+partly AMTM-managed `post-mount` hook is retained only as a review reference
+and is never auto-applied. The final implementation also refuses to auto-apply
+that live-path hook from older project backups.
+
+The safe restore evidence is recorded in
+[evidence/2026-09-27/issue-100-dr-cleanroom-restore-validation.md](evidence/2026-09-27/issue-100-dr-cleanroom-restore-validation.md),
+and the recovery contract is documented in
+[docs/router-disaster-recovery.md](docs/router-disaster-recovery.md).
+
+The next execution phase is observability. The preferred design keeps expensive
+time-series storage and dashboards outside the 512 MiB router and begins with a
+read-only monitoring preflight before any new router-side installation.
 
 ## 2026-09-26 HE160 interoperability investigation
 
