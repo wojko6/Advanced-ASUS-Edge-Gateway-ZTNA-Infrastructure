@@ -1,0 +1,16 @@
+# Applies to idcdog/asuswrt-merlin-monitoring
+# commit ed2f24a25f90983cb7e7715af61332b51491223b
+diff --git a/src/asus_wifi_exporter.py b/src/asus_wifi_exporter.py
+--- a/src/asus_wifi_exporter.py
++++ b/src/asus_wifi_exporter.py
+@@
+   stats=$(wl -i "$radio" chanim_stats 2>/dev/null | awk 'NR > 2 && NF >= 15 {last=$0} END {print last}')
+   if [ -n "$stats" ]; then
+     set -- $stats
+-    channel=${1%%/*}
++    channel=$(wl -i "$radio" channel 2>/dev/null | \
++      awk '$1 == "current" && $2 == "mac" && $3 == "channel" {print $4; exit}')
++    case "$channel" in
++      ''|*[!0-9]*) continue ;;
++    esac
+     utilization=$((100 - $14))

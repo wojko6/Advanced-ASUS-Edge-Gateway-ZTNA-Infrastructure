@@ -6,11 +6,11 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** recovery baseline completed; next execution phase is observability / external monitoring
+**Current phase:** external observability baseline completed; next execution phase is centralized logging / alerting improvements
 
 ## Executive status
 
-This status document was reviewed on 2026-09-27. The post-firmware validation set is now complete: current-firmware classic DNS, Diversion Large normal-use acceptance, clean startup/persistence, Android exit-node behavior, and the canonical architecture diagrams all have their required evidence. The same day, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The next planned phase is observability, with heavy collection/storage/visualization kept off-router where practical.
+This status document was reviewed on 2026-09-27. The post-firmware validation set is now complete: current-firmware classic DNS, Diversion Large normal-use acceptance, clean startup/persistence, Android exit-node behavior, and the canonical architecture diagrams all have their required evidence. The same day, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was then implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
@@ -81,6 +81,25 @@ and the recovery contract is documented in
 The next execution phase is observability. The preferred design keeps expensive
 time-series storage and dashboards outside the 512 MiB router and begins with a
 read-only monitoring preflight before any new router-side installation.
+
+
+## 2026-09-27 external observability baseline
+
+The planned external monitoring phase is implemented on the Fedora reference
+host while keeping time-series/database/dashboard workloads off the router.
+
+Validated components include the read-only SSH exporter, the TUF-AX5400
+Broadcom chanspec compatibility patch, VictoriaMetrics with 90-day retention,
+Blackbox HTTPS/ICMP/router-DNS probes, scheduled Traffic Analyzer history
+import, Grafana provisioning and automatic recovery after a real Fedora reboot.
+
+All monitoring HTTP listeners bind to `127.0.0.1`. SNMP was not required.
+
+See [the case study](docs/asus-tuf-ax5400-observability-case-study.md),
+[sanitized validation](evidence/2026-09-27/observability-stack-validation.md) and
+[reproducible monitoring configuration](monitoring/README.md).
+
+The next execution focus is centralized logging / alerting improvement.
 
 ## 2026-09-26 HE160 interoperability investigation
 

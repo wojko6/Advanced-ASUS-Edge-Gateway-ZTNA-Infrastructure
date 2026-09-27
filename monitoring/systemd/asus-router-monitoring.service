@@ -1,0 +1,13 @@
+[Unit]
+Description=ASUS TUF-AX5400 monitoring exporter
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/asus-router-monitoring.env
+ExecStart=%h/.local/bin/asus-wifi-exporter
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+[Install]
+WantedBy=default.target
