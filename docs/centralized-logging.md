@@ -2,7 +2,7 @@
 
 This design forwards the Asuswrt local log to a Linux collector over Tailscale and mutually authenticated TLS (mTLS). The router authenticates the collector certificate, the collector authenticates the router certificate, and a reliable disk buffer preserves messages while the collector is unavailable.
 
-> **Reference-router status:** the unchanged-state observation was closed on **2026-09-22**. The rollout, restart, outage and reboot procedures below are maintenance/validation procedures and should be executed only with backup, rollback and post-change verification. A repository configuration example or CI result is not evidence of live end-to-end logging on the reference router.
+> **Reference-router status:** live end-to-end mTLS logging was validated on **2026-09-27**. The router and Fedora collector were tested with authenticated TLS, source-restricted Tailscale firewalling, an end-to-end unique message, and a short collector-outage recovery test. Reboot persistence of this specific logging path remains a separate validation item.
 
 ## Data path
 
@@ -60,9 +60,53 @@ Use this sequence in a planned maintenance window, not during an active unchange
 
 Do not weaken peer verification as a normal rollout step. If certificate troubleshooting requires isolating a trust-chain problem, do it offline or in a disposable/non-reference environment rather than exposing the production collector with `optional-untrusted`. The checked-in examples intentionally use `required-trusted` on both peers.
 
-## Validation
+## Live reference validation — 2026-09-27
 
-Configuration syntax checks are read-only, but a router-side restart is a maintenance action. On the current post-observation reference state, validate syntax first and perform sender restarts or trust-policy changes only in a planned maintenance window with rollback.
+The reference deployment was live-validated with:
+
+- router syslog-ng 4.10.2;
+- Fedora syslog-ng 4.11.0;
+- listener bound only to the Fedora Tailscale IPv4 address on TCP/6514;
+- a dedicated firewalld zone for `tailscale0` with default `DROP`;
+- a source-specific rich rule allowing TCP/6514 only from the router Tailscale /32;
+- no TCP/6514 exposure in the normal Fedora workstation zone;
+- `peer-verify(required-trusted)` on both peers;
+- an encrypted private CA key retained off-router;
+- collector certificate restricted to `serverAuth` with the collector Tailscale IP in SAN;
+- router certificate restricted to `clientAuth` with the router Tailscale IP in SAN.
+
+The existing router PKI could not be extended because the original CA private
+key was not available on the Fedora host or router. A new dedicated logging CA
+was therefore created and deployed through a side-by-side staged rotation. The
+new router certificate/key and CA were copied under new filenames, the
+candidate syslog-ng configuration was syntax-checked before activation, and
+the active configuration was backed up before cutover.
+
+mTLS negative and positive tests behaved as expected:
+
+```text
+without client certificate: TLS alert certificate required
+with issued router certificate: Verification: OK
+```
+
+A unique router message was then observed in the Fedora collector file,
+establishing the tested end-to-end path:
+
+```text
+Asuswrt syslog
+ -> /tmp/syslog.log
+ -> router syslog-ng
+ -> Tailscale
+ -> mTLS TCP/6514
+ -> Fedora syslog-ng
+ -> /var/log/asus-edge/router/<date>.log
+```
+
+See [sanitized live evidence](../evidence/2026-09-27/centralized-logging-mtls-live-validation.md).
+
+## Validation procedure
+
+Configuration syntax checks are read-only, but a router-side restart is a maintenance action. Validate syntax first and perform sender restarts or trust-policy changes only in a planned maintenance window with rollback.
 
 Validate configuration before every planned restart:
 
@@ -110,13 +154,18 @@ grep -R "MTLS_END_TO_END_OK" /var/log/asus-edge
 
 These are controlled fault-injection tests. Run them only in a planned validation window, or on a disposable/non-reference environment.
 
-To validate the disk buffer:
+The 2026-09-27 live test validated short collector-outage buffering/retry:
 
-1. Stop syslog-ng on the collector.
-2. Generate several unique messages on the router.
-3. Wait long enough for the sender to observe the failure.
-4. Start the collector.
-5. Verify that every buffered message arrives.
+1. Fedora syslog-ng was stopped.
+2. Three unique messages were generated on the router.
+3. The sender was left without its collector for 15 seconds.
+4. Fedora syslog-ng was started again.
+5. All three messages arrived: `3/3`.
+
+This supports short-outage store-and-forward behavior for the tested running
+router process. It does **not** by itself prove disk-queue durability across a
+router reboot or power loss. The disk-buffer directory is preallocated, so
+unchanged `du` size during this test is not treated as queue-depth evidence.
 
 A reboot test is also a planned maintenance test. When a reboot is intentionally scheduled, verify all of the following:
 

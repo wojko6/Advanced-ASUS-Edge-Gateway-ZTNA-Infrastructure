@@ -6,11 +6,13 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** external observability and initial Grafana alerting completed; next execution phase is centralized logging
+**Current phase:** observability, initial Grafana alerting and centralized mTLS logging completed; next execution phase is encrypted-DNS bypass assessment / hardening research
 
 ## Executive status
 
 This status document was reviewed on 2026-09-27. The post-firmware validation set is now complete: current-firmware classic DNS, Diversion Large normal-use acceptance, clean startup/persistence, Android exit-node behavior, and the canonical architecture diagrams all have their required evidence. The same day, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was then implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
+
+The centralized logging path is now also live-validated: router syslog-ng forwards the Asuswrt log over Tailscale and mutually authenticated TLS to the Fedora collector, with source-restricted firewall policy and successful short-outage recovery (3/3 test messages delivered after collector restoration).
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
