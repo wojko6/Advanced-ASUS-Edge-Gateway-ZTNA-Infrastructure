@@ -33,11 +33,14 @@ printf '%s\n' "$output" | grep -F "Clean-room restore target: $TARGET" >/dev/nul
 printf '%s\n' "$output" | grep -F 'Restore completed.' >/dev/null
 
 cmp -s "$PAYLOAD/jffs/configs/asus-edge.conf" "$TARGET/jffs/configs/asus-edge.conf"
-cmp -s "$PAYLOAD/jffs/scripts/post-mount" "$TARGET/jffs/scripts/post-mount"
+[ ! -e "$TARGET/jffs/scripts/post-mount" ] || {
+    echo "FAIL: review-only post-mount was applied automatically" >&2
+    exit 1
+}
+printf '%s\n' "$output" | grep -F 'post-mount will not be applied automatically' >/dev/null
 cmp -s "$PAYLOAD/opt/etc/test.conf" "$TARGET/opt/etc/test.conf"
 
 [ "$(stat -c %a "$TARGET/jffs/configs/asus-edge.conf")" = "600" ]
-[ "$(stat -c %a "$TARGET/jffs/scripts/post-mount")" = "755" ]
 
 if EDGE_RESTORE_ROOT=/ sh "$REPO_DIR/scripts/restore.sh" "$ARCHIVE" --apply >/dev/null 2>&1; then
     echo "FAIL: root alternate restore target unexpectedly accepted" >&2
