@@ -19,12 +19,17 @@ flowchart TD
     MS["Merlin services-start"] --> LK["Acquire services-start lock"]
     LK --> OP["Wait for /opt readiness<br/>bounded timeout"]
     OP --> AS["If AMTM ownership detected:<br/>wait for Entware startup to settle"]
-    AS --> TS["Preserve stable tailscaled<br/>or recover with bounded retries"]
-    TS --> SW["Before project Tailscale recovery:<br/>require active swap when policy/platform requires it"]
-    SW --> UP["tailscale up<br/>netfilter-mode=off<br/>apply advertised routes / exit-node policy"]
-    UP --> UB["Preserve stable Unbound<br/>or validate config and recover directly"]
-    UB -->|"only after direct Unbound recovery"| RD["restart dnsmasq"]
-    UB --> SL["Preserve/start optional syslog-ng"]
+    AS --> TC{"tailscaled already stable?"}
+    TC -->|"yes"| TP["Preserve current tailscaled"]
+    TC -->|"no"| SW["Require active swap first<br/>when policy/platform requires it"]
+    SW --> TR["Recover tailscaled<br/>with bounded retries"]
+    TP --> UP["tailscale up<br/>netfilter-mode=off<br/>apply advertised routes / exit-node policy"]
+    TR --> UP
+    UP --> UB{"Unbound already stable?"}
+    UB -->|"yes"| UK["Preserve current Unbound"]
+    UB -->|"no"| UR["Validate config and recover Unbound directly"]
+    UR --> RD["restart dnsmasq<br/>after successful recovery"]
+    UK --> SL["Preserve/start optional syslog-ng"]
     RD --> SL
     SL --> FW["Run /jffs/scripts/firewall-start"]
     FW --> OK["services startup completed"]
@@ -34,7 +39,7 @@ flowchart TD
     WH --> WD["Wait for dnsmasq + Unbound<br/>127.0.0.1:53535"]
     WD --> SR["Enforce /tmp/resolv.conf<br/>nameserver 127.0.0.1"]
     SR --> RT["Restart S06tailscaled"]
-    RT --> TR["Wait for Tailscale status ready"]
+    RT --> RR["Wait for Tailscale status ready"]
 ```
 
 ## Validated scope and limitations
@@ -43,7 +48,8 @@ flowchart TD
 - The reference router was corrected so the mounted volume's swap is activated **before** sourcing AMTM mount-entware.mod. Three fresh clean cycles then passed with no recurring dnsmasq ENOMEM event.
 - This pre-Entware post-mount correction is **validated live reference configuration**, but it is not presently installed or owned by the repository's services-start script. If AMTM rewrites post-mount, this ownership boundary must be rechecked.
 - services-start waits for /opt, detects AMTM ownership, lets the external Entware startup settle, and preserves already-stable services where possible.
-- The repository's own swap guard is specifically before Tailscale recovery on platforms/policies that require swap; it does not replace the live reference pre-Entware post-mount ordering correction.
+- If tailscaled is not already stable, the repository's recovery path checks required swap **before** launching the Go daemon. Stable tailscaled processes are preserved without taking that recovery path.
+- EDGE_RUN_RC_UNSLUNG=1 is an explicit alternative for deployments where no external hook owns rc.unslung; the reference configuration keeps it disabled because AMTM owns normal Entware startup.
 - Unbound is preserved if stable. Direct recovery validates the configuration and restarts dnsmasq only after a successful recovery.
 - syslog-ng is optional in services-start.
 - firewall-start is required. Required service/firewall failures cause services-start to exit non-zero.
