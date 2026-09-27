@@ -210,6 +210,20 @@ After the completed unchanged-state observation:
 
 The 2026-09-27 acceptance evidence records completion of these criteria. Future list/profile changes require a new bounded validation rather than inheriting this result automatically. See [issue-65 acceptance evidence](../evidence/2026-09-27/issue-65-diversion-large-normal-use-acceptance.md).
 
+## Planned near-term case study — Diversion vs Pi-hole on-router
+
+**Status: planned / near-term — not deployed.**
+
+Issue #80 has been promoted from a generic comparison idea to a controlled
+case study of Pi-hole running directly on the TUF-AX5400 through Entware.
+
+The case study will compare the current Diversion + dnsmasq + Unbound baseline
+against an on-router Pi-hole + Unbound candidate, with particular emphasis on
+512 MiB RAM pressure, swap activity, DNS latency/reliability, Gravity/update
+peaks, Tailscale/firewall compatibility, reboot recovery and rollback.
+
+See: [Diversion vs Pi-hole on-router case study plan](pi-hole-on-router-case-study-plan.md).
+
 ## Post-observation idea — Pi-hole + Unbound DNS filtering migration
 
 **Status: idea / design candidate only — not deployed.**
