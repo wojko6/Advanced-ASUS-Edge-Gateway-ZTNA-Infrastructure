@@ -31,8 +31,13 @@ stale telemetry reached firing state in a controlled Fedora-only fault test,
 recovered after service restoration, and the WAN no-data policy was corrected
 so missing collector data does not masquerade as WAN-down evidence.
 
-**Next execution focus:** centralized logging, followed by encrypted-DNS bypass
-assessment and remaining hardening research in issue #82.
+The centralized syslog-ng path was subsequently live-validated over Tailscale
+with mutual TLS, source-restricted firewalld policy, an end-to-end unique
+message, and a short collector-outage recovery test that delivered 3/3 queued
+messages after collector restoration.
+
+**Next execution focus:** encrypted-DNS bypass assessment and remaining
+hardening research in issue #82.
 
 ## Completed and validated — SSD migration
 
