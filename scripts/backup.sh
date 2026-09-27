@@ -57,7 +57,8 @@ trap 'rm -rf "$WORK_DIR"' EXIT HUP INT TERM
 mkdir -p "$WORK_DIR/jffs/scripts" "$WORK_DIR/jffs/configs" \
     "$WORK_DIR/jffs/addons/asus-edge" "$WORK_DIR/jffs/addons/unbound" \
     "$WORK_DIR/opt/etc/unbound" "$WORK_DIR/opt/etc/init.d" \
-    "$WORK_DIR/opt/var/lib/unbound"
+    "$WORK_DIR/opt/var/lib/unbound" \
+    "$WORK_DIR/recovery-reference/jffs/scripts"
 
 copy_if_present() {
     src="$1"
@@ -70,6 +71,7 @@ copy_if_present() {
 copy_if_present /jffs/configs/asus-edge.conf "$WORK_DIR/jffs/configs/"
 copy_if_present /jffs/configs/dnsmasq.conf.add "$WORK_DIR/jffs/configs/"
 copy_if_present /jffs/scripts/firewall-start "$WORK_DIR/jffs/scripts/"
+copy_if_present /jffs/scripts/post-mount "$WORK_DIR/recovery-reference/jffs/scripts/"
 copy_if_present /jffs/scripts/services-start "$WORK_DIR/jffs/scripts/"
 copy_if_present /jffs/scripts/wan-event "$WORK_DIR/jffs/scripts/"
 copy_if_present /jffs/scripts/dnsmasq.postconf "$WORK_DIR/jffs/scripts/"
@@ -83,6 +85,9 @@ copy_if_present /opt/etc/syslog-ng.conf "$WORK_DIR/opt/etc/"
 
 cat >"$WORK_DIR/README-RESTORE.txt" <<'EOF'
 This backup intentionally excludes Tailscale state and authentication material.
+NVRAM is a separate private ASUS/Merlin settings export and is not stored here.
+The archived post-mount hook is stored under recovery-reference/ for manual review only.
+It is not copied automatically by scripts/restore.sh because the live hook may be addon-managed.
 Use scripts/restore.sh from the repository. Review the dry-run before --apply.
 EOF
 

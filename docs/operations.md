@@ -34,6 +34,16 @@ Move backups off the router-attached SSD and keep an independent copy on another
 
 Do not treat the router-attached SSD as the only backup merely because it is now the persistent Entware/data device. A failure, filesystem corruption, operator error, or compromise affecting the router can affect locally attached storage at the same time.
 
+The project backup is deliberately **not** a complete router image. NVRAM, addon ownership, Entware/package reconstruction, storage layout and intentionally excluded authentication state are tracked in the [router disaster-recovery baseline](router-disaster-recovery.md). Keep the private native ASUS/Merlin settings export and at least one verified project archive off-router before a material experiment.
+
+For a sanitized, read-only reconstruction inventory during a planned DR review:
+
+```sh
+./scripts/collect-dr-manifest.sh /tmp/asus-edge-dr-manifest
+```
+
+Review the generated files before copying any of them into public evidence.
+
 ## Restore
 
 Restore is dry-run by default:
@@ -42,6 +52,18 @@ Restore is dry-run by default:
 ./scripts/restore.sh BACKUP.tar.gz --dry-run
 ./scripts/restore.sh BACKUP.tar.gz --apply
 ```
+
+For a non-destructive clean-room acceptance test on a workstation, use an existing disposable directory as an alternate root:
+
+```sh
+mkdir -p /tmp/asus-edge-dr-cleanroom
+EDGE_RESTORE_ROOT=/tmp/asus-edge-dr-cleanroom \
+  ./scripts/restore.sh BACKUP.tar.gz --apply
+```
+
+Do not set `EDGE_RESTORE_ROOT` during an actual router restore. The default live behavior remains `/jffs` and `/opt`.
+
+The current `post-mount` hook is backed up only as a review reference. It is not automatically restored because AMTM can own/regenerate part of that file. `restore.sh` also refuses to auto-apply `jffs/scripts/post-mount` from older archives; merge the validated swap-order logic manually after rebuilding the AMTM baseline.
 
 The restore rejects links, special files, unsafe paths, duplicate archive
 entries and multiple top-level roots. It requires every payload file to appear
@@ -102,6 +124,20 @@ With `--apply`, it creates an atomically unique private rollback directory under
 This helper is deliberately a **finalization helper**, not the complete restore engine. Partition creation, filesystem creation, Btrfs receive/snapshot work, restoring root/home/boot/EFI payloads, adapting non-`/boot` filesystem identities, regenerating kernel/initramfs/GRUB state where required, and creating/verifying the firmware boot entry remain explicit recovery steps until they receive equivalent automation and regression coverage.
 
 This procedure was validated in the 2026-09-18 clean-room VMware restore. The validation found that the restored target could have a different `/boot` filesystem identity and that the restored `/boot` tree initially carried `unlabeled_t` SELinux labels. The helper turns those observed recovery steps into an explicit, repeatable procedure. The detailed sanitized validation record is [FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md](FEDORA-DR-RESTORE-VALIDATION-2026-09-18.md).
+
+## Router post-restore acceptance
+
+After any actual router restore, do not treat file copy success as service recovery. Validate, in order:
+
+- intended storage mounts and `/opt`;
+- required swap in `/proc/swaps`;
+- Tailscale daemon/runtime version and intentional `netfilter-mode=off`;
+- Unbound runtime ownership, configuration, loopback:53535 listener and direct DNSSEC resolution;
+- dnsmasq-to-Unbound forwarding;
+- project firewall chain ownership/default-deny behavior;
+- final `/jffs/addons/asus-edge/bin/healthcheck.sh`.
+
+The detailed recovery contract, including the reference Unbound runtime-directory ownership reconstruction, is maintained in [router-disaster-recovery.md](router-disaster-recovery.md).
 
 ## Emergency rollback
 
