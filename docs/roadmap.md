@@ -41,6 +41,19 @@ messages after collector restoration.
 paths), followed by remaining hardening research in issue #82. No enforcement
 change is implied until the bypass paths are measured and documented.
 
+## Planned — Network DNS Visibility / Client Activity Analytics
+
+A new planned module is tracked in [issue #108](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/108) and documented in [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
+
+The target is domain-level DNS visibility by time and client, reusing the
+validated syslog-ng + Tailscale + mTLS transport and keeping Loki/Alloy/Grafana
+off-router. The module explicitly excludes HTTPS MITM, full URL capture and
+publication of real household browsing data.
+
+Implementation starts with a read-only preflight and is intentionally coupled
+to the measurement-first DoH/DoQ bypass assessment. It is **planned**, not yet
+live-validated.
+
 ## Completed and validated — SSD migration
 
 The persistent router storage migration was completed and reboot-validated on 2026-09-11.
