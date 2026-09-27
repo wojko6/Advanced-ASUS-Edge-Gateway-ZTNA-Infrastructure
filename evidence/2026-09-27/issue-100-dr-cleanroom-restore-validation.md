@@ -74,6 +74,24 @@ This confirms:
 
 UID/GID ownership is not claimed by this workstation test because the clean-room restore ran under the Fedora user context rather than router runtime identities.
 
+## Router ownership reconstruction validation
+
+A separate read-only/safe runtime test was performed on the reference ASUS router using only a temporary directory under `/tmp`.
+
+The test recreated the documented Unbound runtime-directory ownership contract and verified it with BusyBox-compatible tooling.
+
+Observed result:
+
+```text
+UID=65534
+GID=0
+UNBOUND_RUNTIME_OWNERSHIP_RECONSTRUCTION_OK
+```
+
+The temporary test directory was removed immediately after validation. The live `/opt/var/lib/unbound` tree was not modified.
+
+This proves that the documented recovery ownership step (`uid=65534`, `gid=0`, mode `0755`) is executable on the reference router platform.
+
 ## Claim boundary
 
 This validates archive structure, content integrity, permission-mode preservation and the actual restore/copy path into a disposable filesystem target.
