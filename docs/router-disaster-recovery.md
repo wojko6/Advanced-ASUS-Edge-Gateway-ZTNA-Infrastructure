@@ -159,12 +159,12 @@ The alternate root must already exist, be writable, be absolute, must not be `/`
 Before #100 can close:
 
 - [ ] backup includes the validated post-mount integration hook;
-- [ ] package/runtime rebuild manifest is captured;
-- [ ] NVRAM export procedure is documented and a private export is stored off-router;
+- [x] package/runtime rebuild manifest is captured;
+- [x] NVRAM export procedure is documented and a private export is stored off-router;
 - [ ] Unbound runtime ownership recovery is proven or explicitly reconstructed;
-- [ ] backup archive and sidecar checksum are copied off-router and verified;
-- [ ] `restore.sh --dry-run` passes on the produced archive;
-- [ ] a safe restore test is completed without jeopardizing the known-good router;
+- [x] backup archive and sidecar checksum are copied off-router and verified;
+- [x] `restore.sh --dry-run` passes on the produced archive;
+- [x] a safe restore test is completed without jeopardizing the known-good router;
 - [ ] post-restore validation covers storage, swap, Tailscale, DNS/Unbound, firewall and project healthcheck;
 - [ ] published evidence is sanitized.
 
