@@ -126,6 +126,8 @@ chmod +x "$MOCK_BIN/iptables"
 
 PATH="$MOCK_BIN:/usr/bin:/bin"
 export PATH
+EDGE_TS_IF="tailscale0"
+export EDGE_TS_IF
 
 # shellcheck disable=SC1090
 . "$FUNCS"
