@@ -147,6 +147,28 @@ flush_chain() { table="$1"; chain="$2"; "$IPTABLES" -t "$table" -N "$chain" 2>/d
 single_jump() { table="$1"; parent="$2"; interface="$3"; chain="$4"; while "$IPTABLES" -t "$table" -D "$parent" -i "$interface" -j "$chain" 2>/dev/null; do :; done; "$IPTABLES" -t "$table" -I "$parent" 1 -i "$interface" -j "$chain" || die "cannot attach $chain"; }
 second_jump() { table="$1"; parent="$2"; interface="$3"; chain="$4"; while "$IPTABLES" -t "$table" -D "$parent" -i "$interface" -j "$chain" 2>/dev/null; do :; done; "$IPTABLES" -t "$table" -I "$parent" 2 -i "$interface" -j "$chain" || die "cannot attach $chain"; }
 remove_all_rules() { table="$1"; chain="$2"; shift 2; while "$IPTABLES" -t "$table" -D "$chain" "$@" 2>/dev/null; do :; done; }
+remove_temp_ingress_drop_guards() {
+    guard_tool="$1"; guard_chain="$2"; guard_interface="$3"
+
+    # The current apply inserted one fail-closed guard, so one delete must
+    # succeed. Count and remove any older exact guards left by interrupted or
+    # failed applies without opening a fail-open window during the rebuild.
+    "$guard_tool" -t filter -D "$guard_chain" -i "$guard_interface" -j DROP 2>/dev/null ||
+        die "cannot remove temporary $guard_chain guard"
+
+    remaining_guards="$(
+        "$guard_tool" -t filter -S "$guard_chain" 2>/dev/null |
+            awk -v chain="$guard_chain" -v iface="$guard_interface" '
+                $0 == "-A " chain " -i " iface " -j DROP { count++ }
+                END { print count + 0 }'
+    )"
+
+    while [ "$remaining_guards" -gt 0 ]; do
+        "$guard_tool" -t filter -D "$guard_chain" -i "$guard_interface" -j DROP 2>/dev/null ||
+            die "cannot remove stale temporary $guard_chain guard"
+        remaining_guards=$((remaining_guards - 1))
+    done
+}
 remove_legacy_tailscale_rules() {
     remove_all_rules filter INPUT -i tailscale+ -j ACCEPT
     remove_all_rules filter FORWARD -i tailscale+ -j ACCEPT
@@ -242,12 +264,12 @@ if executable_exists "$IP6TABLES" >/dev/null 2>&1; then
     while "$IP6TABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j EDGE_TS6_FORWARD 2>/dev/null; do :; done
     "$IP6TABLES" -t filter -I INPUT 1 -i "$EDGE_TS_IF" -j EDGE_TS6_INPUT || die "cannot attach IPv6 INPUT guard"
     "$IP6TABLES" -t filter -I FORWARD 1 -i "$EDGE_TS_IF" -j EDGE_TS6_FORWARD || die "cannot attach IPv6 FORWARD guard"
-    "$IP6TABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary IPv6 INPUT guard"
-    "$IP6TABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary IPv6 FORWARD guard"
+    remove_temp_ingress_drop_guards "$IP6TABLES" INPUT "$EDGE_TS_IF"
+    remove_temp_ingress_drop_guards "$IP6TABLES" FORWARD "$EDGE_TS_IF"
 else
     log "WARNING: ip6tables unavailable; verify IPv6 is disabled"
 fi
-"$IPTABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary INPUT guard"
-"$IPTABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j DROP || die "cannot remove temporary FORWARD guard"
+remove_temp_ingress_drop_guards "$IPTABLES" INPUT "$EDGE_TS_IF"
+remove_temp_ingress_drop_guards "$IPTABLES" FORWARD "$EDGE_TS_IF"
 log "firewall policy applied: interface=$EDGE_TS_IF"
 exit 0

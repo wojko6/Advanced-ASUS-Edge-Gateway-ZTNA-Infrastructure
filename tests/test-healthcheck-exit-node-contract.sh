@@ -86,6 +86,26 @@ RULES
 -A FORWARD -j DROP
 RULES
                 ;;
+            stale-ts-guard)
+                cat <<'RULES'
+-P FORWARD ACCEPT
+-A FORWARD -i tailscale0 -j EDGE_TS_FORWARD
+-A FORWARD -i tailscale0 -j DROP
+-A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD ! -i br0 -o ppp0 -j DROP
+-A FORWARD -j DROP
+RULES
+                ;;
+            wan-ingress-drop-before-return)
+                cat <<'RULES'
+-P FORWARD ACCEPT
+-A FORWARD -i tailscale0 -j EDGE_TS_FORWARD
+-A FORWARD -i ppp0 -j DROP
+-A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD ! -i br0 -o ppp0 -j DROP
+-A FORWARD -j DROP
+RULES
+                ;;
             *)
                 cat <<'RULES'
 -P FORWARD ACCEPT
@@ -106,6 +126,8 @@ chmod +x "$MOCK_BIN/iptables"
 
 PATH="$MOCK_BIN:/usr/bin:/bin"
 export PATH
+EDGE_TS_IF="tailscale0"
+export EDGE_TS_IF
 
 # shellcheck disable=SC1090
 . "$FUNCS"
@@ -148,4 +170,15 @@ if platform_return_path_exists ppp0; then
     exit 1
 fi
 
-echo "PASS: healthcheck exit-node contract parsers accept the validated rule shape and reject missing/misordered dependencies"
+FIXTURE=stale-ts-guard
+export FIXTURE
+platform_return_path_exists ppp0
+
+FIXTURE=wan-ingress-drop-before-return
+export FIXTURE
+if platform_return_path_exists ppp0; then
+    echo "FAIL: WAN ingress drop before established/related return path was accepted" >&2
+    exit 1
+fi
+
+echo "PASS: healthcheck exit-node contract parsers accept valid return paths, ignore stale Tailscale ingress guards, and reject real blocking drops"

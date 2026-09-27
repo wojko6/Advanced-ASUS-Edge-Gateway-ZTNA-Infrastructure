@@ -263,10 +263,11 @@ platform_return_path_exists() {
     exit_wan_if="$1"
 
     iptables -t filter -S FORWARD 2>/dev/null |
-        awk -v wan="$exit_wan_if" '
+        awk -v wan="$exit_wan_if" -v ts="$EDGE_TS_IF" '
             $1 == "-A" && $2 == "FORWARD" {
-                out=""; target=""; states=""
+                incoming=""; out=""; target=""; states=""
                 for (i=3; i<=NF; i++) {
+                    if ($i == "-i") incoming=$(i+1)
                     if ($i == "-o") out=$(i+1)
                     if ($i == "-j") target=$(i+1)
                     if ($i == "--state" || $i == "--ctstate") states=$(i+1)
@@ -279,8 +280,11 @@ platform_return_path_exists() {
                     accept_line=NR
                 }
 
+                # Ignore project fail-closed guards scoped to tailscale ingress:
+                # they cannot match return traffic arriving from the WAN.
                 if (!drop_line &&
                     target == "DROP" &&
+                    incoming != ts &&
                     (out == "" || out == wan)) {
                     drop_line=NR
                 }
