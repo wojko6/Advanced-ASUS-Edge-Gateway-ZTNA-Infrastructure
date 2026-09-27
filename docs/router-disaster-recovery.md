@@ -97,6 +97,26 @@ Therefore:
 - the DR manifest must record both package metadata and live binary version/provenance;
 - Tailscale authentication state remains excluded.
 
+## Sanitized rebuild manifest
+
+The repository includes a read-only collector for the reconstruction facts that are safe and useful to retain with DR evidence:
+
+```sh
+./scripts/collect-dr-manifest.sh /tmp/asus-edge-dr-manifest
+```
+
+The collector records:
+
+- model and firmware identifiers from an explicit NVRAM allowlist;
+- storage/mount and swap topology without filesystem UUIDs;
+- Entware package inventory;
+- Tailscale package metadata plus actual live binary version/hash;
+- metadata and hashes for selected recovery-critical integration files;
+- addon file-path inventory without reading addon configuration contents;
+- Unbound and syslog-ng versions.
+
+It deliberately does **not** call `nvram show`, `tailscale status`, or read configuration contents. Review the output manually before publishing it.
+
 ## NVRAM strategy
 
 Do not add raw `nvram show` output to the project archive or public evidence. NVRAM can contain credentials, WAN authentication data, SSH material and private network configuration.
