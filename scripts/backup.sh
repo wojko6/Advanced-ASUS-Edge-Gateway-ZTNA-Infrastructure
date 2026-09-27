@@ -70,6 +70,7 @@ copy_if_present() {
 copy_if_present /jffs/configs/asus-edge.conf "$WORK_DIR/jffs/configs/"
 copy_if_present /jffs/configs/dnsmasq.conf.add "$WORK_DIR/jffs/configs/"
 copy_if_present /jffs/scripts/firewall-start "$WORK_DIR/jffs/scripts/"
+copy_if_present /jffs/scripts/post-mount "$WORK_DIR/jffs/scripts/"
 copy_if_present /jffs/scripts/services-start "$WORK_DIR/jffs/scripts/"
 copy_if_present /jffs/scripts/wan-event "$WORK_DIR/jffs/scripts/"
 copy_if_present /jffs/scripts/dnsmasq.postconf "$WORK_DIR/jffs/scripts/"
@@ -83,6 +84,8 @@ copy_if_present /opt/etc/syslog-ng.conf "$WORK_DIR/opt/etc/"
 
 cat >"$WORK_DIR/README-RESTORE.txt" <<'EOF'
 This backup intentionally excludes Tailscale state and authentication material.
+NVRAM is a separate private ASUS/Merlin settings export and is not stored here.
+The archived post-mount hook may contain addon-managed integration; review it before restore.
 Use scripts/restore.sh from the repository. Review the dry-run before --apply.
 EOF
 
