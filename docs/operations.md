@@ -36,6 +36,14 @@ Do not treat the router-attached SSD as the only backup merely because it is now
 
 The project backup is deliberately **not** a complete router image. NVRAM, addon ownership, Entware/package reconstruction, storage layout and intentionally excluded authentication state are tracked in the [router disaster-recovery baseline](router-disaster-recovery.md). Keep the private native ASUS/Merlin settings export and at least one verified project archive off-router before a material experiment.
 
+For a sanitized, read-only reconstruction inventory during a planned DR review:
+
+```sh
+./scripts/collect-dr-manifest.sh /tmp/asus-edge-dr-manifest
+```
+
+Review the generated files before copying any of them into public evidence.
+
 ## Restore
 
 Restore is dry-run by default:
