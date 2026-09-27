@@ -1,0 +1,224 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: ASUS TUF-AX5400
+    folder: Network
+    interval: 1m
+
+    rules:
+      - uid: tuf_collector_down
+        title: Collector SSH niedostępny
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'asus_wifi_exporter_up{job="asus_wifi_clients"}'
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        dashboardUid: asus-wifi-clients
+        panelId: 4
+        noDataState: Alerting
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Collector SSH nie dostarcza danych
+          description: Brak poprawnej telemetrii z ASUS TUF-AX5400 przez co najmniej 2 minuty.
+        labels:
+          severity: critical
+          component: ssh-exporter
+        isPaused: false
+
+      - uid: tuf_wan_down
+        title: WAN niedostępny
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'asus_router_wan_link_up{job="asus_wifi_clients"}'
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        dashboardUid: asus-wifi-clients
+        panelId: 41
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Router zgłasza WAN jako niedostępny
+          description: Stan WAN pozostaje DOWN przez co najmniej 2 minuty.
+        labels:
+          severity: critical
+          component: wan
+        isPaused: false
+
+      - uid: tuf_probe_failed
+        title: Test Internetu lub DNS nieudany
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'probe_success{job=~"internet_https|internet_icmp|internet_dns"}'
+              instant: true
+              intervalMs: 1000
+              legendFormat: '{{job}}'
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        dashboardUid: asus-wifi-clients
+        panelId: 46
+        noDataState: Alerting
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Jeden z testów Internetu lub DNS nie przechodzi
+          description: HTTPS, ICMP albo zapytanie DNS pozostaje nieskuteczne przez co najmniej 2 minuty.
+        labels:
+          severity: warning
+          component: blackbox
+        isPaused: false
+
+      - uid: tuf_telemetry_stale
+        title: Telemetria routera jest nieaktualna
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'time() - asus_wifi_exporter_last_success_unixtime_seconds{job="asus_wifi_clients"}'
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [90]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        dashboardUid: asus-wifi-clients
+        panelId: 5
+        noDataState: Alerting
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Dane z routera są starsze niż 90 sekund
+          description: Collector nie zakończył poprawnej kolekcji przez co najmniej 90 sekund.
+        labels:
+          severity: warning
+          component: telemetry
+        isPaused: false

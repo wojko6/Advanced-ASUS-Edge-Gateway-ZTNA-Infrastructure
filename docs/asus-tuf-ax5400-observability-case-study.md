@@ -122,3 +122,29 @@ billing-grade traffic accounting, secure remote dashboard exposure or
 monitoring availability while the Fedora host is off.
 
 See [sanitized execution evidence](../evidence/2026-09-27/observability-stack-validation.md).
+
+
+## Grafana alerting validation
+
+The local Grafana deployment now provisions four baseline rules for collector
+availability, WAN state, independent Internet/DNS probes and telemetry
+freshness.
+
+A controlled Fedora-only fault test stopped the SSH collector without changing
+the router or WAN connection. The collector and stale-telemetry rules progressed
+to `Firing`; the HTTPS/ICMP/DNS blackbox rule remained healthy. Restarting the
+collector restored all rules to normal.
+
+The test also exposed a dependency-quality issue in the initial WAN rule:
+missing collector data could leave the WAN rule in a no-data state even though
+the physical WAN had not been tested as down. The provisioned WAN policy was
+therefore changed to `noDataState: OK`. Dedicated collector/freshness rules
+own missing-telemetry detection, while the WAN rule is reserved for an actual
+reported WAN-down value.
+
+After the change, Grafana 13.2.2 reported database health `ok`, and a journal
+check scoped to the newly started process contained no matching error/failure
+entries.
+
+This case validates rule evaluation and recovery only. External notification
+delivery is a separate future step.

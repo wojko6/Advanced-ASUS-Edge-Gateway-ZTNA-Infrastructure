@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** external observability baseline completed; next execution phase is centralized logging / alerting improvements
+**Current phase:** external observability and initial Grafana alerting completed; next execution phase is centralized logging
 
 ## Executive status
 
