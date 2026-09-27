@@ -107,3 +107,15 @@ rules.
 No external notification contact point is part of this baseline yet.
 
 See [the alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md).
+
+
+## Grafana interface language
+
+Grafana 13 provides a built-in Polish interface option. The application UI
+itself therefore does not require a custom translation patch.
+
+This is separate from dashboard content: panel titles, descriptions, legends
+and other strings stored in the project dashboard JSON are project-owned
+content and were localized explicitly. The reference deployment therefore uses
+the native Polish Grafana UI together with the project-localized Polish
+TUF-AX5400 dashboard.
