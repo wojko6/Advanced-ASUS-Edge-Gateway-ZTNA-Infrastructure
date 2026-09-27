@@ -57,6 +57,7 @@ for backup_path in \
     '/opt/etc/unbound/unbound.conf "$WORK_DIR/opt/etc/unbound/"' \
     '/opt/var/lib/unbound/unbound.conf "$WORK_DIR/opt/var/lib/unbound/"' \
     '/jffs/scripts/dnsmasq.postconf "$WORK_DIR/jffs/scripts/"' \
+    '/jffs/scripts/post-mount "$WORK_DIR/jffs/scripts/"' \
     '/jffs/scripts/wan-event "$WORK_DIR/jffs/scripts/"' \
     '/jffs/configs/dnsmasq.conf.add "$WORK_DIR/jffs/configs/"'
 do
