@@ -1,6 +1,6 @@
 # Network DNS Visibility / Client Activity Analytics
 
-**Status:** Phase 0 read-only preflight passed on 2026-09-28. A bounded Fedora collector reference implementation is now present in the repository; live service deployment, Loki/Alloy ingestion and dashboard validation are not yet claimed.
+**Status:** Phase 0 read-only preflight and Phase 1 Fedora collector live validation passed on 2026-09-28. Loki/Alloy ingestion, longer-term retention/storage validation and the Grafana DNS dashboard remain pending.
 
 Tracking issue: #108.
 
@@ -211,8 +211,19 @@ with systemd user units and a sanitized configuration example under
 `monitoring/`. Repository tests cover the RAM/disk cursor edge case,
 deduplication and prepared-batch crash recovery.
 
-The next step is live Fedora deployment and restart/outage validation; the
-repository does not yet claim that operational validation.
+Live Fedora deployment and short transport-outage recovery have now been
+validated. The collector recovered a real prepared batch after the first-run
+bug fixed by PR #120, then maintained a duplicate-free strictly ascending event
+stream through manual and timer-driven runs.
+
+During a controlled SSH-tunnel outage, the collector returned non-zero without
+advancing the accepted event file. After transport restoration it caught up
+from the Pi-hole disk and memory views. The final integrity checkpoint reported
+10,414 events, 10,414 unique IDs, zero duplicates and a local checkpoint equal
+to the maximum event ID.
+
+Sanitized evidence is published in
+[`evidence/2026-09-28/pi-hole-dns-collector-live-validation.md`](../evidence/2026-09-28/pi-hole-dns-collector-live-validation.md).
 
 Implement the smallest practical collector on Fedora.
 
