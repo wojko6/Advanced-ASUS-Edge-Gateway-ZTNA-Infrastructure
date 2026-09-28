@@ -299,24 +299,39 @@ than reclassified downstream. The reply-latency panel was validated against a
 private NDJSON calculation after correcting an initial P95 query that had
 accidentally selected the observed maximum.
 
-## Phase 4 — coverage-gap correlation
+## Phase 4 — coverage-gap correlation — PARTIALLY VALIDATED
 
-After the Pi-hole-visible baseline works, correlate it with the actual resolver
-architecture.
+The Tailscale classic-DNS boundary is now live-validated. With Tailscale active
+on a controlled Windows client, a synthetic DNS marker was captured on
+`tailscale0` but was absent from Pi-hole RAM/disk API history and from the
+Fedora collector dataset. With Tailscale disabled, the same controlled client
+was visible through the normal main-LAN Pi-hole path.
 
-Required questions:
+The sanitized two-client result was:
+
+```text
+FEDORA7_EVENTS=1
+WINDOWS7_EVENTS=4
+DISTINCT_CLIENTS=2
+CLIENTS_ARE_DISTINCT=True
+```
+
+This confirms both that at least two main-LAN clients are distinguishable and
+that the current `Tailscale -> firmware dnsmasq -> Unbound` path is outside
+the Pi-hole-visible dataset.
+
+Remaining Phase 4 questions:
 
 1. What happens when a LAN client deliberately sends classic DNS to another
    resolver and the firewall redirects it to firmware dnsmasq?
-2. What happens on the existing Tailscale classic-DNS redirect?
-3. Can those paths be represented safely as a supplemental dataset without
-   enabling broad duplicate query logging?
-4. Would moving those paths behind Pi-hole improve consistency enough to justify
-   a firewall/listener change and new live revalidation?
+2. Should dnsmasq-only paths be represented as a supplemental dataset without
+   duplicating Pi-hole-visible events?
+3. Would moving any interception path behind Pi-hole improve consistency enough
+   to justify a firewall/listener change and new live revalidation?
 
-This phase must remain separate from the initial analytics rollout. A dashboard
-must not be used as justification to change a validated DNS datapath merely to
-make the data easier to collect.
+This phase remains separate from resolver-policy changes. The dashboard must
+not be used as justification to change a validated DNS datapath merely to make
+the data easier to collect.
 
 ## Phase 5 — encrypted-DNS visibility assessment
 
@@ -350,31 +365,40 @@ Before calling the module complete:
 - document rollback/uninstall for the Fedora collector, Alloy and Loki changes;
 - document any private client-to-alias mapping outside public evidence.
 
-The first pilot should use deliberately short retention until storage growth and
-privacy expectations are measured.
+The current pilot uses seven-day Loki retention. Storage growth and actual
+expiry behavior must be measured before extending that window.
 
 ## Acceptance criteria
 
-The module can be marked completed only when:
+Current status against the completion criteria:
 
-1. DNS events from at least two controlled DHCP-managed main-LAN clients are
-   distinguishable in the Pi-hole-visible dataset.
-2. Timestamp, client, domain and query type are parsed reliably.
-3. Block/cache/forward status is represented only where the Pi-hole source
-   supports it reliably.
-4. Collection is read-only and does not require a new router-facing analytics
-   listener.
-5. Loki/Alloy storage and ingestion remain off-router.
-6. Grafana can show time-series and client/domain activity from the controlled
-   dataset.
-7. High-cardinality domain/client values are not persistent Loki labels.
-8. No HTTPS interception is used.
-9. The dashboard explicitly documents dnsmasq interception, Tailscale and
-   encrypted-DNS visibility gaps.
-10. Public evidence is sanitized and does not include the live Pi-hole database
-    or real household browsing history.
-11. Router resource impact, Fedora storage growth and retention are documented.
-12. Collector restart/outage recovery and rollback are tested.
+1. **PASS** — DNS events from at least two controlled DHCP-managed main-LAN
+   clients are distinguishable in the Pi-hole-visible dataset.
+2. **PASS** — timestamp, client, domain and query type are parsed reliably in
+   the tested Pi-hole v6 dataset.
+3. **PASS** — block/cache/forward status is represented only where the Pi-hole
+   source supports it; persistent `IN_PROGRESS` rows remain a separate class.
+4. **PASS** — collection is read-only and does not require a new router-facing
+   analytics listener.
+5. **PASS** — Loki/Alloy storage and ingestion remain off-router.
+6. **PASS** — Grafana shows time-series and client/domain activity from the
+   controlled dataset.
+7. **PASS** — high-cardinality domain/client values are not persistent Loki
+   labels.
+8. **PASS** — no HTTPS interception is used.
+9. **PASS within the current documented scope** — the dashboard and supporting
+   documentation state dnsmasq/Tailscale and encrypted-DNS visibility gaps; the
+   tested Tailscale classic-DNS exclusion is evidence-backed.
+10. **PASS** — public evidence is sanitized and excludes the live Pi-hole
+    database and real household browsing history.
+11. **PARTIAL** — bounded router read impact is documented and Loki uses
+    seven-day configured retention, but longer-term Fedora storage growth and
+    actual retention expiry still require observation.
+12. **PARTIAL** — collector restart, transport-outage recovery and full Fedora
+    reboot persistence passed; rollback/uninstall validation is still pending.
+
+The module remains open until the partial items and the remaining hard-coded
+LAN classic-DNS coverage correlation are closed.
 
 ## Portfolio value
 
