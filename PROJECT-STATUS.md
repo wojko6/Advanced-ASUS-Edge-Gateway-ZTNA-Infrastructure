@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Pi-hole DNS analytics Phase 0 and Fedora collector Phase 1 live validation passed; next focus is local Loki/Alloy ingestion, retention/storage validation and the Grafana DNS dashboard
+**Current phase:** Pi-hole DNS analytics Phase 0-3 live validation passed through the local Grafana dashboard; remaining work is retention/storage measurement, reboot/rollback validation and coverage-gap correlation
 
 ## Executive status
 
@@ -41,19 +41,23 @@ validated the required query schema, authenticated read-only access through a
 Fedora loopback SSH forward, bounded RAM/disk read cost and the RAM-versus-disk
 cursor edge case.
 
-The repository now contains a bounded Fedora collector reference
-implementation. It freezes each source on the first query ID actually returned,
-deduplicates the disk/memory union by query ID and commits its checkpoint only
-after journaled local persistence. Live collector service deployment,
-restart/outage validation, Loki/Alloy ingestion and Grafana DNS dashboards
-remain outstanding.
+The bounded Fedora collector is live-validated, including restart/outage
+recovery. The local Alloy/Loki path and the first Grafana DNS dashboard are also
+live-validated. A bounded equality check matched 11,116 events in the private
+spool to 11,116 Loki events, and a label audit confirmed that domain/client
+values are not persistent Loki labels. The dashboard now exposes blocked,
+cache, forwarded and unfinished status, latency, top activity and an explicit
+coverage disclaimer.
 
 The accepted dataset still represents only DHCP-managed main-LAN traffic that
 actually traverses Pi-hole. Current dnsmasq interception paths, the Tailscale
 classic-DNS redirect and encrypted-DNS bypasses remain explicitly outside that
 dataset until separately measured.
 
-See [the DNS activity analytics plan](docs/network-dns-visibility-client-activity-analytics.md) and [sanitized Phase 0 evidence](evidence/2026-09-28/pi-hole-api-phase0-preflight.md).
+See [the DNS activity analytics plan](docs/network-dns-visibility-client-activity-analytics.md),
+[sanitized Phase 0 evidence](evidence/2026-09-28/pi-hole-api-phase0-preflight.md),
+[collector validation](evidence/2026-09-28/pi-hole-dns-collector-live-validation.md)
+and [Phase 2/3 analytics validation](evidence/2026-09-28/pi-hole-dns-analytics-phase2-3-validation.md).
 
 See [the final case study](docs/pi-hole-on-router-case-study.md) and [sanitized cutover evidence](evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md).
 

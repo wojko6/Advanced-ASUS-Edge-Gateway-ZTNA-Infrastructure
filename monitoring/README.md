@@ -110,9 +110,10 @@ See [the alerting validation evidence](../evidence/2026-09-27/grafana-alerting-v
 
 ## Pi-hole DNS activity collector
 
-Issue #108 Phase 0 and the first Fedora collector live validation passed on
-2026-09-28. The collector, SSH tunnel and recurring systemd timer were validated
-on Fedora; Loki/Alloy ingestion remains unvalidated.
+Issue #108 Phase 0, the Fedora collector, local Alloy/Loki ingestion and the
+first Grafana DNS dashboard were live-validated on 2026-09-28. The complete
+analytics path remains Fedora-side; no Loki/Alloy listener is exposed to LAN or
+WAN.
 
 The implemented acquisition path is:
 
@@ -131,7 +132,13 @@ pihole-dns-collector.py
         +--> private queries.ndjson
                   |
                   v
-        planned Alloy -> Loki -> Grafana
+                Alloy
+                  |
+                  v
+          127.0.0.1:3100 Loki
+                  |
+                  v
+          existing local Grafana
 ```
 
 The collector accepts API credentials only through a private local credential
@@ -150,6 +157,11 @@ Reference files:
 - `systemd/pihole-api-tunnel.service`
 - `systemd/pihole-dns-collector.service`
 - `systemd/pihole-dns-collector.timer`
+- `systemd/pihole-dns-collector-alloy-spool.conf`
+- `alloy/config.alloy`
+- `loki/config.yml`
+- `grafana/provisioning/datasources/loki.yml`
+- `grafana/dashboards/pihole-dns-activity.json`
 
 The recurring timer remains separate from the one-shot service. Live validation
 confirmed manual collection, timer-driven collection, prepared-batch recovery,
@@ -160,7 +172,22 @@ allows at most 1,000 pages of 500 rows per source and fails closed rather than
 silently skipping a larger backlog.
 
 See the
-[sanitized live validation evidence](../evidence/2026-09-28/pi-hole-dns-collector-live-validation.md).
+[sanitized collector validation evidence](../evidence/2026-09-28/pi-hole-dns-collector-live-validation.md)
+and the
+[Phase 2/3 analytics validation](../evidence/2026-09-28/pi-hole-dns-analytics-phase2-3-validation.md).
+
+The validated Loki deployment uses TSDB v13 with filesystem storage under
+`/var/lib/loki`, seven-day configured retention and loopback-only HTTP/gRPC.
+Alloy tails the private DNS spool and forwards only to local Loki. A bounded
+equality check matched 11,116 local events to 11,116 Loki events for the tested
+window. Domain/client/upstream values remain parsed fields rather than
+persistent Loki labels.
+
+The provisioned Grafana dashboard is titled
+`Pi-hole — Aktywność DNS v2`. It includes blocked/cache/forwarded/unfinished
+status, cache-hit rate, reply latency, top domains/clients/upstreams and an
+explicit coverage disclaimer. Live screenshots containing real household DNS
+activity are intentionally not stored in the public repository.
 
 This pipeline remains separate from the VictoriaMetrics metrics path and the
 syslog-ng mTLS system-log path. Full domain names, client IPs and hostnames must
