@@ -108,31 +108,60 @@ No external notification contact point is part of this baseline yet.
 
 See [the alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md).
 
-## Planned Pi-hole DNS activity extension
+## Pi-hole DNS activity collector
 
-Issue #108 will extend this off-router pattern without changing the validated
-monitoring baseline above.
+Issue #108 Phase 0 passed on 2026-09-28. The repository now contains the first
+Fedora-side collector implementation, while live service deployment and
+Loki/Alloy ingestion remain unvalidated.
 
-The preferred future flow is:
+The implemented acquisition path is:
 
 ```text
-Pi-hole FTL query history on ASUS
+Pi-hole FTL authenticated API on ASUS
         |
-        | bounded read-only incremental extraction
+        | SSH local forward
         v
-Fedora collector
+127.0.0.1:18080 on Fedora
         |
         v
-Grafana Alloy -> Loki -> existing Grafana
+pihole-dns-collector.py
+        |
+        +--> private SQLite checkpoint/journal
+        |
+        +--> private queries.ndjson
+                  |
+                  v
+        planned Alloy -> Loki -> Grafana
 ```
 
-This is intentionally separate from the VictoriaMetrics metrics pipeline and
-from the syslog-ng mTLS system-log pipeline. Full domain names and client
-identifiers must not become persistent high-cardinality Loki labels.
+The collector accepts API credentials only through a private local credential
+file and refuses cleartext non-loopback HTTP.
 
-No Loki/Alloy DNS analytics deployment is claimed by this file yet. The initial
-scope is limited to Pi-hole-visible DHCP-managed main-LAN traffic; resolver
-coverage gaps remain documented in
+Phase 0 showed that the global API cursor can be ahead of the newest row
+already flushed to disk. The implementation therefore freezes the disk and
+memory sources on their own first returned query IDs, unions them on Fedora,
+deduplicates by query ID and advances its checkpoint only after a journaled
+local append.
+
+Reference files:
+
+- `pihole-dns-collector.py`
+- `config/pihole-dns-collector.env.example`
+- `systemd/pihole-api-tunnel.service`
+- `systemd/pihole-dns-collector.service`
+- `systemd/pihole-dns-collector.timer`
+
+The recurring timer is intentionally separate from the one-shot service so the
+first live run can be validated manually before scheduling. The default guard
+allows at most 1,000 pages of 500 rows per source and fails closed rather than
+silently skipping a larger backlog.
+
+This pipeline remains separate from the VictoriaMetrics metrics path and the
+syslog-ng mTLS system-log path. Full domain names, client IPs and hostnames must
+remain parsed event fields rather than persistent high-cardinality Loki labels.
+
+The initial scope remains limited to Pi-hole-visible DHCP-managed main-LAN
+traffic. Resolver coverage gaps are documented in
 [the analytics plan](../docs/network-dns-visibility-client-activity-analytics.md).
 
 ## Grafana interface language
