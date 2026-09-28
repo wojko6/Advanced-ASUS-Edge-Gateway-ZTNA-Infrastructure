@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect Pi-hole-visible DNS activity into private local NDJSON
+After=network-online.target pihole-api-tunnel.service
+Wants=network-online.target
+Requires=pihole-api-tunnel.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/pihole-dns-collector.env
+ExecStart=%h/.local/bin/pihole-dns-collector
+NoNewPrivileges=true
