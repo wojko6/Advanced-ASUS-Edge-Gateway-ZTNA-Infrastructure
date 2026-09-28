@@ -317,6 +317,8 @@ See [router disaster recovery](router-disaster-recovery.md) and the
 
 Remaining recovery-maturity work:
 
+- Extend clean-room router recovery to the post-2026-09-28 Pi-hole state: reinstall/rebuild Pi-hole/FTL, recreate the dedicated LAN alias/startup ordering, reconstruct reviewed filtering inputs/Gravity, and validate DHCP-only-Pi-hole, Pi-hole -> Unbound, DNSSEC-negative, blocking and reverse-DNS behavior.
+- Decide what minimal Pi-hole configuration belongs in the project backup versus a separately protected private recovery artifact; do not treat the live query-history database as a required gateway-recovery payload.
 - Automate copying completed project backups to an independent system without making the router-attached SSD the only recovery location.
 - Retain multiple dated generations and define explicit retention/rotation.
 - Add backup-result monitoring so failed creation, transfer or integrity verification becomes observable.
