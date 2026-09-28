@@ -1,6 +1,6 @@
 # Diversion vs Pi-hole on-router — case study plan
 
-**Status:** planned, near-term. No Pi-hole deployment is claimed yet.
+**Status:** active case study. Staged installation, single-client validation, reboot persistence, firewall integration and an initial corrected A/B latency benchmark were completed on 2026-09-28. Full-LAN adoption is not yet claimed.
 
 Tracking issue: #80.
 
@@ -45,9 +45,11 @@ firmware dnsmasq
   -> moved away from :53 if the validated design requires it
 ```
 
-A staged design using a dedicated virtual LAN address for Pi-hole may be used
-to avoid destructive early cutover. Exact listener ownership must be measured
-and documented before deployment.
+The staged pilot uses a dedicated LAN alias for Pi-hole so the firmware
+dnsmasq/Diversion path remains available for rollback. Exact listener ownership
+was measured during the 2026-09-28 pilot: Pi-hole and firmware dnsmasq remained
+on separate local addresses while both used port 53, with Unbound preserved on
+loopback:53535.
 
 ## What Pi-hole would replace
 
@@ -78,6 +80,43 @@ workstation is powered off and could add:
 
 The trade-off is additional memory, CPU, database and maintenance load on the
 512 MiB edge device.
+
+## 2026-09-28 pilot checkpoint
+
+Completed and live-validated:
+
+- staged Pi-hole installation on a dedicated LAN alias;
+- Pi-hole DHCP disabled;
+- existing Unbound retained as upstream;
+- Gravity populated from OISD Big;
+- single Fedora client moved to Pi-hole;
+- per-client query visibility confirmed;
+- DNSSEC failure behavior preserved through the Unbound upstream;
+- project LAN DNS enforcement updated with a configurable local-resolver
+  bypass that is validated for ordering;
+- managed firewall rebuild validated with 0 health-check failures/warnings;
+- controlled router reboot validated Pi-hole alias, FTL, Gravity, firewall and
+  resolver persistence;
+- corrected 200-sample-per-scenario Diversion vs Pi-hole latency comparison
+  completed after removing the NAT-interception confounder.
+
+Initial corrected benchmark:
+
+| Scenario | Diversion mean / median | Pi-hole mean / median |
+| --- | ---: | ---: |
+| blocked test name | 0.54 / 0.50 ms | 0.87 / 1.00 ms |
+| warmed clean name | 2.65 / 3.00 ms | 1.12 / 1.00 ms |
+
+All 800 measured queries returned a valid DNS response. These local
+single-client results do not establish general resolver performance.
+
+See [sanitized pilot evidence](../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md).
+
+Remaining before any adoption decision: multi-client/stress testing,
+Gravity/update peak-resource observation, storage/DB growth, WAN reconnect,
+final local-name/reverse-DNS behavior, IPv6/Tailscale validation for the final
+listener design, rollback rehearsal and broader normal-use/false-positive
+assessment.
 
 ## Test phases
 
