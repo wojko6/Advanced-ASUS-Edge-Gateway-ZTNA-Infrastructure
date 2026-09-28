@@ -26,7 +26,7 @@ The old [Architecture.png](images/Architecture.png) is retained only as a histor
 | Overlay | Tailscale | Encrypted connectivity, subnet advertisement and optional exit routing |
 | Local enforcement | project-owned iptables/ip6tables | Router-service policy, selected LAN access, default-deny forwarding, LAN DNS/DoT controls and fail-closed Tailscale IPv6 guards |
 | DNS | Pi-hole + dnsmasq + Unbound | Main-LAN DHCP filtering on the dedicated Pi-hole listener, firmware DHCP/local naming and classic-DNS interception, recursive resolution and DNSSEC validation |
-| Observability | syslog-ng | Local logging and optional remote forwarding |
+| Observability | syslog-ng + off-router Fedora monitoring stack | Authenticated system-log forwarding plus read-only metrics/probes, VictoriaMetrics and Grafana; planned DNS activity analytics remain a separate future-state extension |
 | Operations | Merlin hooks + project scripts | Startup/recovery coordination, health checks, backup/restore, evidence collection and controlled updates |
 
 ## Ownership boundaries
@@ -53,6 +53,20 @@ The current reference router uses split port-53 ownership. Pi-hole FTL owns a de
 
 The 2026-09-28 cutover does not by itself move the existing LAN/Tailscale interception redirects behind Pi-hole. Hard-coded external classic DNS that is intercepted by the current firewall still terminates at firmware dnsmasq; this remains an explicit follow-up if universal Pi-hole filtering of intercepted classic DNS is desired.
 
+### Planned DNS analytics boundary
+
+Issue #108 is a **future-state observability extension**, not part of the
+validated resolver datapath. Its preferred source is the query history already
+written by Pi-hole FTL for DHCP-managed main-LAN clients. The planned collector
+reads that source incrementally and read-only from Fedora, then keeps Alloy,
+Loki, retention and Grafana processing off-router.
+
+The resulting dataset must be described as **Pi-hole-visible DNS activity**.
+It does not automatically include the existing dnsmasq interception path,
+Tailscale classic-DNS redirects or encrypted-DNS bypasses. Those paths remain
+separate coverage measurements and must not be merged into the current
+architecture diagram without live validation.
+
 Current validated IPv4 controls are intentionally scoped:
 
 - LAN/br0 classic TCP/UDP 53: enforced through EDGE_LAN_DNS_PREROUTING.
@@ -78,7 +92,7 @@ Current architecture claims are anchored to dated evidence:
 - **2026-09-27:** AUDIT-03 revalidated the current-firmware Fedora classic-DNS datapath through tailscale0 → EDGE_TS_PREROUTING → dnsmasq → Unbound for both UDP and TCP 53.
 - **2026-09-27:** #66 recorded 3/3 clean startup cycles after the reference pre-Entware swap-order correction.
 - **2026-09-27:** #67 reconfirmed Android exit-node public-IP behavior after reboot with a clean router health check.
-- **2026-09-27:** #65 accepted Diversion Large as the current filtering baseline after multi-day use, refresh, DNS-path and resource checks.
+- **2026-09-27:** #65 accepted Diversion Large as the then-current filtering baseline after multi-day use, refresh, DNS-path and resource checks; that historical baseline was replaced on the main-LAN DHCP path the next day by #80.
 - **2026-09-28:** #80 migrated the main-LAN DHCP filtering path to Pi-hole, retained Unbound and firmware local naming, removed duplicate filtering/statistics services, corrected a pre-Entware swap regression discovered during reboot, and passed the final swap/Tailscale/Pi-hole/Unbound reboot validation.
 
 These dated results do not establish universal firmware compatibility or enforcement outside their stated protocol/interface scope. Time-sensitive project status remains governed by [PROJECT-STATUS.md](../PROJECT-STATUS.md) and the dated [evidence](../evidence/) tree.

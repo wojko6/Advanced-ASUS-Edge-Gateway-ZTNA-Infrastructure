@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Added
+- Added a Pi-hole-centric DNS activity analytics design for issue #108, including read-only Fedora collection, Alloy/Loki/Grafana processing, privacy boundaries, cardinality rules, coverage-gap testing and acceptance criteria.
+- Added a dedicated swap and memory reliability guide covering boot ordering, observed OOM/ENOMEM incidents, remediation and post-reboot validation.
 - Added a sanitized 2026-09-25 router live-checkpoint artifact and dated engineering worklog covering health, current-firmware DNS/DoT counter correlation, Exit Node diagnostic boundaries and GeForce NOW follow-up.
 - Added an Xbox Cloud Gaming browser/WebRTC case study with sanitized H.264 stream, RTP loss/frame, jitter, ICE candidate-pair, bitrate and decoder-path evidence from Microsoft Edge on Fedora.
 - Added a GeForce NOW Ethernet-versus-Wi-Fi 6 stability case study with sanitized latency, Wi-Fi link, application-overlay and packet-capture evidence for both transports.
@@ -21,6 +23,9 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Reconciled the disaster-recovery documentation with the post-Pi-hole reference state and made the new Pi-hole rebuild/alias/filtering recovery gap explicit instead of inheriting the 2026-09-27 clean-room result.
+- Reconciled active project documentation with the 2026-09-28 Pi-hole architecture: DNS activity analytics now use Pi-hole FTL query history as the preferred primary source, while syslog-ng remains the system-log transport and dnsmasq/Tailscale/encrypted-DNS paths are explicit coverage gaps.
+- Corrected the documentation source-of-truth rule so the four source-controlled Mermaid architecture documents are canonical and the old raster Architecture.png is historical only.
 - Refreshed documentation review/status metadata and clarified that remediation is optional for observational/performance case studies.
 - Expanded evidence-collection guidance for browser/WebRTC telemetry and surfaced the GeForce NOW and Xbox Cloud real-time validation work in the main portfolio highlights.
 - Corrected the GeForce NOW validation record after recovering the Wi-Fi capture: 3,675,119 complete packets across 678.772 s are now documented, with the tmpfs truncation and claim boundaries stated explicitly.

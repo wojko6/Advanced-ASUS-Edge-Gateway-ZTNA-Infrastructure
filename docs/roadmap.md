@@ -36,22 +36,35 @@ with mutual TLS, source-restricted firewalld policy, an end-to-end unique
 message, and a short collector-outage recovery test that delivered 3/3 queued
 messages after collector restoration.
 
-**Next execution focus:** measurement-first encrypted-DNS bypass assessment
-(DoH, DoQ/QUIC, application-specific encrypted resolvers and relevant IPv6
-paths), followed by remaining hardening research in issue #82. No enforcement
-change is implied until the bypass paths are measured and documented.
+**Next execution focus:** issue #108 — build a read-only Pi-hole DNS-activity
+analytics baseline on Fedora. The first milestone is source/schema/resource
+preflight against the already validated Pi-hole query history; Loki/Alloy and
+dashboard work follow only after that succeeds. Issue #68 remains coupled as
+the explicit encrypted-DNS coverage assessment, not as a prerequisite for the
+initial Pi-hole-visible main-LAN dataset. No DNS enforcement change is implied
+by the analytics work.
 
 ## Planned — Network DNS Visibility / Client Activity Analytics
 
 A new planned module is tracked in [issue #108](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/108) and documented in [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
 
-The target is domain-level DNS visibility by time and client, reusing the
-validated syslog-ng + Tailscale + mTLS transport and keeping Loki/Alloy/Grafana
-off-router. The module explicitly excludes HTTPS MITM, full URL capture and
-publication of real household browsing data.
+The target is domain-level DNS visibility by time and client for the
+Pi-hole-filtered main-LAN path. After the 2026-09-28 migration, Pi-hole FTL
+query history is the preferred primary source instead of enabling new broad
+dnsmasq query logging. A bounded read-only collector on Fedora should extract
+incremental query metadata and feed local Alloy -> Loki -> the existing Grafana
+instance. Indexing, retention and visualization remain off-router.
 
-Implementation starts with a read-only preflight and is intentionally coupled
-to the measurement-first DoH/DoQ bypass assessment. It is **planned**, not yet
+The existing syslog-ng + Tailscale + mTLS path remains authoritative for system
+logs and may later provide supplemental evidence for dnsmasq interception paths;
+it is no longer the default analytics transport assumption.
+
+Implementation starts with a Pi-hole database/schema/resource preflight. The
+first accepted dataset is intentionally limited to DHCP-managed main-LAN clients
+that actually traverse Pi-hole. Hard-coded classic-DNS interception, the
+Tailscale redirect and encrypted-DNS paths remain explicit coverage gaps until
+separately measured. The module excludes HTTPS MITM, full URL capture and
+publication of real household browsing data. It is **planned**, not yet
 live-validated.
 
 ## Completed and validated — SSD migration
@@ -259,7 +272,14 @@ See:
 - [single-client pilot evidence](../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md)
 - [main-LAN cutover and final reboot evidence](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
 
-Follow-up work should focus on aligning or intentionally preserving the classic-DNS interception paths, measuring broader concurrent-client/database growth, and continuing the separate #68 encrypted-DNS bypass assessment. None of those follow-ups invalidate the completed main-LAN DHCP migration.
+Follow-up work now starts with #108: reuse the validated Pi-hole query-history
+source for read-only client/domain analytics on Fedora without changing the
+working main-LAN resolver path. After that baseline exists, correlate the
+remaining dnsmasq interception/Tailscale paths and continue the separate #68
+encrypted-DNS bypass assessment. Any decision to move interception paths behind
+Pi-hole remains a later datapath change requiring its own rollback and live
+revalidation. None of these follow-ups invalidate the completed main-LAN DHCP
+migration.
 
 ## Post-observation — severity-aware alerting and phone notifications
 
@@ -297,6 +317,8 @@ See [router disaster recovery](router-disaster-recovery.md) and the
 
 Remaining recovery-maturity work:
 
+- Extend clean-room router recovery to the post-2026-09-28 Pi-hole state: reinstall/rebuild Pi-hole/FTL, recreate the dedicated LAN alias/startup ordering, reconstruct reviewed filtering inputs/Gravity, and validate DHCP-only-Pi-hole, Pi-hole -> Unbound, DNSSEC-negative, blocking and reverse-DNS behavior.
+- Decide what minimal Pi-hole configuration belongs in the project backup versus a separately protected private recovery artifact; do not treat the live query-history database as a required gateway-recovery payload.
 - Automate copying completed project backups to an independent system without making the router-attached SSD the only recovery location.
 - Retain multiple dated generations and define explicit retention/rotation.
 - Add backup-result monitoring so failed creation, transfer or integrity verification becomes observable.

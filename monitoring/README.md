@@ -108,6 +108,32 @@ No external notification contact point is part of this baseline yet.
 
 See [the alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md).
 
+## Planned Pi-hole DNS activity extension
+
+Issue #108 will extend this off-router pattern without changing the validated
+monitoring baseline above.
+
+The preferred future flow is:
+
+```text
+Pi-hole FTL query history on ASUS
+        |
+        | bounded read-only incremental extraction
+        v
+Fedora collector
+        |
+        v
+Grafana Alloy -> Loki -> existing Grafana
+```
+
+This is intentionally separate from the VictoriaMetrics metrics pipeline and
+from the syslog-ng mTLS system-log pipeline. Full domain names and client
+identifiers must not become persistent high-cardinality Loki labels.
+
+No Loki/Alloy DNS analytics deployment is claimed by this file yet. The initial
+scope is limited to Pi-hole-visible DHCP-managed main-LAN traffic; resolver
+coverage gaps remain documented in
+[the analytics plan](../docs/network-dns-visibility-client-activity-analytics.md).
 
 ## Grafana interface language
 

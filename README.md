@@ -2,7 +2,7 @@
 
 [![Validation suite](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml/badge.svg?branch=main)](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml)
 
-A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. It combines Asuswrt-Merlin, Entware, Tailscale, Unbound, syslog-ng, and a least-privilege firewall policy.
+A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. The current reference deployment combines Asuswrt-Merlin, Entware, Tailscale, Pi-hole, Unbound, syslog-ng, off-router observability, and a least-privilege firewall policy.
 
 This is an **enterprise-style lab**, not an enterprise-grade appliance. It has no high availability, redundant WAN, native VLAN microsegmentation, or vendor support.
 
@@ -49,6 +49,7 @@ See [architecture](docs/architecture.md), [swap and memory reliability](docs/swa
 - Sanitized evidence collection with explicit separation of automated and live results.
 - Optional mutually authenticated TLS log forwarding with syslog-ng and reliable disk buffering.
 - Automated collector retention that compresses completed logs after 24 hours and expires them after 30 days.
+- Planned DNS activity analytics use Pi-hole FTL query history as the primary read-only source and keep collection state, Loki/Alloy and dashboard processing on Fedora rather than adding another router-side analytics service.
 
 ## Repository layout
 
@@ -66,7 +67,8 @@ evidence/           Sanitized dated validation artifacts, evidence policy and te
 - ASUS router supported by Asuswrt-Merlin; reference device: TUF-AX5400.
 - JFFS custom scripts enabled.
 - Entware mounted at `/opt`.
-- Tailscale and Unbound installed; syslog-ng is optional.
+- Tailscale and Unbound installed; syslog-ng is optional unless remote logging is enabled.
+- The current reference main-LAN design also uses Pi-hole/FTL through Entware on a dedicated LAN alias. Pi-hole is not installed by the repository's generic `install.sh`; use the validated migration/case-study procedure and treat its package/listener/startup state as a separate deployment dependency.
 - A SHA-256 utility for verified backups; install Entware package `coreutils-sha256sum` when the firmware does not provide one.
 - A working `flock` utility on the router PATH; `firewall-start` requires it to serialize concurrent policy rebuilds and fails closed if it is unavailable.
 - A current router/JFFS backup and local recovery access for first deployment.
@@ -175,6 +177,21 @@ See:
 The optional logging design tails the firmware-owned `/tmp/syslog.log`, forwards it through Tailscale using mutually authenticated TLS, and can buffer messages on disk during collector outages. The checked-in examples require trusted peer certificates. Live mTLS delivery, buffer recovery, and post-reboot collector delivery should be described as observed only when the corresponding dated evidence exists; the presence of the example configuration alone is not operational proof.
 
 See [centralized logging with mTLS](docs/centralized-logging.md) for the trust model, safe rollout order, negative certificate test, buffer recovery test, reboot validation, and evidence boundaries.
+
+## Planned DNS activity analytics
+
+Issue #108 now follows the adopted Pi-hole architecture instead of assuming
+dnsmasq query logs are the primary source. The first planned dataset is the
+query history already recorded by Pi-hole FTL for DHCP-managed main-LAN
+clients. A bounded read-only Fedora collector will normalize incremental events
+for local Grafana Alloy -> Loki -> the existing Grafana instance.
+
+This extension is **not yet live-validated**. It intentionally keeps the
+current router datapath unchanged and does not claim visibility into the
+existing dnsmasq interception/Tailscale paths, DoH, DoQ, VPN-carried DNS or
+unvalidated IPv6 resolver paths. Raw household query history remains private.
+
+See [Network DNS Visibility / Client Activity Analytics](docs/network-dns-visibility-client-activity-analytics.md).
 
 ## Live validation status
 

@@ -6,11 +6,11 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** main-LAN Pi-hole migration adopted and reboot-validated; next DNS work is interception-path alignment and the measurement-first encrypted-DNS bypass assessment
+**Current phase:** main-LAN Pi-hole migration adopted and reboot-validated; next execution phase is read-only Pi-hole DNS/client-activity analytics on Fedora, with interception-path and encrypted-DNS coverage kept explicit
 
 ## Executive status
 
-This status document was reviewed on 2026-09-27. The post-firmware validation set is now complete: current-firmware classic DNS, Diversion Large normal-use acceptance, clean startup/persistence, Android exit-node behavior, and the canonical architecture diagrams all have their required evidence. The same day, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was then implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
+This status document was reconciled on 2026-09-28. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
 
 The centralized logging path is now also live-validated: router syslog-ng forwards the Asuswrt log over Tailscale and mutually authenticated TLS to the Fedora collector, with source-restricted firewall policy and successful short-outage recovery (3/3 test messages delivered after collector restoration). Grafana 13 uses its native Polish interface option; the project dashboard remains explicitly localized in JSON because application language settings do not translate project-owned panel content.
 
@@ -18,7 +18,7 @@ The reference deployment is operational. The unchanged-state observation was clo
 
 On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_tuf`. The project `v2.1.4-dev` scripts were deployed from source revision `de1cf10`, and a later private configuration change limited tailnet administration to the Fedora workstation and Android phone. A same-day reboot and bounded router/workstation/phone checks passed. The previously outstanding negative management-access check was then completed from a distinct unauthorized Windows tailnet client and published as sanitized live evidence; see the [dated worklog](docs/worklog/2026-09-23.md) and [negative-management validation](evidence/2026-09-23/unauthorized-tailnet-management-denial.md).
 
-The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Unbound/DNSSEC integration, dnsmasq integration, syslog-ng logging, project-owned least-privilege firewall chains, recovery tooling, health checks, evidence collection, and automated repository validation.
+The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Pi-hole main-LAN filtering, Unbound/DNSSEC integration, firmware dnsmasq for DHCP/local naming and existing interception paths, syslog-ng logging, project-owned least-privilege firewall chains, recovery tooling, health checks, evidence collection, external observability and automated repository validation.
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
 
@@ -33,6 +33,24 @@ An intermediate reboot exposed a real recovery fault: both SSD swap files existe
 The final checkpoint observed approximately 128 MiB memory available; Pi-hole FTL was about 10 MiB RSS, Unbound about 17 MiB RSS and tailscaled about 37 MiB RSS, with 0 kB process swap for all three at that point in time.
 
 The claim remains bounded: DHCP-managed main-LAN clients use Pi-hole, but the existing firewall interception of arbitrary external classic DNS and the historical Tailscale redirect still terminate at firmware dnsmasq before Unbound. Those paths require separate revalidation if they are moved behind Pi-hole.
+
+### Next phase — Pi-hole-visible DNS activity analytics
+
+Issue #108 has been redesigned around the new resolver architecture. The
+preferred primary source is the existing Pi-hole FTL query-history database,
+queried read-only and incrementally from Fedora. The planned pipeline keeps
+collection state, Alloy, Loki, retention and Grafana processing off-router and
+does not require broad dnsmasq query logging or a new router-facing analytics
+listener.
+
+The first accepted dataset will represent only DHCP-managed main-LAN traffic
+that actually traverses Pi-hole. Current dnsmasq interception paths, the
+Tailscale classic-DNS redirect and encrypted-DNS bypasses remain explicitly
+outside that dataset until separately measured. Issue #68 therefore becomes a
+coverage-assessment companion to the analytics work rather than a reason to
+delay the initial Pi-hole-visible baseline.
+
+See [the DNS activity analytics plan](docs/network-dns-visibility-client-activity-analytics.md).
 
 See [the final case study](docs/pi-hole-on-router-case-study.md) and [sanitized cutover evidence](evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md).
 
@@ -94,9 +112,17 @@ The safe restore evidence is recorded in
 and the recovery contract is documented in
 [docs/router-disaster-recovery.md](docs/router-disaster-recovery.md).
 
-The next execution phase is observability. The preferred design keeps expensive
-time-series storage and dashboards outside the 512 MiB router and begins with a
-read-only monitoring preflight before any new router-side installation.
+That clean-room DR baseline predates the 2026-09-28 Pi-hole adoption. The
+archive/restore mechanics remain validated, but current-state recovery now has
+a documented follow-up gap: Pi-hole/FTL package/service reconstruction,
+dedicated alias/startup ordering, Gravity/filtering policy rebuild and the
+Pi-hole -> Unbound/DHCP/reverse-DNS checks have not yet been repeated as a
+clean-room rebuild. The project must not imply otherwise.
+
+That observability phase is now complete and remains the design precedent for
+new analytics work: expensive storage, indexing and dashboards stay outside the
+512 MiB router. The next extension reuses Pi-hole's existing query history
+read-only rather than adding a new router-side analytics service.
 
 
 ## 2026-09-27 external observability baseline
@@ -115,7 +141,11 @@ See [the case study](docs/asus-tuf-ax5400-observability-case-study.md),
 [sanitized validation](evidence/2026-09-27/observability-stack-validation.md) and
 [reproducible monitoring configuration](monitoring/README.md).
 
-The next execution focus is centralized logging / alerting improvement.
+Centralized logging and the initial Grafana alerting baseline are now
+live-validated. The next execution focus is issue #108: a read-only
+Pi-hole-visible DNS activity pipeline on Fedora, followed by explicit coverage
+correlation for dnsmasq/Tailscale interception and issue #68 encrypted-DNS
+bypass measurement.
 
 ## 2026-09-26 HE160 interoperability investigation
 

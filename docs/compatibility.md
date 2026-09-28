@@ -2,9 +2,9 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-09-23
+**Last reviewed:** 2026-09-28
 
-**Reference evidence:** 2026-09-11 baseline, 2026-09-22 exit-node/DNS datapath validation, and the scoped [2026-09-23 firmware/reboot checks](worklog/2026-09-23.md)
+**Reference evidence:** 2026-09-11 storage baseline, 2026-09-22/23 exit-node and DNS datapath validation, 2026-09-27 startup/current-firmware checks, and the [2026-09-28 Pi-hole cutover validation](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
 
 The project is validated against a specific reference deployment. It does not claim a universal minimum version for every Asuswrt-Merlin or Entware package combination.
 
@@ -15,14 +15,15 @@ The project is validated against a specific reference deployment. It does not cl
 | Shell/runtime | BusyBox-compatible POSIX `sh` for deployed scripts | shell/tooling change |
 | Entware/storage | persistent `/opt` on the validated SSD-backed layout | storage migration, mount or startup-ownership change |
 | Tailscale | configured local socket, required subnet/exit routing and intentional `netfilter-mode=off` ownership model must remain functional | Tailscale update, socket/state-path or netfilter-mode change |
-| Unbound | deployed configuration validates and exposes the configured loopback listener; reference path uses `127.0.0.1:53535` | Unbound update, listener or config-manager change |
-| dnsmasq | firmware-owned port-53 listener in the current architecture, forwarding to local Unbound | resolver ownership/port change or Pi-hole migration |
+| Unbound | deployed configuration validates and exposes the configured loopback listener; both current local resolver front ends use `127.0.0.1:53535` for ordinary external resolution | Unbound update, listener or config-manager change |
+| Pi-hole FTL | current main-LAN DHCP filtering service on a dedicated LAN alias; Pi-hole DHCP disabled; allowed queries use local Unbound upstream | Pi-hole/FTL update, database/schema change used by analytics, listener/alias change, Gravity/policy change or startup-order change |
+| dnsmasq | firmware-owned router-LAN/Tailscale port-53 listener retained for DHCP/local naming and existing classic-DNS interception, forwarding ordinary external resolution to local Unbound | firmware update, resolver ownership/port change, DHCP option change or interception-path redesign |
 | syslog-ng | optional unless remote logging is configured; configured TLS path must validate on both peers | package, TLS or collector change |
 | WAN NAT | platform-owned Asuswrt-Merlin `MASQUERADE`/SNAT is a runtime dependency for the validated exit-node architecture | firmware, firewall or WAN-interface policy change |
 
 ## Version evidence policy
 
-Record actual Tailscale, Unbound, syslog-ng and other material package versions in dated evidence after upgrades. Do not infer compatibility merely because a package installs or a process starts.
+Record actual Tailscale, Pi-hole/FTL, Unbound, syslog-ng and other material package versions in dated evidence after upgrades. Do not infer compatibility merely because a package installs or a process starts.
 
 The repository does not publish an evidence-backed universal minimum package-version matrix. Adding one requires controlled compatibility testing across every version range being claimed.
 
@@ -32,9 +33,10 @@ Repeat the affected live checks after:
 
 - Asuswrt-Merlin firmware upgrades;
 - Tailscale upgrades that can affect routing, local API/socket behaviour or netfilter integration;
-- Unbound/dnsmasq ownership or listener changes;
+- Pi-hole/FTL, Unbound or dnsmasq ownership/listener/upstream changes;
+- Pi-hole query-schema changes when issue #108 analytics depends on those fields;
 - firewall or WAN NAT architecture changes;
-- migration from Diversion to another DNS filtering layer;
+- DNS filtering-layer migration or classic-DNS interception-path redesign;
 - storage or startup-hook ownership changes.
 
 For exit-node changes, re-check IPv4 forwarding, project forwarding, platform NAT, established/related return handling and packet-level datapath correlation. For DNS changes, re-check classic UDP/TCP 53 from the relevant LAN/Tailscale clients and keep encrypted DNS outside the claim unless it is separately tested.

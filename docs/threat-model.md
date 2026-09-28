@@ -37,6 +37,8 @@ Endpoint content filtering is a separate optional trust boundary. It is evaluate
 | T12 | HTTPS interception CA is abused or left behind | Low | High | Source/version verification, trust-store inspection, uninstall/cleanup validation | Endpoint compromise can undermine local trust store |
 | T13 | Endpoint evidence leaks private browsing/session data | Medium | High | Sanitized text-first evidence, manual review, no cookies/tokens/profiles/private keys | Human redaction error |
 | T14 | Endpoint-filter result is overstated as router capability | Medium | Medium | Separate test methodology and precise result language | Portfolio reader may still conflate layers |
+| T15 | DNS analytics exposes private household activity metadata | Medium | High | Read-only collection, local-only analytics services, bounded retention, sanitized/synthetic public evidence, no live Pi-hole database publication | Authorized local operator can still see sensitive resolver metadata |
+| T16 | DNS analytics creates excessive index cardinality or router load | Medium | Medium | Keep domain/client values out of persistent Loki labels; incremental bounded extraction; preflight CPU/RAM/I/O measurement; fail closed on schema drift | Workload and Pi-hole schema may change over time |
 
 ## Abuse cases to test
 
@@ -50,6 +52,10 @@ Endpoint content filtering is a separate optional trust boundary. It is evaluate
 - A Windows endpoint filter is enabled and the workstation DNS resolver is checked for unexpected replacement.
 - Endpoint HTTPS filtering is disabled/uninstalled and the local trust-store/certificate state is checked for expected cleanup.
 - Endpoint-filter evidence is reviewed for hostnames, account identifiers, cookies, tokens, private IPs, unrelated browsing history, and certificate private material before publication.
+- A DNS analytics collector is given read-only access and is verified not to modify Pi-hole/Gravity/FTL state.
+- The collector is interrupted and restarted to confirm its checkpoint does not cause unbounded duplicate ingestion.
+- Controlled clients generate DNS through Pi-hole and through known bypass/interception paths to prove that the dashboard does not overstate coverage.
+- DNS analytics evidence is reviewed to ensure the live Pi-hole database, real household domains, private client identifiers and high-cardinality Loki labels are not published.
 
 ## Evidence and claim boundary
 

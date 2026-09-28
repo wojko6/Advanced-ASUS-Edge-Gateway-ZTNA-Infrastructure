@@ -43,6 +43,18 @@ A merged PR or green CI run does **not** prove that the same revision is install
 
 ## Architecture asset rule
 
-`docs/images/Architecture.png` is the canonical current-deployment diagram. Active documentation should reference only that file unless a document explicitly presents a historical or future-state architecture.
+The canonical current architecture is the set of focused, source-controlled
+Mermaid documents under `docs/architecture/`:
 
-Retired diagrams should be removed from the active public tree after their provenance/recovery reference is preserved. This avoids presenting two competing diagrams as equally current.
+- `high-level-trust-boundaries.md`;
+- `dns-enforcement-flow.md`;
+- `tailscale-management-exit-node-flow.md`;
+- `boot-service-dependency-flow.md`.
+
+`docs/images/Architecture.png` is retained only as a historical/illustrative
+artifact and is not a source of truth for the current deployment.
+
+Planned future-state diagrams must be clearly labelled as planned and must not
+silently replace the validated current-deployment diagrams. Retired diagrams
+should remain only when their historical/provenance value is explicit. This
+avoids presenting competing diagrams as equally current.

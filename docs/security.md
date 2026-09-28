@@ -41,6 +41,24 @@ The reference deployment now enforces classic LAN DNS on TCP/UDP 53 and blocks d
 
 Endpoint-side filtering must not be presented as proof that router DNS filtering can block the same content. Conversely, an endpoint filter that silently replaces the configured DNS resolver can reduce router visibility and invalidate DNS-path assumptions. The endpoint-filtering validation therefore checks that the existing router DNS path remains authoritative.
 
+## DNS activity analytics privacy caveats
+
+Pi-hole query history can reveal sensitive browsing and application metadata
+even though it does not contain complete HTTPS URLs or page contents.
+
+The planned issue #108 analytics pipeline therefore treats the live Pi-hole
+query database, real client identifiers and household domains as private
+operational data. Collection must be read-only, indexing/retention stay
+off-router, and public evidence must use controlled synthetic domains,
+aggregates or manually sanitized extracts.
+
+Full domains and client identifiers must not be persistent high-cardinality
+Loki labels. The dashboard must also expose resolver-coverage gaps rather than
+imply complete visibility: current dnsmasq interception, Tailscale classic DNS,
+DoH/DoQ, VPN-carried DNS and unvalidated IPv6 paths are separate measurements.
+
+The analytics plan does not authorize HTTPS interception.
+
 ## Endpoint HTTPS filtering caveats
 
 Optional system-level content filters such as Zen or AdGuard for Windows may inspect HTTPS by installing a local certificate authority and proxying traffic on the endpoint. This creates a separate trust boundary from the ASUS gateway.
