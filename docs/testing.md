@@ -9,6 +9,7 @@ This repository uses separate validation tracks. A PASS in one track must not be
 - **Remote client** validates end-to-end Tailscale, DNS, firewall, and reachability behaviour from defined client roles.
 - **Endpoint filtering** validates workstation-local content filtering and DNS-path preservation.
 - **Mobile telemetry** records device-specific traffic observations under defined scenarios.
+- **DNS activity analytics** validates the planned read-only Pi-hole -> Fedora -> Alloy/Loki/Grafana pipeline, its privacy boundary, incremental checkpointing and explicit resolver-coverage gaps.
 
 The unchanged-state router observation was closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22. Subsequent state-changing router tests remain planned maintenance actions; read-only packet/counter inspection can be used independently when it is sufficient.
 
@@ -93,6 +94,40 @@ Use the port from the *deployed* private configuration for the SSH row, rather t
 The expected column describes policy; dated evidence is required before treating a row as observed. The [2026-09-23 worklog](worklog/2026-09-23.md#same-day-router-reboot-and-persistence-check) records successful Fedora HTTPS with verified TLS, both managed admin rule matches, and operator-reported Android login over Tailscale after reboot. A later same-day negative test used a separate tailnet Windows client that was intentionally absent from `EDGE_ADMIN_TS_SOURCES`. Tailscale peer reachability succeeded, TCP/8443 connection establishment failed, a directional capture on `tailscale0` recorded five client-to-router SYN packets, and a temporary counter-only rule scoped to that client and TCP/8443 matched the same five packets / 260 bytes before returning to the unchanged production LOG/DROP tail. The two production admin ACCEPT counters did not increase during that controlled probe. The temporary instrumentation was removed and the production health check then returned zero failures and warnings. See the [sanitized negative-management validation](../evidence/2026-09-23/unauthorized-tailnet-management-denial.md).
 
 The packet-capture filter used for that negative test was intentionally directional, so it proves ingress of the unauthorized client's SYN packets but does not independently establish whether reverse packets were emitted; the failed client TCP connection and firewall rule path provide the end-to-end denial result. A phone failing to load the page after turning off Tailscale is not a substitute for this role-specific negative test. Run WAN scans only against addresses you own or are authorized to test.
+
+## DNS activity analytics validation
+
+Issue #108 must be validated as an observability feature, not as a DNS
+enforcement change.
+
+Minimum controlled test matrix:
+
+1. two DHCP-managed main-LAN clients generate unique synthetic DNS names through
+   Pi-hole;
+2. the collector reads only records newer than its saved checkpoint;
+3. timestamp, client, domain and query type reach the Fedora-side structured
+   event stream correctly;
+4. Pi-hole block/cache/forward status is compared with the source record rather
+   than inferred from Grafana presentation;
+5. restart the collector and confirm it resumes without a large duplicate
+   window or skipped controlled events;
+6. measure router CPU/RAM and DNS latency before/during bounded collection;
+7. verify domain/client values remain fields rather than persistent
+   high-cardinality Loki labels;
+8. prove the dashboard's scope by generating at least one controlled resolver
+   path that does **not** appear in the Pi-hole dataset, such as the current
+   dnsmasq interception path or an approved encrypted-DNS test under issue #68;
+9. verify Loki/Alloy listeners remain local to Fedora;
+10. remove/rollback the collector and confirm the router resolver path is
+    unchanged.
+
+Do not use real household browsing as the acceptance workload. Prefer synthetic
+domains, controlled test clients and a short defined time window.
+
+The first accepted result must be described as **Pi-hole-visible main-LAN DNS
+activity**. It must not be generalized to the existing dnsmasq interception
+path, Tailscale classic DNS, DoH/DoQ, VPN-carried DNS or unvalidated IPv6
+resolver paths.
 
 ## Packet capture
 
