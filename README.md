@@ -2,7 +2,7 @@
 
 [![Validation suite](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml/badge.svg?branch=main)](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml)
 
-A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. It combines Asuswrt-Merlin, Entware, Tailscale, Unbound, syslog-ng, and a least-privilege firewall policy.
+A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. The current reference deployment combines Asuswrt-Merlin, Entware, Tailscale, Pi-hole, Unbound, syslog-ng, off-router observability, and a least-privilege firewall policy.
 
 This is an **enterprise-style lab**, not an enterprise-grade appliance. It has no high availability, redundant WAN, native VLAN microsegmentation, or vendor support.
 
@@ -67,7 +67,8 @@ evidence/           Sanitized dated validation artifacts, evidence policy and te
 - ASUS router supported by Asuswrt-Merlin; reference device: TUF-AX5400.
 - JFFS custom scripts enabled.
 - Entware mounted at `/opt`.
-- Tailscale and Unbound installed; syslog-ng is optional.
+- Tailscale and Unbound installed; syslog-ng is optional unless remote logging is enabled.
+- The current reference main-LAN design also uses Pi-hole/FTL through Entware on a dedicated LAN alias. Pi-hole is not installed by the repository's generic `install.sh`; use the validated migration/case-study procedure and treat its package/listener/startup state as a separate deployment dependency.
 - A SHA-256 utility for verified backups; install Entware package `coreutils-sha256sum` when the firmware does not provide one.
 - A working `flock` utility on the router PATH; `firewall-start` requires it to serialize concurrent policy rebuilds and fails closed if it is unavailable.
 - A current router/JFFS backup and local recovery access for first deployment.
