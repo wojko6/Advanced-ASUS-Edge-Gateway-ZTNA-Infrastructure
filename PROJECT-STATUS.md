@@ -112,6 +112,13 @@ The safe restore evidence is recorded in
 and the recovery contract is documented in
 [docs/router-disaster-recovery.md](docs/router-disaster-recovery.md).
 
+That clean-room DR baseline predates the 2026-09-28 Pi-hole adoption. The
+archive/restore mechanics remain validated, but current-state recovery now has
+a documented follow-up gap: Pi-hole/FTL package/service reconstruction,
+dedicated alias/startup ordering, Gravity/filtering policy rebuild and the
+Pi-hole -> Unbound/DHCP/reverse-DNS checks have not yet been repeated as a
+clean-room rebuild. The project must not imply otherwise.
+
 That observability phase is now complete and remains the design precedent for
 new analytics work: expensive storage, indexing and dashboards stay outside the
 512 MiB router. The next extension reuses Pi-hole's existing query history
