@@ -265,11 +265,15 @@ Reject or redesign the on-router candidate if testing shows:
 
 ## Relationship to #108
 
-If Pi-hole is adopted, its query log/API can become a major input to Network
-DNS Visibility / Client Activity Analytics.
+Pi-hole **was adopted** on 2026-09-28, and the validated FTL query-history
+source is now the preferred primary input to Network DNS Visibility / Client
+Activity Analytics.
 
-If the on-router design is rejected, #108 still proceeds through the existing
-centralized logging + Loki/Alloy design.
+Issue #108 has therefore been redesigned around bounded read-only extraction
+from Pi-hole to Fedora, followed by local Alloy -> Loki -> Grafana processing.
+The existing centralized syslog-ng + Tailscale + mTLS path remains the
+system-log transport and a possible supplemental source for dnsmasq-only
+coverage gaps; it is no longer the default primary DNS-analytics path.
 
 ## Final deliverable
 
