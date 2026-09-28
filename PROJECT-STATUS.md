@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** main-LAN Pi-hole migration adopted and reboot-validated; next execution phase is read-only Pi-hole DNS/client-activity analytics on Fedora, with interception-path and encrypted-DNS coverage kept explicit
+**Current phase:** Pi-hole DNS analytics Phase 0 passed; bounded Fedora collector code is present and awaiting live service/restart validation before Loki/Alloy integration
 
 ## Executive status
 
@@ -34,23 +34,26 @@ The final checkpoint observed approximately 128 MiB memory available; Pi-hole FT
 
 The claim remains bounded: DHCP-managed main-LAN clients use Pi-hole, but the existing firewall interception of arbitrary external classic DNS and the historical Tailscale redirect still terminate at firmware dnsmasq before Unbound. Those paths require separate revalidation if they are moved behind Pi-hole.
 
-### Next phase — Pi-hole-visible DNS activity analytics
+### Current phase — Pi-hole-visible DNS activity analytics
 
-Issue #108 has been redesigned around the new resolver architecture. The
-preferred primary source is the existing Pi-hole FTL query-history database,
-queried read-only and incrementally from Fedora. The planned pipeline keeps
-collection state, Alloy, Loki, retention and Grafana processing off-router and
-does not require broad dnsmasq query logging or a new router-facing analytics
-listener.
+Issue #108 Phase 0 passed against the deployed Pi-hole v6 API. The preflight
+validated the required query schema, authenticated read-only access through a
+Fedora loopback SSH forward, bounded RAM/disk read cost and the RAM-versus-disk
+cursor edge case.
 
-The first accepted dataset will represent only DHCP-managed main-LAN traffic
-that actually traverses Pi-hole. Current dnsmasq interception paths, the
-Tailscale classic-DNS redirect and encrypted-DNS bypasses remain explicitly
-outside that dataset until separately measured. Issue #68 therefore becomes a
-coverage-assessment companion to the analytics work rather than a reason to
-delay the initial Pi-hole-visible baseline.
+The repository now contains a bounded Fedora collector reference
+implementation. It freezes each source on the first query ID actually returned,
+deduplicates the disk/memory union by query ID and commits its checkpoint only
+after journaled local persistence. Live collector service deployment,
+restart/outage validation, Loki/Alloy ingestion and Grafana DNS dashboards
+remain outstanding.
 
-See [the DNS activity analytics plan](docs/network-dns-visibility-client-activity-analytics.md).
+The accepted dataset still represents only DHCP-managed main-LAN traffic that
+actually traverses Pi-hole. Current dnsmasq interception paths, the Tailscale
+classic-DNS redirect and encrypted-DNS bypasses remain explicitly outside that
+dataset until separately measured.
+
+See [the DNS activity analytics plan](docs/network-dns-visibility-client-activity-analytics.md) and [sanitized Phase 0 evidence](evidence/2026-09-28/pi-hole-api-phase0-preflight.md).
 
 See [the final case study](docs/pi-hole-on-router-case-study.md) and [sanitized cutover evidence](evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md).
 
@@ -142,10 +145,11 @@ See [the case study](docs/asus-tuf-ax5400-observability-case-study.md),
 [reproducible monitoring configuration](monitoring/README.md).
 
 Centralized logging and the initial Grafana alerting baseline are now
-live-validated. The next execution focus is issue #108: a read-only
-Pi-hole-visible DNS activity pipeline on Fedora, followed by explicit coverage
-correlation for dnsmasq/Tailscale interception and issue #68 encrypted-DNS
-bypass measurement.
+live-validated. Issue #108 Phase 0 is also complete and the Fedora collector
+reference implementation is source-controlled. The next execution focus is
+live collector deployment/restart validation, followed by local Loki/Alloy
+integration and later explicit coverage correlation for dnsmasq/Tailscale and
+issue #68 encrypted-DNS bypass measurement.
 
 ## 2026-09-26 HE160 interoperability investigation
 
@@ -349,4 +353,4 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 As of 2026-09-28, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with Unbound 1.26.1 and Pi-hole adopted for the main-LAN DHCP DNS-filtering path. Diversion and uiDivStats are no longer active; ASUS DNS Privacy/Stubby is disabled; stale NextDNS hook logic is removed. The final reboot validated both swap files, Tailscale, Pi-hole, Unbound, main-LAN DHCP DNS, blocking, DNSSEC negative behavior and active-lease reverse DNS.
 
-The next execution step is issue #108: build the read-only Pi-hole-visible DNS activity pipeline on Fedora without changing the validated resolver path. After that baseline exists, correlate the remaining dnsmasq/Tailscale interception paths and continue the separate measurement-first DoH/DoQ/application-resolver assessment under #68. Any decision to route those interception paths through Pi-hole remains a later datapath change with its own rollback and live validation. Public evidence remains sanitized and deployment-specific identifiers stay private.
+The next execution step is to deploy and live-validate the source-controlled issue #108 Fedora collector, including restart/outage recovery and local storage growth, before adding Loki/Alloy and the Grafana DNS dashboard. After that baseline exists, correlate the remaining dnsmasq/Tailscale interception paths and continue the separate measurement-first DoH/DoQ/application-resolver assessment under #68. Any decision to route those interception paths through Pi-hole remains a later datapath change with its own rollback and live validation. Public evidence remains sanitized and deployment-specific identifiers stay private.
