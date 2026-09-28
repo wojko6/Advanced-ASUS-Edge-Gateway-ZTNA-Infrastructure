@@ -1,8 +1,12 @@
 # Diversion vs Pi-hole on-router — case study plan
 
-**Status:** active case study. Staged installation, single-client validation, reboot persistence, firewall integration and an initial corrected A/B latency benchmark were completed on 2026-09-28. Full-LAN adoption is not yet claimed.
+**Status:** completed case study. Pi-hole was adopted for the reference main-LAN DHCP path on 2026-09-28 after staged validation, blocking-list parity analysis, controlled cutover, duplicate-service cleanup, swap/Tailscale recovery and a final successful reboot.
 
 Tracking issue: #80.
+
+Final result: [Diversion to Pi-hole on-router migration case study](pi-hole-on-router-case-study.md) and [sanitized main-LAN cutover evidence](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md).
+
+The accepted deployment keeps Pi-hole DHCP disabled, advertises only Pi-hole to the main LAN through firmware DHCP, keeps Unbound as the validating upstream, and retains firmware dnsmasq for DHCP/local naming and the existing classic-DNS interception endpoint. The case study does **not** claim that every hard-coded external classic-DNS or Tailscale-intercepted query is filtered by Pi-hole; those interception paths remain a separate follow-up validation.
 
 ## Research question
 
@@ -112,11 +116,15 @@ single-client results do not establish general resolver performance.
 
 See [sanitized pilot evidence](../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md).
 
-Remaining before any adoption decision: multi-client/stress testing,
-Gravity/update peak-resource observation, storage/DB growth, WAN reconnect,
-final local-name/reverse-DNS behavior, IPv6/Tailscale validation for the final
-listener design, rollback rehearsal and broader normal-use/false-positive
-assessment.
+The adoption decision was made after the later same-day main-LAN cutover and
+reboot/recovery work. The final evidence additionally covers DHCP-only Pi-hole
+advertisement, reverse DNS through firmware dnsmasq, removal of duplicate
+services, a swap-startup regression that prevented Tailscale from starting,
+and the successful reboot after restoring pre-Entware swap activation.
+
+Longer-duration database growth, broader concurrent-client stress and alignment
+of the existing classic-DNS interception path with Pi-hole remain follow-up
+engineering work rather than hidden acceptance assumptions.
 
 ## Test phases
 
