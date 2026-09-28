@@ -92,7 +92,7 @@ Current architecture claims are anchored to dated evidence:
 - **2026-09-27:** AUDIT-03 revalidated the current-firmware Fedora classic-DNS datapath through tailscale0 → EDGE_TS_PREROUTING → dnsmasq → Unbound for both UDP and TCP 53.
 - **2026-09-27:** #66 recorded 3/3 clean startup cycles after the reference pre-Entware swap-order correction.
 - **2026-09-27:** #67 reconfirmed Android exit-node public-IP behavior after reboot with a clean router health check.
-- **2026-09-27:** #65 accepted Diversion Large as the current filtering baseline after multi-day use, refresh, DNS-path and resource checks.
+- **2026-09-27:** #65 accepted Diversion Large as the then-current filtering baseline after multi-day use, refresh, DNS-path and resource checks; that historical baseline was replaced on the main-LAN DHCP path the next day by #80.
 - **2026-09-28:** #80 migrated the main-LAN DHCP filtering path to Pi-hole, retained Unbound and firmware local naming, removed duplicate filtering/statistics services, corrected a pre-Entware swap regression discovered during reboot, and passed the final swap/Tailscale/Pi-hole/Unbound reboot validation.
 
 These dated results do not establish universal firmware compatibility or enforcement outside their stated protocol/interface scope. Time-sensitive project status remains governed by [PROJECT-STATUS.md](../PROJECT-STATUS.md) and the dated [evidence](../evidence/) tree.
