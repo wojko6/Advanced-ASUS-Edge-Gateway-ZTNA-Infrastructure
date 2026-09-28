@@ -49,7 +49,7 @@ See [architecture](docs/architecture.md), [swap and memory reliability](docs/swa
 - Sanitized evidence collection with explicit separation of automated and live results.
 - Optional mutually authenticated TLS log forwarding with syslog-ng and reliable disk buffering.
 - Automated collector retention that compresses completed logs after 24 hours and expires them after 30 days.
-- Pi-hole DNS activity analytics Phase 0 passed; the repository now includes a bounded Fedora collector reference implementation while live service deployment, Loki/Alloy ingestion and dashboard validation remain outstanding.
+- Pi-hole DNS activity analytics Phase 0-3 are live-validated: bounded Fedora collection, local Alloy/Loki ingestion, Grafana dashboarding, controlled reboot persistence and two-client main-LAN distinguishability all passed within the documented Pi-hole-visible scope.
 
 ## Repository layout
 
@@ -181,21 +181,29 @@ See [centralized logging with mTLS](docs/centralized-logging.md) for the trust m
 ## DNS activity analytics
 
 Issue #108 follows the adopted Pi-hole architecture rather than using broad
-dnsmasq query logging as the primary source. The 2026-09-28 Phase 0 preflight
-validated the authenticated Pi-hole v6 API, required query fields, the
-RAM-versus-disk cursor edge case and low bounded read cost.
+dnsmasq query logging as the primary source. The 2026-09-28 implementation is
+live-validated through the Pi-hole-visible main-LAN path:
 
-A Fedora collector reference implementation is now checked in under
-`monitoring/`. It reads through a loopback SSH forward, combines the
-source-local disk and memory snapshots, deduplicates by query ID and advances a
-Fedora-side checkpoint only after journaled local persistence.
+- authenticated Pi-hole v6 API access over a Fedora loopback SSH forward;
+- bounded disk/memory collection with source-local cursors, deduplication and a
+  crash-safe Fedora checkpoint/journal;
+- local Alloy -> Loki ingestion with loopback-only listeners and no
+  high-cardinality domain/client labels;
+- the provisioned `Pi-hole — Aktywność DNS v2` Grafana dashboard;
+- automatic recovery after a controlled Fedora reboot;
+- two controlled main-LAN clients distinguished in the collected dataset.
 
-The collector code is **not yet live service-validated**, and Loki/Alloy plus
-the Grafana DNS dashboard remain future phases. The scope still excludes the
-existing dnsmasq interception/Tailscale paths, DoH, DoQ, VPN-carried DNS and
-unvalidated IPv6 resolver paths. Raw household query history remains private.
+A controlled Windows test also confirmed the documented coverage boundary:
+classic DNS carried over Tailscale was visible on `tailscale0` but absent from
+Pi-hole history, matching the existing `Tailscale -> dnsmasq -> Unbound` path.
+The remaining #108 work is bounded retention/storage observation,
+rollback/uninstall validation and correlation of the hard-coded external
+classic-DNS LAN interception path. Encrypted-DNS coverage remains a separate
+measurement track under issue #68. Raw household query history remains private.
 
-See [Network DNS Visibility / Client Activity Analytics](docs/network-dns-visibility-client-activity-analytics.md) and the [sanitized Phase 0 evidence](evidence/2026-09-28/pi-hole-api-phase0-preflight.md).
+See [Network DNS Visibility / Client Activity Analytics](docs/network-dns-visibility-client-activity-analytics.md),
+the [sanitized collector validation](evidence/2026-09-28/pi-hole-dns-collector-live-validation.md)
+and the [Phase 2/3 + reboot/client validation](evidence/2026-09-28/pi-hole-dns-analytics-phase2-3-validation.md).
 
 ## Live validation status
 
