@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Pi-hole DNS analytics Phase 0 passed; bounded Fedora collector code is present and awaiting live service/restart validation before Loki/Alloy integration
+**Current phase:** Pi-hole DNS analytics Phase 0 and Fedora collector Phase 1 live validation passed; next focus is local Loki/Alloy ingestion, retention/storage validation and the Grafana DNS dashboard
 
 ## Executive status
 
@@ -353,4 +353,4 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 As of 2026-09-28, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with Unbound 1.26.1 and Pi-hole adopted for the main-LAN DHCP DNS-filtering path. Diversion and uiDivStats are no longer active; ASUS DNS Privacy/Stubby is disabled; stale NextDNS hook logic is removed. The final reboot validated both swap files, Tailscale, Pi-hole, Unbound, main-LAN DHCP DNS, blocking, DNSSEC negative behavior and active-lease reverse DNS.
 
-The next execution step is to deploy and live-validate the source-controlled issue #108 Fedora collector, including restart/outage recovery and local storage growth, before adding Loki/Alloy and the Grafana DNS dashboard. After that baseline exists, correlate the remaining dnsmasq/Tailscale interception paths and continue the separate measurement-first DoH/DoQ/application-resolver assessment under #68. Any decision to route those interception paths through Pi-hole remains a later datapath change with its own rollback and live validation. Public evidence remains sanitized and deployment-specific identifiers stay private.
+The source-controlled issue #108 Fedora collector has now been live-validated, including prepared-batch recovery, recurring systemd collection, a controlled SSH-transport outage, catch-up after transport restoration, duplicate-free ordering and checkpoint consistency. The next execution step is local Loki/Alloy integration plus bounded retention/storage-growth validation before the Grafana DNS dashboard. After that baseline exists, correlate the remaining dnsmasq/Tailscale interception paths and continue the separate measurement-first DoH/DoQ/application-resolver assessment under #68. Any decision to route those interception paths through Pi-hole remains a later datapath change with its own rollback and live validation. Public evidence remains sanitized and deployment-specific identifiers stay private.
