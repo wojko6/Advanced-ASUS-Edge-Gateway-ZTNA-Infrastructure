@@ -110,9 +110,9 @@ See [the alerting validation evidence](../evidence/2026-09-27/grafana-alerting-v
 
 ## Pi-hole DNS activity collector
 
-Issue #108 Phase 0 passed on 2026-09-28. The repository now contains the first
-Fedora-side collector implementation, while live service deployment and
-Loki/Alloy ingestion remain unvalidated.
+Issue #108 Phase 0 and the first Fedora collector live validation passed on
+2026-09-28. The collector, SSH tunnel and recurring systemd timer were validated
+on Fedora; Loki/Alloy ingestion remains unvalidated.
 
 The implemented acquisition path is:
 
@@ -151,10 +151,16 @@ Reference files:
 - `systemd/pihole-dns-collector.service`
 - `systemd/pihole-dns-collector.timer`
 
-The recurring timer is intentionally separate from the one-shot service so the
-first live run can be validated manually before scheduling. The default guard
+The recurring timer remains separate from the one-shot service. Live validation
+confirmed manual collection, timer-driven collection, prepared-batch recovery,
+a controlled SSH-transport failure and catch-up after transport restoration.
+The final integrity checkpoint contained 10,414 unique, strictly ascending query
+IDs with zero duplicates and a matching persisted checkpoint. The default guard
 allows at most 1,000 pages of 500 rows per source and fails closed rather than
 silently skipping a larger backlog.
+
+See the
+[sanitized live validation evidence](../evidence/2026-09-28/pi-hole-dns-collector-live-validation.md).
 
 This pipeline remains separate from the VictoriaMetrics metrics path and the
 syslog-ng mTLS system-log path. Full domain names, client IPs and hostnames must
