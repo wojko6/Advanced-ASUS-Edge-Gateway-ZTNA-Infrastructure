@@ -210,114 +210,56 @@ After the completed unchanged-state observation:
 
 The 2026-09-27 acceptance evidence records completion of these criteria. Future list/profile changes require a new bounded validation rather than inheriting this result automatically. See [issue-65 acceptance evidence](../evidence/2026-09-27/issue-65-diversion-large-normal-use-acceptance.md).
 
-## Active case study — Diversion vs Pi-hole on-router
+## Completed and adopted — Diversion to Pi-hole on-router migration
 
-**Status: active pilot — single-client and reboot-persistence stages passed on 2026-09-28; no full-LAN cutover yet.**
+**Status: main-LAN DHCP cutover completed and reboot-validated 2026-09-28.**
 
-Issue #80 now tracks a live controlled case study of Pi-hole running directly
-on the TUF-AX5400 through Entware.
+Issue #80 progressed from staged pilot to an adopted reference main-LAN DNS-filtering path.
 
-The staged design keeps firmware dnsmasq + Diversion on the existing router
-address while Pi-hole owns a dedicated LAN alias and forwards allowed queries
-to the existing Unbound loopback listener. The project LAN DNS enforcement was
-extended with a validated local-resolver bypass so intentional traffic to the
-staged Pi-hole listener is not transparently redirected back to firmware
-dnsmasq.
+Final validated design:
 
-The corrected initial A/B latency run used 200 queries per resolver per
-scenario. All 800 measured queries returned valid DNS responses. Diversion was
-faster for the selected blocked-name test (0.54 ms mean versus 0.87 ms), while
-Pi-hole was faster for the warmed clean-name test (1.12 ms mean versus
-2.65 ms). These are bounded local single-client measurements, not a general
-performance verdict.
+```text
+DHCP-managed main-LAN clients
+        |
+        v
+Pi-hole FTL on dedicated LAN alias :53
+        |
+        v
+Unbound 127.0.0.1:53535
+        |
+        v
+Internet
 
-The controlled reboot restored the Pi-hole alias, FTL, Gravity, managed
-six-rule LAN DNS policy and healthy Unbound path; the project health check
-finished with 0 failures and 0 warnings.
+firmware dnsmasq
+        +-- DHCP
+        +-- local/reverse names
+        +-- existing classic-DNS interception endpoint
+        |
+        v
+Unbound 127.0.0.1:53535
+```
 
-Remaining work includes multi-client/stress testing, Gravity/update resource
-peaks, database/storage growth, WAN reconnect, final local-name/reverse-DNS
-behavior, IPv6/Tailscale validation, rollback rehearsal and broader normal-use
-assessment.
+Completed work includes:
+
+- staged single-client validation and corrected A/B latency testing;
+- OISD source parity comparison: Pi-hole retained 244,128 normalized domains while Diversion retained 244,126 because its essential allowlist intentionally excluded two OISD entries through their parent domains;
+- Pi-hole SQLite query-history validation and synthetic rate-limit observation;
+- main-LAN DHCP cutover that advertises only Pi-hole;
+- conditional reverse DNS through firmware dnsmasq for active DHCP leases;
+- removal of uiDivStats, Diversion, Stubby/DNS Privacy and inactive NextDNS hook logic;
+- discovery of a post-mount regression that left swap inactive and caused Tailscale to fail with a Go-runtime OOM;
+- restoration of explicit per-volume pre-Entware swap activation;
+- final clean reboot with both swap files, Tailscale, Pi-hole, Unbound, DHCP DNS, blocking and DNSSEC behavior restored automatically.
+
+The final case study deliberately keeps one boundary explicit: the existing project classic-DNS interception path for arbitrary external resolver destinations, and the historical Tailscale classic-DNS redirect, still terminate at firmware dnsmasq before Unbound. The main-LAN DHCP path is Pi-hole-filtered, but universal Pi-hole filtering of those interception paths is not claimed without a separate datapath change and revalidation.
 
 See:
-- [Diversion vs Pi-hole on-router case study plan](pi-hole-on-router-case-study-plan.md)
-- [2026-09-28 sanitized pilot evidence](../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md).
+- [final Pi-hole migration case study](pi-hole-on-router-case-study.md)
+- [case-study plan and acceptance history](pi-hole-on-router-case-study-plan.md)
+- [single-client pilot evidence](../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md)
+- [main-LAN cutover and final reboot evidence](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
 
-## Post-observation idea — Pi-hole + Unbound DNS filtering migration
-
-**Status: idea / design candidate only — not deployed.**
-
-The current Diversion-based filtering is considered insufficient for some real-world mobile application flows, especially Android applications that render web content through WebView or browser Custom Tabs instead of a full browser session with its own strong content blocker. The purpose of this idea is therefore broader than improving browser ad blocking: it is to improve network-wide filtering for applications that do not provide an effective in-app blocker.
-
-The preferred target architecture is:
-
-```text
-LAN / authorized Tailscale clients
-              |
-              v
-        Pi-hole FTL :53
-          /        \
-         /          \
-        v            v
-Unbound 127.0.0.1:53535   firmware dnsmasq :8053
-recursive DNS + DNSSEC    DHCP / local names / reverse DNS
-```
-
-Design principles for this migration:
-
-- Treat Pi-hole as a potential **replacement for Diversion**, not an additional parallel filtering layer.
-- Keep Unbound as the recursive validating resolver and preserve DNSSEC validation.
-- Keep firmware dnsmasq for DHCP, local naming and reverse-DNS duties after moving it away from port 53.
-- Reuse the existing project-owned Tailscale/firewall policy so only authorized remote clients can use the router DNS service.
-- Keep the Pi-hole administrative UI restricted to trusted LAN management and explicitly authorized Tailscale administration sources; do not expose it to WAN or broad remote access.
-- Use Pi-hole query logging, per-client statistics, groups and API data to improve DNS observability and evidence quality.
-- Create a dedicated Android/mobile policy group only after baseline measurements show which advertising, tracking and telemetry domains are actually observed.
-- Preserve the existing privacy boundary: do not publish raw browsing history, private hostnames, client identifiers or unsanitized DNS logs.
-- Do not subscribe blindly to very large third-party blocklists. Prefer curated, attributable sources and small evidence-backed additions with rollback.
-- Do not claim that Pi-hole can block same-origin advertising, encrypted resolver bypasses, or all in-app advertising; WebView/Custom Tabs benefit must be measured rather than assumed.
-
-A key use case is remote mobile protection:
-
-```text
-home Wi-Fi:
-Android -> ASUS/Pi-hole -> Unbound
-
-LTE/5G:
-Android -> Tailscale -> ASUS/Pi-hole -> Unbound
-```
-
-This should allow the same project-owned DNS policy to protect Android applications both at home and away from the LAN, provided the measured client DNS path actually traverses the router. The completed 2026-09-22 AUDIT-03 validation provides the classic-DNS baseline for Fedora and Android; any Pi-hole migration must repeat the affected datapath checks before equivalent claims are made for the new listener architecture.
-
-### Required migration/acceptance plan
-
-The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22. Pi-hole work may now move from repository-only design into a controlled maintenance/test phase.
-
-Before deployment:
-
-Implementation prerequisites:
-
-- confirm that the selected Pi-hole/FTL build is supportable on the router CPU and Entware environment before treating it as an implementation candidate;
-- measure the current RAM/swap and storage-write baseline, then define a resource and retention budget for FTL databases/query logging;
-- document exact listener ownership and cutover order for Pi-hole `:53`, firmware dnsmasq `:8053`, and Unbound `:53535` so two services never compete for the same socket;
-- implement a rollback path that restores the current Diversion + dnsmasq + Unbound arrangement without depending on a functioning Pi-hole service;
-- define Pi-hole/FTL update ownership and maintenance procedure rather than introducing package mutation into the boot path;
-- define explicit firewall and administrative-UI exposure rules plus negative tests so the UI cannot become reachable from WAN or broadly from the tailnet.
-
-1. Capture a fresh pre-change health/evidence snapshot and back up the current Diversion/dnsmasq/Unbound state.
-2. Create a dedicated feature branch and implement Pi-hole integration, health checks, rollback and configuration validation before deployment.
-3. Measure a Diversion baseline using representative Android app, WebView/Custom Tab, browser and telemetry scenarios.
-4. Stage Pi-hole without destroying the rollback path.
-5. Move firmware dnsmasq away from port 53 while preserving DHCP/local-name/reverse-DNS behavior.
-6. Bind Pi-hole to the intended LAN/Tailscale interfaces and forward upstream resolution to Unbound on loopback:53535.
-7. Disable Diversion only after Pi-hole has demonstrated equivalent or better DNS-layer coverage.
-8. Validate LAN DNS, Android WebView/Custom Tabs, LTE/5G over Tailscale, DNSSEC, reverse DNS, WAN reconnect, reboot recovery, Gravity updates, RAM/swap behavior, firewall exposure and administrative UI access.
-9. Compare before/after blocking effectiveness and false positives rather than accepting the migration on subjective appearance alone.
-10. Validate the accepted Pi-hole design across several normal-use sessions and multiple full router power-on/startup cycles before promoting it into the validated baseline; a continuous 7-14 day unchanged-state gate is not required for this deployment because the reference router is normally powered only for part of each day.
-
-Primary success criterion: improve advertising/tracking suppression in applications without strong browser-native blockers while preserving DNSSEC, local-network functionality, Tailscale policy, recoverability and an auditable DNS datapath.
-
-Post-migration acceptance should emphasize repeated successful cold/startup cycles, normal daily-use sessions, WAN reconnect handling, Gravity maintenance, RAM/swap behavior and clean health checks rather than continuous multi-day uptime.
+Follow-up work should focus on aligning or intentionally preserving the classic-DNS interception paths, measuring broader concurrent-client/database growth, and continuing the separate #68 encrypted-DNS bypass assessment. None of those follow-ups invalidate the completed main-LAN DHCP migration.
 
 ## Post-observation — severity-aware alerting and phone notifications
 
