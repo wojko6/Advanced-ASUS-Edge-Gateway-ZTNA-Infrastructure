@@ -65,6 +65,7 @@ fi
 : "${EDGE_BLOCK_LAN_DOT:=0}"
 : "${EDGE_DOT_PORT:=853}"
 : "${EDGE_DNS_PORT:=53}"
+: "${EDGE_LAN_DNS_BYPASS_IPS:=}"
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_UNBOUND_CONFIG:=}"
 : "${EDGE_SYSLOG_HOST:=}"
@@ -115,6 +116,9 @@ valid_boolean "$EDGE_BLOCK_LAN_DOT" || fail "invalid EDGE_BLOCK_LAN_DOT value: $
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
 valid_ipv4 "$EDGE_ROUTER_LAN_IP" || fail "invalid EDGE_ROUTER_LAN_IP value: $EDGE_ROUTER_LAN_IP"
+for dns_bypass_ip in $EDGE_LAN_DNS_BYPASS_IPS; do
+    valid_ipv4 "$dns_bypass_ip" || fail "invalid EDGE_LAN_DNS_BYPASS_IPS IPv4: $dns_bypass_ip"
+done
 valid_port "$EDGE_DNS_PORT" || fail "invalid EDGE_DNS_PORT value: $EDGE_DNS_PORT"
 valid_port "$EDGE_DOT_PORT" || fail "invalid EDGE_DOT_PORT value: $EDGE_DOT_PORT"
 [ -z "$EDGE_WAN_IF" ] || valid_interface "$EDGE_WAN_IF" || fail "invalid EDGE_WAN_IF value: $EDGE_WAN_IF"
@@ -429,10 +433,21 @@ direct_parent_lan_dns_rule_count() {
 
 lan_dns_chain_matches_policy() {
     iptables -t nat -S EDGE_LAN_DNS_PREROUTING 2>/dev/null |
-        awk -v router="$EDGE_ROUTER_LAN_IP" -v port="$EDGE_DNS_PORT" '
+        awk -v router="$EDGE_ROUTER_LAN_IP" \
+            -v bypasses="$EDGE_LAN_DNS_BYPASS_IPS" \
+            -v port="$EDGE_DNS_PORT" '
+            BEGIN {
+                bypass_count = 0
+                if (bypasses != "")
+                    bypass_count = split(bypasses, bypass, /[[:space:]]+/)
+
+                expected_rules = 4 + (2 * bypass_count)
+            }
+
             $1 == "-A" && $2 == "EDGE_LAN_DNS_PREROUTING" {
                 rules++
                 dst=""; proto=""; dport=""; target=""; toports=""
+
                 for (i=3; i<=NF; i++) {
                     if ($i == "-d" && i < NF) dst=$(i+1)
                     if ($i == "-p" && i < NF) proto=$(i+1)
@@ -440,17 +455,72 @@ lan_dns_chain_matches_policy() {
                     if ($i == "-j" && i < NF) target=$(i+1)
                     if ($i == "--to-ports" && i < NF) toports=$(i+1)
                 }
-                if (dst == router "/32" && proto == "udp" && dport == port && target == "RETURN") return_udp++
-                if (dst == router "/32" && proto == "tcp" && dport == port && target == "RETURN") return_tcp++
-                if (dst == "" && proto == "udp" && dport == port && target == "REDIRECT" && toports == port) redirect_udp++
-                if (dst == "" && proto == "tcp" && dport == port && target == "REDIRECT" && toports == port) redirect_tcp++
+
+                for (j=1; j<=bypass_count; j++) {
+                    if (rules == (2*j-1) &&
+                        dst == bypass[j] "/32" &&
+                        proto == "udp" &&
+                        dport == port &&
+                        target == "RETURN")
+                        bypass_udp[j]++
+
+                    if (rules == (2*j) &&
+                        dst == bypass[j] "/32" &&
+                        proto == "tcp" &&
+                        dport == port &&
+                        target == "RETURN")
+                        bypass_tcp[j]++
+                }
+
+                router_udp_pos = 2*bypass_count + 1
+                router_tcp_pos = 2*bypass_count + 2
+                redirect_udp_pos = 2*bypass_count + 3
+                redirect_tcp_pos = 2*bypass_count + 4
+
+                if (rules == router_udp_pos &&
+                    dst == router "/32" &&
+                    proto == "udp" &&
+                    dport == port &&
+                    target == "RETURN")
+                    return_udp++
+
+                if (rules == router_tcp_pos &&
+                    dst == router "/32" &&
+                    proto == "tcp" &&
+                    dport == port &&
+                    target == "RETURN")
+                    return_tcp++
+
+                if (rules == redirect_udp_pos &&
+                    dst == "" &&
+                    proto == "udp" &&
+                    dport == port &&
+                    target == "REDIRECT" &&
+                    toports == port)
+                    redirect_udp++
+
+                if (rules == redirect_tcp_pos &&
+                    dst == "" &&
+                    proto == "tcp" &&
+                    dport == port &&
+                    target == "REDIRECT" &&
+                    toports == port)
+                    redirect_tcp++
             }
+
             END {
-                exit !(rules == 4 &&
-                       return_udp == 1 &&
-                       return_tcp == 1 &&
-                       redirect_udp == 1 &&
-                       redirect_tcp == 1)
+                ok = (rules == expected_rules &&
+                      return_udp == 1 &&
+                      return_tcp == 1 &&
+                      redirect_udp == 1 &&
+                      redirect_tcp == 1)
+
+                for (j=1; j<=bypass_count; j++) {
+                    if (bypass_udp[j] != 1 || bypass_tcp[j] != 1)
+                        ok = 0
+                }
+
+                exit !ok
             }
         '
 }
