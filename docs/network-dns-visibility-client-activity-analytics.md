@@ -1,6 +1,6 @@
 # Network DNS Visibility / Client Activity Analytics
 
-**Status:** Phase 0 read-only preflight, Phase 1 Fedora collector, Phase 2 Alloy/Loki ingestion and the Phase 3 Grafana dashboard were live-validated on 2026-09-28. Longer-term retention/storage, reboot/rollback and coverage-gap validation remain pending.
+**Status:** Phase 0 read-only preflight, Phase 1 Fedora collector, Phase 2 Alloy/Loki ingestion, the Phase 3 Grafana dashboard and full Fedora reboot persistence were live-validated on 2026-09-28. Longer-term retention/storage, rollback and coverage-gap validation remain pending.
 
 Tracking issue: #108.
 
@@ -344,7 +344,7 @@ Before calling the module complete:
 - define bounded local Loki retention for DNS activity separately from generic
   infrastructure metrics/logs;
 - measure storage growth from real query volume;
-- validate collector restart and host reboot persistence;
+- validate collector restart and host reboot persistence; **PASS for the tested Fedora reboot on 2026-09-28**
 - validate checkpoint recovery after a short collector outage;
 - confirm that duplicate ingestion remains bounded;
 - document rollback/uninstall for the Fedora collector, Alloy and Loki changes;

@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Pi-hole DNS analytics Phase 0-3 live validation passed through the local Grafana dashboard; remaining work is retention/storage measurement, reboot/rollback validation and coverage-gap correlation
+**Current phase:** Pi-hole DNS analytics Phase 0-3 plus full Fedora reboot persistence are live-validated; remaining work is retention/storage measurement, rollback/uninstall validation, final two-client acceptance and coverage-gap correlation
 
 ## Executive status
 
@@ -357,4 +357,4 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 As of 2026-09-28, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with Unbound 1.26.1 and Pi-hole adopted for the main-LAN DHCP DNS-filtering path. Diversion and uiDivStats are no longer active; ASUS DNS Privacy/Stubby is disabled; stale NextDNS hook logic is removed. The final reboot validated both swap files, Tailscale, Pi-hole, Unbound, main-LAN DHCP DNS, blocking, DNSSEC negative behavior and active-lease reverse DNS.
 
-The source-controlled issue #108 Fedora collector has now been live-validated, including prepared-batch recovery, recurring systemd collection, a controlled SSH-transport outage, catch-up after transport restoration, duplicate-free ordering and checkpoint consistency. The next execution step is local Loki/Alloy integration plus bounded retention/storage-growth validation before the Grafana DNS dashboard. After that baseline exists, correlate the remaining dnsmasq/Tailscale interception paths and continue the separate measurement-first DoH/DoQ/application-resolver assessment under #68. Any decision to route those interception paths through Pi-hole remains a later datapath change with its own rollback and live validation. Public evidence remains sanitized and deployment-specific identifiers stay private.
+The source-controlled issue #108 Fedora collector, local Alloy/Loki ingestion and the Grafana DNS dashboard are live-validated. A controlled Fedora reboot also returned the complete path automatically; the post-reboot collector integrity check remained duplicate-free and a final seven-day equality check matched 12,183 source events to 12,183 Loki events. After that baseline exists, correlate the remaining dnsmasq/Tailscale interception paths and continue the separate measurement-first DoH/DoQ/application-resolver assessment under #68. Any decision to route those interception paths through Pi-hole remains a later datapath change with its own rollback and live validation. Public evidence remains sanitized and deployment-specific identifiers stay private.
