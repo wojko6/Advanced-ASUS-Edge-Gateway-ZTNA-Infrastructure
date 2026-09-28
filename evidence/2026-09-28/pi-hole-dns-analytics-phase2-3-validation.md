@@ -183,16 +183,52 @@ This validates automatic recovery of the complete tested path:
 Pi-hole -> SSH tunnel -> collector -> NDJSON -> Alloy -> Loki -> Grafana
 ```
 
+## Two-client acceptance and Tailscale coverage boundary
+
+A controlled two-client test was performed with synthetic DNS markers.
+
+The first Windows test was intentionally useful as a coverage check: with
+Tailscale active, the synthetic query was visible on `tailscale0` but absent
+from both Pi-hole memory/disk API history and the Fedora collector dataset.
+This is consistent with the already documented Tailscale classic-DNS path that
+terminates at firmware dnsmasq rather than Pi-hole.
+
+After disabling Tailscale on that Windows client, both controlled main-LAN
+clients were distinguishable in the Pi-hole-visible collector dataset:
+
+```text
+FEDORA7_EVENTS=1
+WINDOWS7_EVENTS=4
+DISTINCT_CLIENTS=2
+CLIENTS_ARE_DISTINCT=True
+```
+
+The higher Windows event count is not treated as a defect; the acceptance
+criterion is client distinguishability rather than an exact one-query/one-event
+count.
+
+The Tailscale capture was summarized without publishing client addresses or
+private query history:
+
+```text
+WINDOWS_QUERY_ON_TAILSCALE0=True
+WINDOWS_QUERY_PACKET_LINES=4
+PIHOLE_ALIAS_BYPASS_CONFIGURED=True
+```
+
+This gives evidence-backed confirmation that the current Pi-hole analytics
+dataset does not include the tested Tailscale classic-DNS path.
+
 ## Result
 
-**PASS — Phase 2 Alloy/Loki ingestion, the Phase 3 Grafana dashboard and full
-Fedora reboot persistence are live-validated for the tested environment.**
+**PASS — Phase 2 Alloy/Loki ingestion, the Phase 3 Grafana dashboard, full
+Fedora reboot persistence and controlled two-client main-LAN acceptance are
+live-validated for the tested environment.**
 
 Still outstanding before issue #108 can be considered complete:
 
 - longer-term storage-growth measurement;
 - proof that seven-day retention actually expires data as configured;
-- controlled two-client acceptance evidence in the final analytics view;
 - rollback/uninstall validation;
-- explicit coverage-gap correlation for dnsmasq/Tailscale and encrypted-DNS
-  paths.
+- remaining coverage-gap correlation for the LAN hard-coded classic-DNS path
+  and the separate encrypted-DNS work tracked under issue #68.
