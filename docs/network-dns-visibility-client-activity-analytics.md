@@ -1,6 +1,6 @@
 # Network DNS Visibility / Client Activity Analytics
 
-**Status:** planned redesign after the 2026-09-28 Pi-hole main-LAN migration. No Loki/Alloy analytics deployment or live dashboard validation is claimed by this document.
+**Status:** implementation plan aligned with the 2026-09-28 Pi-hole main-LAN reference architecture. Phase 0 read-only preflight is the next execution step. No Loki/Alloy analytics deployment or live dashboard validation is claimed by this document.
 
 Tracking issue: #108.
 
@@ -169,7 +169,7 @@ preflight before implementation.
 
 ## Phase 0 — read-only Pi-hole preflight
 
-Before installing Loki/Alloy or changing router configuration:
+Before installing Loki/Alloy or changing router configuration, complete this phase against the deployed Pi-hole build and record sanitized evidence:
 
 1. identify the exact Pi-hole FTL database location and owner/mode;
 2. confirm the live schema/view needed for timestamp, client, domain, query
@@ -182,7 +182,7 @@ Before installing Loki/Alloy or changing router configuration:
 7. define a monotonic cursor or equivalent incremental-ingestion key;
 8. confirm which fields can be normalized without publishing private data.
 
-No Loki, Alloy or router-side logging change is required to complete this phase.
+No Loki, Alloy or router-side logging change is required to complete this phase. A failed or ambiguous schema/read-safety preflight blocks later analytics deployment rather than being worked around with broad router query logging.
 
 ## Phase 1 — bounded Fedora collector
 

@@ -200,6 +200,30 @@ For amtm Unbound Manager, treat `/opt/var/lib/unbound/unbound.conf` as the gener
 
 With amtm, `post-mount` sources `mount-entware.mod`, which already runs `rc.unslung`. Keep `EDGE_RUN_RC_UNSLUNG="0"` so the project does not launch a parallel Entware startup. The project waits for NTP readiness and a configurable quiet interval after amtm startup activity and preserves a stable Unbound or syslog-ng process. If amtm does not leave Unbound running, recovery validates the generated configuration and starts `/opt/sbin/unbound` directly. Validation and launch receive a command-scoped `LD_LIBRARY_PATH=/opt/lib:/opt/usr/lib`; this prevents the early-boot loader from pairing Entware's `libunbound` with the older firmware libc, without changing the global environment that `rc.unslung` manages. Recovery intentionally bypasses `S61unbound` because that wrapper restarts dnsmasq after every launch attempt, including a failed one, which can feed the boot-time socket race. Before direct recovery it removes the Unbound PID file only when no Unbound process exists. Required-service failures are returned as a non-zero `services-start` status instead of being masked. Set `EDGE_RUN_RC_UNSLUNG="1"` only on deployments where no external hook owns Entware startup. Inspect `/tmp/asus-edge-entware-start.log`, `/tmp/asus-edge-unbound-start.log`, or `/tmp/asus-edge-syslog-ng-start.log` when startup fails.
 
+## DNS analytics operational boundary
+
+Issue #108 is an **off-router observability change**, not a resolver-policy change.
+
+The first implementation phase should leave Pi-hole, dnsmasq, Unbound, DHCP and
+firewall rules unchanged. Perform the read-only Pi-hole FTL database/schema
+preflight first, then place collector checkpoint state and any Alloy/Loki state
+on Fedora.
+
+Operational rules:
+
+- never write collector state into the Pi-hole database;
+- do not enable broad dnsmasq query logging merely to duplicate Pi-hole data;
+- fail visibly on Pi-hole schema drift instead of guessing field meanings;
+- keep domain/client values out of persistent high-cardinality Loki labels;
+- keep raw household query history and the live FTL database private;
+- test collector restart/checkpoint behavior before enabling long retention;
+- measure router CPU/RAM/I/O during extraction and stop if read pressure is
+  material;
+- treat dnsmasq/Tailscale and encrypted-DNS coverage as separate measurement
+  phases, not as implied coverage of the initial dashboard.
+
+See [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
+
 ## Tailscale OOM during boot
 
 On this low-memory 32-bit router, `tailscaled` has previously failed with `out of memory

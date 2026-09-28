@@ -183,8 +183,10 @@ See [centralized logging with mTLS](docs/centralized-logging.md) for the trust m
 Issue #108 now follows the adopted Pi-hole architecture instead of assuming
 dnsmasq query logs are the primary source. The first planned dataset is the
 query history already recorded by Pi-hole FTL for DHCP-managed main-LAN
-clients. A bounded read-only Fedora collector will normalize incremental events
-for local Grafana Alloy -> Loki -> the existing Grafana instance.
+clients. The next implementation step is a read-only preflight of the deployed
+FTL database/schema and a bounded incremental Fedora collector; only after that
+preflight passes should local Grafana Alloy -> Loki -> the existing Grafana
+instance be added.
 
 This extension is **not yet live-validated**. It intentionally keeps the
 current router datapath unchanged and does not claim visibility into the
@@ -218,7 +220,7 @@ On 2026-09-22, a live exit-node validation established the reference deployment'
 
 The 2026-09-08 LTE/5G validation observed behavior consistent with the intended remote DNS path:
 
-`Android remote client -> Tailscale tunnel -> router dnsmasq/Diversion -> Unbound on loopback:53535 -> recursive DNS`
+`Android remote client -> Tailscale tunnel -> router dnsmasq -> Unbound on loopback:53535 -> recursive DNS` **(historical/current Tailscale interception path; Diversion was removed from the active stack on 2026-09-28)**
 
 That historical result remains bounded to what was measured on that date. On **2026-09-22**, the previously unresolved Fedora/Android exit-node DNS datapath was re-tested with unique classic-DNS queries sent intentionally to an external resolver address. Read-only packet captures and `EDGE_TS_PREROUTING` counters validated UDP/53 and TCP/53 interception from Fedora, forwarding from dnsmasq to Unbound on `127.0.0.1:53535`, and equivalent controlled classic-DNS behavior from an Android client on LTE/5G with the ASUS selected as exit node.
 

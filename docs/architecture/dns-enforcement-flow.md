@@ -79,6 +79,24 @@ flowchart TD
 - DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted
   resolvers and IPv6 resolver paths remain separate assessment items.
 
+## DNS analytics visibility boundary
+
+Issue #108 builds analytics from the query history already recorded by Pi-hole
+FTL for the validated DHCP-managed main-LAN path. That is an observability
+overlay, not a change to the resolver datapath shown above.
+
+The initial dashboard must therefore describe its dataset as
+**Pi-hole-visible DNS activity**. Queries redirected to firmware dnsmasq by the
+existing LAN/Tailscale interception paths, and encrypted-DNS traffic that
+bypasses the local resolver, are not automatically present in that dataset.
+They require separate coverage measurements before they can be represented as
+part of one combined view.
+
+No broad dnsmasq query logging should be enabled solely to duplicate Pi-hole
+history before the read-only FTL preflight is complete.
+
+See [Network DNS Visibility / Client Activity Analytics](../network-dns-visibility-client-activity-analytics.md).
+
 ## 2026-09-28 Pi-hole cutover validation
 
 The reference main LAN completed a staged Pi-hole migration:
