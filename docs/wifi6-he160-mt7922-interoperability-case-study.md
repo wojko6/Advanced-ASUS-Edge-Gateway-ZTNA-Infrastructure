@@ -382,6 +382,37 @@ wl1_bw_switch_160:        0
 The `bw_switch_160` values were part of the temporary controlled experiment and
 were not committed with `nvram commit`.
 
+## Operational follow-up — faster 5 GHz startup
+
+After the HE80/HE160 interoperability investigation, the reference 5 GHz radio
+was moved to a simpler non-DFS operating profile for normal use:
+
+```text
+channel:       36
+channel width: 20/40/80 MHz
+160 MHz:       disabled
+mode:          HE / 802.11ax
+security:      WPA3-Personal
+```
+
+The previous normal configuration used channel 100 with 160 MHz enabled. That
+placed the radio in DFS operation and could delay 5 GHz availability after a
+router restart while the access point completed the required DFS/CAC checks.
+
+After changing to channel 36 with 160 MHz disabled, the operator performed a
+router restart and observed that the 5 GHz network became available
+**noticeably faster**.
+
+This is retained as a bounded operational observation rather than a timed boot
+benchmark: no exact before/after startup interval was measured. The result is
+consistent with avoiding DFS/CAC startup delay on the normal-use profile, but it
+does not retroactively prove that DFS was the cause of the earlier HE160
+throughput problem.
+
+The current operational choice also aligns with the controlled throughput
+results in this case study: HE80 was the stable high-performance state for the
+tested MT7922 client, whereas HE160 remained substantially worse on that client.
+
 ## Limitations
 
 This was a controlled troubleshooting exercise on one reference router and a
