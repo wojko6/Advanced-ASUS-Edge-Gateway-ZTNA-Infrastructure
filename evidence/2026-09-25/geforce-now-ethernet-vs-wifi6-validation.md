@@ -230,9 +230,11 @@ game frame rate:     99 FPS
 stream frame rate:   97 FPS
 ```
 
-The GeForce NOW overlay displayed `WiFi 5.0` as its transport label, but
-the operating system directly reported HE/802.11ax. The link-layer
-classification in this evidence therefore follows `iw`.
+The GeForce NOW overlay displayed `WiFi 5.0`. In this overlay, `5.0` denotes
+the 5 GHz radio band; it is **not** a Wi-Fi generation label and should not be
+read as Wi-Fi 5 / 802.11ac. Linux `iw` independently identified the actual
+link mode as HE / 802.11ax (Wi-Fi 6), so there is no conflict between the two
+observations.
 
 ## Later same-day observational follow-up
 

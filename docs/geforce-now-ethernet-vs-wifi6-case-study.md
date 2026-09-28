@@ -184,9 +184,11 @@ The `rx drop misc` value is a driver/kernel interface statistic and is
 not equivalent to 743 lost GeForce NOW packets. It is therefore recorded
 as an observation only.
 
-The GeForce NOW overlay labeled the transport as `WiFi 5.0`, while
-Linux `iw` directly reported HE/802.11ax parameters. For this case study,
-`iw` is used as the link-layer source of truth.
+The GeForce NOW overlay displayed `WiFi 5.0`, where `5.0` denotes the
+5 GHz radio band rather than the Wi-Fi generation. It therefore does **not**
+mean Wi-Fi 5 / 802.11ac and does not contradict the Linux `iw` telemetry.
+The operating system directly reported HE / 802.11ax, so the tested wireless
+link is correctly documented as Wi-Fi 6 on 5 GHz.
 
 ## Wired GeForce NOW packet capture
 
