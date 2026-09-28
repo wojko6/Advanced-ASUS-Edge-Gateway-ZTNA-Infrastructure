@@ -150,7 +150,7 @@ From a LAN/serial recovery session:
 service restart_firewall
 ```
 
-`uninstall.sh` removes the project-owned IPv4 and IPv6 runtime chains/jumps and restores a preserved pre-project hook only when the current hook is marked as ASUS Edge managed. It intentionally leaves the project configuration and backups in place for review. It does **not** itself restart the firmware firewall, stop Tailscale/Unbound/syslog-ng, remove packages, erase Tailscale state, or delete unrelated router configuration. Treat `service restart_firewall` as a separate recovery action and verify the resulting state locally.
+`uninstall.sh` removes the project-owned IPv4 and IPv6 runtime chains/jumps and restores a preserved pre-project hook only when the current hook is marked as ASUS Edge managed. It intentionally leaves the project configuration and backups in place for review. It does **not** itself restart the firmware firewall, stop Pi-hole/Tailscale/Unbound/syslog-ng, remove packages, erase Tailscale state, or delete unrelated router configuration. Treat `service restart_firewall` as a separate recovery action and verify the resulting state locally.
 
 If hook restoration or managed-hook removal fails, `uninstall.sh` returns non-zero and reports an incomplete uninstall. Do not continue with a remote-only recovery assumption; inspect `/jffs/scripts` through local access before deciding whether to restart the firewall.
 
