@@ -213,6 +213,24 @@ The defaults provide at least 30 days of retained logs. Override `ASUS_EDGE_LOG_
 
 Collector-only maintenance does not modify the router, but intentionally stopping the collector can still change the behavior being observed by exercising the router's reliable buffer. During any future declared unchanged-state observation, avoid deliberate collector outages if the goal is to preserve an unchanged end-to-end logging state.
 
+## DNS analytics integration boundary
+
+The validated syslog-ng + Tailscale + mTLS path remains the project source of
+truth for centralized **system logs**.
+
+After the 2026-09-28 Pi-hole migration, issue #108 no longer assumes that broad
+dnsmasq query logging should be enabled and forwarded here as the primary DNS
+analytics source. Pi-hole FTL already records normalized query history for the
+DHCP-managed main-LAN path, so the preferred design is a bounded read-only
+extractor on Fedora feeding local Alloy/Loki/Grafana.
+
+This logging path may later provide **supplemental** evidence for DNS traffic
+that still terminates at firmware dnsmasq, but only after a read-only preflight
+shows that doing so adds useful coverage without duplicating the Pi-hole
+dataset or increasing router log load unnecessarily.
+
+See [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
+
 ## Operational boundaries
 
 mTLS authenticates the sending router but does not replace Tailscale policy. Restrict port 6514 to the intended router identity in Tailscale Grants or ACLs. Retain the source-address filter as defense in depth.
