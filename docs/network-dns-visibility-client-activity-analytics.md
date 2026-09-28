@@ -1,6 +1,6 @@
 # Network DNS Visibility / Client Activity Analytics
 
-**Status:** Phase 0 read-only preflight and Phase 1 Fedora collector live validation passed on 2026-09-28. Loki/Alloy ingestion, longer-term retention/storage validation and the Grafana DNS dashboard remain pending.
+**Status:** Phase 0 read-only preflight, Phase 1 Fedora collector, Phase 2 Alloy/Loki ingestion and the Phase 3 Grafana dashboard were live-validated on 2026-09-28. Longer-term retention/storage, reboot/rollback and coverage-gap validation remain pending.
 
 Tracking issue: #108.
 
@@ -240,16 +240,24 @@ Responsibilities:
 The collector must not modify Pi-hole configuration, Gravity, FTL state or the
 query database.
 
-## Phase 2 — Fedora analytics backend
+## Phase 2 — Fedora analytics backend — LIVE VALIDATED
 
-Planned components:
+Validated components:
 
-- Grafana Alloy for local ingestion;
-- Loki for local log storage/query;
+- Grafana Alloy 1.20.0 for local file ingestion;
+- Loki 3.7.8 for local TSDB/filesystem log storage and query;
 - the existing Grafana instance for visualization.
 
-Loki and Alloy remain off-router and should bind locally unless a separately
-reviewed access requirement is introduced.
+Alloy HTTP and Loki HTTP/gRPC are bound to loopback only. Loki is configured
+with seven-day retention, disabled analytics reporting and local storage under
+`/var/lib/loki`.
+
+A bounded end-to-end equality check matched 11,116 source events to 11,116
+Loki events. A label audit confirmed that domain, client IP/name, query ID and
+upstream are not persistent Loki labels.
+
+Sanitized evidence:
+[`evidence/2026-09-28/pi-hole-dns-analytics-phase2-3-validation.md`](../evidence/2026-09-28/pi-hole-dns-analytics-phase2-3-validation.md).
 
 ### Label-cardinality rule
 
@@ -266,9 +274,10 @@ Prefer low-cardinality labels such as:
 
 Client/domain values should remain parsed fields available at query time.
 
-## Phase 3 — Grafana dashboard
+## Phase 3 — Grafana dashboard — LIVE VALIDATED
 
-Planned views for the Pi-hole-visible dataset:
+The provisioned dashboard `Pi-hole — Aktywność DNS v2` implements the
+following views for the Pi-hole-visible dataset:
 
 - DNS queries over time;
 - top queried domains;
@@ -281,8 +290,14 @@ Planned views for the Pi-hole-visible dataset:
 - recent DNS activity;
 - an explicit coverage panel describing traffic not represented by Pi-hole.
 
-The dashboard title and descriptions must make the scope obvious:
+The dashboard title and descriptions keep the scope explicit:
 **Pi-hole-visible DNS activity**, not complete household web history.
+
+A source check also confirmed that `IN_PROGRESS` rows can persist identically
+in Pi-hole RAM and disk views, so that status is displayed separately rather
+than reclassified downstream. The reply-latency panel was validated against a
+private NDJSON calculation after correcting an initial P95 query that had
+accidentally selected the observed maximum.
 
 ## Phase 4 — coverage-gap correlation
 
