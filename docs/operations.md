@@ -133,7 +133,9 @@ After any actual router restore, do not treat file copy success as service recov
 - required swap in `/proc/swaps`;
 - Tailscale daemon/runtime version and intentional `netfilter-mode=off`;
 - Unbound runtime ownership, configuration, loopback:53535 listener and direct DNSSEC resolution;
-- dnsmasq-to-Unbound forwarding;
+- Pi-hole dedicated LAN alias and FTL service state;
+- main-LAN DHCP advertises only Pi-hole, with ordinary resolution, synthetic blocking, DNSSEC-negative and active-lease reverse-DNS checks;
+- Pi-hole-to-Unbound forwarding plus the separate dnsmasq-to-Unbound interception/local path;
 - project firewall chain ownership/default-deny behavior;
 - final `/jffs/addons/asus-edge/bin/healthcheck.sh`.
 
@@ -171,7 +173,22 @@ Entware may not retain a previous package version. Download/retain the known-goo
 
 ## Resolver ownership
 
-Use exactly one active upstream path behind dnsmasq. The validated reference path is `dnsmasq → Unbound:53535`. If another DNS component manages `dnsmasq.postconf`, verify whether it redirects dnsmasq to a different local listener; in that state Unbound may be healthy but unused by clients.
+The current reference design has **two local resolver front ends with one
+validating upstream**:
+
+- DHCP-managed main-LAN clients -> Pi-hole FTL -> Unbound:53535;
+- firmware dnsmasq -> Unbound:53535 for DHCP/local naming support and the
+  existing classic-DNS interception/Tailscale-local listener paths.
+
+Main-LAN DHCP must advertise only the dedicated Pi-hole resolver. Pi-hole DHCP
+remains disabled.
+
+Do not collapse these roles during maintenance merely because both front ends
+use the same Unbound upstream. Before changing `dnsmasq.postconf`, Pi-hole
+listener addressing or DHCP option 6, review
+[dns-enforcement-flow.md](architecture/dns-enforcement-flow.md) and the
+[Pi-hole case study](pi-hole-on-router-case-study.md). A healthy Unbound process
+does not prove that either front-end path is wired correctly.
 
 For amtm Unbound Manager, treat `/opt/var/lib/unbound/unbound.conf` as the generated runtime configuration. Do not replace it with the standard Entware example. Back up and review both the manager hook and runtime configuration before changes.
 
