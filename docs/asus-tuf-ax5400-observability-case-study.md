@@ -159,3 +159,22 @@ entries.
 
 This case validates rule evaluation and recovery only. External notification
 delivery is a separate future step.
+
+
+## Planned extension — Pi-hole DNS activity analytics
+
+The validated observability baseline above remains unchanged. Issue #108 is a
+separate future-state extension that reuses the same **off-router processing**
+principle.
+
+After the 2026-09-28 main-LAN migration, the preferred source is Pi-hole FTL
+query history rather than broad dnsmasq query logging. The planned collector
+will read that source incrementally and read-only from Fedora, then feed local
+Grafana Alloy -> Loki -> the existing Grafana instance.
+
+This extension is not part of the live-validated case study yet. Its first
+dataset is intentionally limited to DHCP-managed main-LAN queries that traverse
+Pi-hole, and it must display the current dnsmasq/Tailscale/encrypted-DNS
+coverage gaps explicitly.
+
+See [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
