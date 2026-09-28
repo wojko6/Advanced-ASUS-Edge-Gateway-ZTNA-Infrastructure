@@ -99,6 +99,36 @@ solely from a decoder implementation label, and do not infer that a specific
 stream used hardware decode solely because the browser reports generic
 hardware-video-decode capability.
 
+## DNS activity analytics evidence
+
+The planned issue #108 pipeline treats DNS query history as sensitive operational
+data.
+
+Public evidence should use a short controlled window with synthetic domains and
+at least two controlled client aliases. Record only what is needed to prove:
+
+- the Pi-hole source schema/view used by the collector;
+- read-only incremental extraction and checkpoint behavior;
+- correct timestamp/client/domain/query-type parsing;
+- block/cache/forward status where supported by the source;
+- router CPU/RAM/DNS-latency impact during the bounded test;
+- Fedora collector/Alloy/Loki service state and local-only exposure;
+- restart/outage recovery;
+- explicit coverage gaps for dnsmasq interception, Tailscale and encrypted DNS.
+
+Do **not** publish:
+
+- the live Pi-hole/FTL database;
+- raw household query history;
+- real household client IP/MAC/hostnames;
+- private client-to-person mappings;
+- long unsanitized Loki exports;
+- screenshots containing unrelated household domains.
+
+Prefer aggregate counts, synthetic test domains and manually reviewed excerpts.
+If an example needs a client identifier, use a synthetic role such as
+`client-a` / `client-b`.
+
 ## Mobile-telemetry evidence
 
 Mobile telemetry requires a separate test record for each phone. Capture at minimum:
@@ -122,7 +152,7 @@ Before committing evidence:
 1. Review every generated or manually collected file.
 2. Remove public IP addresses, real internal addresses, email addresses, hostnames, usernames, serial numbers, MAC addresses, tokens, keys, collector destinations, cookies, browser/session identifiers, and certificate private material.
 3. Do not publish raw router exports, Tailscale state, browser profiles, exported trust stores, or authentication databases.
-4. Treat packet captures, raw DNS logs, and screenshots as private by default. Publish only purpose-built, minimized, manually inspected extracts.
+4. Treat packet captures, raw DNS logs, Pi-hole/FTL query databases, Loki exports, and screenshots as private by default. Publish only purpose-built, minimized, manually inspected extracts.
 5. State the test date, environment/version information, source role/device, expected result where applicable, observed result, and verdict.
 6. Keep failed results when they explain a later fix; link the correcting commit or issue.
 7. Distinguish **Observed**, **Not observed**, **Not tested**, and **Inconclusive**. Do not convert absence during a short test into a permanent claim.
