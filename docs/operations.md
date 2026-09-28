@@ -202,12 +202,13 @@ With amtm, `post-mount` sources `mount-entware.mod`, which already runs `rc.unsl
 
 ## DNS analytics operational boundary
 
-Issue #108 is an **off-router observability change**, not a resolver-policy change.
+Issue #108 is an **off-router observability capability**, not a resolver-policy change.
 
-The first implementation phase should leave Pi-hole, dnsmasq, Unbound, DHCP and
-firewall rules unchanged. Perform the read-only Pi-hole FTL database/schema
-preflight first, then place collector checkpoint state and any Alloy/Loki state
-on Fedora.
+The deployed analytics path keeps Pi-hole, dnsmasq, Unbound, DHCP and firewall
+ownership unchanged. Collector checkpoint/journal state, the private NDJSON
+spool, Alloy, Loki and Grafana processing remain on Fedora. The tested stack
+survived a controlled Fedora reboot and distinguished two controlled main-LAN
+clients.
 
 Operational rules:
 
@@ -216,11 +217,20 @@ Operational rules:
 - fail visibly on Pi-hole schema drift instead of guessing field meanings;
 - keep domain/client values out of persistent high-cardinality Loki labels;
 - keep raw household query history and the live FTL database private;
-- test collector restart/checkpoint behavior before enabling long retention;
-- measure router CPU/RAM/I/O during extraction and stop if read pressure is
-  material;
-- treat dnsmasq/Tailscale and encrypted-DNS coverage as separate measurement
-  phases, not as implied coverage of the initial dashboard.
+- keep Alloy/Loki HTTP and gRPC listeners loopback-only unless separately
+  reviewed;
+- after Fedora boot, allow Loki to finish ring/WAL recovery before treating an
+  initial `/ready` HTTP 503 as a persistent fault;
+- preserve the collector checkpoint/journal and verify duplicate-free ordering
+  after outages or recovery;
+- measure storage growth before extending the current seven-day Loki retention;
+- treat the hard-coded LAN interception path, Tailscale classic DNS and
+  encrypted-DNS paths as separate coverage domains rather than implied coverage
+  of the Pi-hole dashboard.
+
+The tested Tailscale classic-DNS boundary is now explicit: a controlled Windows
+query carried over `tailscale0` was absent from Pi-hole history, while the same
+client became visible when using the ordinary main-LAN Pi-hole path.
 
 See [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
 
