@@ -198,15 +198,16 @@ Current order:
 
 These revalidations should not introduce broader policy changes. Keep them as bounded measurements with current backups, explicit cleanup for any temporary instrumentation, and sanitized evidence.
 
-## Post-observation router filtering work
+## Historical filtering work and current Pi-hole follow-up
 
-After the completed unchanged-state observation:
+After the completed unchanged-state observation, stronger Diversion filtering was evaluated and the main-LAN path was subsequently migrated to Pi-hole on 2026-09-28. The retained engineering rules now apply to Pi-hole/Gravity policy changes rather than to a pending Diversion expansion:
 
-- Review candidate stronger DNS/content-filtering lists and policies prepared offline, including the curated candidate set derived from the third-party aggregate-list assessment.
-- Baseline false positives before enabling stricter filtering broadly.
-- Deploy changes incrementally with explicit rollback steps; do not make a large external aggregate list a single unreviewed point of policy.
-- Re-run DNSSEC, resolution, firewall, service-health, and recovery validation after each material change.
-- Capture sanitized before/after evidence without overstating what DNS-level filtering can block.
+- review candidate lists/policies offline and avoid making a large external aggregate list a single unreviewed point of policy;
+- baseline false positives before broader filtering changes;
+- deploy list/policy changes incrementally with explicit rollback;
+- re-run DNSSEC, resolution, Pi-hole blocking, DHCP/local-name, firewall, service-health and reboot validation after material resolver-policy changes;
+- capture sanitized before/after evidence without overstating what DNS-level filtering can block;
+- keep issue #108 analytics read-only and separate from filtering-policy changes so observability work does not silently change enforcement.
 
 ## Completed Diversion Large normal-use acceptance
 
