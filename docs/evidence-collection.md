@@ -101,11 +101,13 @@ hardware-video-decode capability.
 
 ## DNS activity analytics evidence
 
-The planned issue #108 pipeline treats DNS query history as sensitive operational
+The deployed issue #108 pipeline treats DNS query history as sensitive operational
 data.
 
-Public evidence should use a short controlled window with synthetic domains and
-at least two controlled client aliases. Record only what is needed to prove:
+Public evidence should use short controlled windows with synthetic domains and
+controlled client roles. The 2026-09-28 two-client acceptance followed this
+pattern and published only aggregate counts/booleans. Record only what is needed
+to prove:
 
 - the Pi-hole source schema/view used by the collector;
 - read-only incremental extraction and checkpoint behavior;
@@ -114,7 +116,8 @@ at least two controlled client aliases. Record only what is needed to prove:
 - router CPU/RAM/DNS-latency impact during the bounded test;
 - Fedora collector/Alloy/Loki service state and local-only exposure;
 - restart/outage recovery;
-- explicit coverage gaps for dnsmasq interception, Tailscale and encrypted DNS.
+- explicit coverage gaps for dnsmasq interception, Tailscale and encrypted DNS;
+- reboot/ingestion equality where persistence is being claimed.
 
 Do **not** publish:
 
