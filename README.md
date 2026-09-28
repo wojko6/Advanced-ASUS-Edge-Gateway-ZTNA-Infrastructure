@@ -35,7 +35,7 @@ Remote access is enforced at two layers:
 
 Current-firmware validation is tied to dated evidence rather than inferred from the diagrams. AUDIT-02 exit-node forwarding/NAT ownership was revalidated on GNUton 388.11 on 2026-09-23, and AUDIT-03 classic IPv4 UDP/TCP port-53 packet correlation was revalidated on the same reference firmware on 2026-09-27. DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted DNS and IPv6 resolver paths remain outside any universal DNS-enforcement claim.
 
-See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy.md), [security limitations](docs/security.md), and the [requirements and acceptance map](docs/requirements.md) for the detailed design, test methods and current validation limits.
+See [architecture](docs/architecture.md), [swap and memory reliability](docs/swap-and-memory-reliability.md), [firewall policy](docs/firewall-policy.md), [security limitations](docs/security.md), and the [requirements and acceptance map](docs/requirements.md) for the detailed design, test methods and current validation limits.
 
 ## Key controls
 
@@ -44,7 +44,7 @@ See [architecture](docs/architecture.md), [firewall policy](docs/firewall-policy
 - Device allowlist for router management and host/port allowlists for LAN access.
 - Fail-closed IPv6 guards until an equivalent granular IPv6 policy is implemented.
 - Classic DNS interception on TCP/UDP 53 through dnsmasq and Unbound.
-- Bounded `/opt` readiness check and startup lock; no package upgrades during boot.
+- Pre-Entware swap activation in the validated live reference boot path, plus bounded `/opt` readiness and startup locking; no package upgrades during boot.
 - Backup, dry-run restore, health checks, mock firewall tests, live tests, and CI.
 - Sanitized evidence collection with explicit separation of automated and live results.
 - Optional mutually authenticated TLS log forwarding with syslog-ng and reliable disk buffering.
