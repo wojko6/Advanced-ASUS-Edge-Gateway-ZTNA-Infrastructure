@@ -46,16 +46,18 @@ Endpoint-side filtering must not be presented as proof that router DNS filtering
 Pi-hole query history can reveal sensitive browsing and application metadata
 even though it does not contain complete HTTPS URLs or page contents.
 
-The planned issue #108 analytics pipeline therefore treats the live Pi-hole
+The deployed issue #108 analytics pipeline therefore treats the live Pi-hole
 query database, real client identifiers and household domains as private
-operational data. Collection must be read-only, indexing/retention stay
-off-router, and public evidence must use controlled synthetic domains,
-aggregates or manually sanitized extracts.
+operational data. Collection is read-only, indexing/retention stay off-router,
+and public evidence uses controlled synthetic domains, aggregates or manually
+sanitized extracts.
 
-Full domains and client identifiers must not be persistent high-cardinality
-Loki labels. The dashboard must also expose resolver-coverage gaps rather than
-imply complete visibility: current dnsmasq interception, Tailscale classic DNS,
-DoH/DoQ, VPN-carried DNS and unvalidated IPv6 paths are separate measurements.
+Full domains and client identifiers are not persistent high-cardinality Loki
+labels. The dashboard also exposes resolver-coverage gaps rather than implying
+complete visibility. The tested Tailscale classic-DNS path is now directly
+confirmed outside Pi-hole history; the hard-coded LAN dnsmasq interception path,
+DoH/DoQ, VPN-carried DNS and unvalidated IPv6 paths remain separate
+measurements.
 
 The analytics plan does not authorize HTTPS interception.
 
