@@ -1,0 +1,40 @@
+logging {
+  level = "info"
+}
+
+loki.source.file "pihole_dns" {
+  targets = [
+    {
+      "__path__" = "/var/lib/pihole-dns-analytics/queries.ndjson",
+      "job"       = "dns-activity",
+      "source"    = "pihole",
+      "dataset"   = "dns-activity",
+    },
+  ]
+
+  forward_to    = [loki.process.pihole_dns.receiver]
+  tail_from_end = false
+}
+
+loki.process "pihole_dns" {
+  stage.json {
+    expressions = {
+      event_time = "time",
+    }
+    drop_malformed = true
+  }
+
+  stage.timestamp {
+    source            = "event_time"
+    format            = "Unix"
+    action_on_failure = "skip"
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://127.0.0.1:3100/loki/api/v1/push"
+  }
+}
