@@ -341,7 +341,7 @@ snbAdSupport=no
 focused denylist entry: sdk-videoplayer.optad360.info
 ```
 
-The correct architectural conclusion is that DNS filtering remains useful for broad network-wide domain suppression, but it must not be presented as complete browser-content or in-app advertising removal. Pi-hole remains a policy/observability candidate rather than a guarantee of perfect ad removal.
+The historical Diversion result established that DNS filtering is useful for broad network-wide domain suppression but is not equivalent to complete browser-content or in-app advertising removal. That conclusion still applies after the 2026-09-28 Pi-hole adoption: Pi-hole is now the active main-LAN filtering/visibility layer, but it is not a guarantee of perfect ad removal or complete client visibility.
 
 Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
@@ -349,4 +349,4 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 As of 2026-09-28, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with Unbound 1.26.1 and Pi-hole adopted for the main-LAN DHCP DNS-filtering path. Diversion and uiDivStats are no longer active; ASUS DNS Privacy/Stubby is disabled; stale NextDNS hook logic is removed. The final reboot validated both swap files, Tailscale, Pi-hole, Unbound, main-LAN DHCP DNS, blocking, DNSSEC negative behavior and active-lease reverse DNS.
 
-The next DNS/security work is not another filtering-stack migration. It is to decide whether the existing classic-DNS interception paths should also be routed through Pi-hole, and to continue the separate measurement-first DoH/DoQ/application-resolver assessment. Public evidence remains sanitized and deployment-specific identifiers stay private.
+The next execution step is issue #108: build the read-only Pi-hole-visible DNS activity pipeline on Fedora without changing the validated resolver path. After that baseline exists, correlate the remaining dnsmasq/Tailscale interception paths and continue the separate measurement-first DoH/DoQ/application-resolver assessment under #68. Any decision to route those interception paths through Pi-hole remains a later datapath change with its own rollback and live validation. Public evidence remains sanitized and deployment-specific identifiers stay private.
