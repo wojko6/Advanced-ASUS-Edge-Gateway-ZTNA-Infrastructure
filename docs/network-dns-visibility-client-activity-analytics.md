@@ -1,6 +1,6 @@
 # Network DNS Visibility / Client Activity Analytics
 
-**Status:** implementation plan aligned with the 2026-09-28 Pi-hole main-LAN reference architecture. Phase 0 read-only preflight is the next execution step. No Loki/Alloy analytics deployment or live dashboard validation is claimed by this document.
+**Status:** Phase 0 read-only preflight passed on 2026-09-28. A bounded Fedora collector reference implementation is now present in the repository; live service deployment, Loki/Alloy ingestion and dashboard validation are not yet claimed.
 
 Tracking issue: #108.
 
@@ -156,16 +156,17 @@ The preferred collector should:
 - tolerate collector downtime and resume without silently duplicating large windows;
 - keep router CPU, RAM and SSD I/O impact bounded and measured.
 
-The exact Pi-hole database path, schema/view names and safe read method must be
-confirmed in Phase 0 rather than hard-coded from assumptions. The already
-validated `queries` view is a starting point, not a promise of schema stability
-across future Pi-hole versions.
+Phase 0 selected the supported Pi-hole v6 HTTP API instead of direct SQLite
+access. The API is reached from Fedora through a loopback-only SSH local
+forward, so the application password and session ID are not sent as cleartext
+HTTP across the LAN. No new Pi-hole listener was added.
 
-A restricted read-only SSH command is the preferred transport candidate because
-the project already uses read-only SSH collection for external observability and
-it requires no additional analytics listener. If the live Pi-hole build exposes
-a safer supported read-only interface, that option should be evaluated during
-preflight before implementation.
+The validated collector model uses the first query ID actually returned by each
+source as that source's frozen pagination cursor. This is important for
+`disk=true`: the response-level cursor is global and can be newer than the
+latest row already flushed to disk. The collector therefore unions the
+source-local disk snapshot with the current in-memory snapshot and deduplicates
+by query ID before advancing its Fedora-side checkpoint.
 
 ## Phase 0 — read-only Pi-hole preflight
 
@@ -184,7 +185,34 @@ Before installing Loki/Alloy or changing router configuration, complete this pha
 
 No Loki, Alloy or router-side logging change is required to complete this phase. A failed or ambiguous schema/read-safety preflight blocks later analytics deployment rather than being worked around with broad router query logging.
 
+### Phase 0 result — PASS
+
+Sanitized live evidence is published in
+[`evidence/2026-09-28/pi-hole-api-phase0-preflight.md`](../evidence/2026-09-28/pi-hole-api-phase0-preflight.md).
+
+The deployed Pi-hole v6 API exposed the required timestamp, client, domain,
+query type, status, upstream and reply-time fields. A dedicated application
+password authenticated successfully with `webserver.api.app_sudo=false`.
+
+A 100-row read from memory completed in about 15.6 ms wall time and a 100-row
+`disk=true` read in about 15.2 ms. FTL process swap remained zero and the
+bounded test changed FTL CPU accounting by two ticks. This is evidence for the
+tested sample only, not a long-running performance claim.
+
+The preflight also reproduced a 13-query RAM/disk head gap and demonstrated why
+the global response cursor cannot be used blindly as the first disk checkpoint.
+
+
 ## Phase 1 — bounded Fedora collector
+
+A reference implementation now exists at
+[`monitoring/pihole-dns-collector.py`](../monitoring/pihole-dns-collector.py),
+with systemd user units and a sanitized configuration example under
+`monitoring/`. Repository tests cover the RAM/disk cursor edge case,
+deduplication and prepared-batch crash recovery.
+
+The next step is live Fedora deployment and restart/outage validation; the
+repository does not yet claim that operational validation.
 
 Implement the smallest practical collector on Fedora.
 
