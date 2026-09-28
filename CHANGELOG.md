@@ -23,6 +23,7 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Reconciled the disaster-recovery documentation with the post-Pi-hole reference state and made the new Pi-hole rebuild/alias/filtering recovery gap explicit instead of inheriting the 2026-09-27 clean-room result.
 - Reconciled active project documentation with the 2026-09-28 Pi-hole architecture: DNS activity analytics now use Pi-hole FTL query history as the preferred primary source, while syslog-ng remains the system-log transport and dnsmasq/Tailscale/encrypted-DNS paths are explicit coverage gaps.
 - Corrected the documentation source-of-truth rule so the four source-controlled Mermaid architecture documents are canonical and the old raster Architecture.png is historical only.
 - Refreshed documentation review/status metadata and clarified that remediation is optional for observational/performance case studies.
