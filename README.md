@@ -11,6 +11,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 - Built a consumer-router security edge with Tailscale identity, project-owned default-deny firewall chains, and explicit router/LAN allowlists.
 - Integrated dnsmasq with local Unbound on loopback:53535 and validated DNSSEC with the AD flag after controlled reboots.
 - Migrated main-LAN DNS filtering from Diversion to an on-router Pi-hole/FTL listener while preserving Unbound, firmware DHCP/local naming, rollback evidence and reboot recovery.
+- Built a privacy-bounded Pi-hole DNS analytics pipeline on Fedora using a crash-safe collector, Alloy, Loki and Grafana; live tests covered reboot recovery, two-client attribution and an evidence-backed Tailscale visibility gap.
 - Added install, backup, restore, uninstall, health-check, evidence-collection, WAN-event recovery, and rollback workflows.
 - Migrated the persistent Entware environment from USB flash storage to SSD, restored swap-backed service startup, and directly validated SSD mounts, swap activation, Tailscale, Unbound, and resolver configuration after the controlled reboot.
 - Extended validation into latency-sensitive cloud workloads: compared GeForce NOW over Gigabit Ethernet and Wi-Fi 6, and analyzed an Xbox Cloud Gaming session with browser-native WebRTC RTP, jitter, ICE RTT, frame-delivery, bitrate, and decoder telemetry.
@@ -57,6 +58,7 @@ See [architecture](docs/architecture.md), [swap and memory reliability](docs/swa
 config/             Example runtime configuration and Tailscale policy
 router/scripts/     Asuswrt-Merlin firewall-start and services-start hooks
 scripts/            Install, update, health-check, backup, restore, uninstall
+monitoring/         Fedora observability and Pi-hole DNS analytics reference stack
 tests/              Static, mock-firewall, and live-client tests
 docs/               Architecture, security, operations, testing, and roadmap
 evidence/           Sanitized dated validation artifacts, evidence policy and templates
