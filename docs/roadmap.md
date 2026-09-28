@@ -36,36 +36,35 @@ with mutual TLS, source-restricted firewalld policy, an end-to-end unique
 message, and a short collector-outage recovery test that delivered 3/3 queued
 messages after collector restoration.
 
-**Next execution focus:** issue #108 — build a read-only Pi-hole DNS-activity
-analytics baseline on Fedora. The first milestone is source/schema/resource
-preflight against the already validated Pi-hole query history; Loki/Alloy and
-dashboard work follow only after that succeeds. Issue #68 remains coupled as
-the explicit encrypted-DNS coverage assessment, not as a prerequisite for the
-initial Pi-hole-visible main-LAN dataset. No DNS enforcement change is implied
-by the analytics work.
+**Next execution focus:** finish the remaining issue #108 acceptance work:
+bounded storage/retention observation, rollback/uninstall validation and
+correlation of the hard-coded external classic-DNS LAN interception path. The
+Pi-hole-visible collector, Alloy/Loki backend, Grafana dashboard, Fedora reboot
+persistence and two-client main-LAN distinguishability are already
+live-validated. Issue #68 remains the separate encrypted-DNS coverage
+assessment. No resolver-policy change is implied by the analytics work.
 
-## Planned — Network DNS Visibility / Client Activity Analytics
+## In progress — Network DNS Visibility / Client Activity Analytics
 
-A new planned module is tracked in [issue #108](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/108) and documented in [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
+Issue #108 is tracked in [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
 
-The target is domain-level DNS visibility by time and client for the
-Pi-hole-filtered main-LAN path. After the 2026-09-28 migration, Pi-hole FTL
-query history is the preferred primary source instead of enabling new broad
-dnsmasq query logging. A bounded read-only collector on Fedora should extract
-incremental query metadata and feed local Alloy -> Loki -> the existing Grafana
-instance. Indexing, retention and visualization remain off-router.
+The implemented baseline provides domain-level DNS visibility by time and
+client for the Pi-hole-filtered main-LAN path. Pi-hole FTL query history is the
+primary source; a bounded read-only Fedora collector feeds local
+Alloy -> Loki -> the existing Grafana instance. Indexing, retention and
+visualization remain off-router.
 
 The existing syslog-ng + Tailscale + mTLS path remains authoritative for system
 logs and may later provide supplemental evidence for dnsmasq interception paths;
-it is no longer the default analytics transport assumption.
+it is not the primary Pi-hole analytics transport.
 
-Implementation starts with a Pi-hole database/schema/resource preflight. The
-first accepted dataset is intentionally limited to DHCP-managed main-LAN clients
-that actually traverse Pi-hole. Hard-coded classic-DNS interception, the
-Tailscale redirect and encrypted-DNS paths remain explicit coverage gaps until
-separately measured. The module excludes HTTPS MITM, full URL capture and
-publication of real household browsing data. It is **planned**, not yet
-live-validated.
+The 2026-09-28 live validation covered API preflight, bounded collection,
+transport-outage recovery, Alloy/Loki ingestion, dashboarding, Fedora reboot
+persistence and two controlled main-LAN clients. A controlled Tailscale test
+also confirmed that the current `Tailscale -> dnsmasq -> Unbound` classic-DNS
+path is absent from Pi-hole history. The remaining classic-DNS coverage target
+is the hard-coded external LAN interception path. The module excludes HTTPS
+MITM, full URL capture and publication of real household browsing data.
 
 ## Completed and validated — SSD migration
 
@@ -273,12 +272,13 @@ See:
 - [single-client pilot evidence](../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md)
 - [main-LAN cutover and final reboot evidence](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
 
-Follow-up work now starts with #108: reuse the validated Pi-hole query-history
-source for read-only client/domain analytics on Fedora without changing the
-working main-LAN resolver path. After that baseline exists, correlate the
-remaining dnsmasq interception/Tailscale paths and continue the separate #68
-encrypted-DNS bypass assessment. Any decision to move interception paths behind
-Pi-hole remains a later datapath change requiring its own rollback and live
+Follow-up work under #108 now focuses on the remaining acceptance gaps:
+storage/retention observation, rollback/uninstall validation and correlation of
+the hard-coded external LAN classic-DNS interception path. The Pi-hole-visible
+Fedora analytics baseline and the tested Tailscale classic-DNS coverage boundary
+are already live-validated. The separate #68 encrypted-DNS bypass assessment
+continues independently. Any decision to move interception paths behind Pi-hole
+remains a later datapath change requiring its own rollback and live
 revalidation. None of these follow-ups invalidate the completed main-LAN DHCP
 migration.
 

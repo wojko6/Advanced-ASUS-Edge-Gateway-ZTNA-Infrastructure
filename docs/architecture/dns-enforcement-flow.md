@@ -85,15 +85,19 @@ Issue #108 builds analytics from the query history already recorded by Pi-hole
 FTL for the validated DHCP-managed main-LAN path. That is an observability
 overlay, not a change to the resolver datapath shown above.
 
-The initial dashboard must therefore describe its dataset as
-**Pi-hole-visible DNS activity**. Queries redirected to firmware dnsmasq by the
-existing LAN/Tailscale interception paths, and encrypted-DNS traffic that
-bypasses the local resolver, are not automatically present in that dataset.
-They require separate coverage measurements before they can be represented as
-part of one combined view.
+The live Grafana dashboard therefore describes its dataset as
+**Pi-hole-visible DNS activity**. Queries redirected to firmware dnsmasq and
+encrypted-DNS traffic that bypasses the local resolver are not automatically
+present in that dataset.
 
-No broad dnsmasq query logging should be enabled solely to duplicate Pi-hole
-history before the read-only FTL preflight is complete.
+The Tailscale boundary is now directly demonstrated: a controlled classic-DNS
+query with Tailscale active was captured on `tailscale0` but absent from
+Pi-hole RAM/disk history and the Fedora collector. With Tailscale disabled, the
+same controlled client was visible through the ordinary main-LAN Pi-hole path.
+The hard-coded external LAN interception path remains to be correlated
+separately.
+
+Broad dnsmasq query logging is not enabled merely to duplicate Pi-hole history.
 
 See [Network DNS Visibility / Client Activity Analytics](../network-dns-visibility-client-activity-analytics.md).
 

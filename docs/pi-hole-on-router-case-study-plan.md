@@ -269,11 +269,13 @@ Pi-hole **was adopted** on 2026-09-28, and the validated FTL query-history
 source is now the preferred primary input to Network DNS Visibility / Client
 Activity Analytics.
 
-Issue #108 has therefore been redesigned around bounded read-only extraction
+Issue #108 was therefore redesigned around bounded read-only extraction
 from Pi-hole to Fedora, followed by local Alloy -> Loki -> Grafana processing.
+That design was subsequently implemented and live-validated on 2026-09-28,
+including Fedora reboot persistence and two-client main-LAN distinguishability.
 The existing centralized syslog-ng + Tailscale + mTLS path remains the
 system-log transport and a possible supplemental source for dnsmasq-only
-coverage gaps; it is no longer the default primary DNS-analytics path.
+coverage gaps; it is not the primary DNS-analytics path.
 
 ## Final deliverable
 

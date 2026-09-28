@@ -26,7 +26,7 @@ The old [Architecture.png](images/Architecture.png) is retained only as a histor
 | Overlay | Tailscale | Encrypted connectivity, subnet advertisement and optional exit routing |
 | Local enforcement | project-owned iptables/ip6tables | Router-service policy, selected LAN access, default-deny forwarding, LAN DNS/DoT controls and fail-closed Tailscale IPv6 guards |
 | DNS | Pi-hole + dnsmasq + Unbound | Main-LAN DHCP filtering on the dedicated Pi-hole listener, firmware DHCP/local naming and classic-DNS interception, recursive resolution and DNSSEC validation |
-| Observability | syslog-ng + off-router Fedora monitoring stack | Authenticated system-log forwarding plus read-only metrics/probes, VictoriaMetrics and Grafana; planned DNS activity analytics remain a separate future-state extension |
+| Observability | syslog-ng + off-router Fedora monitoring stack | Authenticated system-log forwarding, read-only metrics/probes, VictoriaMetrics/Grafana, and the live-validated Pi-hole-visible Alloy/Loki DNS analytics pipeline |
 | Operations | Merlin hooks + project scripts | Startup/recovery coordination, health checks, backup/restore, evidence collection and controlled updates |
 
 ## Ownership boundaries
@@ -53,19 +53,20 @@ The current reference router uses split port-53 ownership. Pi-hole FTL owns a de
 
 The 2026-09-28 cutover does not by itself move the existing LAN/Tailscale interception redirects behind Pi-hole. Hard-coded external classic DNS that is intercepted by the current firewall still terminates at firmware dnsmasq; this remains an explicit follow-up if universal Pi-hole filtering of intercepted classic DNS is desired.
 
-### Planned DNS analytics boundary
+### DNS analytics boundary
 
-Issue #108 is a **future-state observability extension**, not part of the
-validated resolver datapath. Its preferred source is the query history already
-written by Pi-hole FTL for DHCP-managed main-LAN clients. The planned collector
-reads that source incrementally and read-only from Fedora, then keeps Alloy,
-Loki, retention and Grafana processing off-router.
+Issue #108 is a live-validated **off-router observability extension**, not a
+change to the resolver datapath. Its source is the query history already written
+by Pi-hole FTL for DHCP-managed main-LAN clients. The Fedora collector reads
+that source incrementally and read-only; checkpoint/journal state, the private
+NDJSON spool, Alloy, Loki, retention and Grafana processing stay off-router.
 
-The resulting dataset must be described as **Pi-hole-visible DNS activity**.
-It does not automatically include the existing dnsmasq interception path,
-Tailscale classic-DNS redirects or encrypted-DNS bypasses. Those paths remain
-separate coverage measurements and must not be merged into the current
-architecture diagram without live validation.
+The resulting dataset is described as **Pi-hole-visible DNS activity**. It does
+not automatically include firmware-dnsmasq interception paths or encrypted-DNS
+bypasses. A controlled 2026-09-28 test specifically confirmed the Tailscale
+classic-DNS boundary: the query was visible on `tailscale0` but absent from
+Pi-hole history, matching the existing dnsmasq path. The hard-coded external
+LAN interception path remains a separate correlation item.
 
 Current validated IPv4 controls are intentionally scoped:
 

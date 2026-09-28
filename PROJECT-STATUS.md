@@ -149,11 +149,13 @@ See [the case study](docs/asus-tuf-ax5400-observability-case-study.md),
 [reproducible monitoring configuration](monitoring/README.md).
 
 Centralized logging and the initial Grafana alerting baseline are now
-live-validated. Issue #108 Phase 0 is also complete and the Fedora collector
-reference implementation is source-controlled. The next execution focus is
-live collector deployment/restart validation, followed by local Loki/Alloy
-integration and later explicit coverage correlation for dnsmasq/Tailscale and
-issue #68 encrypted-DNS bypass measurement.
+live-validated. Issue #108 has also advanced through the Fedora collector,
+local Alloy/Loki ingestion, the Grafana DNS dashboard, full Fedora reboot
+persistence and controlled two-client main-LAN acceptance. The tested
+Tailscale classic-DNS exclusion is evidence-backed. Remaining #108 work is
+bounded storage/retention observation, rollback/uninstall validation and
+hard-coded external LAN interception correlation; issue #68 remains the
+separate encrypted-DNS bypass assessment.
 
 ## 2026-09-26 HE160 interoperability investigation
 
