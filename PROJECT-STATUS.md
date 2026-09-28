@@ -1,12 +1,12 @@
 # Project status
 
-**Status date:** 2026-09-27
+**Status date:** 2026-09-28
 
-**Latest live router checkpoint:** 2026-09-27
+**Latest live router checkpoint:** 2026-09-28
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** 2026-09-27 work closed; observability, Grafana alerting and centralized mTLS logging completed; next execution phase is measurement-first encrypted-DNS bypass assessment
+**Current phase:** main-LAN Pi-hole migration adopted and reboot-validated; next DNS work is interception-path alignment and the measurement-first encrypted-DNS bypass assessment
 
 ## Executive status
 
@@ -21,6 +21,20 @@ On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_
 The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Unbound/DNSSEC integration, dnsmasq integration, syslog-ng logging, project-owned least-privilege firewall chains, recovery tooling, health checks, evidence collection, and automated repository validation.
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
+
+## 2026-09-28 Pi-hole main-LAN migration
+
+The reference main LAN now uses Pi-hole running directly on the ASUS router through Entware as its DHCP-advertised DNS-filtering service. Unbound remains the validating upstream resolver, while firmware dnsmasq remains responsible for DHCP, local/reverse naming and the existing project classic-DNS interception endpoint.
+
+The migration was staged from the previously accepted Diversion baseline. The controlled work validated a dedicated Pi-hole listener, single-client query history, DNSSEC behavior through Unbound, OISD blocking-list parity, corrected local A/B latency measurements, normal-use query statistics, DHCP cutover and reverse DNS. After the cutover, uiDivStats, Diversion, ASUS DNS Privacy/Stubby and inactive NextDNS hook logic were removed from the active stack.
+
+An intermediate reboot exposed a real recovery fault: both SSD swap files existed but the current `post-mount` hook no longer executed `swapon`. Tailscale therefore failed to start and the Go runtime reported an out-of-memory heap-arena allocation failure. Manual swap activation immediately restored Tailscale. The hook was corrected to activate each mounted `myswap.swp` before the AMTM Entware startup path, and the next clean reboot returned both swap files, Tailscale, Pi-hole, Unbound and the main-LAN DHCP DNS policy automatically.
+
+The final checkpoint observed approximately 128 MiB memory available; Pi-hole FTL was about 10 MiB RSS, Unbound about 17 MiB RSS and tailscaled about 37 MiB RSS, with 0 kB process swap for all three at that point in time.
+
+The claim remains bounded: DHCP-managed main-LAN clients use Pi-hole, but the existing firewall interception of arbitrary external classic DNS and the historical Tailscale redirect still terminate at firmware dnsmasq before Unbound. Those paths require separate revalidation if they are moved behind Pi-hole.
+
+See [the final case study](docs/pi-hole-on-router-case-study.md) and [sanitized cutover evidence](evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md).
 
 ## Historical baseline and subsequent live checks
 
@@ -303,4 +317,6 @@ Sanitized evidence: `evidence/2026-09-22/diversion-ad-blocking-validation.md`.
 
 ## Current decision
 
-As of 2026-09-27, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with Unbound 1.26.1 on the active resolver path. AUDIT-02 remains post-firmware live revalidated, and the Fedora classic-DNS portion of AUDIT-03 is now also current-firmware revalidated with synchronized UDP/TCP packet capture, exact managed REDIRECT deltas and a clean final health check. Diversion `Large + snbAdSupport=no` remains under normal-use observation rather than a permanently accepted filtering baseline. Next: accumulate clean startup/persistence evidence and complete the remaining post-firmware client-validation items.
+As of 2026-09-28, the reference router runs GNUton `3004.388.11_1-gnuton1_tuf` with Unbound 1.26.1 and Pi-hole adopted for the main-LAN DHCP DNS-filtering path. Diversion and uiDivStats are no longer active; ASUS DNS Privacy/Stubby is disabled; stale NextDNS hook logic is removed. The final reboot validated both swap files, Tailscale, Pi-hole, Unbound, main-LAN DHCP DNS, blocking, DNSSEC negative behavior and active-lease reverse DNS.
+
+The next DNS/security work is not another filtering-stack migration. It is to decide whether the existing classic-DNS interception paths should also be routed through Pi-hole, and to continue the separate measurement-first DoH/DoQ/application-resolver assessment. Public evidence remains sanitized and deployment-specific identifiers stay private.
