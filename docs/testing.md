@@ -9,7 +9,7 @@ This repository uses separate validation tracks. A PASS in one track must not be
 - **Remote client** validates end-to-end Tailscale, DNS, firewall, and reachability behaviour from defined client roles.
 - **Endpoint filtering** validates workstation-local content filtering and DNS-path preservation.
 - **Mobile telemetry** records device-specific traffic observations under defined scenarios.
-- **DNS activity analytics** validates the planned read-only Pi-hole -> Fedora -> Alloy/Loki/Grafana pipeline, its privacy boundary, incremental checkpointing and explicit resolver-coverage gaps.
+- **DNS activity analytics** validates the deployed read-only Pi-hole -> Fedora -> Alloy/Loki/Grafana pipeline, its privacy boundary, incremental checkpointing, restart/reboot behavior and explicit resolver-coverage gaps.
 
 The unchanged-state router observation was closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22. Subsequent state-changing router tests remain planned maintenance actions; read-only packet/counter inspection can be used independently when it is sufficient.
 
@@ -120,6 +120,13 @@ Minimum controlled test matrix:
 9. verify Loki/Alloy listeners remain local to Fedora;
 10. remove/rollback the collector and confirm the router resolver path is
     unchanged.
+
+Current 2026-09-28 status: items 1-9 have live evidence within the documented
+Pi-hole-visible scope, including two distinct main-LAN clients, duplicate-free
+restart/outage recovery, loopback-only Alloy/Loki listeners, full Fedora reboot
+persistence and a Tailscale classic-DNS query demonstrated outside Pi-hole
+history. Item 10 remains pending because the complete collector/Alloy/Loki
+rollback/uninstall path has not yet been live-tested.
 
 Do not use real household browsing as the acceptance workload. Prefer synthetic
 domains, controlled test clients and a short defined time window.
