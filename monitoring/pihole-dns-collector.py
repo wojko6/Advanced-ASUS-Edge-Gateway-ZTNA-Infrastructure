@@ -317,13 +317,17 @@ def append_prepared(
     if current == expected:
         if file_segment_sha256(output_path, start, length) != digest:
             raise CollectorError("existing output batch digest mismatch")
-    elif start <= current < expected:
+    elif current == start:
+        # Normal first append or a clean append after the previous batch.
+        # The output file may not exist yet when both values are zero.
+        pass
+    elif start < current < expected:
         with output_path.open("r+b") as fh:
             fh.truncate(start)
             fh.flush()
             os.fsync(fh.fileno())
         current = start
-    elif current != start:
+    else:
         raise CollectorError(
             "output file size changed outside the collector; refusing unsafe recovery"
         )
