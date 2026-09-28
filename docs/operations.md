@@ -36,6 +36,12 @@ Do not treat the router-attached SSD as the only backup merely because it is now
 
 The project backup is deliberately **not** a complete router image. NVRAM, addon ownership, Entware/package reconstruction, storage layout and intentionally excluded authentication state are tracked in the [router disaster-recovery baseline](router-disaster-recovery.md). Keep the private native ASUS/Merlin settings export and at least one verified project archive off-router before a material experiment.
 
+After the 2026-09-28 Pi-hole adoption, the project archive also does **not** yet
+represent a complete Pi-hole rebuild. Treat Pi-hole/FTL package/service state,
+the dedicated LAN alias/startup integration and filtering-policy reconstruction
+as a documented DR follow-up. The live query-history database is private
+operational data and is not required to recover gateway DNS service.
+
 For a sanitized, read-only reconstruction inventory during a planned DR review:
 
 ```sh
