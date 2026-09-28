@@ -142,17 +142,57 @@ Note: the collector field name `reply_time_ms` is historical. The Pi-hole API
 value is in seconds; the dashboard multiplies it by 1000 for millisecond
 display.
 
+## Fedora reboot persistence
+
+A controlled Fedora reboot was performed with the DNS analytics stack enabled.
+
+Before reboot, the private spool contained 11,755 events. After reboot:
+
+- Grafana, Loki, Alloy and Caddy returned to `active`;
+- the Pi-hole SSH tunnel and collector timer returned to `active`;
+- the expected HTTP/gRPC listeners remained bound to loopback;
+- Alloy returned `Alloy is ready.`;
+- Grafana returned `"database": "ok"`;
+- Loki initially returned HTTP 503 while its internal ring/WAL recovery was
+  still converging, then returned `ready` on the next health check;
+- the collector resumed automatically and advanced the spool without manual
+  intervention.
+
+The post-reboot collector integrity check reported:
+
+```text
+EVENT_LINES=12119
+UNIQUE_IDS=12119
+DUPLICATE_IDS=0
+STRICTLY_ASCENDING=True
+FILE_MAX_ID=12119
+CHECKPOINT=12119
+CHECKPOINT_MATCH=True
+```
+
+A final end-to-end catch-up check after services settled reported:
+
+```text
+FILE_7D=12183
+LOKI_7D=12183
+```
+
+This validates automatic recovery of the complete tested path:
+
+```text
+Pi-hole -> SSH tunnel -> collector -> NDJSON -> Alloy -> Loki -> Grafana
+```
+
 ## Result
 
-**PASS — Phase 2 Alloy/Loki ingestion and the Phase 3 Grafana dashboard are
-live-validated for the tested environment.**
+**PASS — Phase 2 Alloy/Loki ingestion, the Phase 3 Grafana dashboard and full
+Fedora reboot persistence are live-validated for the tested environment.**
 
 Still outstanding before issue #108 can be considered complete:
 
 - longer-term storage-growth measurement;
 - proof that seven-day retention actually expires data as configured;
 - controlled two-client acceptance evidence in the final analytics view;
-- Fedora reboot persistence of the complete DNS analytics path;
 - rollback/uninstall validation;
 - explicit coverage-gap correlation for dnsmasq/Tailscale and encrypted-DNS
   paths.
