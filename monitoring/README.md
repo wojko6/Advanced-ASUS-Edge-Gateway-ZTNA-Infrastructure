@@ -110,10 +110,10 @@ See [the alerting validation evidence](../evidence/2026-09-27/grafana-alerting-v
 
 ## Pi-hole DNS activity collector
 
-Issue #108 Phase 0, the Fedora collector, local Alloy/Loki ingestion and the
-first Grafana DNS dashboard were live-validated on 2026-09-28. The complete
-analytics path remains Fedora-side; no Loki/Alloy listener is exposed to LAN or
-WAN.
+Issue #108 Phase 0, the Fedora collector, local Alloy/Loki ingestion, the
+Grafana DNS dashboard, full Fedora reboot persistence and controlled two-client
+main-LAN acceptance were live-validated on 2026-09-28. The complete analytics
+path remains Fedora-side; no Loki/Alloy listener is exposed to LAN or WAN.
 
 The implemented acquisition path is:
 
@@ -183,6 +183,19 @@ equality check matched 11,116 local events to 11,116 Loki events for the tested
 window. Domain/client/upstream values remain parsed fields rather than
 persistent Loki labels.
 
+A controlled Fedora reboot returned Grafana, Loki, Alloy, Caddy, the Pi-hole
+SSH tunnel and the collector timer automatically. The collector remained
+duplicate-free with a matching checkpoint; after the stack settled, the
+seven-day source/Loki equality check matched 12,183 events to 12,183 events.
+Loki may briefly return HTTP 503 from `/ready` while its startup ring/WAL
+recovery converges.
+
+A later controlled two-client test distinguished two separate main-LAN clients
+without publishing their addresses. The same test confirmed the current
+Tailscale coverage boundary: a Windows classic-DNS marker carried over
+`tailscale0` was absent from Pi-hole history, while the client became visible
+when using the ordinary main-LAN Pi-hole path.
+
 The provisioned Grafana dashboard is titled
 `Pi-hole — Aktywność DNS v2`. It includes blocked/cache/forwarded/unfinished
 status, cache-hit rate, reply latency, top domains/clients/upstreams and an
@@ -193,8 +206,10 @@ This pipeline remains separate from the VictoriaMetrics metrics path and the
 syslog-ng mTLS system-log path. Full domain names, client IPs and hostnames must
 remain parsed event fields rather than persistent high-cardinality Loki labels.
 
-The initial scope remains limited to Pi-hole-visible DHCP-managed main-LAN
-traffic. Resolver coverage gaps are documented in
+The scope remains limited to Pi-hole-visible DHCP-managed main-LAN traffic.
+The tested Tailscale classic-DNS path is now an evidence-backed exclusion; the
+hard-coded external LAN interception path and encrypted-DNS paths remain
+separate coverage work. See
 [the analytics plan](../docs/network-dns-visibility-client-activity-analytics.md).
 
 ## Grafana interface language
