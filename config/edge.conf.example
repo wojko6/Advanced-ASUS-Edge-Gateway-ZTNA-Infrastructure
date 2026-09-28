@@ -42,6 +42,14 @@ EDGE_BLOCK_LAN_DOT="0"
 EDGE_DOT_PORT="853"
 
 EDGE_DNS_PORT="53"
+
+# Optional local resolver destinations that LAN classic-DNS enforcement must not
+# redirect back to the router's default port-53 listener. Values are
+# space-separated IPv4 addresses. This is intended for deliberately staged
+# local resolvers, for example Pi-hole on a dedicated LAN alias. Keep empty
+# unless listener ownership, rollback and health checks have been validated.
+EDGE_LAN_DNS_BYPASS_IPS=""
+
 EDGE_UNBOUND_PORT="53535"
 
 # WAN-connected can race with services-start while Unbound is still recovering.

@@ -210,19 +210,39 @@ After the completed unchanged-state observation:
 
 The 2026-09-27 acceptance evidence records completion of these criteria. Future list/profile changes require a new bounded validation rather than inheriting this result automatically. See [issue-65 acceptance evidence](../evidence/2026-09-27/issue-65-diversion-large-normal-use-acceptance.md).
 
-## Planned near-term case study — Diversion vs Pi-hole on-router
+## Active case study — Diversion vs Pi-hole on-router
 
-**Status: planned / near-term — not deployed.**
+**Status: active pilot — single-client and reboot-persistence stages passed on 2026-09-28; no full-LAN cutover yet.**
 
-Issue #80 has been promoted from a generic comparison idea to a controlled
-case study of Pi-hole running directly on the TUF-AX5400 through Entware.
+Issue #80 now tracks a live controlled case study of Pi-hole running directly
+on the TUF-AX5400 through Entware.
 
-The case study will compare the current Diversion + dnsmasq + Unbound baseline
-against an on-router Pi-hole + Unbound candidate, with particular emphasis on
-512 MiB RAM pressure, swap activity, DNS latency/reliability, Gravity/update
-peaks, Tailscale/firewall compatibility, reboot recovery and rollback.
+The staged design keeps firmware dnsmasq + Diversion on the existing router
+address while Pi-hole owns a dedicated LAN alias and forwards allowed queries
+to the existing Unbound loopback listener. The project LAN DNS enforcement was
+extended with a validated local-resolver bypass so intentional traffic to the
+staged Pi-hole listener is not transparently redirected back to firmware
+dnsmasq.
 
-See: [Diversion vs Pi-hole on-router case study plan](pi-hole-on-router-case-study-plan.md).
+The corrected initial A/B latency run used 200 queries per resolver per
+scenario. All 800 measured queries returned valid DNS responses. Diversion was
+faster for the selected blocked-name test (0.54 ms mean versus 0.87 ms), while
+Pi-hole was faster for the warmed clean-name test (1.12 ms mean versus
+2.65 ms). These are bounded local single-client measurements, not a general
+performance verdict.
+
+The controlled reboot restored the Pi-hole alias, FTL, Gravity, managed
+six-rule LAN DNS policy and healthy Unbound path; the project health check
+finished with 0 failures and 0 warnings.
+
+Remaining work includes multi-client/stress testing, Gravity/update resource
+peaks, database/storage growth, WAN reconnect, final local-name/reverse-DNS
+behavior, IPv6/Tailscale validation, rollback rehearsal and broader normal-use
+assessment.
+
+See:
+- [Diversion vs Pi-hole on-router case study plan](pi-hole-on-router-case-study-plan.md)
+- [2026-09-28 sanitized pilot evidence](../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md).
 
 ## Post-observation idea — Pi-hole + Unbound DNS filtering migration
 

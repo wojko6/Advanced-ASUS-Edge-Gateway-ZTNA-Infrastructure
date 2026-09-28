@@ -347,6 +347,36 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
     exit 1
 }
 
+
+grep -F 'EDGE_LAN_DNS_BYPASS_IPS=""' "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+    echo "FAIL: LAN DNS bypass configuration guard missing" >&2
+    exit 1
+}
+
+for lan_dns_bypass_guard in \
+    'EDGE_LAN_DNS_BYPASS_IPS:=}"' \
+    'invalid LAN DNS bypass IPv4' \
+    'LAN DNS bypass UDP return rule failed' \
+    'LAN DNS bypass TCP return rule failed'
+do
+    grep -F "$lan_dns_bypass_guard" "$REPO_DIR/router/scripts/firewall-start" >/dev/null || {
+        echo "FAIL: firewall LAN DNS bypass guard missing: $lan_dns_bypass_guard" >&2
+        exit 1
+    }
+done
+
+for lan_dns_bypass_health_guard in \
+    'EDGE_LAN_DNS_BYPASS_IPS:=}"' \
+    'invalid EDGE_LAN_DNS_BYPASS_IPS IPv4' \
+    'bypass_count = split(bypasses' \
+    'expected_rules = 4 + (2 * bypass_count)'
+do
+    grep -F "$lan_dns_bypass_health_guard" "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: healthcheck LAN DNS bypass guard missing: $lan_dns_bypass_health_guard" >&2
+        exit 1
+    }
+done
+
 grep -F '${EDGE_RUN_LEGACY_HOOKS:-0}' "$REPO_DIR/scripts/install.sh" >/dev/null || {
     echo "FAIL: installer does not gate preserved legacy hooks" >&2
     exit 1

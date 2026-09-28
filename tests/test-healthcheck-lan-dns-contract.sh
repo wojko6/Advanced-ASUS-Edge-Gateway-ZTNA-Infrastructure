@@ -61,6 +61,28 @@ RULES
 -A EDGE_LAN_DNS_PREROUTING -p udp -m udp --dport 53 -j REDIRECT --to-ports 53
 RULES
                 ;;
+            good-bypass)
+                cat <<'RULES'
+-N EDGE_LAN_DNS_PREROUTING
+-A EDGE_LAN_DNS_PREROUTING -d 192.168.50.253/32 -p udp -m udp --dport 53 -j RETURN
+-A EDGE_LAN_DNS_PREROUTING -d 192.168.50.253/32 -p tcp -m tcp --dport 53 -j RETURN
+-A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p udp -m udp --dport 53 -j RETURN
+-A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p tcp -m tcp --dport 53 -j RETURN
+-A EDGE_LAN_DNS_PREROUTING -p udp -m udp --dport 53 -j REDIRECT --to-ports 53
+-A EDGE_LAN_DNS_PREROUTING -p tcp -m tcp --dport 53 -j REDIRECT --to-ports 53
+RULES
+                ;;
+            bad-bypass-order)
+                cat <<'RULES'
+-N EDGE_LAN_DNS_PREROUTING
+-A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p udp -m udp --dport 53 -j RETURN
+-A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p tcp -m tcp --dport 53 -j RETURN
+-A EDGE_LAN_DNS_PREROUTING -d 192.168.50.253/32 -p udp -m udp --dport 53 -j RETURN
+-A EDGE_LAN_DNS_PREROUTING -d 192.168.50.253/32 -p tcp -m tcp --dport 53 -j RETURN
+-A EDGE_LAN_DNS_PREROUTING -p udp -m udp --dport 53 -j REDIRECT --to-ports 53
+-A EDGE_LAN_DNS_PREROUTING -p tcp -m tcp --dport 53 -j REDIRECT --to-ports 53
+RULES
+                ;;
             *)
                 cat <<'RULES'
 -N EDGE_LAN_DNS_PREROUTING
@@ -84,7 +106,8 @@ export PATH
 EDGE_LAN_IF=br0
 EDGE_ROUTER_LAN_IP=192.168.50.1
 EDGE_DNS_PORT=53
-export EDGE_LAN_IF EDGE_ROUTER_LAN_IP EDGE_DNS_PORT
+EDGE_LAN_DNS_BYPASS_IPS=""
+export EDGE_LAN_IF EDGE_ROUTER_LAN_IP EDGE_DNS_PORT EDGE_LAN_DNS_BYPASS_IPS
 
 # shellcheck disable=SC1090
 . "$FUNCS"
@@ -104,6 +127,24 @@ lan_dns_chain_matches_policy || {
     exit 1
 }
 
+EDGE_LAN_DNS_BYPASS_IPS="192.168.50.253"
+export EDGE_LAN_DNS_BYPASS_IPS
+FIXTURE=good-bypass
+export FIXTURE
+lan_dns_chain_matches_policy || {
+    echo "FAIL: valid LAN DNS bypass chain was rejected" >&2
+    exit 1
+}
+
+FIXTURE=bad-bypass-order
+export FIXTURE
+if lan_dns_chain_matches_policy; then
+    echo "FAIL: misordered LAN DNS bypass chain was accepted" >&2
+    exit 1
+fi
+
+EDGE_LAN_DNS_BYPASS_IPS=""
+export EDGE_LAN_DNS_BYPASS_IPS
 FIXTURE=direct-dns
 export FIXTURE
 [ "$(direct_parent_lan_dns_rule_count)" = "1" ] || {

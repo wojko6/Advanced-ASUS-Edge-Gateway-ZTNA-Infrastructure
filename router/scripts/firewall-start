@@ -53,6 +53,7 @@ flock -x 9 || die "cannot acquire firewall lock"
 : "${EDGE_BLOCK_LAN_DOT:=0}"
 : "${EDGE_DOT_PORT:=853}"
 : "${EDGE_DNS_PORT:=53}"
+: "${EDGE_LAN_DNS_BYPASS_IPS:=}"
 : "${EDGE_ALLOWED_LAN_HOSTS:=}"
 : "${EDGE_ALLOWED_LAN_TCP_PORTS:=}"
 : "${EDGE_ALLOWED_LAN_UDP_PORTS:=}"
@@ -113,6 +114,9 @@ valid_interface "$EDGE_TS_IF" || die "invalid Tailscale interface: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || die "invalid LAN interface: $EDGE_LAN_IF"
 [ -z "$EDGE_WAN_IF" ] || valid_interface "$EDGE_WAN_IF" || die "invalid WAN interface: $EDGE_WAN_IF"
 valid_ipv4 "$EDGE_ROUTER_LAN_IP" || die "invalid router LAN IPv4: $EDGE_ROUTER_LAN_IP"
+for dns_bypass_ip in $EDGE_LAN_DNS_BYPASS_IPS; do
+    valid_ipv4 "$dns_bypass_ip" || die "invalid LAN DNS bypass IPv4: $dns_bypass_ip"
+done
 valid_ipv4_cidr "$EDGE_TAILNET_V4_CIDR" || die "invalid tailnet IPv4 CIDR: $EDGE_TAILNET_V4_CIDR"
 for source in $EDGE_ADMIN_TS_SOURCES $EDGE_PRINTER_TS_SOURCES; do
     valid_ipv4_or_cidr "$source" || die "invalid Tailscale source: $source"
@@ -218,6 +222,10 @@ if [ "$EDGE_INTERCEPT_DNS" = "1" ]; then
 fi
 
 if [ "$EDGE_ENFORCE_LAN_DNS" = "1" ]; then
+    for dns_bypass_ip in $EDGE_LAN_DNS_BYPASS_IPS; do
+        "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -d "$dns_bypass_ip/32" -p udp --dport "$EDGE_DNS_PORT" -j RETURN || die "LAN DNS bypass UDP return rule failed: $dns_bypass_ip"
+        "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -d "$dns_bypass_ip/32" -p tcp --dport "$EDGE_DNS_PORT" -j RETURN || die "LAN DNS bypass TCP return rule failed: $dns_bypass_ip"
+    done
     "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -d "$EDGE_ROUTER_LAN_IP/32" -p udp --dport "$EDGE_DNS_PORT" -j RETURN || die "LAN DNS UDP router-return rule failed"
     "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -d "$EDGE_ROUTER_LAN_IP/32" -p tcp --dport "$EDGE_DNS_PORT" -j RETURN || die "LAN DNS TCP router-return rule failed"
     "$IPTABLES" -t nat -A EDGE_LAN_DNS_PREROUTING -p udp --dport "$EDGE_DNS_PORT" -j REDIRECT --to-ports "$EDGE_DNS_PORT" || die "LAN DNS UDP redirect failed"

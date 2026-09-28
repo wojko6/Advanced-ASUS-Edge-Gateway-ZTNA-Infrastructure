@@ -154,9 +154,16 @@ Merge `config/dnsmasq.conf.add.example` with any existing `/jffs/configs/dnsmasq
 
 A controlled 2026-09-22 Diversion comparison tested `Standard + snbAdSupport=yes`, `Standard + snbAdSupport=no`, and `Large + snbAdSupport=no`. Disabling the SNBForums support exception measurably improved blocking, and the Large profile broadened DNS coverage, but representative sites still rendered advertising even while many observed ad-tech hostnames returned `NXDOMAIN` from the Android Tailscale exit-node client.
 
-The accepted current filtering baseline is `Large + snbAdSupport=no` with one focused denylist entry. Issue #65 closed the normal-use acceptance on 2026-09-27 after multi-day representative use, three clean startup cycles, a normal list refresh, LAN and Android-over-Tailscale classic-DNS checks, clean health checks and stable RAM/swap observations. DNS filtering remains useful but is not equivalent to request-level/browser content blocking. Pi-hole remains a future observability and policy-management candidate, not a promise of complete visual-ad removal.
+The accepted current household filtering baseline remains `Large + snbAdSupport=no` with one focused denylist entry. Issue #65 closed the normal-use acceptance on 2026-09-27 after multi-day representative use, three clean startup cycles, a normal list refresh, LAN and Android-over-Tailscale classic-DNS checks, clean health checks and stable RAM/swap observations.
 
-See [the sanitized Diversion validation](evidence/2026-09-22/diversion-ad-blocking-validation.md).
+A staged Pi-hole-on-router case study is now active. On 2026-09-28 a dedicated local Pi-hole listener completed single-client validation, managed-firewall integration, reboot persistence and an initial corrected A/B latency run while the existing dnsmasq/Diversion path remained available for rollback. This does **not** yet represent a full-LAN migration or a decision to replace Diversion.
+
+DNS filtering remains useful but is not equivalent to request-level/browser content blocking, and neither stack is claimed to block all visual or in-application advertising.
+
+See:
+- [the sanitized Diversion validation](evidence/2026-09-22/diversion-ad-blocking-validation.md);
+- [the Pi-hole case-study plan](docs/pi-hole-on-router-case-study-plan.md);
+- [the 2026-09-28 sanitized Pi-hole pilot evidence](evidence/2026-09-28/pi-hole-single-client-pilot-validation.md).
 
 ## Centralized logging
 
