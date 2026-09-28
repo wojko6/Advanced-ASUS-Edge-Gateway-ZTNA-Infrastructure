@@ -218,16 +218,17 @@ Collector-only maintenance does not modify the router, but intentionally stoppin
 The validated syslog-ng + Tailscale + mTLS path remains the project source of
 truth for centralized **system logs**.
 
-After the 2026-09-28 Pi-hole migration, issue #108 no longer assumes that broad
-dnsmasq query logging should be enabled and forwarded here as the primary DNS
-analytics source. Pi-hole FTL already records normalized query history for the
-DHCP-managed main-LAN path, so the preferred design is a bounded read-only
-extractor on Fedora feeding local Alloy/Loki/Grafana.
+After the 2026-09-28 Pi-hole migration, issue #108 does not use broad
+dnsmasq query logging as the primary DNS analytics source. Pi-hole FTL records
+normalized query history for the DHCP-managed main-LAN path, and the
+live-validated implementation uses a bounded read-only Fedora collector feeding
+local Alloy/Loki/Grafana.
 
 This logging path may later provide **supplemental** evidence for DNS traffic
-that still terminates at firmware dnsmasq, but only after a read-only preflight
-shows that doing so adds useful coverage without duplicating the Pi-hole
-dataset or increasing router log load unnecessarily.
+that still terminates at firmware dnsmasq, but only if doing so adds useful
+coverage without duplicating the Pi-hole dataset or increasing router log load
+unnecessarily. A controlled Tailscale classic-DNS test already demonstrated one
+such dnsmasq-only coverage gap without enabling broad query logging.
 
 See [Network DNS Visibility / Client Activity Analytics](network-dns-visibility-client-activity-analytics.md).
 
