@@ -2,7 +2,7 @@
 
 **Status:** CURRENT — reference deployment and planned validation
 
-**Reviewed:** 2026-09-27
+**Reviewed:** 2026-09-28
 
 This map links the existing architecture and test procedures to the reference ASUS TUF-AX5400. The status applies only to the stated test date and path. It does not turn a roadmap proposal, a mock test, or an operator-reported observation into independently captured live evidence. For the latest deployment summary see [project status](../PROJECT-STATUS.md); for detailed test methods see [testing](testing.md).
 
@@ -12,7 +12,7 @@ This map links the existing architecture and test procedures to the reference AS
 | --- | --- | --- |
 | Authorized admin device | Open the router HTTPS panel through Tailscale | Tailscale authorization, exact router firewall source rule and router login |
 | Ordinary tailnet device | Use only approved destinations or exit-node access if entitled | No router management; grants and project firewall remain separate checks |
-| LAN client | Resolve classic DNS through the router | Router dnsmasq and Unbound; direct DoT control applies to the documented IPv4 `br0` path |
+| LAN client | Resolve classic DNS through the router | Main-LAN DHCP advertises Pi-hole; firmware dnsmasq retains local naming and the existing intercepted classic-DNS path; both use Unbound upstream |
 | Router operator | Back up, verify, deploy, check health and recover configuration | Local/LAN access and private recovery copies remain necessary |
 
 ## Functional acceptance
@@ -24,6 +24,7 @@ This map links the existing architecture and test procedures to the reference AS
 | F-03 | An entitled Tailscale client can use exit-node IPv4 routing only through the selected WAN path, with platform NAT and return handling present. | [2026-09-23 post-firmware packet correlation](../evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md) validated the before/after-NAT path on GNUton `3004.388.11_1-gnuton1_tuf`; the [2026-09-27 Android validation](../evidence/2026-09-27/issue-67-android-exit-node-public-ip-validation.md) separately reconfirmed the expected client public-IP behavior after reboot. | **Validated for the tested current-firmware IPv4 path and bounded Android client check.** These tests do not prove every protocol/client. Revalidate after material firmware/firewall/routing changes. |
 | F-04 | On a clean startup the required SSD mounts, swap and project services are available; WPS remains off and unnecessary USB-service listeners are closed. | The [2026-09-27 startup/persistence evidence](../evidence/2026-09-27/issue-66-clean-startup-persistence-evidence.md) records three fresh clean startup cycles after correcting the pre-Entware swap ordering, building on the earlier reboot/USB-exposure checkpoints. | **Validated for the current reference startup path.** AMTM ownership of `post-mount` remains an operational boundary and must be rechecked if the addon rewrites the hook. |
 | F-05 | A project backup passes its sidecar hash and internal manifest checks; restore dry-run accepts it; a controlled failure during restore attempts rollback. | [Router DR baseline](router-disaster-recovery.md) and [2026-09-27 clean-room restore evidence](../evidence/2026-09-27/issue-100-dr-cleanroom-restore-validation.md): off-router sidecar verification, internal manifest validation, dry-run, alternate-root apply, byte-for-byte JFFS/opt comparison, permission-mode comparison and backward-compatible `post-mount` safety all passed. | The project archive intentionally excludes Tailscale authentication/state and is not a firmware image. Native NVRAM/settings recovery remains a separate private artifact, and measured RTO/RPO are not yet claimed. |
+| F-06 | Main-LAN DHCP clients receive only the dedicated Pi-hole resolver; Pi-hole forwards allowed external queries to Unbound, preserves DNSSEC negative behavior, and resolves active local DHCP names through conditional reverse DNS. | [2026-09-28 main-LAN cutover evidence](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md) records DHCP renewal, Pi-hole blocking, Unbound DNSSEC behavior, reverse DNS, duplicate-service removal and final reboot persistence. | **Validated for the main-LAN DHCP path.** The existing hard-coded external classic-DNS and Tailscale interception redirects still terminate at firmware dnsmasq and are not claimed as Pi-hole-filtered paths. |
 
 ## Nonfunctional acceptance and risks
 
@@ -31,7 +32,7 @@ This map links the existing architecture and test procedures to the reference AS
 | --- | --- | --- |
 | N-01 | Treat credentials, node state and raw router evidence as private; only publish minimized, reviewed extracts. | [Publication checklist](evidence-collection.md#publication-checklist) applies; the 2026-09-23 raw backup/evidence copies remain private. |
 | N-02 | Keep recovery copies in a separate failure domain, encrypted and integrity checked; define retention, backup monitoring, then measure recovery time/data loss in a drill. | #100 established verified off-router project backup copies plus a separately encrypted native ASUS/Merlin settings export and a successful clean-room restore. Automated transfer/retention monitoring and measured RTO/RPO remain [planned](roadmap.md). |
-| N-03 | Accept Diversion Large only after five normal-use sessions across multiple days, three clean startups and the remaining [roadmap criteria](roadmap.md#completed-diversion-large-normal-use-acceptance). | **Completed 2026-09-27.** The [acceptance evidence](../evidence/2026-09-27/issue-65-diversion-large-normal-use-acceptance.md) records the required normal-use sessions, startup cycles, list refresh, DNS checks, health results and RAM/swap observations. |
+| N-03 | Preserve the historical Diversion acceptance result while treating the later Pi-hole cutover as a separate migration decision. | **Historical baseline completed 2026-09-27; replaced on the main-LAN DHCP path 2026-09-28.** Diversion acceptance evidence remains valid for the tested historical state, while #80 documents the later Pi-hole adoption. |
 | N-04 | Measure latency, loss, throughput and CPU/RAM before setting performance targets for this platform. | [Performance method](testing.md#performance-baseline) exists and the [GeForce NOW Ethernet/Wi-Fi case study](geforce-now-ethernet-vs-wifi6-case-study.md) provides bounded real-time workload measurements. A later 2026-09-25 wired normal-use observation remained stable for approximately one hour, but no universal throughput, latency or availability objective has been accepted for the platform. |
 
 Future RouterCloud, Pi-hole, alerts and mobile telemetry are proposals in the [roadmap](roadmap.md); they require separate requirements, failure cases and acceptance evidence before being described as deployed capabilities.

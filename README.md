@@ -10,6 +10,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 
 - Built a consumer-router security edge with Tailscale identity, project-owned default-deny firewall chains, and explicit router/LAN allowlists.
 - Integrated dnsmasq with local Unbound on loopback:53535 and validated DNSSEC with the AD flag after controlled reboots.
+- Migrated main-LAN DNS filtering from Diversion to an on-router Pi-hole/FTL listener while preserving Unbound, firmware DHCP/local naming, rollback evidence and reboot recovery.
 - Added install, backup, restore, uninstall, health-check, evidence-collection, WAN-event recovery, and rollback workflows.
 - Migrated the persistent Entware environment from USB flash storage to SSD, restored swap-backed service startup, and directly validated SSD mounts, swap activation, Tailscale, Unbound, and resolver configuration after the controlled reboot.
 - Extended validation into latency-sensitive cloud workloads: compared GeForce NOW over Gigabit Ethernet and Wi-Fi 6, and analyzed an Xbox Cloud Gaming session with browser-native WebRTC RTP, jitter, ICE RTT, frame-delivery, bitrate, and decoder telemetry.
@@ -131,7 +132,9 @@ The installer backs up existing Merlin hooks but does not execute unreviewed leg
 
 ## DNS integration
 
-dnsmasq continues to own port 53 for LAN and `tailscale0`. Unbound listens on `127.0.0.1:53535`, and dnsmasq forwards queries to it. When Tailscale DNS interception is enabled, the active dnsmasq configuration must include `interface=tailscale0`.
+The current reference deployment uses split local DNS ownership. Pi-hole FTL owns TCP/UDP 53 on a dedicated LAN alias advertised to main-LAN DHCP clients. Firmware dnsmasq continues to own the router LAN/Tailscale port-53 sockets for DHCP/local-name duties and the existing project classic-DNS interception path. Both Pi-hole and dnsmasq forward ordinary external resolution to Unbound on `127.0.0.1:53535`. When Tailscale DNS interception is enabled, the active dnsmasq configuration must still include `interface=tailscale0`.
+
+This distinction matters: the 2026-09-28 migration validates Pi-hole for the DHCP-managed main-LAN path, but it does not yet claim that arbitrary hard-coded external classic-DNS or the existing Tailscale redirect is filtered by Pi-hole. Those intercepted paths still terminate at firmware dnsmasq before Unbound and require separate revalidation if moved behind Pi-hole.
 
 For a standard Entware deployment:
 
@@ -154,16 +157,18 @@ Merge `config/dnsmasq.conf.add.example` with any existing `/jffs/configs/dnsmasq
 
 A controlled 2026-09-22 Diversion comparison tested `Standard + snbAdSupport=yes`, `Standard + snbAdSupport=no`, and `Large + snbAdSupport=no`. Disabling the SNBForums support exception measurably improved blocking, and the Large profile broadened DNS coverage, but representative sites still rendered advertising even while many observed ad-tech hostnames returned `NXDOMAIN` from the Android Tailscale exit-node client.
 
-The accepted current household filtering baseline remains `Large + snbAdSupport=no` with one focused denylist entry. Issue #65 closed the normal-use acceptance on 2026-09-27 after multi-day representative use, three clean startup cycles, a normal list refresh, LAN and Android-over-Tailscale classic-DNS checks, clean health checks and stable RAM/swap observations.
+Diversion `Large + snbAdSupport=no` was the accepted historical filtering baseline after issue #65 closed on 2026-09-27. On 2026-09-28 the reference main LAN was then migrated to Pi-hole running directly on the router through Entware. The staged pilot, OISD parity comparison, main-LAN DHCP cutover, reverse-DNS check, duplicate-service cleanup and final reboot validation all completed on the same controlled maintenance day.
 
-A staged Pi-hole-on-router case study is now active. On 2026-09-28 a dedicated local Pi-hole listener completed single-client validation, managed-firewall integration, reboot persistence and an initial corrected A/B latency run while the existing dnsmasq/Diversion path remained available for rollback. This does **not** yet represent a full-LAN migration or a decision to replace Diversion.
+Pi-hole now provides the reference main-LAN DNS-filtering path while Unbound remains the validating upstream and firmware dnsmasq remains responsible for DHCP/local naming plus the existing classic-DNS interception endpoint. The final case study explicitly records a swap-startup regression discovered during cleanup: Tailscale failed with a Go-runtime OOM until pre-Entware swap activation was restored and revalidated by another clean reboot.
 
 DNS filtering remains useful but is not equivalent to request-level/browser content blocking, and neither stack is claimed to block all visual or in-application advertising.
 
 See:
 - [the sanitized Diversion validation](evidence/2026-09-22/diversion-ad-blocking-validation.md);
 - [the Pi-hole case-study plan](docs/pi-hole-on-router-case-study-plan.md);
-- [the 2026-09-28 sanitized Pi-hole pilot evidence](evidence/2026-09-28/pi-hole-single-client-pilot-validation.md).
+- [the final Pi-hole migration case study](docs/pi-hole-on-router-case-study.md);
+- [the 2026-09-28 sanitized Pi-hole pilot evidence](evidence/2026-09-28/pi-hole-single-client-pilot-validation.md);
+- [the 2026-09-28 sanitized main-LAN cutover evidence](evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md).
 
 ## Centralized logging
 

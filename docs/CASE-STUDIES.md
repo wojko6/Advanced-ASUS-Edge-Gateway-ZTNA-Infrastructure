@@ -129,6 +129,25 @@ The case keeps time-series and dashboard workloads off the 512 MiB router and
 retains explicit limits around host downtime, remote exposure and cross-model
 compatibility.
 
+## 8. Diversion to Pi-hole on-router migration
+
+**File:** [Diversion to Pi-hole on-router migration](pi-hole-on-router-case-study.md)
+
+A staged DNS-filtering migration on the 512 MiB ASUS TUF-AX5400 covering:
+
+- dedicated Pi-hole listener design without port-53 conflict with firmware dnsmasq;
+- OISD blocking-list parity and the two-domain Diversion essential-allowlist delta;
+- corrected latency A/B testing and normal-use query-history analysis;
+- main-LAN DHCP cutover to Pi-hole while keeping firmware DHCP/local naming;
+- conditional reverse DNS;
+- removal of uiDivStats, Diversion, Stubby and stale NextDNS hook logic;
+- a real reboot failure caused by missing swap activation and the resulting Tailscale Go-runtime OOM;
+- restoration of pre-Entware swap activation and successful final reboot validation;
+- explicit separation between the adopted DHCP path and classic-DNS interception paths that still terminate at firmware dnsmasq.
+
+The case study treats the discovered startup failure as evidence and remediation,
+not as a result to omit from the portfolio narrative.
+
 ## How to read these cases
 
 Where applicable, case studies separate:

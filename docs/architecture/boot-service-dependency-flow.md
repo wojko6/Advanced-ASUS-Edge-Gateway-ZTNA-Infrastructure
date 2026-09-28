@@ -13,8 +13,10 @@ flowchart TD
     RC --> S1["S01 syslog-ng"]
     S1 --> S6["S06 tailscaled"]
     S6 --> S61["S61 Unbound"]
-    S61 --> DM["dnsmasq restart / resolver integration"]
-    DM --> S90["Later Entware startup work<br/>including S90taildns where installed"]
+    S61 --> S64["S64 Pi-hole LAN alias<br/>dedicated local address"]
+    S64 --> S65["S65 Pi-hole FTL"]
+    S65 --> DM["dnsmasq restart / resolver integration"]
+    DM --> SLATE["Later Entware startup work"]
 
     MS["Merlin services-start"] --> LK["Acquire services-start lock"]
     LK --> OP["Wait for /opt readiness<br/>bounded timeout"]
@@ -46,6 +48,8 @@ flowchart TD
 
 - The 2026-09-27 #66 evidence found that the original reference post-mount order could start Entware services before its AMTM-added swapon line was reached.
 - The reference router was corrected so the mounted volume's swap is activated **before** sourcing AMTM mount-entware.mod. Three fresh clean cycles then passed with no recurring dnsmasq ENOMEM event.
+- During the 2026-09-28 Pi-hole cleanup, a later `post-mount` revision was found to have lost the actual `swapon` action while retaining only the state check. The resulting reboot left swap inactive and Tailscale failed with a Go-runtime heap-allocation OOM. Explicit per-volume `swapon` was restored before AMTM startup, and the next clean reboot returned both swap files, Tailscale, the Pi-hole alias, FTL and Unbound automatically.
+- The Pi-hole alias init script is ordered immediately before the FTL init script so the dedicated listener address exists before FTL binds TCP/UDP 53.
 - This pre-Entware post-mount correction is **validated live reference configuration**, but it is not presently installed or owned by the repository's services-start script. If AMTM rewrites post-mount, this ownership boundary must be rechecked.
 - services-start waits for /opt, detects AMTM ownership, lets the external Entware startup settle, and preserves already-stable services where possible.
 - If tailscaled is not already stable, the repository's recovery path checks required swap **before** launching the Go daemon. Stable tailscaled processes are preserved without taking that recovery path.
@@ -63,3 +67,4 @@ flowchart TD
 - [router/scripts/firewall-start](../../router/scripts/firewall-start)
 - [config/edge.conf.example](../../config/edge.conf.example)
 - [Clean startup and persistence evidence — 2026-09-27](../../evidence/2026-09-27/issue-66-clean-startup-persistence-evidence.md)
+- [Pi-hole main-LAN cutover and final reboot evidence — 2026-09-28](../../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)

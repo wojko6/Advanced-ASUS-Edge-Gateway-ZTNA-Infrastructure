@@ -25,7 +25,7 @@ The old [Architecture.png](images/Architecture.png) is retained only as a histor
 | Identity/policy | Tailscale Grants | User/group/device authorization and exit-node entitlement |
 | Overlay | Tailscale | Encrypted connectivity, subnet advertisement and optional exit routing |
 | Local enforcement | project-owned iptables/ip6tables | Router-service policy, selected LAN access, default-deny forwarding, LAN DNS/DoT controls and fail-closed Tailscale IPv6 guards |
-| DNS | dnsmasq + Unbound | Local port-53 ownership, classic-DNS interception, recursive resolution and DNSSEC validation |
+| DNS | Pi-hole + dnsmasq + Unbound | Main-LAN DHCP filtering on the dedicated Pi-hole listener, firmware DHCP/local naming and classic-DNS interception, recursive resolution and DNSSEC validation |
 | Observability | syslog-ng | Local logging and optional remote forwarding |
 | Operations | Merlin hooks + project scripts | Startup/recovery coordination, health checks, backup/restore, evidence collection and controlled updates |
 
@@ -49,7 +49,9 @@ The project owns exit-node forwarding policy in EDGE_TS_FORWARD. It does **not**
 
 ### DNS ownership
 
-dnsmasq owns port 53 and forwards ordinary queries to Unbound on 127.0.0.1:53535.
+The current reference router uses split port-53 ownership. Pi-hole FTL owns a dedicated main-LAN alias and is the only DNS server advertised to main-LAN DHCP clients. Firmware dnsmasq continues to own the router LAN and Tailscale port-53 sockets for DHCP/local-name duties and the existing project classic-DNS interception path. Pi-hole and dnsmasq both use Unbound on 127.0.0.1:53535 for ordinary external resolution.
+
+The 2026-09-28 cutover does not by itself move the existing LAN/Tailscale interception redirects behind Pi-hole. Hard-coded external classic DNS that is intercepted by the current firewall still terminates at firmware dnsmasq; this remains an explicit follow-up if universal Pi-hole filtering of intercepted classic DNS is desired.
 
 Current validated IPv4 controls are intentionally scoped:
 
@@ -77,6 +79,7 @@ Current architecture claims are anchored to dated evidence:
 - **2026-09-27:** #66 recorded 3/3 clean startup cycles after the reference pre-Entware swap-order correction.
 - **2026-09-27:** #67 reconfirmed Android exit-node public-IP behavior after reboot with a clean router health check.
 - **2026-09-27:** #65 accepted Diversion Large as the current filtering baseline after multi-day use, refresh, DNS-path and resource checks.
+- **2026-09-28:** #80 migrated the main-LAN DHCP filtering path to Pi-hole, retained Unbound and firmware local naming, removed duplicate filtering/statistics services, corrected a pre-Entware swap regression discovered during reboot, and passed the final swap/Tailscale/Pi-hole/Unbound reboot validation.
 
 These dated results do not establish universal firmware compatibility or enforcement outside their stated protocol/interface scope. Time-sensitive project status remains governed by [PROJECT-STATUS.md](../PROJECT-STATUS.md) and the dated [evidence](../evidence/) tree.
 
