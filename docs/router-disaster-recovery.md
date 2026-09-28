@@ -24,17 +24,27 @@ This decision can be revisited if a required recovery gap cannot be covered safe
 
 ## Reference-state inventory findings
 
-Read-only inventory on 2026-09-27 established:
+The original clean-room DR inventory was captured on 2026-09-27. The
+reference deployment then changed materially on 2026-09-28 when the main LAN
+migrated from Diversion/uiDivStats to Pi-hole.
+
+Current reference facts are:
 
 - reference router: ASUS TUF-AX5400;
 - reference firmware: GNUton / Asuswrt-Merlin 3004.388.11_1-gnuton1_tuf;
 - JFFS is read/write;
 - separate ENTWARE and ROUTER_DATA ext4 filesystems are active;
 - two swap files are active;
-- Tailscale, Unbound and syslog-ng are running;
+- Tailscale, Pi-hole FTL, Unbound and syslog-ng are part of the active reference stack;
 - Unbound listens on 127.0.0.1:53535 over TCP and UDP;
-- the live post-mount hook contains the validated #66 pre-Entware swap-order correction;
-- AMTM, Unbound Manager, uiDivStats and Diversion-related state exist outside the project-owned tree.
+- Pi-hole owns the dedicated main-LAN DNS alias while firmware dnsmasq retains DHCP/local naming and the existing classic-DNS interception endpoint;
+- the live post-mount hook contains the validated pre-Entware swap activation required by the current startup path;
+- AMTM and Unbound Manager remain addon-owned integration points;
+- Diversion and uiDivStats were removed from the active reference stack after the Pi-hole cutover.
+
+The **2026-09-27 DR validation predates Pi-hole adoption**. It remains valid for
+the archive/restore mechanics and the components it tested, but it is not by
+itself proof of complete recovery of the current Pi-hole layer.
 
 No raw private Tailscale identifiers, authentication state or credential values are published in this document.
 
@@ -59,8 +69,11 @@ No raw private Tailscale identifiers, authentication state or credential values 
 | Tailscale package/runtime provenance | rebuild manifest | gap | package metadata alone is insufficient on the current reference state |
 | Entware package inventory | rebuild manifest | gap | capture versions for reconstruction; packages are reinstalled rather than copied blindly |
 | AMTM modules | reinstall/revalidate | addon-owned | restore integration points, then reinstall/validate AMTM-managed components |
-| Diversion | reinstall/rebuild | partial / open | preserve only verified user-specific state once exact ownership is classified |
-| uiDivStats | reinstall/rebuild | optional addon | not required for core gateway recovery |
+| Pi-hole / FTL package and service state | reinstall/rebuild | **current DR gap** | the project archive does not currently capture a complete Pi-hole rebuild payload; reinstall the reviewed Entware Pi-hole stack and revalidate listener/startup ownership |
+| Pi-hole filtering configuration / Gravity inputs | reconstruct and revalidate | **current DR gap** | restore only reviewed policy inputs/private settings; rebuild Gravity and validate blocking rather than copying an opaque live database |
+| Pi-hole query-history database | private operational data | intentionally not a public/project backup payload | analytics/history continuity is not required for gateway recovery; keep any private backup under a separate data/privacy policy |
+| Pi-hole dedicated LAN alias/startup integration | reconstruct/revalidate | **current DR gap** | recreate the validated listener ordering before FTL starts and verify no port-53 conflict with firmware dnsmasq |
+| Diversion / uiDivStats | historical only | removed from active reference stack | reinstall only for an intentional rollback to the pre-2026-09-28 historical design, not as part of current recovery |
 | storage labels/layout | rebuild manifest | gap | record filesystem labels, mount roles and swap topology; do not depend on a full USB image |
 | swap files | recreate | intentionally not backed up | recreate on the intended storage and validate before Tailscale recovery |
 | `root.key` | regenerate/manager-owned | intentionally not primary payload | restore writable runtime ownership and let the resolver/manager maintain trust-anchor state |
@@ -192,12 +205,15 @@ After an actual router restore/rebuild, validate the recovered state in this ord
    - record the live binary version locally;
    - re-enroll/re-authenticate when node state was intentionally not restored;
    - confirm project `netfilter-mode=off` ownership.
-4. **DNS / Unbound**
-   - confirm the runtime directory owner/mode contract;
-   - validate the active Unbound configuration;
-   - confirm TCP/UDP listener on `127.0.0.1:53535`;
-   - run a direct DNSSEC-validating query;
-   - confirm dnsmasq forwards to the local Unbound listener.
+4. **DNS / Pi-hole / Unbound**
+   - confirm the Unbound runtime directory owner/mode contract;
+   - validate the active Unbound configuration and TCP/UDP listener on `127.0.0.1:53535`;
+   - recreate/validate the dedicated Pi-hole LAN alias before FTL binds port 53;
+   - confirm Pi-hole FTL is running and the main-LAN DHCP policy advertises only the Pi-hole resolver;
+   - confirm Pi-hole forwards allowed external queries to Unbound;
+   - run ordinary resolution, a known synthetic block test and the DNSSEC negative test;
+   - confirm conditional reverse DNS works for an active DHCP lease;
+   - confirm firmware dnsmasq still forwards its own interception/local path to Unbound.
 5. **Firewall**
    - confirm project-owned IPv4/IPv6 chains are present in the expected parent-rule positions;
    - confirm the terminal default-deny policy and any enabled LAN DNS/DoT controls.
@@ -218,8 +234,20 @@ Before #100 can close:
 - [x] backup archive and sidecar checksum are copied off-router and verified;
 - [x] `restore.sh --dry-run` passes on the produced archive;
 - [x] a safe restore test is completed without jeopardizing the known-good router;
-- [x] post-restore validation covers storage, swap, Tailscale, DNS/Unbound, firewall and project healthcheck;
+- [x] post-restore validation covers storage, swap, Tailscale, DNS/Unbound, firewall and project healthcheck for the 2026-09-27 baseline;
 - [x] published evidence is sanitized.
+
+### Post-Pi-hole DR extension status
+
+The checklist above closed issue #100 against the pre-Pi-hole reference state.
+Because Pi-hole was adopted on 2026-09-28, full current-state DR requires an
+additional controlled rebuild that proves Pi-hole package/service
+reconstruction, dedicated alias/startup ordering, filtering policy rebuild,
+DHCP-only-Pi-hole advertisement, reverse DNS and Pi-hole -> Unbound behavior.
+
+Until that extension is tested, describe the project as having a **validated
+project/archive DR baseline with a documented Pi-hole recovery gap**, not a
+fully revalidated clean-room rebuild of every current DNS component.
 
 ## Out of scope
 
