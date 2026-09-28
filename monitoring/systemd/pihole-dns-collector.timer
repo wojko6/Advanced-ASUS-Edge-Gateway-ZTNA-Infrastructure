@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Pi-hole DNS activity collector every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+RandomizedDelaySec=5s
+AccuracySec=5s
+Persistent=true
+Unit=pihole-dns-collector.service
+
+[Install]
+WantedBy=timers.target

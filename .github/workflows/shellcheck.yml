@@ -21,6 +21,8 @@ jobs:
         run: sh tests/test-static.sh
       - name: Run Python recovery integration tests
         run: python3 tests/test-recovery.py
+      - name: Run Pi-hole DNS collector unit tests
+        run: python3 tests/test-pihole-dns-collector.py
       - name: Run firewall mock policy test
         run: sh tests/test-firewall-mock.sh
       - name: Run temporary firewall guard cleanup regression
