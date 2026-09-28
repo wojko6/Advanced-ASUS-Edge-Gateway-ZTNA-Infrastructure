@@ -49,7 +49,7 @@ See [architecture](docs/architecture.md), [swap and memory reliability](docs/swa
 - Sanitized evidence collection with explicit separation of automated and live results.
 - Optional mutually authenticated TLS log forwarding with syslog-ng and reliable disk buffering.
 - Automated collector retention that compresses completed logs after 24 hours and expires them after 30 days.
-- Planned DNS activity analytics use Pi-hole FTL query history as the primary read-only source and keep collection state, Loki/Alloy and dashboard processing on Fedora rather than adding another router-side analytics service.
+- Pi-hole DNS activity analytics Phase 0 passed; the repository now includes a bounded Fedora collector reference implementation while live service deployment, Loki/Alloy ingestion and dashboard validation remain outstanding.
 
 ## Repository layout
 
@@ -178,22 +178,24 @@ The optional logging design tails the firmware-owned `/tmp/syslog.log`, forwards
 
 See [centralized logging with mTLS](docs/centralized-logging.md) for the trust model, safe rollout order, negative certificate test, buffer recovery test, reboot validation, and evidence boundaries.
 
-## Planned DNS activity analytics
+## DNS activity analytics
 
-Issue #108 now follows the adopted Pi-hole architecture instead of assuming
-dnsmasq query logs are the primary source. The first planned dataset is the
-query history already recorded by Pi-hole FTL for DHCP-managed main-LAN
-clients. The next implementation step is a read-only preflight of the deployed
-FTL database/schema and a bounded incremental Fedora collector; only after that
-preflight passes should local Grafana Alloy -> Loki -> the existing Grafana
-instance be added.
+Issue #108 follows the adopted Pi-hole architecture rather than using broad
+dnsmasq query logging as the primary source. The 2026-09-28 Phase 0 preflight
+validated the authenticated Pi-hole v6 API, required query fields, the
+RAM-versus-disk cursor edge case and low bounded read cost.
 
-This extension is **not yet live-validated**. It intentionally keeps the
-current router datapath unchanged and does not claim visibility into the
-existing dnsmasq interception/Tailscale paths, DoH, DoQ, VPN-carried DNS or
+A Fedora collector reference implementation is now checked in under
+`monitoring/`. It reads through a loopback SSH forward, combines the
+source-local disk and memory snapshots, deduplicates by query ID and advances a
+Fedora-side checkpoint only after journaled local persistence.
+
+The collector code is **not yet live service-validated**, and Loki/Alloy plus
+the Grafana DNS dashboard remain future phases. The scope still excludes the
+existing dnsmasq interception/Tailscale paths, DoH, DoQ, VPN-carried DNS and
 unvalidated IPv6 resolver paths. Raw household query history remains private.
 
-See [Network DNS Visibility / Client Activity Analytics](docs/network-dns-visibility-client-activity-analytics.md).
+See [Network DNS Visibility / Client Activity Analytics](docs/network-dns-visibility-client-activity-analytics.md) and the [sanitized Phase 0 evidence](evidence/2026-09-28/pi-hole-api-phase0-preflight.md).
 
 ## Live validation status
 
