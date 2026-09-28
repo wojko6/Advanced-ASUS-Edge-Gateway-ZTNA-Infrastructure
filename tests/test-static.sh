@@ -354,7 +354,7 @@ grep -F 'EDGE_LAN_DNS_BYPASS_IPS=""' "$REPO_DIR/config/edge.conf.example" >/dev/
 }
 
 for lan_dns_bypass_guard in \
-    'EDGE_LAN_DNS_BYPASS_IPS:=}' \
+    'EDGE_LAN_DNS_BYPASS_IPS:=}"' \
     'invalid LAN DNS bypass IPv4' \
     'LAN DNS bypass UDP return rule failed' \
     'LAN DNS bypass TCP return rule failed'
@@ -366,7 +366,7 @@ do
 done
 
 for lan_dns_bypass_health_guard in \
-    'EDGE_LAN_DNS_BYPASS_IPS:=}' \
+    'EDGE_LAN_DNS_BYPASS_IPS:=}"' \
     'invalid EDGE_LAN_DNS_BYPASS_IPS IPv4' \
     'bypass_count = split(bypasses' \
     'expected_rules = 4 + (2 * bypass_count)'
