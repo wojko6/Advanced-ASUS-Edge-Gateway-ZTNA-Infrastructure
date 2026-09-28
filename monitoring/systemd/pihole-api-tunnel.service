@@ -1,0 +1,15 @@
+[Unit]
+Description=Loopback SSH tunnel to Pi-hole FTL API on ASUS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/pihole-dns-collector.env
+ExecStart=/usr/bin/ssh -NT -p ${ROUTER_PORT} -o BatchMode=yes -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PreferredAuthentications=publickey -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -L 127.0.0.1:${PIHOLE_LOCAL_PORT}:${PIHOLE_REMOTE_HOST}:${PIHOLE_REMOTE_PORT} ${ROUTER_USER}@${ROUTER_HOST}
+Restart=always
+RestartSec=5s
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
