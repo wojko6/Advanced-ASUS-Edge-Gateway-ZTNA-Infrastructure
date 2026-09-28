@@ -95,6 +95,28 @@ class CollectorTests(unittest.TestCase):
         )
         self.assertEqual(payload["domain"], "mem10")
 
+    def test_first_append_creates_missing_output_file(self):
+        payload = json.dumps(
+            collector.normalize_query(row(1)),
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        self.db.execute("INSERT INTO pending(id,payload) VALUES(?,?)", (1, payload))
+        self.db.commit()
+
+        output = self.root / "queries.ndjson"
+        prepared = self.root / "prepared.ndjson"
+        self.assertFalse(output.exists())
+
+        max_id = collector.prepare_batch(self.db, output, prepared)
+        self.assertEqual(max_id, 1)
+        appended = collector.append_prepared(self.db, output, prepared)
+
+        self.assertEqual(appended, 1)
+        self.assertTrue(output.exists())
+        self.assertEqual(output.read_text().count("\n"), 1)
+        self.assertEqual(int(collector.get_meta(self.db, "last_id")), 1)
+
     def test_prepared_batch_recovery_does_not_duplicate_complete_append(self):
         for i in (1, 2):
             payload = json.dumps(
