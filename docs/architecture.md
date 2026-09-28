@@ -26,7 +26,7 @@ The old [Architecture.png](images/Architecture.png) is retained only as a histor
 | Overlay | Tailscale | Encrypted connectivity, subnet advertisement and optional exit routing |
 | Local enforcement | project-owned iptables/ip6tables | Router-service policy, selected LAN access, default-deny forwarding, LAN DNS/DoT controls and fail-closed Tailscale IPv6 guards |
 | DNS | Pi-hole + dnsmasq + Unbound | Main-LAN DHCP filtering on the dedicated Pi-hole listener, firmware DHCP/local naming and classic-DNS interception, recursive resolution and DNSSEC validation |
-| Observability | syslog-ng | Local logging and optional remote forwarding |
+| Observability | syslog-ng + off-router Fedora monitoring stack | Authenticated system-log forwarding plus read-only metrics/probes, VictoriaMetrics and Grafana; planned DNS activity analytics remain a separate future-state extension |
 | Operations | Merlin hooks + project scripts | Startup/recovery coordination, health checks, backup/restore, evidence collection and controlled updates |
 
 ## Ownership boundaries
@@ -52,6 +52,20 @@ The project owns exit-node forwarding policy in EDGE_TS_FORWARD. It does **not**
 The current reference router uses split port-53 ownership. Pi-hole FTL owns a dedicated main-LAN alias and is the only DNS server advertised to main-LAN DHCP clients. Firmware dnsmasq continues to own the router LAN and Tailscale port-53 sockets for DHCP/local-name duties and the existing project classic-DNS interception path. Pi-hole and dnsmasq both use Unbound on 127.0.0.1:53535 for ordinary external resolution.
 
 The 2026-09-28 cutover does not by itself move the existing LAN/Tailscale interception redirects behind Pi-hole. Hard-coded external classic DNS that is intercepted by the current firewall still terminates at firmware dnsmasq; this remains an explicit follow-up if universal Pi-hole filtering of intercepted classic DNS is desired.
+
+### Planned DNS analytics boundary
+
+Issue #108 is a **future-state observability extension**, not part of the
+validated resolver datapath. Its preferred source is the query history already
+written by Pi-hole FTL for DHCP-managed main-LAN clients. The planned collector
+reads that source incrementally and read-only from Fedora, then keeps Alloy,
+Loki, retention and Grafana processing off-router.
+
+The resulting dataset must be described as **Pi-hole-visible DNS activity**.
+It does not automatically include the existing dnsmasq interception path,
+Tailscale classic-DNS redirects or encrypted-DNS bypasses. Those paths remain
+separate coverage measurements and must not be merged into the current
+architecture diagram without live validation.
 
 Current validated IPv4 controls are intentionally scoped:
 
