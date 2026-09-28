@@ -1,6 +1,6 @@
 # Network DNS Visibility / Client Activity Analytics
 
-**Status:** Phase 0 read-only preflight, Phase 1 Fedora collector, Phase 2 Alloy/Loki ingestion, the Phase 3 Grafana dashboard and full Fedora reboot persistence were live-validated on 2026-09-28. Longer-term retention/storage, rollback and coverage-gap validation remain pending.
+**Status:** Phase 0 read-only preflight, Phase 1 Fedora collector, Phase 2 Alloy/Loki ingestion, the Phase 3 Grafana dashboard, full Fedora reboot persistence and controlled two-client main-LAN acceptance were live-validated on 2026-09-28. The tested Tailscale classic-DNS coverage gap is also evidence-backed. Longer-term retention/storage, rollback and the remaining LAN interception coverage work remain pending.
 
 Tracking issue: #108.
 
