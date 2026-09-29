@@ -13,11 +13,19 @@ PL_SOURCE="$PL_DIR/PL.dict"
 HELP_SOURCE="$PL_DIR/help.js"
 SYSINFO_SOURCE="$PL_DIR/Tools_Sysinfo.asp"
 TWEAKS_SOURCE="$PL_DIR/Tools_OtherSettings.asp"
+WADV_SOURCE="$PL_DIR/Advanced_WAdvanced_Content.asp"
+STATE_SOURCE="$PL_DIR/state.js"
+ROUTER_STATUS_SOURCE="$PL_DIR/router_status.asp"
+ROUTER_SOURCE="$PL_DIR/router.asp"
 
 PL_TARGET="/www/PL.dict"
 HELP_TARGET="/www/help.js"
 SYSINFO_TARGET="/www/Tools_Sysinfo.asp"
 TWEAKS_TARGET="/www/Tools_OtherSettings.asp"
+WADV_TARGET="/www/Advanced_WAdvanced_Content.asp"
+STATE_TARGET="/www/state.js"
+ROUTER_STATUS_TARGET="/www/device-map/router_status.asp"
+ROUTER_TARGET="/www/device-map/router.asp"
 
 MENU_BASE="/tmp/menuTree.js"
 MENU_TARGET="/www/require/modules/menuTree.js"
@@ -29,10 +37,18 @@ SYSINFO_BASE_SHA="6d5a23ab9ee39d6d63b19c33fca10fe74a2b2fc38bd1fe95d95aeba85e7e43
 TWEAKS_BASE_SHA="65024c7403fdb0c684b1f574aa82bc38923b69f04c5119ac02ac172f43769b79"
 
 # Validated Polish candidates.
-PL_PATCHED_SHA="4af3d9df6633a1885b949c2d6f7bfa35663a867990230daf35a0f3319ab90bcb"
+PL_PATCHED_SHA="1bc59ad0727ee6198dd75a35a15be3313fed67ac816c85bd741463415773e8ac"
 HELP_PATCHED_SHA="7da975a69b1237499ee238e93ede215c3e235c5b34a5d87ab507d45a4e063778"
 SYSINFO_PATCHED_SHA="3dbef5d95c02561baf920a6b2014ed34d021eb5ce6723c076ddecf9072d839df"
 TWEAKS_PATCHED_SHA="6cee7405bcc556ac3af1baee418a2ffa85cad39b37c3f76e340ef2a8297595c6"
+WADV_BASE_SHA="21c08426a49a95cefad0097077d509d4a6b759a634b379f58e3ad00fa3ef5fa3"
+WADV_PATCHED_SHA="62b5c08839fb238c17bdace3e968c799233926873c50cb400e6de2d2356e10fc"
+STATE_BASE_SHA="bf0992a67f18807e18fc8b9baf75852cef825e80ff8b5885bc0452745ce77ee5"
+STATE_PATCHED_SHA="21c1653b9d76c1fe174044467a3ba4648908a4e525df7735fd23d3c737ae2dfb"
+ROUTER_STATUS_BASE_SHA="dc99b353220c1b3b13fceacf44a4ca1fa137831cc103cdfaee8ada97ef26ed09"
+ROUTER_STATUS_PATCHED_SHA="1435585d9f1f8a77e1f03d765f7114c9f2a33da26425bc38512922d5e0f56b95"
+ROUTER_BASE_SHA="b2ef787f4a53740eac12f9304533937c347de9f8afd0541f06f62d600c6aaf20"
+ROUTER_PATCHED_SHA="5c809d2105bfdb87f1e6493ddc8cf05f78dbd3f50be402d3846f3b987d3f7cd6"
 
 find_hash_backend() {
     # Firmware OpenSSL is available before Entware /opt is mounted.
@@ -215,6 +231,18 @@ mount_overlay() {
     mount_one "$TWEAKS_SOURCE" "$TWEAKS_TARGET" \
         "$TWEAKS_BASE_SHA" "$TWEAKS_PATCHED_SHA" "Tools_OtherSettings.asp" || return 1
 
+    mount_one "$WADV_SOURCE" "$WADV_TARGET" \
+        "$WADV_BASE_SHA" "$WADV_PATCHED_SHA" "Advanced_WAdvanced_Content.asp" || return 1
+
+    mount_one "$STATE_SOURCE" "$STATE_TARGET" \
+        "$STATE_BASE_SHA" "$STATE_PATCHED_SHA" "state.js" || return 1
+
+    mount_one "$ROUTER_STATUS_SOURCE" "$ROUTER_STATUS_TARGET" \
+        "$ROUTER_STATUS_BASE_SHA" "$ROUTER_STATUS_PATCHED_SHA" "router_status.asp" || return 1
+
+    mount_one "$ROUTER_SOURCE" "$ROUTER_TARGET" \
+        "$ROUTER_BASE_SHA" "$ROUTER_PATCHED_SHA" "router.asp" || return 1
+
     localize_menu || return 1
 
     echo "WEBUI_PL_OVERLAY=PASS"
@@ -321,6 +349,18 @@ unmount_overlay() {
     unmount_one "$TWEAKS_TARGET" \
         "$TWEAKS_BASE_SHA" "$TWEAKS_PATCHED_SHA" "Tools_OtherSettings.asp" || return 1
 
+    unmount_one "$WADV_TARGET" \
+        "$WADV_BASE_SHA" "$WADV_PATCHED_SHA" "Advanced_WAdvanced_Content.asp" || return 1
+
+    unmount_one "$STATE_TARGET" \
+        "$STATE_BASE_SHA" "$STATE_PATCHED_SHA" "state.js" || return 1
+
+    unmount_one "$ROUTER_STATUS_TARGET" \
+        "$ROUTER_STATUS_BASE_SHA" "$ROUTER_STATUS_PATCHED_SHA" "router_status.asp" || return 1
+
+    unmount_one "$ROUTER_TARGET" \
+        "$ROUTER_BASE_SHA" "$ROUTER_PATCHED_SHA" "router.asp" || return 1
+
     restore_menu_labels || return 1
 
     echo "WEBUI_PL_OVERLAY_UNMOUNT=PASS"
@@ -331,6 +371,10 @@ status_overlay() {
     echo "help.js=$(file_hash "$HELP_TARGET")"
     echo "Tools_Sysinfo.asp=$(file_hash "$SYSINFO_TARGET")"
     echo "Tools_OtherSettings.asp=$(file_hash "$TWEAKS_TARGET")"
+    echo "Advanced_WAdvanced_Content.asp=$(file_hash "$WADV_TARGET")"
+    echo "state.js=$(file_hash "$STATE_TARGET")"
+    echo "router_status.asp=$(file_hash "$ROUTER_STATUS_TARGET")"
+    echo "router.asp=$(file_hash "$ROUTER_TARGET")"
 
     if grep -F 'menuName: "Informacje o systemie",' "$MENU_TARGET" >/dev/null 2>&1 &&
        grep -F 'tabName: "Dostrajanie"' "$MENU_TARGET" >/dev/null 2>&1; then

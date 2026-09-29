@@ -7,7 +7,7 @@
     "firmware_context": "TUF-AX5400 / GNUton 3004.388.11_1-gnuton1_tuf"
   },
   "batch": {
-    "name": "reviewed-pl-002",
+    "name": "reviewed-pl-008",
     "description": "Reviewed Polish localization corrections, structural repairs and remaining visible Wi-Fi labels."
   },
   "overrides": {
@@ -130,7 +130,23 @@
     "1869": "Sprawdzaj co",
     "1906": "Skaner stanu",
     "2417": "Czas pracy",
+    "2491": "Pomoc",
+    "2903": "Stan systemu",
+    "3295": "Odłącz klientów z RSSI niższym niż:",
+    "4198": "Regulacja mocy Tx dla TPC (kontrola mocy nadawania) i oszczędzania energii.",
+    "4200": "Oszczędzanie energii",
+    "4201": "Umiarkowana",
+    "4202": "Zrównoważona",
+    "4203": "Dobra",
+    "4204": "Wydajność",
     "4205": "Docelowy czas wybudzania",
-    "4270": "Zabezpieczone ramki zarządzania"
+    "4238": "Współistnienie Bluetooth",
+    "4239": "Włącza lub wyłącza współistnienie Bluetooth. Prędkości transmisji 1 Mb/s i 2 Mb/s są niedostępne w trybie Pre-emptive. Funkcja TX Bursting jest również niedostępna w trybie Pre-emptive.",
+    "4270": "Zabezpieczone ramki zarządzania",
+    "4281": "Schemat modulacji",
+    "4283": "Włącz tryb WMM bez potwierdzeń",
+    "4331": "Typ preambuły określa długość bloku CRC (Cyclic Redundancy Check — cykliczna kontrola nadmiarowa), który służy do wykrywania błędów transmisji danych między urządzeniami bezprzewodowymi. Zaleca się ustawienie tego samego typu preambuły na wszystkich urządzeniach bezprzewodowych. Krótka preambuła jest zalecana w miejscach o dużym ruchu sieciowym, a długa dla starszych urządzeń bezprzewodowych.",
+    "4332": "Typ preambuły",
+    "4521": "Aplikacja ASUS Router"
   }
 }

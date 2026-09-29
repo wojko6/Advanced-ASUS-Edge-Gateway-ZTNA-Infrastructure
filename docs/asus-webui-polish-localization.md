@@ -110,6 +110,10 @@ router/webui/patches/PL.dict.patch
 router/webui/patches/help.js.patch
 router/webui/patches/Tools_Sysinfo.asp.patch
 router/webui/patches/Tools_OtherSettings.asp.patch
+router/webui/patches/Advanced_WAdvanced_Content.asp.patch
+router/webui/patches/state.js.patch
+router/webui/patches/router_status.asp.patch
+router/webui/patches/router.asp.patch
 ```
 
 These are deltas against the pinned ASUS/GNUton firmware resources, not copies
@@ -129,10 +133,14 @@ installation or update. The builder is fail-closed:
 The validated Polish artifact hashes are:
 
 ```text
-PL.dict                  4af3d9df6633a1885b949c2d6f7bfa35663a867990230daf35a0f3319ab90bcb
+PL.dict                  1bc59ad0727ee6198dd75a35a15be3313fed67ac816c85bd741463415773e8ac
 help.js                  7da975a69b1237499ee238e93ede215c3e235c5b34a5d87ab507d45a4e063778
 Tools_Sysinfo.asp        3dbef5d95c02561baf920a6b2014ed34d021eb5ce6723c076ddecf9072d839df
 Tools_OtherSettings.asp  6cee7405bcc556ac3af1baee418a2ffa85cad39b37c3f76e340ef2a8297595c6
+Advanced_WAdvanced_Content.asp  62b5c08839fb238c17bdace3e968c799233926873c50cb400e6de2d2356e10fc
+state.js                       21c1653b9d76c1fe174044467a3ba4648908a4e525df7735fd23d3c737ae2dfb
+router_status.asp              1435585d9f1f8a77e1f03d765f7114c9f2a33da26425bc38512922d5e0f56b95
+router.asp                     5c809d2105bfdb87f1e6493ddc8cf05f78dbd3f50be402d3846f3b987d3f7cd6
 ```
 
 ## Runtime persistence
@@ -160,7 +168,7 @@ The project `webui-mount` lifecycle integrates the localization helper:
 The reference TUF-AX5400 passed the following controlled checks on
 2026-09-29:
 
-- exact patch reproduction for all four resources;
+- exact patch reproduction for all eight managed resources;
 - install-time build while the Polish overlay was already active;
 - install-time build directly from the stock firmware baselines;
 - mount -> unmount -> remount lifecycle;

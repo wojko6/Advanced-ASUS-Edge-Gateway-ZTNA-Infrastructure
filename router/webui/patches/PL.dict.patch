@@ -652,15 +652,66 @@
  Na tej stronie pokazywane są szczegółowe działania systemu.
  Get Beta Firmware
  Połącz się z Siecią gościnną
-@@ -4202,7 +4202,7 @@
- Balance
- Good
- Performance
+@@ -2488,7 +2488,7 @@
+ Jeśli włączysz przełącznik LED sieci dla dzieci, zauważysz specjalny efekt LED pojawiający się w środku wskaźników LED routera na obudowie.
+ Dostosowania LED %1$@ mają zastosowanie do wszystkich profili %2$@.
+ Wersja sprzętu
+-Help
++Pomoc
+ Pomoc poprowadzi Cię przez podręcznik i informację na temat używania funkcji routera. Kliknij
+ Odnośniki do słów z żółtym i niebieskim podkreśleniem
+ by uzyskać pomoc
+@@ -2900,7 +2900,7 @@
+ ostatnich 24 godzin
+ codziennie
+ QoS
+-System Status
++Stan systemu
+ Ustawienia dynamicznego adresu IP
+ MER
+ Tablica wiadomości
+@@ -3292,7 +3292,7 @@
+ Interfejs sieciowy do którego odnoszą się reguły routingu.
+ Użyj tej funkcji do uruchomienia aplikacji IPTV (takich jak VLC) w kilku komputerach, w tym samym czasie. Funkcja ta może przekonwertować strumienie UDP multicast do strumieni HTTP unicast. Wprowadź port (taki jak 4000), który ma zostać przydzielony do aplikacji IPTV, a następnie użyj ten format do wprowadzenia adresu na liście odtwarzania w celu oglądania strumieni IPTV: http://[IP routera]:[Port Udpxy]/[protokół]/[adres kanału IP]:[port kanału] (taki jak http://192.168.1.1:4000/udp/239.255.1.1:5000 lub http://192.168.1.1:4000/rtp/239.255.1.2:5000). Wprowadź 0 (zero) w celu wyłączenia tej funkcji.
+ Pomocnik przesyłania
+-Disconnect clients with RSSI lower than :
++Odłącz klientów z RSSI niższym niż:
+ Urządzenia dodane do listy blokowania roamingu nie będą mieć możliwości roamingu między różnymi węzłami AiMesh.
+ Włącz listę blokowania roamingu
+ Włącz LED
+@@ -4195,14 +4195,14 @@
+ Lista odległych punktów dostępowych
+ Nazwa sieci lub SSID to unikatowa nazwa, która identyfikuje sieć bezprzewodową. Urządzenia WiFi automatycznie wykrywają wszystkie sieci w zasięgu. Przydziel ciąg identyfikacji zawierający do 32 znaków dla połączenia bezprzewodowego.
+ Zgodnie z przepisami CE, wartość Tx Power (Moc Tx) nie powinna przekraczać 100mW.
+-Tx power adjustment for TPC(Transmit power control) and power saving.
++Regulacja mocy Tx dla TPC (kontrola mocy nadawania) i oszczędzania energii.
+ Regulacja Tx Power (Moc Tx)
+-Power Saving
+-Fair
+-Balance
+-Good
+-Performance
 -Target Wake Time
++Oszczędzanie energii
++Umiarkowana
++Zrównoważona
++Dobra
++Wydajność
 +Docelowy czas wybudzania
  Ustaw klucz WEP do transmisji danych w sieci bezprzewodowej/
  Klucz WEP #1.
  Klucz WEP #2.
+@@ -4235,8 +4235,8 @@
+ Przedział beacon
+ Jeżeli wybierzesz [Tak] rozgłaszanie nazwy SSID sieci bezprzewodowej będzie wyłączone.
+ Ukryj SSID
+-Bluetooth Coexistence
+-Enable/Disable Bluetooth Coexistence. Data rate 1Mbps and 2 Mbps are not allowed in Pre-emptive mode. TX Bursting is also not allowed in Pre-emptive mode.
++Współistnienie Bluetooth
++Włącza lub wyłącza współistnienie Bluetooth. Prędkości transmisji 1 Mb/s i 2 Mb/s są niedostępne w trybie Pre-emptive. Funkcja TX Bursting jest również niedostępna w trybie Pre-emptive.
+ Pre-emptive
+ Wybierz (Tak) w celu połączenia TUF-AX5400 z innymi punktami dostępowymi, wymienionymi w Remote AP List (Lista odległych punktów dostępowych).
+ Połącz do zdalnych AP z listy?
 @@ -4267,7 +4267,7 @@
  Izolacja AP
  Ustaw zdolność dla mocy transmisji. Maksymalna wartość to
@@ -670,3 +721,35 @@
  Obsługiwane
  Wymagane
  Element ten umożliwia wybór dowolnej z tych opcji dla trybu bezprzewodowego interfejsu 802.11n. <p>[automat]: Umożliwia połączenie urządzeń 802.11n, 802.11g i 802.11b z TUF-AX5400.</p><p>[Legacy]: Umożliwia połączenie urządzeń 802.11b/g/n z TUF-AX5400, ale urządzenia 802.11n działają jedynie z szybkością 54Mbps. Wybierz tryb Legacy, aby móc skorzystać z większej liczby opcji dla metody uwierzytelniania.</p><p>[N Only]: Maksymalizacja wydajności, ale bez możliwości połączenia urządzeń 802.11g i 802.11b z posiadanym urządzeniem.</p><p>Zaznacz b/g Protection (Zabezpieczenie b/g), aby zezwolić urządzeniom b/g na połączenie z TUF-AX5400, bez wpływu na urządzenia 11n, jednak zwiększa to obciążenie routera.</p>
+@@ -4278,9 +4278,9 @@
+ Tryb bezprzewodowy
+ Zabezpieczenie b/g
+ Zoptymalizowany dla Xbox
+-Modulation Scheme
++Schemat modulacji
+ [No-Acknowledgement] to zasada braku potwierdzeń na poziomie MAC. Jeżeli opcja jest włączona, efektem jest większa przepływność ale zarazem zwiększona ilośc błędów transmisji bezprzewodowej z uwagi na większe obciążenie interfejsu WLAN.
+-Enable WMM-No acknowledgement
++Włącz tryb WMM bez potwierdzeń
+ Po wybraniu WEP Encryption (Szyfrowanie WEP), do tego pola można wprowadzić kilka wyrazów w celu automatycznego wygenerowania kluczy WEP.
+ Hasło dostepu:
+ Wybranie opcji [Włączony] włącza funkcję agregacji pakietów celem zwiększenia pasma oferowanego w Twojej sieci.
+@@ -4328,8 +4328,8 @@
+ Tryb [N+AC] nie jest zgodny z bieżącą metodą uwierzytelniania sieci dla gości (TKIP lub WEP). Przejdź do pozycji <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">Sieć dla gości</a> i zmień metodę uwierzytelniania.
+ Tryb [N Only] nie jest zgodny z bieżącą metodą uwierzytelniania sieci dla gości (TKIP lub WEP). Przejdź do pozycji <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">Sieć dla gości</a> i zmień metodę uwierzytelniania.
+ By enabling AX only mode, if devices do not support 802.11ax(WiFi 6), will not able to connect to this band.
+-Typ Preamble (Preambuła) definiuje długość bloku CRC (Cyclic Redundancy Check (Cykliczne sprawdzanie redundancji)), który jest techniką wykrywania błędów transmisji wśród urządzeń bezprzewodowych. Zalecamy skonfigurowanie wszystkich urządzeń bezprzewodowych na ten sam typ preambuły. Krótką preambułę należy stosować dla urządzeń bezprzewodowych w miejscach o dużym ruchu sieciowym. Długą preambułę należy stosować dla starszych urządzeń bezprzewodowych.
+-Preamble Type
++Typ preambuły określa długość bloku CRC (Cyclic Redundancy Check — cykliczna kontrola nadmiarowa), który służy do wykrywania błędów transmisji danych między urządzeniami bezprzewodowymi. Zaleca się ustawienie tego samego typu preambuły na wszystkich urządzeniach bezprzewodowych. Krótka preambuła jest zalecana w miejscach o dużym ruchu sieciowym, a długa dla starszych urządzeń bezprzewodowych.
++Typ preambuły
+ Długi
+ Krótki
+ Na tej stronie pokazywane są szczegółowe informacje dotyczące stanu sieci bezprzewodowej.
+@@ -4518,7 +4518,7 @@
+ W przypadku korzystania z modemu kablowego lub modemu o statycznym adresie IP należy wykonać następujące czynności:
+ Once the new SSID is connected, go back to ZVDOMAIN_NAMEVZ for more advanced settings.
+ Disable Web Access from WAN will not allow you to control your router via $Apps$ from Internet. Do you want to continue?
+-ASUS ROUTER APP
++Aplikacja ASUS Router
+ Alexa enabled device or IFTTT
+ Polityka
+ INFORMACJE FIRMY ASUS (dotyczące prywatności)

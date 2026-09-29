@@ -1,0 +1,20 @@
+--- device-map/router_status.asp
++++ device-map/router_status.asp
+@@ -369,7 +369,7 @@
+ code += '<div class="bar-container">';
+ code += '<div id="cpu'+ i +'_bar" class="core-color-container core-color-'+ i +'"></div>';
+ code += '</div>';
+-code += '<div class="bar-text-width bar-text">Core '+ parseInt(i+1) +'</div>';
++code += '<div class="bar-text-width bar-text">Rdzeń '+ parseInt(i+1) +'</div>';
+ code += '<div id="cpu'+ i +'_quantification" class="bar-text-width bar-text-percent"></div>';
+ code += '</div>';
+ }
+@@ -456,7 +456,7 @@
+ $('#ram_field').html(code);
+ }
+ function genNETelement() {
+-var code = '<div class="division-block">Internet Traffic</div>';
++var code = '<div class="division-block">Ruch internetowy</div>';
+ code += '<div>';
+ code += '<div>';
+ code += '<div class="display-flex flex-a-center info-block">';

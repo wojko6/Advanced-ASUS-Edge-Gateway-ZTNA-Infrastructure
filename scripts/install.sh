@@ -74,7 +74,11 @@ for webui_patch in \
     PL.dict.patch \
     help.js.patch \
     Tools_Sysinfo.asp.patch \
-    Tools_OtherSettings.asp.patch
+    Tools_OtherSettings.asp.patch \
+    Advanced_WAdvanced_Content.asp.patch \
+    state.js.patch \
+    router_status.asp.patch \
+    router.asp.patch
 do
     [ -r "$REPO_DIR/router/webui/patches/$webui_patch" ] || {
         echo "ERROR: missing Polish WebUI patch: $webui_patch" >&2
@@ -282,7 +286,11 @@ for webui_patch in \
     PL.dict.patch \
     help.js.patch \
     Tools_Sysinfo.asp.patch \
-    Tools_OtherSettings.asp.patch
+    Tools_OtherSettings.asp.patch \
+    Advanced_WAdvanced_Content.asp.patch \
+    state.js.patch \
+    router_status.asp.patch \
+    router.asp.patch
 do
     install_file \
         "$REPO_DIR/router/webui/patches/$webui_patch" \

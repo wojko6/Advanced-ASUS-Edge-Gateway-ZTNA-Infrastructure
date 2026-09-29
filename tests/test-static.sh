@@ -111,6 +111,10 @@ for webui_pl_build_guard in \
     'router/webui/patches/$webui_patch' \
     'webui-pl-build" "$ADDON_DIR/bin/webui-pl-build" 0755' \
     'EDGE_ADDON_DIR="$ADDON_DIR"' \
+    'WADV_PATCHED_SHA=' \
+    'STATE_PATCHED_SHA=' \
+    'ROUTER_STATUS_PATCHED_SHA=' \
+    'ROUTER_PATCHED_SHA=' \
     'WEBUI_PL_BUILD=PASS'
 do
     grep -F "$webui_pl_build_guard" \
@@ -125,7 +129,11 @@ for webui_patch in \
     PL.dict.patch \
     help.js.patch \
     Tools_Sysinfo.asp.patch \
-    Tools_OtherSettings.asp.patch
+    Tools_OtherSettings.asp.patch \
+    Advanced_WAdvanced_Content.asp.patch \
+    state.js.patch \
+    router_status.asp.patch \
+    router.asp.patch
 do
     [ -s "$REPO_DIR/router/webui/patches/$webui_patch" ] || {
         echo "FAIL: Polish WebUI patch missing or empty: $webui_patch" >&2
@@ -146,7 +154,11 @@ for webui_pl_guard in \
     'WEBUI_PL_OVERLAY=PASS' \
     'WEBUI_PL_OVERLAY_UNMOUNT=PASS' \
     'menuName: "Informacje o systemie"' \
-    'tabName: "Dostrajanie"'
+    'tabName: "Dostrajanie"' \
+    'Advanced_WAdvanced_Content.asp' \
+    'STATE_TARGET="/www/state.js"' \
+    'ROUTER_STATUS_TARGET="/www/device-map/router_status.asp"' \
+    'ROUTER_TARGET="/www/device-map/router.asp"'
 do
     grep -F "$webui_pl_guard" \
         "$REPO_DIR/router/scripts/webui-mount" \
