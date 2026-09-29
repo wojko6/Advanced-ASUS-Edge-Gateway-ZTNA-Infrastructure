@@ -79,6 +79,14 @@ if executable_exists "$IP6TABLES" >/dev/null 2>&1; then
     "$IP6TABLES" -t filter -X EDGE_TS6_FORWARD 2>/dev/null || true
 fi
 
+webui_unmount_failed=0
+if [ -x "$ADDON_DIR/bin/webui-mount" ]; then
+    if ! "$ADDON_DIR/bin/webui-mount" unmount; then
+        echo "ERROR: failed to unmount Edge Gateway WebUI" >&2
+        webui_unmount_failed=1
+    fi
+fi
+
 hook_restore_failed=0
 for hook in firewall-start services-start wan-event; do
     current="$JFFS_DIR/scripts/$hook"
@@ -96,8 +104,8 @@ for hook in firewall-start services-start wan-event; do
     fi
 done
 
-if [ "$hook_restore_failed" = "1" ]; then
-    echo "ERROR: uninstall incomplete; inspect /jffs/scripts using local access" >&2
+if [ "$hook_restore_failed" = "1" ] || [ "$webui_unmount_failed" = "1" ]; then
+    echo "ERROR: uninstall incomplete; inspect /jffs/scripts and WebUI runtime state using local access" >&2
     exit 1
 fi
 
