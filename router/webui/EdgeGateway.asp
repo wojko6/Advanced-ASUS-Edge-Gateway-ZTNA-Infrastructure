@@ -40,14 +40,31 @@
     }
 
     function edgeBooleanState(value, enabledText, disabledText) {
-      return (String(value) === "1")
-        ? '<span class="edge-ok">' + enabledText + '</span>'
-        : '<span class="edge-muted">' + disabledText + '</span>';
+      if (String(value) === "1")
+        return '<span class="edge-ok">' + enabledText + '</span>';
+      if (String(value) === "0")
+        return '<span class="edge-muted">' + disabledText + '</span>';
+      return '<span class="edge-muted">Unknown</span>';
     }
 
-    function initial() {
-      show_menu();
+    function edgeWanWebuiState(value) {
+      if (String(value) === "0")
+        return '<span class="edge-ok">Disabled</span>';
+      if (String(value) === "1")
+        return '<span class="edge-bad">Enabled</span>';
+      return '<span class="edge-muted">Unknown</span>';
+    }
 
+    function SetCurrentPage() {
+      if (document.form) {
+        if (document.form.next_page)
+          document.form.next_page.value = window.location.pathname.substring(1);
+        if (document.form.current_page)
+          document.form.current_page.value = window.location.pathname.substring(1);
+      }
+    }
+
+    function refreshEdgeStatus() {
       document.getElementById("edge_unbound").innerHTML =
         edgeServiceState("<% sysinfo("pid.unbound"); %>");
       document.getElementById("edge_dnsmasq").innerHTML =
@@ -56,15 +73,49 @@
         edgeServiceState("<% sysinfo("pid.tailscaled"); %>");
 
       document.getElementById("edge_wan_webui").innerHTML =
-        edgeBooleanState("<% nvram_get("misc_http_x"); %>", "Enabled", "Disabled");
+        edgeWanWebuiState("<% nvram_get("misc_http_x"); %>");
       document.getElementById("edge_access_restriction").innerHTML =
         edgeBooleanState("<% nvram_get("enable_acc_restriction"); %>", "Enabled", "Disabled");
+    }
+
+    function initial() {
+      /*
+       * Render project status before invoking the ASUS menu helper.  This keeps
+       * the status page useful even if a firmware-specific menu helper fails.
+       */
+      refreshEdgeStatus();
+
+      try {
+        show_menu();
+      }
+      catch (error) {
+        if (window.console && console.error)
+          console.error("ASUS Edge: show_menu() failed", error);
+      }
+
+      SetCurrentPage();
     }
   </script>
 </head>
 
 <body onload="initial();" class="bg">
   <div id="TopBanner"></div>
+  <div id="Loading" class="popup_bg"></div>
+
+  <!--
+    ASUSWRT's show_menu() helper expects the standard named form scaffold.
+    This Phase 1 form has no submit controls or apply action and remains
+    read-only.
+  -->
+  <form method="post" name="form" action="">
+    <input type="hidden" name="current_page" value="" />
+    <input type="hidden" name="next_page" value="" />
+    <input type="hidden" name="group_id" value="" />
+    <input type="hidden" name="modified" value="0" />
+    <input type="hidden" name="first_time" value="" />
+    <input type="hidden" name="preferred_lang" id="preferred_lang"
+           value="<% nvram_get("preferred_lang"); %>" />
+    <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>" />
 
   <table class="content" align="center" cellpadding="0" cellspacing="0">
     <tr>
@@ -170,6 +221,7 @@
       </td>
     </tr>
   </table>
+  </form>
   <div id="footer"></div>
 </body>
 </html>
