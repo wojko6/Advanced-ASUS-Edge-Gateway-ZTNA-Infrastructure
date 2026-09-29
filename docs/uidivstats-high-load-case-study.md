@@ -1,5 +1,9 @@
 # uiDivStats High Load Incident – Troubleshooting Case Study
 
+**Historical status:** this incident and remediation predate the 2026-09-28
+Pi-hole migration. uiDivStats and Diversion were subsequently removed from the
+active reference stack; the case study is retained as troubleshooting evidence.
+
 ## Summary
 
 During routine monitoring of an ASUS TUF-AX5400 running Asuswrt-Merlin,
@@ -19,13 +23,13 @@ The issue was remediated by migrating uiDivStats to v4.0.16 from the
 AMTM-OSR-maintained repository, migrating the SQLite statistics database,
 and terminating the stale orphaned processes.
 
-## Environment
+## Environment at the time of the incident
 
 - Router: ASUS TUF-AX5400
 - Firmware: Asuswrt-Merlin / Gnuton
 - uiDivStats before remediation: v3.0.2
 - uiDivStats after remediation: v4.0.16
-- Diversion: enabled
+- Diversion: enabled (historical incident state)
 - Entware: enabled
 - SQLite-backed uiDivStats statistics
 - Tailscale, Unbound and syslog-ng also active
@@ -93,7 +97,7 @@ Before making changes, backups were created for:
 - uiDivStats configuration,
 - the SQLite statistics database.
 
-The current uiDivStats v4.0.16 script from the AMTM-OSR-maintained
+The replacement uiDivStats v4.0.16 script from the AMTM-OSR-maintained
 repository was then installed.
 
 The new version detected the legacy database schema and prepared the old
