@@ -216,6 +216,24 @@ case "$lock_rc" in
 esac
 trap 'release_services_lock' EXIT
 trap 'exit 1' HUP INT TERM
+
+mount_project_webui() {
+    webui_helper="/jffs/addons/asus-edge/bin/webui-mount"
+    [ -x "$webui_helper" ] || {
+        log "WARNING: optional Edge Gateway WebUI helper is unavailable"
+        return 0
+    }
+    if "$webui_helper" mount >/tmp/asus-edge-webui-mount.log 2>&1; then
+        log "Edge Gateway WebUI mounted"
+    else
+        log "WARNING: Edge Gateway WebUI mount failed; inspect /tmp/asus-edge-webui-mount.log"
+    fi
+}
+
+# The WebUI is optional and must never block recovery of required network
+# services. Merlin's services-start event is the persistent mount trigger.
+mount_project_webui
+
 elapsed=0
 while ! opt_is_ready 2>/dev/null; do
     elapsed=$((elapsed + 1))
