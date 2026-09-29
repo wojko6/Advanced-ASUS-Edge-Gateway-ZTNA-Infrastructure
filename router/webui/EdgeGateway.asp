@@ -199,6 +199,7 @@
       setText("edge_svc_pihole", edgeRequiredState(services.piholeFtl));
       setText("edge_svc_syslog", edgeRequiredState(services.syslogNg));
       setText("edge_svc_scheduler", edgeRequiredState(services.scheduler));
+      setText("edge_dns_pihole", edgeRequiredState(services.piholeFtl));
 
       setText("edge_ts_version", tailscale.version || "N/A");
       setText("edge_ts_connected", edgeSnapshotBoolean(tailscale.connected, "Connected", "Disconnected"));
@@ -456,7 +457,7 @@
                 <thead><tr><td colspan="2">DNS services</td></tr></thead>
                 <tr><th>dnsmasq</th><td><span id="edge_dnsmasq">Unknown</span></td></tr>
                 <tr><th>Unbound process</th><td><span id="edge_unbound">Unknown</span></td></tr>
-                <tr><th>Pi-hole FTL process</th><td><span id="edge_svc_pihole">Loading...</span></td></tr>
+                <tr><th>Pi-hole FTL process</th><td><span id="edge_dns_pihole">Loading...</span></td></tr>
                 <tr><th>DNSSEC firmware flag</th><td><% nvram_get("dnssec_enable"); %></td></tr>
               </table>
 

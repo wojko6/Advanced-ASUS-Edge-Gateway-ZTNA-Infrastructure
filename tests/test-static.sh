@@ -132,6 +132,17 @@ grep -F '/usr/sbin/cru d "$STATUS_CRON_ID"' "$REPO_DIR/router/scripts/webui-moun
     exit 1
 }
 
+
+duplicate_webui_ids="$(
+    grep -o 'id="[^"]*"' "$REPO_DIR/router/webui/EdgeGateway.asp" |
+        sort |
+        uniq -d
+)"
+if [ -n "$duplicate_webui_ids" ]; then
+    echo "FAIL: duplicate HTML id(s) in Edge Gateway WebUI: $duplicate_webui_ids" >&2
+    exit 1
+fi
+
 for webui_phase3_guard in \
     'window.edgeGatewayStatus' \
     'system: {' \
