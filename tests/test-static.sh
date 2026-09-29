@@ -90,6 +90,28 @@ if grep -F 'opkg update && opkg upgrade tailscale' "$REPO_DIR/router/scripts/ser
     exit 1
 fi
 
+for webui_guard in \
+    'router/scripts/webui-mount" "$ADDON_DIR/bin/webui-mount" 0755' \
+    'router/webui/EdgeGateway.asp" "$ADDON_DIR/webui/EdgeGateway.asp" 0644' \
+    'snapshot_path "$ADDON_DIR/webui" webui' \
+    'restore_path "$ADDON_DIR/webui" webui'
+do
+    grep -F "$webui_guard" "$REPO_DIR/scripts/install.sh" >/dev/null || {
+        echo "FAIL: installer WebUI integration missing: $webui_guard" >&2
+        exit 1
+    }
+done
+
+grep -F 'mount_project_webui' "$REPO_DIR/router/scripts/services-start" >/dev/null || {
+    echo "FAIL: services-start does not persist the Edge Gateway WebUI" >&2
+    exit 1
+}
+
+grep -F '"$ADDON_DIR/bin/webui-mount" unmount' "$REPO_DIR/scripts/uninstall.sh" >/dev/null || {
+    echo "FAIL: uninstall does not remove Edge Gateway WebUI runtime state" >&2
+    exit 1
+}
+
 if grep -F '"$service" restart' "$REPO_DIR/router/scripts/services-start" >/dev/null; then
     echo "FAIL: Entware service restart present in boot path" >&2
     exit 1
