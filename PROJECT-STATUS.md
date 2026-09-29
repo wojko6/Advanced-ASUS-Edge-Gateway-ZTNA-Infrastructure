@@ -1,18 +1,20 @@
 # Project status
 
-**Status date:** 2026-09-28
+**Status date:** 2026-09-29
 
 **Latest live router checkpoint:** 2026-09-28
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Pi-hole DNS analytics Phase 0-3, full Fedora reboot persistence and controlled two-client main-LAN acceptance are live-validated; the tested Tailscale classic-DNS coverage gap is also confirmed. Remaining work is retention/storage measurement, rollback/uninstall validation and the remaining LAN interception coverage correlation
+**Current phase:** continue the deferred Grafana GitHub/CI dashboard work from the 2026-09-28 checkpoint, then execute the short post-audit hardening round (#127, #128, #130). Pi-hole DNS analytics Phase 0-3, full Fedora reboot persistence and controlled two-client main-LAN acceptance remain live-validated; issue #108 still has bounded retention/storage, rollback/uninstall and LAN interception-correlation gaps.
 
 ## Executive status
 
 This status document was reconciled on 2026-09-28. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
 
 The centralized logging path is now also live-validated: router syslog-ng forwards the Asuswrt log over Tailscale and mutually authenticated TLS to the Fedora collector, with source-restricted firewall policy and successful short-outage recovery (3/3 test messages delivered after collector restoration). Grafana 13 uses its native Polish interface option; the project dashboard remains explicitly localized in JSON because application language settings do not translate project-owned panel content.
+
+On 2026-09-28 the Fedora Grafana instance was also extended with the read-only GitHub datasource plus Polystat and Business Charts plugins. The new `ASUS Edge Gateway — Engineering / CI` dashboard was live-validated with recent CI runs, latest CI status, open-Issue count and open-PR count. Merged-PR/repository-activity panels, final layout cleanup and the Polystat infrastructure-health overview were intentionally deferred to the next session.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
@@ -240,15 +242,21 @@ A full repository audit covered code, security, install/rollback, firewall/DNS/T
 
 AUDIT-02 and AUDIT-03 are closed from live evidence on the reference datapath. AUDIT-02 has additionally been revalidated on the 2026-09-23 GNUton firmware for the tested IPv4 ICMP exit-node flow. The Fedora portion of AUDIT-03 was revalidated on 2026-09-27 on GNUton `3004.388.11_1-gnuton1_tuf` after the Unbound 1.26.1 deployment and remains explicitly bounded to classic DNS over UDP/TCP port 53; Android-specific post-reboot behavior and encrypted resolver transports remain separate items.
 
-## Post-observation validation status and next actions
+## Current execution checkpoint and next actions
 
-The 2026-09-22 closing observation and AUDIT-02/03 sanitized live-validation artifacts are retained as historical checkpoints. Following the 2026-09-23 firmware and policy changes:
+The earlier post-firmware validation debt is closed: the exit-node datapath, current-firmware classic DNS, Diversion Large acceptance, repeated clean startup behavior and Android exit-node public-IP behavior all have dated evidence. The main-LAN filtering path was then migrated from Diversion to Pi-hole on 2026-09-28, so Diversion observation is no longer a current action item.
 
-1. **Completed:** post-firmware exit-node packet correlation on GNUton `3004.388.11_1-gnuton1_tuf` confirmed the same fixed-flow datapath before NAT on `tailscale0` and after NAT on `ppp0`; see the [sanitized revalidation](evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md).
-2. **Completed on 2026-09-27:** current-firmware Fedora classic-DNS UDP/TCP 53 was revalidated end to end. Unique controlled queries were captured on `tailscale0`, the managed UDP/TCP REDIRECT counters each increased by exactly one, matching dnsmasq -> Unbound loopback traffic was observed on `127.0.0.1:53535`, temporary capture instrumentation was removed, and the final project health check returned `0 failure(s), 0 warning(s)`. See [current-firmware AUDIT-03 evidence](evidence/2026-09-27/audit-03-current-firmware-dns-datapath-revalidation.md).
-3. Observe Diversion Large across the sessions and starts specified in [the roadmap](docs/roadmap.md#diversion-large-normal-use-acceptance-criteria), including false positives and RAM/swap behavior. One successful reboot does not meet those acceptance criteria.
-4. Record additional clean startup/power-on cycles and re-check storage, swap, Tailscale, DNS and project health after each cycle so reboot persistence is supported by more than one same-day restart.
-5. Keep new live evidence minimized and sanitized, and treat any further router change as planned maintenance with a current backup, rollback path and affected live revalidation.
+The 2026-09-28 worklog intentionally stopped Grafana work after the first useful GitHub/CI dashboard was validated. The immediate continuation is therefore documentation/observability work rather than a router-policy change:
+
+1. **Finish the Grafana Engineering / CI dashboard:** merged PRs over a bounded recent period, recent repository activity/commits, final layout cleanup and a separate Polystat infrastructure-health overview.
+2. **#127 — LAN management / automatic exposure:** verify and, only where justified, restrict normal-LAN WebUI access and audit UPnP/NAT-PMP, Port Trigger, Port Forwarding and DMZ state.
+3. **#128 — IPv6 and Wi-Fi security parity evidence:** establish the current IPv6 WAN/LAN/client state plus WPA2/WPA3, PMF/802.11w and guest/client-isolation evidence before any enforcement change.
+4. **#130 — repository supply-chain protection:** add a `main` ruleset, require the Validation suite, and block force-push/branch deletion while preserving the PR workflow.
+5. **#108 — finish bounded DNS-analytics gaps:** measure retention/storage behavior, validate rollback/uninstall and correlate the hard-coded external LAN classic-DNS interception path.
+6. **#68 — DoH/DoQ bypass assessment:** measure encrypted-DNS bypass paths before designing enforcement.
+7. **#129 — Pi-hole-aware disaster-recovery refresh:** extend the validated recovery mechanics to Pi-hole/FTL, dedicated listener/alias, Gravity, DHCP/reverse DNS and Pi-hole -> Unbound reconstruction.
+
+Keep new live evidence minimized and sanitized, and treat every router change as planned maintenance with a current backup, rollback path and affected live revalidation.
 
 ## Evidence and privacy boundary
 
@@ -342,7 +350,7 @@ Disabling SNBForums ad support removed a hard-coded exception that allowed `page
 
 The Large profile materially broadened DNS blocking, but visible advertising still remained on representative real-world sites even while many observed advertising/RTB hostnames returned `NXDOMAIN` from the Android client. One focused denylist experiment for `sdk-videoplayer.optad360.info` also did not remove the observed advertising by itself.
 
-Current post-test filtering state:
+Historical 2026-09-22 post-test filtering state:
 
 ```text
 Diversion: enabled

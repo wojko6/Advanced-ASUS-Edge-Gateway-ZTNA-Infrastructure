@@ -36,13 +36,15 @@ with mutual TLS, source-restricted firewalld policy, an end-to-end unique
 message, and a short collector-outage recovery test that delivered 3/3 queued
 messages after collector restoration.
 
-**Next execution focus:** finish the remaining issue #108 acceptance work:
-bounded storage/retention observation, rollback/uninstall validation and
-correlation of the hard-coded external classic-DNS LAN interception path. The
-Pi-hole-visible collector, Alloy/Loki backend, Grafana dashboard, Fedora reboot
-persistence and two-client main-LAN distinguishability are already
-live-validated. Issue #68 remains the separate encrypted-DNS coverage
-assessment. No resolver-policy change is implied by the analytics work.
+**Immediate continuation:** finish the Grafana work deliberately deferred at
+the end of 2026-09-28: merged-PR visibility, recent repository activity/commits,
+dashboard layout cleanup and a separate Polystat infrastructure-health view.
+
+After that checkpoint, continue with #127 (LAN management and exposure audit),
+#128 (IPv6/Wi-Fi security parity evidence) and #130 (GitHub main ruleset /
+required validation). Then finish the bounded #108 retention, rollback and
+LAN-interception correlation gaps, followed by #68 encrypted-DNS assessment
+and #129 Pi-hole-aware disaster-recovery refresh.
 
 ## In progress — Network DNS Visibility / Client Activity Analytics
 
