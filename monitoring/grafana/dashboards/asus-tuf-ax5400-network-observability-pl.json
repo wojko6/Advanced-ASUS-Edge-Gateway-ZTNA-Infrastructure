@@ -4066,7 +4066,7 @@
           "refId": "A"
         }
       ],
-      "title": "Błędy collectora — 24 h",
+      "title": "Nieudane odczyty routera — 24 h",
       "type": "stat"
     },
     {
