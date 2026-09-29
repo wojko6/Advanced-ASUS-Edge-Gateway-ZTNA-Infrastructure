@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Added
+- Added a project-native read-only Edge Gateway WebUI and a persistent Polish ASUS/GNUton localization overlay covering eight version-pinned firmware resources without committing complete vendor WebUI files.
+- Added repository-local Markdown link validation so stale documentation and image targets fail CI.
 - Added a Pi-hole-centric DNS activity analytics design for issue #108, including read-only Fedora collection, Alloy/Loki/Grafana processing, privacy boundaries, cardinality rules, coverage-gap testing and acceptance criteria.
 - Added a dedicated swap and memory reliability guide covering boot ordering, observed OOM/ENOMEM incidents, remediation and post-reboot validation.
 - Added a sanitized 2026-09-25 router live-checkpoint artifact and dated engineering worklog covering health, current-firmware DNS/DoT counter correlation, Exit Node diagnostic boundaries and GeForce NOW follow-up.
@@ -44,6 +46,7 @@
 - Closed the unchanged-state observation on 2026-09-22 after continuous operation from 2026-09-11 through 2026-09-22; current documentation now treats later router changes as controlled maintenance rather than an active Stability Gate.
 
 ### Fixed
+- Corrected installer/recovery CI fixtures after the Polish WebUI builder introduced an installation-time GNU `patch` dependency, and added a static regression guard for the builder's `patch -p1` header contract.
 - Corrected the case-study index to reflect the recovered GeForce NOW Wi-Fi packet capture instead of the earlier unavailable-capture state.
 - Hardened Fedora DR target selection so the helper refuses the running root, same-root backing source, and missing separate `/boot` or `/boot/efi` mounts.
 - Made Fedora DR rollback directory creation collision-resistant with `mktemp -d`.
@@ -56,6 +59,8 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Live-validated the final eight-resource Polish WebUI overlay through exact SHA-256 checks, one bind mount per resource, visual inspection, controlled reboot persistence and a final project health result of `0 failure(s), 0 warning(s)`.
+- Completed issue #128 with router/client IPv6-state evidence and trusted-WLAN WPA/PMF/WEP/TKIP/WPS checks; native IPv6 remains intentionally disabled and inactive guest WLANs are not promoted into a live isolation claim.
 - Reconfirmed the reference router on 2026-09-25 with `0 failure(s), 0 warning(s)`, DNSSEC-validating Unbound, exact LAN UDP/TCP 53 redirect deltas, a correlated direct DoT/853 reject, and a Tailscale UDP/53 redirect delta; the incomplete same-day Exit Node capture was explicitly not promoted over the existing 2026-09-23 evidence.
 - Recorded an approximately one-hour wired GeForce NOW normal-use follow-up with stable latency and zero application-reported packet loss; toggling Zen produced no observed difference in that window, while a confounded Exit Node A/B/A attempt was excluded from performance claims.
 - Recorded a bounded Xbox Cloud Gaming WebRTC session in Edge: 1920 x 1080 H.264, 935/1000 samples at 58–62 FPS, zero receiver-reported video packet loss/dropped frames/freezes, and a nominated UDP ICE path with 30–34 ms WebRTC RTT.
