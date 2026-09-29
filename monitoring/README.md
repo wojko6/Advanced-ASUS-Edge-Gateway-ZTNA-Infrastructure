@@ -222,3 +222,30 @@ and other strings stored in the project dashboard JSON are project-owned
 content and were localized explicitly. The reference deployment therefore uses
 the native Polish Grafana UI together with the project-localized Polish
 TUF-AX5400 dashboard.
+
+## Grafana GitHub / CI observability
+
+The 2026-09-28 Fedora Grafana checkpoint also added a read-only GitHub
+integration for this repository. The validated plugin set includes:
+
+- Grafana GitHub Data Source 2.9.1;
+- Polystat Panel 2.1.16;
+- Business Charts / Apache ECharts 7.2.5.
+
+The GitHub datasource is provisioned read-only. Its fine-grained credential is
+kept locally on Fedora and is not stored in repository files or dashboard JSON.
+
+The initial `ASUS Edge Gateway — Engineering / CI` dashboard is live-validated
+with:
+
+- recent Validation suite workflow runs;
+- the latest CI result;
+- current open-Issue count;
+- current open-Pull-Request count.
+
+The 2026-09-28 session deliberately stopped after those core panels became
+useful. The next dashboard work is merged PRs over a bounded recent period,
+recent repository activity/commits, final layout cleanup and a separate
+Polystat infrastructure-health overview. Business Charts remains optional; no
+additional Grafana plugin installation is required before those steps.
+
