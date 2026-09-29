@@ -44,9 +44,10 @@ mount_webui() {
         exit 1
     }
 
-    exec 386>"$LOCKFILE"
-    flock -x 386
+    exec 9>"$LOCKFILE"
+    flock -x 9
 
+    am_webui_page="none"
     am_get_webui_page "$WEBUI_SOURCE"
     [ "$am_webui_page" != "none" ] || {
         echo "ERROR: no free Merlin addon WebUI page" >&2
@@ -77,8 +78,8 @@ mount_webui() {
 }
 
 unmount_webui() {
-    exec 386>"$LOCKFILE"
-    flock -x 386
+    exec 9>"$LOCKFILE"
+    flock -x 9
 
     page=""
     if [ -r "$STATE_FILE" ]; then
@@ -86,6 +87,7 @@ unmount_webui() {
     fi
 
     if [ -z "$page" ] && [ -f "$WEBUI_SOURCE" ]; then
+        am_webui_page="none"
         am_get_webui_page "$WEBUI_SOURCE"
         [ "$am_webui_page" = "none" ] || page="$am_webui_page"
     fi
