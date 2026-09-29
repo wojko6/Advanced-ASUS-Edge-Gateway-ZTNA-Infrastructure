@@ -77,6 +77,18 @@
         : '<span class="edge-bad">Missing</span>';
     }
 
+    function edgeRunningState(value) {
+      return Number(value) === 1
+        ? '<span class="edge-ok">Running</span>'
+        : '<span class="edge-bad">Stopped</span>';
+    }
+
+    function edgeSchedulerState(value) {
+      return Number(value) === 1
+        ? '<span class="edge-ok">Scheduled</span>'
+        : '<span class="edge-bad">Missing</span>';
+    }
+
     function edgeWanWebuiState(value) {
       if (String(value) === "0")
         return '<span class="edge-ok">Disabled</span>';
@@ -149,7 +161,12 @@
     }
 
     function edgeStorage(used, total, percent) {
-      return edgeGiB(used) + " / " + edgeGiB(total) + " (" + edgeNumber(percent) + "%)";
+      var totalKiB = Number(total);
+      if (!isFinite(totalKiB))
+        return "N/A";
+
+      var formatter = totalKiB < 1048576 ? edgeMiB : edgeGiB;
+      return formatter(used) + " / " + formatter(total) + " (" + edgeNumber(percent) + "%)";
     }
 
     function SetCurrentPage() {
@@ -193,13 +210,13 @@
       setText("edge_system_opt", edgeStorage(system.optUsedKiB, system.optTotalKiB, system.optUsedPct));
       setText("edge_system_jffs", edgeStorage(system.jffsUsedKiB, system.jffsTotalKiB, system.jffsUsedPct));
 
-      setText("edge_svc_tailscale", edgeRequiredState(services.tailscaled));
-      setText("edge_svc_unbound", edgeRequiredState(services.unbound));
-      setText("edge_svc_dnsmasq", edgeRequiredState(services.dnsmasq));
-      setText("edge_svc_pihole", edgeRequiredState(services.piholeFtl));
-      setText("edge_svc_syslog", edgeRequiredState(services.syslogNg));
-      setText("edge_svc_scheduler", edgeRequiredState(services.scheduler));
-      setText("edge_dns_pihole", edgeRequiredState(services.piholeFtl));
+      setText("edge_svc_tailscale", edgeRunningState(services.tailscaled));
+      setText("edge_svc_unbound", edgeRunningState(services.unbound));
+      setText("edge_svc_dnsmasq", edgeRunningState(services.dnsmasq));
+      setText("edge_svc_pihole", edgeRunningState(services.piholeFtl));
+      setText("edge_svc_syslog", edgeRunningState(services.syslogNg));
+      setText("edge_svc_scheduler", edgeSchedulerState(services.scheduler));
+      setText("edge_dns_pihole", edgeRunningState(services.piholeFtl));
 
       setText("edge_ts_version", tailscale.version || "N/A");
       setText("edge_ts_connected", edgeSnapshotBoolean(tailscale.connected, "Connected", "Disconnected"));
@@ -466,7 +483,7 @@
               <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
                      bordercolor="#6b8fa3" class="FormTable">
                 <thead><tr><td colspan="2">Unbound runtime — refreshed every minute</td></tr></thead>
-                <tr><th>Collector status</th><td><span id="edge_unbound_snapshot">Loading...</span></td></tr>
+                <tr><th>Unbound runtime status</th><td><span id="edge_unbound_snapshot">Loading...</span></td></tr>
                 <tr><th>Version</th><td><span id="edge_unbound_version">Loading...</span></td></tr>
                 <tr><th>Listener</th><td><span id="edge_unbound_listener">Loading...</span></td></tr>
                 <tr><th>Uptime</th><td><span id="edge_unbound_uptime">Loading...</span></td></tr>

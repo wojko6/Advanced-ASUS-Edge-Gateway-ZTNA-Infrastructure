@@ -153,7 +153,11 @@ for webui_phase3_guard in \
     'lanDnsRedirectPackets' \
     'projectOwnsNetfilter' \
     'Pi-hole FTL' \
-    'Firewall counters — cumulative'
+    'Firewall counters — cumulative' \
+    'edgeRunningState' \
+    'edgeSchedulerState' \
+    'totalKiB < 1048576' \
+    'Unbound runtime status'
 do
     grep -F "$webui_phase3_guard" \
         "$REPO_DIR/router/scripts/webui-status" \
