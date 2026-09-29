@@ -164,6 +164,48 @@ If hooks cannot run, rename the managed hook files under `/jffs/scripts/`, resto
 
 An emergency rollback during any declared unchanged-state observation interrupts that observation. Record why it was necessary and establish a new known-good baseline before starting a new observation period.
 
+## SFTP administrative file transfer
+
+The reference router was live-validated on 2026-09-29 with the Entware
+`openssh-sftp-server` package. The current GNUton/Dropbear build has SFTP
+subsystem support enabled and delegates that subsystem to:
+
+```text
+/opt/libexec/sftp-server
+```
+
+On the reference Entware installation this path is supplied as a symlink to the
+packaged SFTP server binary. No second SSH daemon or additional listening port
+is required; SFTP runs through the existing Dropbear SSH service and therefore
+inherits the same SSH port, authentication and management-source restrictions.
+
+Install or verify the package during a planned maintenance action:
+
+```sh
+opkg update
+opkg list | grep '^openssh-sftp-server '
+opkg install openssh-sftp-server
+ls -l /opt/libexec/sftp-server
+```
+
+Validate from a trusted workstation through the existing SSH management path:
+
+```sh
+sftp -P SSH_PORT admin@ROUTER_LAN_IP
+```
+
+A successful reference test reached the SFTP prompt and reported the remote
+working directory. This allows current OpenSSH clients to use normal `scp`
+syntax with the default SFTP transport. The `scp -O` option forces the legacy
+SCP protocol and should be treated as a compatibility fallback, not the
+preferred steady-state transfer method.
+
+Installing `openssh-sftp-server` does not by itself broaden network exposure,
+but it adds a file-transfer subsystem to every SSH session that passes the
+existing SSH access controls. Keep the current SSH source restrictions and
+authentication policy in place and do not expose a separate SSH/SFTP listener
+for this feature.
+
 ## Updates
 
 Never place `opkg update` or package upgrades in a boot hook. Use a planned maintenance window:
