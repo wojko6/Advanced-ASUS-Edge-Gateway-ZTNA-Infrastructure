@@ -132,6 +132,32 @@ grep -F '/usr/sbin/cru d "$STATUS_CRON_ID"' "$REPO_DIR/router/scripts/webui-moun
     exit 1
 }
 
+for webui_phase3_guard in \
+    'window.edgeGatewayStatus' \
+    'system: {' \
+    'services: {' \
+    'tailscale: {' \
+    'policy: {' \
+    'firewall: {' \
+    'lanDnsRedirectPackets' \
+    'projectOwnsNetfilter' \
+    'Pi-hole FTL' \
+    'Firewall counters — cumulative'
+do
+    grep -F "$webui_phase3_guard" \
+        "$REPO_DIR/router/scripts/webui-status" \
+        "$REPO_DIR/router/webui/EdgeGateway.asp" >/dev/null || {
+        echo "FAIL: Edge Gateway WebUI Phase 3 guard missing: $webui_phase3_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F 'window.edgeGatewayStatus' "$REPO_DIR/router/scripts/webui-status" |
+    grep -E '100\.[0-9]+\.|192\.168\.' >/dev/null; then
+    echo "FAIL: Phase 3 WebUI snapshot contains hard-coded private deployment addresses" >&2
+    exit 1
+fi
+
 grep -F '"$ADDON_DIR/bin/webui-mount" unmount' "$REPO_DIR/scripts/uninstall.sh" >/dev/null || {
     echo "FAIL: uninstall does not remove Edge Gateway WebUI runtime state" >&2
     exit 1

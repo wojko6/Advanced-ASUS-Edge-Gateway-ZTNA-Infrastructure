@@ -1,6 +1,6 @@
 #!/bin/sh
 # shellcheck shell=dash
-# Generate a sanitized, read-only Unbound status snapshot for the ASUS Edge WebUI.
+# Generate a sanitized, read-only operational snapshot for the ASUS Edge WebUI.
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -14,14 +14,100 @@ OUT_DIR="${EDGE_WEBUI_STATUS_DIR:-/www/ext/asus-edge}"
 OUT_TMP="$OUT_DIR/status.js.tmp"
 OUT_FILE="$OUT_DIR/status.js"
 CONF="${EDGE_UNBOUND_CONFIG:-/opt/var/lib/unbound/unbound.conf}"
+CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 
 mkdir -p "$OUT_DIR" || exit 1
 
-version="unknown"
-port="unknown"
-interface="unknown"
-status="stopped"
-uptime="0"
+if [ -r "$CONFIG_FILE" ]; then
+    # shellcheck disable=SC1090
+    . "$CONFIG_FILE"
+fi
+
+: "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
+: "${EDGE_TS_NETFILTER_MODE:=off}"
+: "${EDGE_INTERCEPT_DNS:=0}"
+: "${EDGE_ENFORCE_LAN_DNS:=0}"
+: "${EDGE_BLOCK_LAN_DOT:=0}"
+: "${EDGE_ENABLE_EXIT_NODE:=0}"
+: "${EDGE_ALLOW_ROUTER_HTTPS:=0}"
+: "${EDGE_ALLOW_ROUTER_SSH:=0}"
+: "${EDGE_ADMIN_TS_SOURCES:=}"
+: "${EDGE_PRINTER_TS_SOURCES:=}"
+: "${EDGE_PRINTER_LAN_IP:=}"
+
+safe_token() {
+    case "${1:-}" in
+        ""|*[!0-9A-Za-z_.:@/+%-]*) printf '%s\n' "unknown" ;;
+        *) printf '%s\n' "$1" ;;
+    esac
+}
+
+number_or_zero() {
+    case "${1:-}" in
+        ""|*[!0-9.]*|*.*.*) printf '%s\n' "0" ;;
+        *) printf '%s\n' "$1" ;;
+    esac
+}
+
+bool01() {
+    case "${1:-}" in
+        1|true|yes|enabled) printf '%s\n' "1" ;;
+        *) printf '%s\n' "0" ;;
+    esac
+}
+
+find_exec() {
+    executable_name="$1"
+    for executable_dir in /opt/sbin /opt/bin /usr/sbin /usr/bin /sbin /bin; do
+        if [ -x "$executable_dir/$executable_name" ]; then
+            printf '%s\n' "$executable_dir/$executable_name"
+            return 0
+        fi
+    done
+    return 1
+}
+
+service_running() {
+    if pidof "$1" >/dev/null 2>&1; then
+        printf '%s\n' "1"
+    else
+        printf '%s\n' "0"
+    fi
+}
+
+chain_exists() {
+    tool="$1"
+    table="$2"
+    chain="$3"
+    if "$tool" -t "$table" -S "$chain" >/dev/null 2>&1; then
+        printf '%s\n' "1"
+    else
+        printf '%s\n' "0"
+    fi
+}
+
+chain_target_packets() {
+    tool="$1"
+    table="$2"
+    chain="$3"
+    target="$4"
+    "$tool" -t "$table" -nvx -L "$chain" 2>/dev/null |
+        awk -v wanted="$target" 'NR > 2 && $3 == wanted { sum += $1 } END { print sum + 0 }'
+}
+
+df_field() {
+    path="$1"
+    field="$2"
+    df -Pk "$path" 2>/dev/null |
+        awk -v wanted="$field" 'NR == 2 { gsub(/%/, "", $5); print $wanted; exit }'
+}
+
+# ---- Unbound --------------------------------------------------------------
+unbound_version="unknown"
+unbound_port="unknown"
+unbound_interface="unknown"
+unbound_status="stopped"
+unbound_uptime="0"
 queries="0"
 cachehits="0"
 cachemiss="0"
@@ -34,40 +120,26 @@ rec_avg="0"
 rec_median="0"
 stats_ok=0
 
-safe_token() {
-    case "${1:-}" in
-        ""|*[!0-9A-Za-z_.:@-]*) printf '%s\n' "unknown" ;;
-        *) printf '%s\n' "$1" ;;
-    esac
-}
-
-number_or_zero() {
-    case "${1:-}" in
-        ""|*[!0-9.]*|*.*.*) printf '%s\n' "0" ;;
-        *) printf '%s\n' "$1" ;;
-    esac
-}
-
 if [ -x /opt/sbin/unbound ]; then
-    version="$(/opt/sbin/unbound -V 2>/dev/null | awk '/^Version / {print $2; exit}')"
-    version="$(safe_token "$version")"
+    unbound_version="$(/opt/sbin/unbound -V 2>/dev/null | awk '/^Version / {print $2; exit}')"
+    unbound_version="$(safe_token "$unbound_version")"
 fi
 
 if [ -x /opt/sbin/unbound-checkconf ] && [ -r "$CONF" ]; then
-    port="$(/opt/sbin/unbound-checkconf -o port "$CONF" 2>/dev/null | head -n 1)"
-    interface="$(/opt/sbin/unbound-checkconf -o interface "$CONF" 2>/dev/null | head -n 1)"
-    port="$(safe_token "$port")"
-    interface="$(safe_token "$interface")"
+    unbound_port="$(/opt/sbin/unbound-checkconf -o port "$CONF" 2>/dev/null | head -n 1)"
+    unbound_interface="$(/opt/sbin/unbound-checkconf -o interface "$CONF" 2>/dev/null | head -n 1)"
+    unbound_port="$(safe_token "$unbound_port")"
+    unbound_interface="$(safe_token "$unbound_interface")"
 fi
 
 if [ -x /opt/sbin/unbound-control ] && [ -r "$CONF" ]; then
     control="$(/opt/sbin/unbound-control -c "$CONF" status 2>/dev/null || true)"
 
     if printf '%s\n' "$control" | grep -q 'is running'; then
-        status="running"
+        unbound_status="running"
     fi
 
-    uptime="$(printf '%s\n' "$control" | awk -F': ' '/^uptime:/ {print $2}' | awk '{print $1}')"
+    unbound_uptime="$(printf '%s\n' "$control" | awk -F': ' '/^uptime:/ {print $2}' | awk '{print $1}')"
 
     if stats="$(/opt/sbin/unbound-control -c "$CONF" stats_noreset 2>/dev/null)"; then
         stats_ok=1
@@ -91,7 +163,7 @@ if [ -x /opt/sbin/unbound-control ] && [ -r "$CONF" ]; then
     rec_median="$(value total.recursion.time.median)"
 fi
 
-uptime="$(number_or_zero "$uptime")"
+unbound_uptime="$(number_or_zero "$unbound_uptime")"
 queries="$(number_or_zero "$queries")"
 cachehits="$(number_or_zero "$cachehits")"
 cachemiss="$(number_or_zero "$cachemiss")"
@@ -104,36 +176,220 @@ rec_avg="$(number_or_zero "$rec_avg")"
 rec_median="$(number_or_zero "$rec_median")"
 
 # When the resolver process exists, never replace the last known-good snapshot
-# with fabricated zero/unknown values because one helper command failed. The
-# separate ASP process-status field still reports whether Unbound is running.
+# with fabricated zero/unknown values because one helper command failed.
 if pidof unbound >/dev/null 2>&1; then
-    if [ "$version" = "unknown" ] || [ "$port" = "unknown" ] || \
-       [ "$interface" = "unknown" ] || [ "$status" != "running" ] || \
+    if [ "$unbound_version" = "unknown" ] || [ "$unbound_port" = "unknown" ] || \
+       [ "$unbound_interface" = "unknown" ] || [ "$unbound_status" != "running" ] || \
        [ "$stats_ok" != "1" ]; then
         echo "ERROR: incomplete Unbound runtime snapshot; preserving previous status.js" >&2
         exit 1
     fi
 fi
 
+# ---- System ---------------------------------------------------------------
+system_uptime="$(awk '{print $1; exit}' /proc/uptime 2>/dev/null)"
+system_uptime="$(number_or_zero "$system_uptime")"
+set -- $(awk '{print $1, $2, $3; exit}' /proc/loadavg 2>/dev/null)
+load1="$(number_or_zero "${1:-0}")"
+load5="$(number_or_zero "${2:-0}")"
+load15="$(number_or_zero "${3:-0}")"
+
+mem_total="$(awk '/^MemTotal:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"
+mem_available="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"
+if [ -z "$mem_available" ]; then
+    mem_available="$(awk '
+        /^MemFree:/ { free=$2 }
+        /^Buffers:/ { buffers=$2 }
+        /^Cached:/ { cached=$2 }
+        END { print free + buffers + cached }
+    ' /proc/meminfo 2>/dev/null)"
+fi
+mem_total="$(number_or_zero "$mem_total")"
+mem_available="$(number_or_zero "$mem_available")"
+mem_used="$(awk -v total="$mem_total" -v available="$mem_available" 'BEGIN { value=total-available; if (value < 0) value=0; printf "%.0f\n", value }')"
+
+swap_total="$(awk '/^SwapTotal:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"
+swap_free="$(awk '/^SwapFree:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"
+swap_total="$(number_or_zero "$swap_total")"
+swap_free="$(number_or_zero "$swap_free")"
+swap_used="$(awk -v total="$swap_total" -v free="$swap_free" 'BEGIN { value=total-free; if (value < 0) value=0; printf "%.0f\n", value }')"
+swap_devices="$(awk 'NR > 1 { count++ } END { print count + 0 }' /proc/swaps 2>/dev/null)"
+
+opt_total="$(number_or_zero "$(df_field /opt 2)")"
+opt_used="$(number_or_zero "$(df_field /opt 3)")"
+opt_pct="$(number_or_zero "$(df_field /opt 5)")"
+jffs_total="$(number_or_zero "$(df_field /jffs 2)")"
+jffs_used="$(number_or_zero "$(df_field /jffs 3)")"
+jffs_pct="$(number_or_zero "$(df_field /jffs 5)")"
+
+# ---- Services -------------------------------------------------------------
+svc_tailscaled="$(service_running tailscaled)"
+svc_unbound="$(service_running unbound)"
+svc_dnsmasq="$(service_running dnsmasq)"
+svc_syslog="$(service_running syslog-ng)"
+svc_pihole="$(service_running pihole-FTL)"
+
+# ---- Tailscale (sanitized aggregate state only) ---------------------------
+ts_version="unknown"
+ts_connected=0
+ts_peers=0
+ts_active=0
+ts_offline=0
+ts_direct=0
+ts_exit_offered=0
+TAILSCALE_BIN="$(find_exec tailscale 2>/dev/null || true)"
+
+if [ -n "$TAILSCALE_BIN" ]; then
+    ts_version="$("$TAILSCALE_BIN" version 2>/dev/null | awk 'NR == 1 {print $1; exit}')"
+    ts_version="$(safe_token "$ts_version")"
+
+    if ts_status="$("$TAILSCALE_BIN" --socket="$EDGE_TS_SOCKET" status 2>/dev/null)"; then
+        ts_connected=1
+        ts_nodes="$(printf '%s\n' "$ts_status" | awk '$1 ~ /^[0-9]+\./ { count++ } END { print count + 0 }')"
+        if [ "$ts_nodes" -gt 0 ] 2>/dev/null; then
+            ts_peers=$((ts_nodes - 1))
+        fi
+        ts_active="$(printf '%s\n' "$ts_status" | awk '$1 ~ /^[0-9]+\./ && /active;/ { count++ } END { print count + 0 }')"
+        ts_offline="$(printf '%s\n' "$ts_status" | awk '$1 ~ /^[0-9]+\./ && /offline/ { count++ } END { print count + 0 }')"
+        ts_direct="$(printf '%s\n' "$ts_status" | awk '$1 ~ /^[0-9]+\./ && /direct / { count++ } END { print count + 0 }')"
+        if printf '%s\n' "$ts_status" | awk '$1 ~ /^[0-9]+\./ {print; exit}' | grep -F 'offers exit node' >/dev/null 2>&1; then
+            ts_exit_offered=1
+        fi
+    fi
+fi
+
+# ---- Project policy -------------------------------------------------------
+policy_intercept_dns="$(bool01 "$EDGE_INTERCEPT_DNS")"
+policy_lan_dns="$(bool01 "$EDGE_ENFORCE_LAN_DNS")"
+policy_dot="$(bool01 "$EDGE_BLOCK_LAN_DOT")"
+policy_exit_node="$(bool01 "$EDGE_ENABLE_EXIT_NODE")"
+policy_https="$(bool01 "$EDGE_ALLOW_ROUTER_HTTPS")"
+policy_ssh="$(bool01 "$EDGE_ALLOW_ROUTER_SSH")"
+policy_admin_sources="$(printf '%s\n' "$EDGE_ADMIN_TS_SOURCES" | awk '{print NF}')"
+policy_printer=0
+if [ -n "$EDGE_PRINTER_TS_SOURCES" ] && [ -n "$EDGE_PRINTER_LAN_IP" ]; then
+    policy_printer=1
+fi
+if [ "$EDGE_TS_NETFILTER_MODE" = "off" ]; then
+    policy_netfilter_project=1
+else
+    policy_netfilter_project=0
+fi
+
+# ---- Firewall summary (no source/destination identities are exposed) ------
+fw_ts_input="$(chain_exists iptables filter EDGE_TS_INPUT)"
+fw_ts_forward="$(chain_exists iptables filter EDGE_TS_FORWARD)"
+fw_ts_prerouting="$(chain_exists iptables nat EDGE_TS_PREROUTING)"
+fw_lan_dns="$(chain_exists iptables nat EDGE_LAN_DNS_PREROUTING)"
+fw_lan_dot="$(chain_exists iptables filter EDGE_LAN_DOT_FORWARD)"
+fw_ts6_input="$(chain_exists ip6tables filter EDGE_TS6_INPUT)"
+fw_ts6_forward="$(chain_exists ip6tables filter EDGE_TS6_FORWARD)"
+
+fw_input_accept="$(chain_target_packets iptables filter EDGE_TS_INPUT ACCEPT)"
+fw_input_log="$(chain_target_packets iptables filter EDGE_TS_INPUT LOG)"
+fw_input_drop="$(chain_target_packets iptables filter EDGE_TS_INPUT DROP)"
+fw_forward_accept="$(chain_target_packets iptables filter EDGE_TS_FORWARD ACCEPT)"
+fw_forward_log="$(chain_target_packets iptables filter EDGE_TS_FORWARD LOG)"
+fw_forward_drop="$(chain_target_packets iptables filter EDGE_TS_FORWARD DROP)"
+fw_dns_bypass="$(chain_target_packets iptables nat EDGE_LAN_DNS_PREROUTING RETURN)"
+fw_dns_redirect="$(chain_target_packets iptables nat EDGE_LAN_DNS_PREROUTING REDIRECT)"
+fw_dot_reject="$(chain_target_packets iptables filter EDGE_LAN_DOT_FORWARD REJECT)"
+fw_ipv6_input_drop="$(chain_target_packets ip6tables filter EDGE_TS6_INPUT DROP)"
+fw_ipv6_forward_drop="$(chain_target_packets ip6tables filter EDGE_TS6_FORWARD DROP)"
+
+# ---- Scheduler ------------------------------------------------------------
+scheduler_ok=0
+if [ -x /usr/sbin/cru ] && /usr/sbin/cru l 2>/dev/null | grep -F '#AsusEdgeWebUIStatus#' >/dev/null 2>&1; then
+    scheduler_ok=1
+fi
+
 cat >"$OUT_TMP" <<JS
-window.edgeUnboundStatus = {
-  version: "$version",
-  status: "$status",
-  port: "$port",
-  interface: "$interface",
-  uptime: $uptime,
-  queries: $queries,
-  cachehits: $cachehits,
-  cachemiss: $cachemiss,
-  servfail: $servfail,
-  secure: $secure,
-  bogus: $bogus,
-  prefetch: $prefetch,
-  expired: $expired,
-  recursionAvg: $rec_avg,
-  recursionMedian: $rec_median,
-  generated: "$(date '+%Y-%m-%d %H:%M:%S')"
+window.edgeGatewayStatus = {
+  generated: "$(date '+%Y-%m-%d %H:%M:%S')",
+  system: {
+    uptime: $system_uptime,
+    load1: $load1,
+    load5: $load5,
+    load15: $load15,
+    memTotalKiB: $mem_total,
+    memUsedKiB: $mem_used,
+    swapTotalKiB: $swap_total,
+    swapUsedKiB: $swap_used,
+    swapDevices: $swap_devices,
+    optTotalKiB: $opt_total,
+    optUsedKiB: $opt_used,
+    optUsedPct: $opt_pct,
+    jffsTotalKiB: $jffs_total,
+    jffsUsedKiB: $jffs_used,
+    jffsUsedPct: $jffs_pct
+  },
+  services: {
+    tailscaled: $svc_tailscaled,
+    unbound: $svc_unbound,
+    dnsmasq: $svc_dnsmasq,
+    syslogNg: $svc_syslog,
+    piholeFtl: $svc_pihole,
+    scheduler: $scheduler_ok
+  },
+  tailscale: {
+    version: "$ts_version",
+    connected: $ts_connected,
+    peers: $ts_peers,
+    activePeers: $ts_active,
+    directPeers: $ts_direct,
+    offlinePeers: $ts_offline,
+    exitNodeOffered: $ts_exit_offered
+  },
+  policy: {
+    interceptDns: $policy_intercept_dns,
+    enforceLanDns: $policy_lan_dns,
+    blockLanDot: $policy_dot,
+    exitNodeEnabled: $policy_exit_node,
+    routerHttps: $policy_https,
+    routerSsh: $policy_ssh,
+    adminSourceCount: $policy_admin_sources,
+    printerPolicy: $policy_printer,
+    projectOwnsNetfilter: $policy_netfilter_project
+  },
+  firewall: {
+    tsInputChain: $fw_ts_input,
+    tsForwardChain: $fw_ts_forward,
+    tsPreroutingChain: $fw_ts_prerouting,
+    lanDnsChain: $fw_lan_dns,
+    lanDotChain: $fw_lan_dot,
+    ipv6InputChain: $fw_ts6_input,
+    ipv6ForwardChain: $fw_ts6_forward,
+    inputAcceptPackets: $fw_input_accept,
+    inputLogPackets: $fw_input_log,
+    inputDropPackets: $fw_input_drop,
+    forwardAcceptPackets: $fw_forward_accept,
+    forwardLogPackets: $fw_forward_log,
+    forwardDropPackets: $fw_forward_drop,
+    lanDnsBypassPackets: $fw_dns_bypass,
+    lanDnsRedirectPackets: $fw_dns_redirect,
+    lanDotRejectPackets: $fw_dot_reject,
+    ipv6InputDropPackets: $fw_ipv6_input_drop,
+    ipv6ForwardDropPackets: $fw_ipv6_forward_drop
+  },
+  unbound: {
+    version: "$unbound_version",
+    status: "$unbound_status",
+    port: "$unbound_port",
+    interface: "$unbound_interface",
+    uptime: $unbound_uptime,
+    queries: $queries,
+    cachehits: $cachehits,
+    cachemiss: $cachemiss,
+    servfail: $servfail,
+    secure: $secure,
+    bogus: $bogus,
+    prefetch: $prefetch,
+    expired: $expired,
+    recursionAvg: $rec_avg,
+    recursionMedian: $rec_median
+  }
 };
+window.edgeUnboundStatus = window.edgeGatewayStatus.unbound;
 JS
 
 mv -f "$OUT_TMP" "$OUT_FILE"
