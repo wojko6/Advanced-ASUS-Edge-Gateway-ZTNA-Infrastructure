@@ -29,6 +29,19 @@ chmod +x "$TMPROOT/jffs/scripts/wan-event"
 cp -a "$ROOT_DIR"/. "$TMPROOT/repo"
 cp "$TMPROOT/repo/config/edge.conf.example" "$TMPROOT/repo/config/edge.conf"
 
+# This test covers installer snapshot retention and rollback. The production
+# WebUI builder has dedicated tests and requires stock firmware files that are
+# intentionally not stored in the repository, so use a no-op builder fixture.
+cat > "$TMPROOT/repo/router/scripts/webui-pl-build" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+chmod 0755 "$TMPROOT/repo/router/scripts/webui-pl-build"
+
+PATCH_STUB="$TMPROOT/patch-stub"
+printf '%s\n' '#!/bin/sh' 'exit 0' > "$PATCH_STUB"
+chmod 0755 "$PATCH_STUB"
+
 python3 - <<'PY' "$TMPROOT/repo/scripts/install.sh"
 from pathlib import Path
 import sys
@@ -67,7 +80,7 @@ managed_snapshot_count() {
     printf '%s\n' "$count"
 }
 
-EDGE_TEST_ROOT="$TMPROOT" EDGE_INSTALL_BACKUP_KEEP=3 sh "$TMPROOT/repo/scripts/install.sh"
+EDGE_TEST_ROOT="$TMPROOT" EDGE_INSTALL_BACKUP_KEEP=3 EDGE_PATCH_BIN="$PATCH_STUB" sh "$TMPROOT/repo/scripts/install.sh"
 
 [ "$(managed_snapshot_count)" -eq 3 ] || {
     echo "FAIL: installer snapshot retention expected 3 managed directories" >&2
@@ -117,7 +130,7 @@ s = s.replace(needle, replacement, 1)
 p.write_text(s)
 PY
 
-if EDGE_TEST_ROOT="$TMPROOT" EDGE_INSTALL_BACKUP_KEEP=3 sh "$TMPROOT/repo/scripts/install.sh"; then
+if EDGE_TEST_ROOT="$TMPROOT" EDGE_INSTALL_BACKUP_KEEP=3 EDGE_PATCH_BIN="$PATCH_STUB" sh "$TMPROOT/repo/scripts/install.sh"; then
     echo "FAIL: installation unexpectedly succeeded"
     exit 1
 fi
