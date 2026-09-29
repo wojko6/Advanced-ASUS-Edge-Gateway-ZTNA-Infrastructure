@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** continue the deferred Grafana GitHub/CI dashboard work from the 2026-09-28 checkpoint, then execute the short post-audit hardening round (#127, #128, #130). Pi-hole DNS analytics Phase 0-3, full Fedora reboot persistence and controlled two-client main-LAN acceptance remain live-validated; issue #108 still has bounded retention/storage, rollback/uninstall and LAN interception-correlation gaps.
+**Current phase:** the deferred Grafana GitHub/CI dashboard work is complete and source-controlled; execute the short post-audit hardening round (#127, #128, #130), then return to the bounded remaining #108 retention/storage, rollback/uninstall and LAN interception-correlation gaps.
 
 ## Executive status
 
@@ -14,7 +14,7 @@ This status document was reconciled on 2026-09-29. The earlier post-firmware val
 
 The centralized logging path is now also live-validated: router syslog-ng forwards the Asuswrt log over Tailscale and mutually authenticated TLS to the Fedora collector, with source-restricted firewall policy and successful short-outage recovery (3/3 test messages delivered after collector restoration). Grafana 13 uses its native Polish interface option; the project dashboard remains explicitly localized in JSON because application language settings do not translate project-owned panel content.
 
-On 2026-09-28 the Fedora Grafana instance was also extended with the read-only GitHub datasource plus Polystat and Business Charts plugins. The new `ASUS Edge Gateway — Engineering / CI` dashboard was live-validated with recent CI runs, latest CI status, open-Issue count and open-PR count. Merged-PR/repository-activity panels, final layout cleanup and the Polystat infrastructure-health overview were intentionally deferred to the next session.
+On 2026-09-28 the Fedora Grafana instance was extended with the read-only GitHub datasource plus Polystat and Business Charts plugins. On 2026-09-29 the deferred `ASUS Edge Gateway — Engineering / CI` work was completed: merged-PR and recent-commit tables, final layout cleanup and a seven-signal Polystat infrastructure-health overview were added and live-checked. The dashboard is now source-controlled as a Grafana v2 resource under `monitoring/grafana/dashboards/`. Business Charts remains installed but optional and unused by this dashboard.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
