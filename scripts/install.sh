@@ -75,6 +75,7 @@ for file in \
     "$REPO_DIR/router/scripts/services-start" \
     "$REPO_DIR/router/scripts/wan-event" \
     "$REPO_DIR/router/scripts/wan-event-handler" \
+    "$REPO_DIR/router/scripts/webui-mount" \
     "$REPO_DIR/scripts/healthcheck.sh" \
     "$REPO_DIR/scripts/check-usb-exposure.sh" \
     "$REPO_DIR/scripts/collect-evidence.sh" \
@@ -120,6 +121,7 @@ snapshot_path "$JFFS_DIR/scripts/services-start" services-start
 snapshot_path "$JFFS_DIR/scripts/wan-event" wan-event
 snapshot_path "$ADDON_DIR/bin" bin
 snapshot_path "$ADDON_DIR/legacy" legacy
+snapshot_path "$ADDON_DIR/webui" webui
 
 is_managed_install_snapshot() {
     snapshot_name="$(basename "$1")"
@@ -200,6 +202,7 @@ finish_installation() {
         restore_path "$JFFS_DIR/configs/asus-edge.conf" asus-edge.conf || rollback_failed=1
         restore_path "$ADDON_DIR/bin" bin || rollback_failed=1
         restore_path "$ADDON_DIR/legacy" legacy || rollback_failed=1
+        restore_path "$ADDON_DIR/webui" webui || rollback_failed=1
         restore_path "$JFFS_DIR/scripts/firewall-start" firewall-start || rollback_failed=1
         restore_path "$JFFS_DIR/scripts/services-start" services-start || rollback_failed=1
         restore_path "$JFFS_DIR/scripts/wan-event" wan-event || rollback_failed=1
@@ -217,7 +220,7 @@ finish_installation() {
 trap finish_installation EXIT
 trap 'exit 1' HUP INT TERM
 
-mkdir -p "$ADDON_DIR/bin" "$ADDON_DIR/legacy" "$JFFS_DIR/scripts" "$JFFS_DIR/configs"
+mkdir -p "$ADDON_DIR/bin" "$ADDON_DIR/legacy" "$ADDON_DIR/webui" "$JFFS_DIR/scripts" "$JFFS_DIR/configs"
 
 refuse_symlink_destination() {
     destination="$1"
@@ -241,6 +244,8 @@ install_file "$REPO_DIR/router/scripts/firewall-start" "$ADDON_DIR/bin/firewall-
 install_file "$REPO_DIR/router/scripts/services-start" "$ADDON_DIR/bin/services-start" 0755
 install_file "$REPO_DIR/router/scripts/wan-event" "$ADDON_DIR/bin/wan-event" 0755
 install_file "$REPO_DIR/router/scripts/wan-event-handler" "$ADDON_DIR/bin/wan-event-handler" 0755
+install_file "$REPO_DIR/router/scripts/webui-mount" "$ADDON_DIR/bin/webui-mount" 0755
+install_file "$REPO_DIR/router/webui/EdgeGateway.asp" "$ADDON_DIR/webui/EdgeGateway.asp" 0644
 install_file "$REPO_DIR/scripts/healthcheck.sh" "$ADDON_DIR/bin/healthcheck.sh" 0755
 install_file "$REPO_DIR/scripts/check-usb-exposure.sh" "$ADDON_DIR/bin/check-usb-exposure.sh" 0755
 install_file "$REPO_DIR/scripts/collect-evidence.sh" "$ADDON_DIR/bin/collect-evidence.sh" 0755
