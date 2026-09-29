@@ -17,7 +17,7 @@ baseline and remaining healthy within a 512 MiB RAM router?
 The case study must answer this with measured evidence rather than UI
 preference.
 
-## Current baseline
+## Pre-migration baseline
 
 ```text
 clients
@@ -137,7 +137,7 @@ Record before installing Pi-hole:
 - CPU/load;
 - per-process memory;
 - storage free space and writes;
-- current dnsmasq/Diversion/Unbound footprint;
+- pre-migration dnsmasq/Diversion/Unbound footprint;
 - port-53 listener ownership;
 - cached/uncached DNS latency;
 - DNSSEC;
@@ -157,7 +157,7 @@ Keep:
 - Pi-hole DHCP disabled;
 - Unbound as the candidate upstream;
 - data on SSD-backed Entware;
-- current DNS path available for rollback;
+- pre-migration DNS path available for rollback;
 - management UI restricted to trusted local/explicitly authorized paths.
 
 Disable unnecessary duplicate functions where appropriate, for example a
