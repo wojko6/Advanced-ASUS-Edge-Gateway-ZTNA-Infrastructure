@@ -79,6 +79,8 @@ if executable_exists "$IP6TABLES" >/dev/null 2>&1; then
     "$IP6TABLES" -t filter -X EDGE_TS6_FORWARD 2>/dev/null || true
 fi
 
+# webui-mount unmount also removes the version-pinned Polish WebUI overlay
+# before releasing the Merlin addon page/menu integration.
 webui_unmount_failed=0
 if [ -x "$ADDON_DIR/bin/webui-mount" ]; then
     if ! "$ADDON_DIR/bin/webui-mount" unmount; then

@@ -21,3 +21,7 @@ tailscaled.state
 
 # Firmware-local ASUSWRT dictionaries and generated localization candidates
 *.dict
+
+# Python bytecode/cache
+__pycache__/
+*.pyc

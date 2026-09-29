@@ -1,0 +1,62 @@
+--- a/help.js
++++ b/help.js
+@@ -427,9 +427,9 @@
+ wifiDesc = "<b>&nbsp;2.4G:</b> ";
+ if ( radio_state[0] == 1) {
+ if ((extent_chan_arr[band_unit[0]] == 0) || (extent_chan_arr[band_unit[0]] == undefined) || (extent_chan_arr[band_unit[0]] == control_chan_arr[band_unit[0]]))
+-wifiDesc += "Channel " + control_chan_arr[band_unit[0]];
++wifiDesc += "Kanał " + control_chan_arr[band_unit[0]];
+ else
+-wifiDesc += "Channel "+ low_channel(control_chan_arr[band_unit[0]],extent_chan_arr[band_unit[0]]) + "+" + high_channel(control_chan_arr[band_unit[0]],extent_chan_arr[band_unit[0]]);
++wifiDesc += "Kanał "+ low_channel(control_chan_arr[band_unit[0]],extent_chan_arr[band_unit[0]]) + "+" + high_channel(control_chan_arr[band_unit[0]],extent_chan_arr[band_unit[0]]);
+ } else {
+ wifiDesc += "<#1669#>";
+ }
+@@ -440,9 +440,9 @@
+ wifiDesc += "<br><b>&nbsp;&nbsp;&nbsp;5G:</b> ";
+ if (radio_state[1] == 1) {
+ if ((extent_chan_arr[band_unit[1]] == 0) || (extent_chan_arr[band_unit[1]] == undefined) || (extent_chan_arr[band_unit[1]] == control_chan_arr[band_unit[1]]))
+-wifiDesc += "Channel " + control_chan_arr[band_unit[1]];
++wifiDesc += "Kanał " + control_chan_arr[band_unit[1]];
+ else
+-wifiDesc += "Channel "+ control_chan_arr[band_unit[1]] + "/" + extent_chan_arr[band_unit[1]];
++wifiDesc += "Kanał "+ control_chan_arr[band_unit[1]] + "/" + extent_chan_arr[band_unit[1]];
+ } else {
+ wifiDesc += "<#1669#>";
+ }
+@@ -450,9 +450,9 @@
+ wifiDesc += "<br><b>5G-2:</b> ";
+ if (radio_state[2] == 1) {
+ if ((extent_chan_arr[band_unit[2]] == 0) || (extent_chan_arr[band_unit[2]] == undefined) || (extent_chan_arr[band_unit[2]] == control_chan_arr[band_unit[2]]))
+-wifiDesc += "Channel " + control_chan_arr[band_unit[2]];
++wifiDesc += "Kanał " + control_chan_arr[band_unit[2]];
+ else
+-wifiDesc += "Channel "+ control_chan_arr[band_unit[2]] + "/" + extent_chan_arr[band_unit[2]];
++wifiDesc += "Kanał "+ control_chan_arr[band_unit[2]] + "/" + extent_chan_arr[band_unit[2]];
+ } else {
+ wifiDesc += "<#1669#>";
+ }
+@@ -462,9 +462,9 @@
+ wifiDesc += "<br><b>&nbsp;&nbsp;&nbsp;6G:</b> ";
+ if (radio_state[3] == 1) {
+ if ((extent_chan_arr[band_unit[3]] == 0) || (extent_chan_arr[band_unit[3]] == undefined) || (extent_chan_arr[band_unit[3]] == control_chan_arr[band_unit[3]]))
+-wifiDesc += "Channel 6g" + control_chan_arr[band_unit[3]];
++wifiDesc += "Kanał 6g" + control_chan_arr[band_unit[3]];
+ else
+-wifiDesc += "Channel 6g"+ control_chan_arr[band_unit[3]] + "/" + extent_chan_arr[band_unit[3]];
++wifiDesc += "Kanał 6g"+ control_chan_arr[band_unit[3]] + "/" + extent_chan_arr[band_unit[3]];
+ } else {
+ wifiDesc += "<#1669#>";
+ }
+@@ -778,7 +778,10 @@
+ for(var i=0; i<usbDevicesList.length; i++){
+ if(usbDevicesList[i].deviceType == "printer") continue;
+ statusmenu += "<div class='StatusHint' style='margin-top:8px'>" + usbDevicesList[i].deviceName + ":</div>";
+-statusmenu += "<div>" + usbDevicesList[i].deviceType.charAt(0).toUpperCase() + usbDevicesList[i].deviceType.substring(1).toLowerCase() + "</div>";
++var deviceTypeLabel = (usbDevicesList[i].deviceType == "storage")
++? "Dysk"
++: usbDevicesList[i].deviceType.charAt(0).toUpperCase() + usbDevicesList[i].deviceType.substring(1).toLowerCase();
++statusmenu += "<div>" + deviceTypeLabel + "</div>";
+ if(usbDevicesList[i].deviceType == "storage" && usbDevicesList[i].mountNumber == 0)
+ statusmenu += "<div><#1903#></div>";
+ else if(usbDevicesList[i].hasErrPart)

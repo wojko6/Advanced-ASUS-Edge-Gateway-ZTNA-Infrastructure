@@ -92,6 +92,8 @@ fi
 
 for webui_guard in \
     'router/scripts/webui-mount" "$ADDON_DIR/bin/webui-mount" 0755' \
+    'router/scripts/webui-pl-build" "$ADDON_DIR/bin/webui-pl-build" 0755' \
+    'router/scripts/webui-pl-mount" "$ADDON_DIR/bin/webui-pl-mount" 0755' \
     'router/scripts/webui-status" "$ADDON_DIR/bin/webui-status" 0755' \
     'router/webui/EdgeGateway.asp" "$ADDON_DIR/webui/EdgeGateway.asp" 0644' \
     'snapshot_path "$ADDON_DIR/webui" webui' \
@@ -103,10 +105,56 @@ do
     }
 done
 
+for webui_pl_build_guard in \
+    'WEBUI_PATCH_BIN="${EDGE_PATCH_BIN:-/opt/bin/patch}"' \
+    'opkg install patch' \
+    'router/webui/patches/$webui_patch' \
+    'webui-pl-build" "$ADDON_DIR/bin/webui-pl-build" 0755' \
+    'EDGE_ADDON_DIR="$ADDON_DIR"' \
+    'WEBUI_PL_BUILD=PASS'
+do
+    grep -F "$webui_pl_build_guard" \
+        "$REPO_DIR/scripts/install.sh" \
+        "$REPO_DIR/router/scripts/webui-pl-build" >/dev/null || {
+        echo "FAIL: Polish WebUI build guard missing: $webui_pl_build_guard" >&2
+        exit 1
+    }
+done
+
+for webui_patch in \
+    PL.dict.patch \
+    help.js.patch \
+    Tools_Sysinfo.asp.patch \
+    Tools_OtherSettings.asp.patch
+do
+    [ -s "$REPO_DIR/router/webui/patches/$webui_patch" ] || {
+        echo "FAIL: Polish WebUI patch missing or empty: $webui_patch" >&2
+        exit 1
+    }
+done
+
 grep -F 'mount_project_webui' "$REPO_DIR/router/scripts/services-start" >/dev/null || {
     echo "FAIL: services-start does not persist the Edge Gateway WebUI" >&2
     exit 1
 }
+
+for webui_pl_guard in \
+    'PL_WEBUI_HELPER="/jffs/addons/asus-edge/bin/webui-pl-mount"' \
+    'mount_polish_overlay' \
+    'unmount_polish_overlay' \
+    '/usr/sbin/openssl' \
+    'WEBUI_PL_OVERLAY=PASS' \
+    'WEBUI_PL_OVERLAY_UNMOUNT=PASS' \
+    'menuName: "Informacje o systemie"' \
+    'tabName: "Dostrajanie"'
+do
+    grep -F "$webui_pl_guard" \
+        "$REPO_DIR/router/scripts/webui-mount" \
+        "$REPO_DIR/router/scripts/webui-pl-mount" >/dev/null || {
+        echo "FAIL: Polish WebUI overlay guard missing: $webui_pl_guard" >&2
+        exit 1
+    }
+done
 
 for webui_status_guard in \
     'configure_webui_status' \
@@ -152,12 +200,12 @@ for webui_phase3_guard in \
     'firewall: {' \
     'lanDnsRedirectPackets' \
     'projectOwnsNetfilter' \
-    'Pi-hole FTL' \
-    'Firewall counters — cumulative' \
+    'edge_svc_pihole' \
+    'edge_fw_input_accept' \
     'edgeRunningState' \
     'edgeSchedulerState' \
     'totalKiB < 1048576' \
-    'Unbound runtime status'
+    'edge_unbound_snapshot'
 do
     grep -F "$webui_phase3_guard" \
         "$REPO_DIR/router/scripts/webui-status" \
@@ -175,6 +223,11 @@ fi
 
 grep -F '"$ADDON_DIR/bin/webui-mount" unmount' "$REPO_DIR/scripts/uninstall.sh" >/dev/null || {
     echo "FAIL: uninstall does not remove Edge Gateway WebUI runtime state" >&2
+    exit 1
+}
+
+grep -F 'unmount_polish_overlay || return 1' "$REPO_DIR/router/scripts/webui-mount" >/dev/null || {
+    echo "FAIL: WebUI unmount does not remove the Polish overlay first" >&2
     exit 1
 }
 

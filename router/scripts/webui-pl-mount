@@ -1,0 +1,354 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Version-pinned Polish WebUI overlay for GNUton 3004.388.11_1.
+# Fails closed on unexpected firmware files.
+
+set -eu
+
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+PL_DIR="/jffs/addons/asus-edge/webui/pl"
+
+PL_SOURCE="$PL_DIR/PL.dict"
+HELP_SOURCE="$PL_DIR/help.js"
+SYSINFO_SOURCE="$PL_DIR/Tools_Sysinfo.asp"
+TWEAKS_SOURCE="$PL_DIR/Tools_OtherSettings.asp"
+
+PL_TARGET="/www/PL.dict"
+HELP_TARGET="/www/help.js"
+SYSINFO_TARGET="/www/Tools_Sysinfo.asp"
+TWEAKS_TARGET="/www/Tools_OtherSettings.asp"
+
+MENU_BASE="/tmp/menuTree.js"
+MENU_TARGET="/www/require/modules/menuTree.js"
+
+# Stock GNUton 3004.388.11_1 baseline.
+PL_BASE_SHA="cad0a4766bfd2bb7e0faa0fc63638b84ab65ee30bc56b0b5755b7e32f7506719"
+HELP_BASE_SHA="609d98814415bf482b583387fb68275d244bb234fb5dde41166887a976a4b0cb"
+SYSINFO_BASE_SHA="6d5a23ab9ee39d6d63b19c33fca10fe74a2b2fc38bd1fe95d95aeba85e7e43ef"
+TWEAKS_BASE_SHA="65024c7403fdb0c684b1f574aa82bc38923b69f04c5119ac02ac172f43769b79"
+
+# Validated Polish candidates.
+PL_PATCHED_SHA="4af3d9df6633a1885b949c2d6f7bfa35663a867990230daf35a0f3319ab90bcb"
+HELP_PATCHED_SHA="7da975a69b1237499ee238e93ede215c3e235c5b34a5d87ab507d45a4e063778"
+SYSINFO_PATCHED_SHA="3dbef5d95c02561baf920a6b2014ed34d021eb5ce6723c076ddecf9072d839df"
+TWEAKS_PATCHED_SHA="6cee7405bcc556ac3af1baee418a2ffa85cad39b37c3f76e340ef2a8297595c6"
+
+find_hash_backend() {
+    # Firmware OpenSSL is available before Entware /opt is mounted.
+    if [ -x /usr/sbin/openssl ]; then
+        printf '%s\n' "openssl:/usr/sbin/openssl"
+        return 0
+    fi
+
+    for candidate in /usr/bin/sha256sum /bin/sha256sum /opt/bin/sha256sum /opt/sbin/sha256sum; do
+        if [ -x "$candidate" ]; then
+            printf '%s\n' "sha256sum:$candidate"
+            return 0
+        fi
+    done
+
+    echo "ERROR: no SHA-256 backend available" >&2
+    return 1
+}
+
+HASH_BACKEND="$(find_hash_backend)"
+
+file_hash() {
+    file="$1"
+
+    case "$HASH_BACKEND" in
+        openssl:*)
+            openssl_bin="${HASH_BACKEND#openssl:}"
+            "$openssl_bin" dgst -sha256 "$file" | awk '{print $NF}'
+            ;;
+        sha256sum:*)
+            sha_bin="${HASH_BACKEND#sha256sum:}"
+            "$sha_bin" "$file" | awk '{print $1}'
+            ;;
+        *)
+            echo "ERROR: unsupported hash backend: $HASH_BACKEND" >&2
+            return 1
+            ;;
+    esac
+}
+
+require_hash() {
+    file="$1"
+    expected="$2"
+    label="$3"
+
+    [ -f "$file" ] || {
+        echo "ERROR: missing $label: $file" >&2
+        return 1
+    }
+
+    actual="$(file_hash "$file")"
+    [ "$actual" = "$expected" ] || {
+        echo "ERROR: $label hash mismatch" >&2
+        echo "EXPECTED=$expected" >&2
+        echo "ACTUAL=$actual" >&2
+        return 1
+    }
+}
+
+mount_one() {
+    source="$1"
+    target="$2"
+    base_sha="$3"
+    patched_sha="$4"
+    label="$5"
+
+    require_hash "$source" "$patched_sha" "$label candidate" || return 1
+
+    current="$(file_hash "$target")"
+
+    if [ "$current" = "$patched_sha" ]; then
+        echo "$label: already active"
+        return 0
+    fi
+
+    if [ "$current" != "$base_sha" ]; then
+        echo "ERROR: $label firmware baseline mismatch" >&2
+        echo "EXPECTED_BASE=$base_sha" >&2
+        echo "ACTIVE=$current" >&2
+        return 1
+    fi
+
+    mount -o bind "$source" "$target" || return 1
+
+    active="$(file_hash "$target")"
+    [ "$active" = "$patched_sha" ] || {
+        echo "ERROR: $label post-mount verification failed" >&2
+        umount "$target" 2>/dev/null || true
+        return 1
+    }
+
+    echo "$label: mounted"
+}
+
+localize_menu() {
+    [ -f "$MENU_BASE" ] || {
+        echo "ERROR: missing Merlin/project menu base: $MENU_BASE" >&2
+        return 1
+    }
+
+    # If the active menu is already Polish, do nothing.
+    if grep -F 'menuName: "Informacje o systemie",' "$MENU_TARGET" >/dev/null 2>&1 &&
+       grep -F 'tabName: "Dostrajanie"' "$MENU_TARGET" >/dev/null 2>&1 &&
+       grep -F 'tabName: "Edge Gateway"' "$MENU_TARGET" >/dev/null 2>&1; then
+        echo "menuTree: already active"
+        return 0
+    fi
+
+    sysinfo_count="$(grep -F -c 'menuName: "System Info",' "$MENU_BASE" || true)"
+    tweaks_count="$(grep -F -c '{url: "Tools_OtherSettings.asp", tabName: "Tweaks"},' "$MENU_BASE" || true)"
+    edge_count="$(grep -F -c 'tabName: "Edge Gateway"' "$MENU_BASE" || true)"
+
+    [ "$sysinfo_count" = "1" ] || {
+        echo "ERROR: unexpected System Info menu structure: $sysinfo_count" >&2
+        return 1
+    }
+
+    [ "$tweaks_count" = "1" ] || {
+        echo "ERROR: unexpected Tweaks menu structure: $tweaks_count" >&2
+        return 1
+    }
+
+    [ "$edge_count" = "1" ] || {
+        echo "ERROR: unexpected Edge Gateway menu structure: $edge_count" >&2
+        return 1
+    }
+
+    build="/tmp/asus-edge-menu-pl-build.$$"
+
+    sed \
+        -e 's/menuName: "System Info",/menuName: "Informacje o systemie",/' \
+        -e 's/{url: "Tools_OtherSettings.asp", tabName: "Tweaks"},/{url: "Tools_OtherSettings.asp", tabName: "Dostrajanie"},/' \
+        "$MENU_BASE" >"$build" || {
+            rm -f "$build"
+            return 1
+        }
+
+    grep -F 'menuName: "Informacje o systemie",' "$build" >/dev/null || {
+        rm -f "$build"
+        return 1
+    }
+    grep -F 'tabName: "Dostrajanie"' "$build" >/dev/null || {
+        rm -f "$build"
+        return 1
+    }
+    grep -F 'tabName: "Edge Gateway"' "$build" >/dev/null || {
+        rm -f "$build"
+        return 1
+    }
+
+    # Important: overwrite the existing file contents instead of sed -i/rename.
+    # /www/.../menuTree.js may already be bind-mounted to this inode.
+    cat "$build" >"$MENU_BASE" || {
+        rm -f "$build"
+        return 1
+    }
+    rm -f "$build"
+
+    if grep -F 'menuName: "Informacje o systemie",' "$MENU_TARGET" >/dev/null 2>&1 &&
+       grep -F 'tabName: "Dostrajanie"' "$MENU_TARGET" >/dev/null 2>&1 &&
+       grep -F 'tabName: "Edge Gateway"' "$MENU_TARGET" >/dev/null 2>&1; then
+        echo "menuTree: localized"
+        return 0
+    fi
+
+    echo "ERROR: active menuTree does not reflect localized menu base" >&2
+    return 1
+}
+
+mount_overlay() {
+    mount_one "$PL_SOURCE" "$PL_TARGET" \
+        "$PL_BASE_SHA" "$PL_PATCHED_SHA" "PL.dict" || return 1
+
+    mount_one "$HELP_SOURCE" "$HELP_TARGET" \
+        "$HELP_BASE_SHA" "$HELP_PATCHED_SHA" "help.js" || return 1
+
+    mount_one "$SYSINFO_SOURCE" "$SYSINFO_TARGET" \
+        "$SYSINFO_BASE_SHA" "$SYSINFO_PATCHED_SHA" "Tools_Sysinfo.asp" || return 1
+
+    mount_one "$TWEAKS_SOURCE" "$TWEAKS_TARGET" \
+        "$TWEAKS_BASE_SHA" "$TWEAKS_PATCHED_SHA" "Tools_OtherSettings.asp" || return 1
+
+    localize_menu || return 1
+
+    echo "WEBUI_PL_OVERLAY=PASS"
+}
+
+restore_menu_labels() {
+    [ -f "$MENU_BASE" ] || {
+        echo "menuTree: base unavailable, nothing to restore"
+        return 0
+    }
+
+    if grep -F 'menuName: "System Info",' "$MENU_BASE" >/dev/null 2>&1 &&
+       grep -F 'tabName: "Tweaks"' "$MENU_BASE" >/dev/null 2>&1; then
+        echo "menuTree labels: already base"
+        return 0
+    fi
+
+    sysinfo_count="$(grep -F -c 'menuName: "Informacje o systemie",' "$MENU_BASE" || true)"
+    tweaks_count="$(grep -F -c 'tabName: "Dostrajanie"' "$MENU_BASE" || true)"
+
+    [ "$sysinfo_count" = "1" ] || {
+        echo "ERROR: unexpected Polish System Info menu structure: $sysinfo_count" >&2
+        return 1
+    }
+
+    [ "$tweaks_count" = "1" ] || {
+        echo "ERROR: unexpected Polish Tweaks menu structure: $tweaks_count" >&2
+        return 1
+    }
+
+    build="/tmp/asus-edge-menu-base-build.$$"
+
+    sed \
+        -e 's/menuName: "Informacje o systemie",/menuName: "System Info",/' \
+        -e 's/{url: "Tools_OtherSettings.asp", tabName: "Dostrajanie"},/{url: "Tools_OtherSettings.asp", tabName: "Tweaks"},/' \
+        "$MENU_BASE" >"$build" || {
+            rm -f "$build"
+            return 1
+        }
+
+    cat "$build" >"$MENU_BASE" || {
+        rm -f "$build"
+        return 1
+    }
+    rm -f "$build"
+
+    echo "menuTree labels: restored"
+}
+
+unmount_one() {
+    target="$1"
+    base_sha="$2"
+    patched_sha="$3"
+    label="$4"
+
+    [ -f "$target" ] || {
+        echo "ERROR: missing target during unmount: $target" >&2
+        return 1
+    }
+
+    current="$(file_hash "$target")"
+
+    if [ "$current" = "$base_sha" ]; then
+        echo "$label: already inactive"
+        return 0
+    fi
+
+    if [ "$current" != "$patched_sha" ]; then
+        echo "ERROR: $label active hash is neither baseline nor project overlay" >&2
+        echo "ACTIVE=$current" >&2
+        return 1
+    fi
+
+    while [ "$(file_hash "$target")" = "$patched_sha" ]; do
+        if ! grep -F " $target " /proc/mounts >/dev/null 2>&1; then
+            echo "ERROR: $label has patched content but is not a bind mount" >&2
+            return 1
+        fi
+
+        umount "$target" || return 1
+    done
+
+    current="$(file_hash "$target")"
+    [ "$current" = "$base_sha" ] || {
+        echo "ERROR: $label baseline not restored after unmount" >&2
+        echo "EXPECTED_BASE=$base_sha" >&2
+        echo "ACTIVE=$current" >&2
+        return 1
+    }
+
+    echo "$label: unmounted"
+}
+
+unmount_overlay() {
+    unmount_one "$PL_TARGET" \
+        "$PL_BASE_SHA" "$PL_PATCHED_SHA" "PL.dict" || return 1
+
+    unmount_one "$HELP_TARGET" \
+        "$HELP_BASE_SHA" "$HELP_PATCHED_SHA" "help.js" || return 1
+
+    unmount_one "$SYSINFO_TARGET" \
+        "$SYSINFO_BASE_SHA" "$SYSINFO_PATCHED_SHA" "Tools_Sysinfo.asp" || return 1
+
+    unmount_one "$TWEAKS_TARGET" \
+        "$TWEAKS_BASE_SHA" "$TWEAKS_PATCHED_SHA" "Tools_OtherSettings.asp" || return 1
+
+    restore_menu_labels || return 1
+
+    echo "WEBUI_PL_OVERLAY_UNMOUNT=PASS"
+}
+
+status_overlay() {
+    echo "PL.dict=$(file_hash "$PL_TARGET")"
+    echo "help.js=$(file_hash "$HELP_TARGET")"
+    echo "Tools_Sysinfo.asp=$(file_hash "$SYSINFO_TARGET")"
+    echo "Tools_OtherSettings.asp=$(file_hash "$TWEAKS_TARGET")"
+
+    if grep -F 'menuName: "Informacje o systemie",' "$MENU_TARGET" >/dev/null 2>&1 &&
+       grep -F 'tabName: "Dostrajanie"' "$MENU_TARGET" >/dev/null 2>&1; then
+        echo "menuTree=polish"
+    elif grep -F 'menuName: "System Info",' "$MENU_TARGET" >/dev/null 2>&1 &&
+         grep -F 'tabName: "Tweaks"' "$MENU_TARGET" >/dev/null 2>&1; then
+        echo "menuTree=base"
+    else
+        echo "menuTree=unknown"
+    fi
+}
+
+case "${1:-}" in
+    mount)   mount_overlay ;;
+    unmount) unmount_overlay ;;
+    status)  status_overlay ;;
+    *)
+        echo "Usage: $0 {mount|unmount|status}" >&2
+        exit 2
+        ;;
+esac

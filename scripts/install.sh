@@ -63,6 +63,25 @@ uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 
     exit 1
 }
 
+WEBUI_PATCH_BIN="${EDGE_PATCH_BIN:-/opt/bin/patch}"
+[ -x "$WEBUI_PATCH_BIN" ] || {
+    echo "ERROR: GNU patch is required for the Polish WebUI build: $WEBUI_PATCH_BIN" >&2
+    echo "Install it with: opkg install patch" >&2
+    exit 1
+}
+
+for webui_patch in \
+    PL.dict.patch \
+    help.js.patch \
+    Tools_Sysinfo.asp.patch \
+    Tools_OtherSettings.asp.patch
+do
+    [ -r "$REPO_DIR/router/webui/patches/$webui_patch" ] || {
+        echo "ERROR: missing Polish WebUI patch: $webui_patch" >&2
+        exit 1
+    }
+done
+
 case "$INSTALL_BACKUP_KEEP" in
     ''|*[!0-9]*|0)
         echo "ERROR: EDGE_INSTALL_BACKUP_KEEP must be a positive integer" >&2
@@ -76,6 +95,8 @@ for file in \
     "$REPO_DIR/router/scripts/wan-event" \
     "$REPO_DIR/router/scripts/wan-event-handler" \
     "$REPO_DIR/router/scripts/webui-mount" \
+    "$REPO_DIR/router/scripts/webui-pl-build" \
+    "$REPO_DIR/router/scripts/webui-pl-mount" \
     "$REPO_DIR/router/scripts/webui-status" \
     "$REPO_DIR/scripts/healthcheck.sh" \
     "$REPO_DIR/scripts/check-usb-exposure.sh" \
@@ -221,7 +242,13 @@ finish_installation() {
 trap finish_installation EXIT
 trap 'exit 1' HUP INT TERM
 
-mkdir -p "$ADDON_DIR/bin" "$ADDON_DIR/legacy" "$ADDON_DIR/webui" "$JFFS_DIR/scripts" "$JFFS_DIR/configs"
+mkdir -p \
+    "$ADDON_DIR/bin" \
+    "$ADDON_DIR/legacy" \
+    "$ADDON_DIR/webui" \
+    "$ADDON_DIR/webui/patches" \
+    "$JFFS_DIR/scripts" \
+    "$JFFS_DIR/configs"
 
 refuse_symlink_destination() {
     destination="$1"
@@ -246,8 +273,26 @@ install_file "$REPO_DIR/router/scripts/services-start" "$ADDON_DIR/bin/services-
 install_file "$REPO_DIR/router/scripts/wan-event" "$ADDON_DIR/bin/wan-event" 0755
 install_file "$REPO_DIR/router/scripts/wan-event-handler" "$ADDON_DIR/bin/wan-event-handler" 0755
 install_file "$REPO_DIR/router/scripts/webui-mount" "$ADDON_DIR/bin/webui-mount" 0755
+install_file "$REPO_DIR/router/scripts/webui-pl-build" "$ADDON_DIR/bin/webui-pl-build" 0755
+install_file "$REPO_DIR/router/scripts/webui-pl-mount" "$ADDON_DIR/bin/webui-pl-mount" 0755
 install_file "$REPO_DIR/router/scripts/webui-status" "$ADDON_DIR/bin/webui-status" 0755
 install_file "$REPO_DIR/router/webui/EdgeGateway.asp" "$ADDON_DIR/webui/EdgeGateway.asp" 0644
+
+for webui_patch in \
+    PL.dict.patch \
+    help.js.patch \
+    Tools_Sysinfo.asp.patch \
+    Tools_OtherSettings.asp.patch
+do
+    install_file \
+        "$REPO_DIR/router/webui/patches/$webui_patch" \
+        "$ADDON_DIR/webui/patches/$webui_patch" \
+        0644
+done
+
+EDGE_ADDON_DIR="$ADDON_DIR" \
+EDGE_PATCH_BIN="$WEBUI_PATCH_BIN" \
+    "$ADDON_DIR/bin/webui-pl-build" || exit 1
 install_file "$REPO_DIR/scripts/healthcheck.sh" "$ADDON_DIR/bin/healthcheck.sh" 0755
 install_file "$REPO_DIR/scripts/check-usb-exposure.sh" "$ADDON_DIR/bin/check-usb-exposure.sh" 0755
 install_file "$REPO_DIR/scripts/collect-evidence.sh" "$ADDON_DIR/bin/collect-evidence.sh" 0755

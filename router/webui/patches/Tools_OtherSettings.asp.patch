@@ -1,0 +1,168 @@
+--- a/Tools_OtherSettings.asp
++++ b/Tools_OtherSettings.asp
+@@ -8,7 +8,7 @@
+ <meta HTTP-EQUIV="Expires" CONTENT="-1">
+ <link rel="shortcut icon" href="images/favicon.png">
+ <link rel="icon" href="images/favicon.png">
+-<title><#976#> - Tweaks</title>
++<title><#976#> - Dostrajanie</title>
+ <link rel="stylesheet" type="text/css" href="index_style.css">
+ <link rel="stylesheet" type="text/css" href="form_style.css">
+ <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+@@ -99,127 +99,127 @@
+ <tr bgcolor="#4D595D">
+ <td valign="top">
+ <div>&nbsp;</div>
+-<div class="formfonttitle"><#519#> - Tweaks</div>
++<div class="formfonttitle"><#519#> - Dostrajanie</div>
+ <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="margin-top:8px;">
+ <thead>
+ <tr>
+-<td colspan="2">TCP/IP settings</td>
++<td colspan="2">Ustawienia TCP/IP</td>
+ </tr>
+ </thead>
+ <tr>
+-<th>TCP connections limit</th>
++<th>Limit połączeń TCP</th>
+ <td>
+ <input type="text" maxlength="6" class="input_12_table" name="ct_max" onKeyPress="return validator.isNumber(this,event);" value="<% nvram_get("ct_max"); %>">
+ </td>
+ </tr>
+ <tr>
+-<th>TCP Timeout: Established</th>
++<th>Limit czasu TCP: ESTABLISHED</th>
+ <td>
+ <input type="text" maxlength="6" class="input_6_table" name="tcp_established" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span id="ct_established_default">Default: 2400</span>
++<span id="ct_established_default">Domyślnie: 2400</span>
+ </td>
+ </tr>
+ <tr>
+-<th>TCP Timeout: syn_sent</th>
++<th>Limit czasu TCP: SYN_SENT</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="tcp_syn_sent" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 120</span>
++<span>Domyślnie: 120</span>
+ </td>
+ </tr>
+ <tr>
+-<th>TCP Timeout: syn_recv</th>
++<th>Limit czasu TCP: SYN_RECV</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="tcp_syn_recv" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 60</span>
++<span>Domyślnie: 60</span>
+ </td>
+ </tr>
+ <tr>
+-<th>TCP Timeout: fin_wait</th>
++<th>Limit czasu TCP: FIN_WAIT</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="tcp_fin_wait" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 120</span>
++<span>Domyślnie: 120</span>
+ </td>
+ </tr>
+ <tr>
+-<th>TCP Timeout: time_wait</th>
++<th>Limit czasu TCP: TIME_WAIT</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="tcp_time_wait" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 120</span>
++<span>Domyślnie: 120</span>
+ </td>
+ </tr>
+ <tr>
+-<th>TCP Timeout: close</th>
++<th>Limit czasu TCP: CLOSE</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="tcp_close" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 10</span>
++<span>Domyślnie: 10</span>
+ </td>
+ </tr>
+ <tr>
+-<th>TCP Timeout: close_wait</th>
++<th>Limit czasu TCP: CLOSE_WAIT</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="tcp_close_wait" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 60</span>
++<span>Domyślnie: 60</span>
+ </td>
+ </tr>
+ <tr>
+-<th>TCP Timeout: last_ack</th>
++<th>Limit czasu TCP: LAST_ACK</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="tcp_last_ack" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 30</span>
++<span>Domyślnie: 30</span>
+ </td>
+ </tr>
+ <tr>
+-<th>UDP Timeout: Assured</th>
++<th>Limit czasu UDP: ASSURED</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="udp_assured" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 180</span>
++<span>Domyślnie: 180</span>
+ </td>
+ </tr>
+ <tr>
+-<th>UDP Timeout: Unreplied</th>
++<th>Limit czasu UDP: UNREPLIED</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="udp_unreplied" onKeyPress="return validator.isNumber(this,event);" value="">
+-<span>Default: 30</span>
++<span>Domyślnie: 30</span>
+ </td>
+ </tr>
+ </table>
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="margin-top:8px;">
+ <thead>
+ <tr>
+-<td colspan="2">Advanced Tweaks and Hacks</td>
++<td colspan="2">Zaawansowane dostrajanie i modyfikacje</td>
+ </tr>
+ </thead>
+ <tr>
+-<th>Redirect webui access to www.asusrouter.com</th>
++<th>Przekierowuj dostęp do WebUI na www.asusrouter.com</th>
+ <td>
+ <input type="radio" name="http_dut_redir" value="1" <% nvram_match_x("","http_dut_redir","1", "checked"); %> ><#278#>
+ <input type="radio" name="http_dut_redir" value="0" <% nvram_match_x("","http_dut_redir","0", "checked"); %> ><#277#>
+ </td>
+ </tr>
+ <tr>
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,4);">Firewall: Drop IPv6 neighbour solicitation broadcasts (default: No)</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,4);">Zapora: Odrzucaj rozgłoszeniowe komunikaty wykrywania sąsiadów IPv6 (domyślnie: Nie)</a></th>
+ <td>
+ <input type="radio" name="ipv6_ns_drop" class="input" value="1" <% nvram_match_x("", "ipv6_ns_drop", "1", "checked"); %>><#278#>
+ <input type="radio" name="ipv6_ns_drop" class="input" value="0" <% nvram_match_x("", "ipv6_ns_drop", "0", "checked"); %>><#277#>
+ </td>
+ </tr>
+ <tr>
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,27);">Wan: Use local caching DNS server as system resolver (default: No)</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,27);">WAN: Używaj lokalnego buforującego serwera DNS jako systemowego resolvera (domyślnie: Nie)</a></th>
+ <td>
+ <input type="radio" name="dns_local_cache" class="input" value="1" <% nvram_match_x("", "dns_local_cache", "1", "checked"); %>><#278#>
+ <input type="radio" name="dns_local_cache" class="input" value="0" <% nvram_match_x("", "dns_local_cache", "0", "checked"); %>><#277#>
+ </td>
+ </tr>
+ <tr>
+-<th>Disable Asusnat tunnel</th>
++<th>Wyłącz tunel Asusnat</th>
+ <td>
+ <input type="radio" name="aae_disable_force" class="input" value="1" <% nvram_match_x("", "aae_disable_force", "1", "checked"); %>><#278#>
+ <input type="radio" name="aae_disable_force" class="input" value="0" <% nvram_match_x("", "aae_disable_force", "0", "checked"); %>><#277#>
+ </td>
+ </tr>
+ <tr>
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,21);">dhcpd: send empty WPAD with a carriage return</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,21);">dhcpd: wysyłaj pusty WPAD zakończony znakiem CR</a></th>
+ <td>
+ <input type="radio" name="dhcpd_send_wpad" class="input" value="1" <% nvram_match_x("", "dhcpd_send_wpad", "1", "checked"); %>><#278#>
+ <input type="radio" name="dhcpd_send_wpad" class="input" value="0" <% nvram_match_x("", "dhcpd_send_wpad", "0", "checked"); %>><#277#>

@@ -9,6 +9,7 @@ PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 WEBUI_SOURCE="${EDGE_WEBUI_SOURCE:-/jffs/addons/asus-edge/webui/EdgeGateway.asp}"
 WEBUI_TITLE="Edge Gateway"
+PL_WEBUI_HELPER="/jffs/addons/asus-edge/bin/webui-pl-mount"
 MENU_ORIGINAL="/www/require/modules/menuTree.js"
 MENU_TMP="/tmp/menuTree.js"
 LOCKFILE="/tmp/addonwebui.lock"
@@ -33,6 +34,33 @@ remount_menu_tree() {
     umount "$MENU_ORIGINAL" 2>/dev/null || true
     mount -o bind "$MENU_TMP" "$MENU_ORIGINAL"
 }
+
+mount_polish_overlay() {
+    [ -x "$PL_WEBUI_HELPER" ] || {
+        echo "WARNING: Polish WebUI helper unavailable: $PL_WEBUI_HELPER" >&2
+        return 0
+    }
+
+    if "$PL_WEBUI_HELPER" mount >/tmp/asus-edge-webui-pl-mount.log 2>&1; then
+        echo "Polish WebUI overlay active"
+    else
+        echo "WARNING: Polish WebUI overlay failed; inspect /tmp/asus-edge-webui-pl-mount.log" >&2
+    fi
+
+    return 0
+}
+
+unmount_polish_overlay() {
+    [ -x "$PL_WEBUI_HELPER" ] || return 0
+
+    if "$PL_WEBUI_HELPER" unmount >/tmp/asus-edge-webui-pl-unmount.log 2>&1; then
+        echo "Polish WebUI overlay inactive"
+    else
+        echo "ERROR: Polish WebUI overlay unmount failed; inspect /tmp/asus-edge-webui-pl-unmount.log" >&2
+        return 1
+    fi
+}
+
 
 mount_webui() {
     addon_supported || {
@@ -77,6 +105,8 @@ mount_webui() {
     remount_menu_tree
     printf '%s\n' "$am_webui_page" >"$STATE_FILE"
 
+    mount_polish_overlay
+
     echo "Mounted $WEBUI_TITLE as $am_webui_page"
     echo "URL: /$am_webui_page"
 }
@@ -84,6 +114,8 @@ mount_webui() {
 unmount_webui() {
     exec 9>"$LOCKFILE"
     flock -x 9
+
+    unmount_polish_overlay || return 1
 
     page=""
     if [ -r "$STATE_FILE" ]; then
