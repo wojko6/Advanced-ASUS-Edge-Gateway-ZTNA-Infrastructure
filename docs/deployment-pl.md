@@ -10,10 +10,22 @@ Włącz obsługę własnych skryptów JFFS. Sprawdź montowanie `/opt`, Entware 
 
 ```sh
 mount | grep ' /opt '
-opkg list-installed | grep -E '^(tailscale|unbound|syslog-ng) '
+opkg list-installed | grep -E '^(tailscale|unbound|syslog-ng|patch) '
 ```
 
 Instalator projektu nie instaluje ani nie aktualizuje pakietów.
+
+Polska nakładka WebUI wymaga GNU `patch` (`/opt/bin/patch`) podczas instalacji
+lub aktualizacji. Jeżeli pakiet nie jest jeszcze dostępny:
+
+```sh
+opkg update
+opkg install patch
+```
+
+`patch` nie jest zależnością startową routera. Po zbudowaniu i zweryfikowaniu
+artefaktów WebUI start systemu korzysta z gotowych plików w JFFS oraz
+bind-mountów.
 
 ## 2. Konfiguracja
 

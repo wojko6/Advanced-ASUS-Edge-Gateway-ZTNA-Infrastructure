@@ -1,0 +1,68 @@
+--- a/Advanced_WAdvanced_Content.asp
++++ b/Advanced_WAdvanced_Content.asp
+@@ -363,11 +363,11 @@
+ }
+ $("#turbo_qam_title").html("<#4280#> (WiFi 5)");
+ if(QAM1024_support){
+-var desc = ["Up to MCS 9 (802.11ac)", "Up to MCS 11 (NitroQAM/1024-QAM)"];
++var desc = ["Do MCS 9 (802.11ac)", "Do MCS 11 (NitroQAM/1024-QAM)"];
+ var value = ["1", "2"];
+ }
+ else if(QAM256_support){
+-var desc = ["Up to MCS 9 (802.11ac)"];
++var desc = ["Do MCS 9 (802.11ac)"];
+ var value = ["1"];
+ }
+ add_options_x2(document.form.wl_turbo_qam, desc, value, '<% nvram_get("wl_turbo_qam"); %>');
+@@ -416,11 +416,11 @@
+ }
+ $("#turbo_qam_title").html("<#4280#> (WiFi 5)");
+ if(QAM1024_support){
+-var desc = ["Up to MCS 7 (802.11n)", "Up to MCS 9 (TurboQAM/256-QAM)", "Up to MCS 11 (NitroQAM/1024-QAM)"];
++var desc = ["Do MCS 7 (802.11n)", "Do MCS 9 (TurboQAM/256-QAM)", "Do MCS 11 (NitroQAM/1024-QAM)"];
+ var value = ["0", "1", "2"];
+ }
+ else if(QAM256_support){
+-var desc = ["Up to MCS 7 (802.11n)", "Up to MCS 9 (TurboQAM/256-QAM)"];
++var desc = ["Do MCS 7 (802.11n)", "Do MCS 9 (TurboQAM/256-QAM)"];
+ var value = ["0", "1"];
+ }
+ add_options_x2(document.form.wl_turbo_qam, desc, value, '<% nvram_get("wl_turbo_qam"); %>');
+@@ -686,12 +686,12 @@
+ }
+ if(ofdma_onlyDL_support){
+ var value = ['0', '1', '3'];
+-var desc = ['<#4214#>', 'DL OFDMA only', 'DL OFDMA + MU-MIMO'];
++var desc = ['<#4214#>', 'Tylko DL OFDMA', 'DL OFDMA + MU-MIMO'];
+ add_options_x2(document.form.wl_ofdma, desc, value, document.form.wl_ofdma.value);
+ }
+ else if(Rawifi_support){
+ var value = ['0', '1', '4', '2','3'];
+-var desc = ['<#4214#>', 'DL OFDMA only', 'DL OFDMA + MU-MIMO', 'DL/UL OFDMA', 'DL/UL OFDMA + MU-MIMO'];
++var desc = ['<#4214#>', 'Tylko DL OFDMA', 'DL OFDMA + MU-MIMO', 'DL/UL OFDMA', 'DL/UL OFDMA + MU-MIMO'];
+ var _ori_value = "<% nvram_get("wl_ofdma"); %>";
+ add_options_x2(document.form.wl_ofdma, desc, value, _ori_value);
+ }
+@@ -1496,11 +1496,11 @@
+ <div style="display:table-cell;vertical-align:middle">
+ <select name="wl_ofdma" class="input_option">
+ <option value="0" <% nvram_match("wl_ofdma", "0","selected"); %>><#4214#></option>
+-<option value="1" <% nvram_match("wl_ofdma", "1","selected"); %>>DL OFDMA only</option>
++<option value="1" <% nvram_match("wl_ofdma", "1","selected"); %>>Tylko DL OFDMA</option>
+ <option value="2" <% nvram_match("wl_ofdma", "2","selected"); %>>DL/UL OFDMA</option>
+ <option value="3" <% nvram_match("wl_ofdma", "3","selected"); %>>DL/UL OFDMA + MU-MIMO</option>
+ </select>
+-<span id="ofdma_hint" style="margin-left:4px;display:none">*Need to enable <a href="Advanced_Wireless_Content.asp" style="color:#FC0;text-decoration:underline;">802.11ax / WiFi 6 mode</a></span>
++<span id="ofdma_hint" style="margin-left:4px;display:none">*Należy włączyć tryb <a href="Advanced_Wireless_Content.asp" style="color:#FC0;text-decoration:underline;">802.11ax / WiFi 6</a></span>
+ </div>
+ </td>
+ </tr>
+@@ -1523,7 +1523,7 @@
+ </td>
+ </tr>
+ <tr id="ext_nss_field" style="display:none">
+-<th><a class="hintstyle">Extended NSS</a></th>
++<th><a class="hintstyle">Rozszerzone NSS</a></th>
+ <td>
+ <select name="wl_ext_nss" class="input_option">
+ <option value="0" <% nvram_match("wl_ext_nss", "0","selected"); %>><#4214#></option>

@@ -1,0 +1,215 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Build version-pinned Polish ASUSWRT WebUI assets from stock firmware files.
+# GNU patch is required only during installation/update, never during boot.
+
+set -eu
+
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+ADDON_DIR="${EDGE_ADDON_DIR:-/jffs/addons/asus-edge}"
+PATCH_DIR="$ADDON_DIR/webui/patches"
+OUTPUT_DIR="$ADDON_DIR/webui/pl"
+WEBUI_ROOT="${EDGE_WEBUI_ROOT:-/www}"
+
+PATCH_BIN="${EDGE_PATCH_BIN:-/opt/bin/patch}"
+
+PL_BASE_SHA="cad0a4766bfd2bb7e0faa0fc63638b84ab65ee30bc56b0b5755b7e32f7506719"
+PL_PATCHED_SHA="1bc59ad0727ee6198dd75a35a15be3313fed67ac816c85bd741463415773e8ac"
+
+HELP_BASE_SHA="609d98814415bf482b583387fb68275d244bb234fb5dde41166887a976a4b0cb"
+HELP_PATCHED_SHA="7da975a69b1237499ee238e93ede215c3e235c5b34a5d87ab507d45a4e063778"
+
+SYSINFO_BASE_SHA="6d5a23ab9ee39d6d63b19c33fca10fe74a2b2fc38bd1fe95d95aeba85e7e43ef"
+SYSINFO_PATCHED_SHA="3dbef5d95c02561baf920a6b2014ed34d021eb5ce6723c076ddecf9072d839df"
+
+TWEAKS_BASE_SHA="65024c7403fdb0c684b1f574aa82bc38923b69f04c5119ac02ac172f43769b79"
+TWEAKS_PATCHED_SHA="6cee7405bcc556ac3af1baee418a2ffa85cad39b37c3f76e340ef2a8297595c6"
+WADV_BASE_SHA="21c08426a49a95cefad0097077d509d4a6b759a634b379f58e3ad00fa3ef5fa3"
+WADV_PATCHED_SHA="62b5c08839fb238c17bdace3e968c799233926873c50cb400e6de2d2356e10fc"
+STATE_BASE_SHA="bf0992a67f18807e18fc8b9baf75852cef825e80ff8b5885bc0452745ce77ee5"
+STATE_PATCHED_SHA="21c1653b9d76c1fe174044467a3ba4648908a4e525df7735fd23d3c737ae2dfb"
+ROUTER_STATUS_BASE_SHA="dc99b353220c1b3b13fceacf44a4ca1fa137831cc103cdfaee8ada97ef26ed09"
+ROUTER_STATUS_PATCHED_SHA="1435585d9f1f8a77e1f03d765f7114c9f2a33da26425bc38512922d5e0f56b95"
+ROUTER_BASE_SHA="b2ef787f4a53740eac12f9304533937c347de9f8afd0541f06f62d600c6aaf20"
+ROUTER_PATCHED_SHA="5c809d2105bfdb87f1e6493ddc8cf05f78dbd3f50be402d3846f3b987d3f7cd6"
+
+find_hash_backend() {
+    if [ -x /usr/sbin/openssl ]; then
+        printf '%s\n' "openssl:/usr/sbin/openssl"
+        return 0
+    fi
+
+    for candidate in \
+        /usr/bin/sha256sum \
+        /bin/sha256sum \
+        /opt/bin/sha256sum \
+        /opt/sbin/sha256sum
+    do
+        if [ -x "$candidate" ]; then
+            printf '%s\n' "sha256sum:$candidate"
+            return 0
+        fi
+    done
+
+    echo "ERROR: no SHA-256 backend available" >&2
+    return 1
+}
+
+HASH_BACKEND="$(find_hash_backend)"
+
+file_hash() {
+    file="$1"
+
+    case "$HASH_BACKEND" in
+        openssl:*)
+            openssl_bin="${HASH_BACKEND#openssl:}"
+            "$openssl_bin" dgst -sha256 "$file" | awk '{print $NF}'
+            ;;
+        sha256sum:*)
+            sha_bin="${HASH_BACKEND#sha256sum:}"
+            "$sha_bin" "$file" | awk '{print $1}'
+            ;;
+        *)
+            echo "ERROR: unsupported hash backend: $HASH_BACKEND" >&2
+            return 1
+            ;;
+    esac
+}
+
+build_one() {
+    source="$1"
+    name="$2"
+    baseline_sha="$3"
+    patched_sha="$4"
+
+    patch_file="$PATCH_DIR/$name.patch"
+    output="$OUTPUT_DIR/$name"
+    workdir="/tmp/asus-edge-webui-pl-build.$$.$name"
+
+    [ -r "$source" ] || {
+        echo "ERROR: missing firmware source: $source" >&2
+        return 1
+    }
+
+    [ -r "$patch_file" ] || {
+        echo "ERROR: missing patch: $patch_file" >&2
+        return 1
+    }
+
+    source_sha="$(file_hash "$source")"
+
+    rm -rf "$workdir"
+    mkdir -p "$workdir"
+
+    case "$source_sha" in
+        "$patched_sha")
+            # Reinstall/update while the project overlay is already active.
+            cp "$source" "$workdir/$name"
+            echo "$name: active source already matches validated Polish artifact"
+            ;;
+
+        "$baseline_sha")
+            cp "$source" "$workdir/$name"
+
+            "$PATCH_BIN" \
+                --batch \
+                --forward \
+                -p1 \
+                -d "$workdir" \
+                <"$patch_file" >/dev/null
+
+            echo "$name: built from validated firmware baseline"
+            ;;
+
+        *)
+            echo "ERROR: unsupported firmware/source hash for $name" >&2
+            echo "BASELINE=$baseline_sha" >&2
+            echo "PATCHED=$patched_sha" >&2
+            echo "ACTIVE=$source_sha" >&2
+            rm -rf "$workdir"
+            return 1
+            ;;
+    esac
+
+    result_sha="$(file_hash "$workdir/$name")"
+
+    if [ "$result_sha" != "$patched_sha" ]; then
+        echo "ERROR: generated $name hash mismatch" >&2
+        echo "EXPECTED=$patched_sha" >&2
+        echo "ACTUAL=$result_sha" >&2
+        rm -rf "$workdir"
+        return 1
+    fi
+
+    cp "$workdir/$name" "$output"
+    chmod 0644 "$output"
+
+    installed_sha="$(file_hash "$output")"
+    [ "$installed_sha" = "$patched_sha" ] || {
+        echo "ERROR: installed $name verification failed" >&2
+        rm -rf "$workdir"
+        return 1
+    }
+
+    rm -rf "$workdir"
+    echo "$name: PASS"
+}
+
+[ -x "$PATCH_BIN" ] || {
+    echo "ERROR: GNU patch is required at $PATCH_BIN" >&2
+    echo "Install it with: opkg install patch" >&2
+    exit 1
+}
+
+mkdir -p "$OUTPUT_DIR"
+
+build_one \
+    "$WEBUI_ROOT/PL.dict" \
+    PL.dict \
+    "$PL_BASE_SHA" \
+    "$PL_PATCHED_SHA"
+
+build_one \
+    "$WEBUI_ROOT/help.js" \
+    help.js \
+    "$HELP_BASE_SHA" \
+    "$HELP_PATCHED_SHA"
+
+build_one \
+    "$WEBUI_ROOT/Tools_Sysinfo.asp" \
+    Tools_Sysinfo.asp \
+    "$SYSINFO_BASE_SHA" \
+    "$SYSINFO_PATCHED_SHA"
+
+build_one \
+    "$WEBUI_ROOT/Tools_OtherSettings.asp" \
+    Tools_OtherSettings.asp \
+    "$TWEAKS_BASE_SHA" \
+    "$TWEAKS_PATCHED_SHA"
+
+build_one \
+    "$WEBUI_ROOT/Advanced_WAdvanced_Content.asp" \
+    Advanced_WAdvanced_Content.asp \
+    "$WADV_BASE_SHA" \
+    "$WADV_PATCHED_SHA"
+
+build_one \
+    "$WEBUI_ROOT/state.js" \
+    state.js \
+    "$STATE_BASE_SHA" \
+    "$STATE_PATCHED_SHA"
+
+build_one \
+    "$WEBUI_ROOT/device-map/router_status.asp" \
+    "router_status.asp" \
+    "$ROUTER_STATUS_BASE_SHA" \
+    "$ROUTER_STATUS_PATCHED_SHA"
+
+build_one \
+    "$WEBUI_ROOT/device-map/router.asp" \
+    "router.asp" \
+    "$ROUTER_BASE_SHA" \
+    "$ROUTER_PATCHED_SHA"
+
+echo "WEBUI_PL_BUILD=PASS"

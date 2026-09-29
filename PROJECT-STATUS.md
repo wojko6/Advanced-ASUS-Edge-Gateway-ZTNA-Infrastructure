@@ -2,19 +2,21 @@
 
 **Status date:** 2026-09-29
 
-**Latest live router checkpoint:** 2026-09-28
+**Latest live router checkpoint:** 2026-09-29
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** continue the deferred Grafana GitHub/CI dashboard work from the 2026-09-28 checkpoint, then execute the short post-audit hardening round (#127, #128, #130). Pi-hole DNS analytics Phase 0-3, full Fedora reboot persistence and controlled two-client main-LAN acceptance remain live-validated; issue #108 still has bounded retention/storage, rollback/uninstall and LAN interception-correlation gaps.
+**Current phase:** the deferred Grafana GitHub/CI dashboard work and issue #127 LAN-management/WAN-exposure hardening are complete; continue the short post-audit hardening round with #128 and #130, then return to the bounded remaining #108 retention/storage, rollback/uninstall and LAN interception-correlation gaps.
 
 ## Executive status
 
-This status document was reconciled through 2026-09-29. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
+This status document was reconciled on 2026-09-29. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
 
 The centralized logging path is now also live-validated: router syslog-ng forwards the Asuswrt log over Tailscale and mutually authenticated TLS to the Fedora collector, with source-restricted firewall policy and successful short-outage recovery (3/3 test messages delivered after collector restoration). Grafana 13 uses its native Polish interface option; the project dashboard remains explicitly localized in JSON because application language settings do not translate project-owned panel content.
 
-On 2026-09-28 the Fedora Grafana instance was also extended with the read-only GitHub datasource plus Polystat and Business Charts plugins. The new `ASUS Edge Gateway — Engineering / CI` dashboard was live-validated with recent CI runs, latest CI status, open-Issue count and open-PR count. Merged-PR/repository-activity panels, final layout cleanup and the Polystat infrastructure-health overview were intentionally deferred to the next session.
+On 2026-09-28 the Fedora Grafana instance was extended with the read-only GitHub datasource plus Polystat and Business Charts plugins. On 2026-09-29 the deferred `ASUS Edge Gateway — Engineering / CI` work was completed: merged-PR and recent-commit tables, final layout cleanup and a seven-signal Polystat infrastructure-health overview were added and live-checked. The dashboard is now source-controlled as a Grafana v2 resource under `monitoring/grafana/dashboards/`. Business Charts remains installed but optional and unused by this dashboard.
+
+On 2026-09-29 issue #127 closed the remaining normal-LAN management and automatic-exposure gap. A stale static TCP 20/21 forwarding rule to an inactive LAN host was removed after rollback capture and runtime verification; UPnP/NAT-PMP had no active daemon/listeners or dynamic mappings, Port Trigger and DMZ were inactive, and WAN WebUI access remained disabled. The Fedora administration workstation received a stable DHCP reservation and ASUS access restriction now permits router HTTPS/8443 and SSH/1122 only from that authorized LAN host. Positive administration tests passed, a controlled non-admin source was denied with firewall DROP counters, the project health check remained `0 failure(s), 0 warning(s)`, and a GeForce NOW session worked normally after the changes.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
@@ -23,6 +25,30 @@ On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_
 The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Pi-hole main-LAN filtering, Unbound/DNSSEC integration, firmware dnsmasq for DHCP/local naming and existing interception paths, syslog-ng logging, project-owned least-privilege firewall chains, recovery tooling, health checks, evidence collection, external observability and automated repository validation.
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
+
+## 2026-09-29 LAN management and WAN exposure hardening
+
+Issue #127 is complete on the reference router.
+
+The accepted state removes the obsolete static WAN TCP 20/21 -> LAN SSH/22
+forward and keeps Port Trigger, DMZ-host and WAN WebUI access disabled.
+UPnP/NAT-PMP was assessed separately from WPS: the active main-WAN UPnP state
+was disabled, `miniupnpd` was not running, UDP 1900/5351 listeners were absent,
+and the runtime UPnP NAT/filter chains were empty.
+
+Normal-LAN router administration is now allowlisted to the Fedora
+administration workstation. That host has a stable DHCP reservation and is the
+only normal-LAN source permitted to reach router HTTPS/8443 and SSH/1122 by the
+platform `ACCESS_RESTRICTION` chain. The pre-existing Tailscale management
+policy remains separately enforced by the project-owned `EDGE_TS_INPUT` path.
+
+Validation included a new SSH session and HTTP 200 from the authorized Fedora
+host, controlled negative HTTPS/SSH attempts from a temporary non-admin LAN
+source, observed DROP counters, a clean project health check and a normal
+GeForce NOW session after hardening.
+
+See
+[evidence/2026-09-29/issue-127-lan-management-wan-exposure-hardening.md](evidence/2026-09-29/issue-127-lan-management-wan-exposure-hardening.md).
 
 ## 2026-09-28 Pi-hole main-LAN migration
 
@@ -36,7 +62,7 @@ The final checkpoint observed approximately 128 MiB memory available; Pi-hole FT
 
 The claim remains bounded: DHCP-managed main-LAN clients use Pi-hole, but the existing firewall interception of arbitrary external classic DNS and the historical Tailscale redirect still terminate at firmware dnsmasq before Unbound. Those paths require separate revalidation if they are moved behind Pi-hole.
 
-### Validated baseline — Pi-hole-visible DNS activity analytics
+### Pi-hole-visible DNS activity analytics status
 
 Issue #108 Phase 0 passed against the deployed Pi-hole v6 API. The preflight
 validated the required query schema, authenticated read-only access through a

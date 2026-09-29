@@ -74,12 +74,13 @@ evidence/           Sanitized dated validation artifacts, evidence policy and te
 - A SHA-256 utility for verified backups; install Entware package `coreutils-sha256sum` when the firmware does not provide one.
 - A working `flock` utility on the router PATH; `firewall-start` requires it to serialize concurrent policy rebuilds and fails closed if it is unavailable.
 - A current router/JFFS backup and local recovery access for first deployment.
+- Optional but recommended for modern workstation file transfers: Entware `openssh-sftp-server`. The reference GNUton/Dropbear build delegates the `sftp` subsystem to `/opt/libexec/sftp-server`; installing this package lets current OpenSSH `scp` clients use their default SFTP transport without forcing legacy SCP with `scp -O`.
 
 Entware package names can differ by target. Confirm them before installation:
 
 ```sh
 opkg update
-opkg list | grep -E '^(tailscale|unbound|syslog-ng|coreutils-sha256sum) '
+opkg list | grep -E '^(tailscale|unbound|syslog-ng|coreutils-sha256sum|openssh-sftp-server) '
 ```
 
 Never commit auth keys, node state, private keys, collector credentials, router exports, or real private infrastructure data.

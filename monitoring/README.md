@@ -235,17 +235,29 @@ integration for this repository. The validated plugin set includes:
 The GitHub datasource is provisioned read-only. Its fine-grained credential is
 kept locally on Fedora and is not stored in repository files or dashboard JSON.
 
-The initial `ASUS Edge Gateway — Engineering / CI` dashboard is live-validated
-with:
+The `ASUS Edge Gateway — Engineering / CI` dashboard is now complete and
+source-controlled as
+[`grafana/dashboards/asus-edge-gateway-engineering-ci.json`](grafana/dashboards/asus-edge-gateway-engineering-ci.json).
+The stored file is the Grafana 13.2.2 v2 resource form with dashboard UID
+`ad92bsh`.
 
-- recent Validation suite workflow runs;
+The live-validated dashboard includes:
+
+- recent Validation suite workflow runs, sorted newest first, with direct run
+  links;
 - the latest CI result;
-- current open-Issue count;
-- current open-Pull-Request count.
+- current open-Issue and open-Pull-Request counts;
+- merged Pull Requests over the selected dashboard period, filtered by
+  `MergedAt`, with direct PR links;
+- recent commits on `main`, sorted newest first, with direct commit links;
+- a Polystat `Infrastructure Health` overview for the SSH collector, WAN,
+  Internet HTTPS, Internet ICMP, router DNS, VictoriaMetrics and Grafana.
 
-The 2026-09-28 session deliberately stopped after those core panels became
-useful. The next dashboard work is merged PRs over a bounded recent period,
-recent repository activity/commits, final layout cleanup and a separate
-Polystat infrastructure-health overview. Business Charts remains optional; no
-additional Grafana plugin installation is required before those steps.
+The Polystat queries are instant checks and map `1 -> OK` and `0 -> BŁĄD`.
+The 2026-09-29 accepted live checkpoint showed all seven signals as `OK`.
+
+The exported dashboard resource contains datasource names, queries and panel
+configuration only. The GitHub credential remains in the locally provisioned
+datasource and is not stored in dashboard JSON. Business Charts remains
+optional and is not required by this dashboard.
 

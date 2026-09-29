@@ -90,6 +90,159 @@ if grep -F 'opkg update && opkg upgrade tailscale' "$REPO_DIR/router/scripts/ser
     exit 1
 fi
 
+for webui_guard in \
+    'router/scripts/webui-mount" "$ADDON_DIR/bin/webui-mount" 0755' \
+    'router/scripts/webui-pl-build" "$ADDON_DIR/bin/webui-pl-build" 0755' \
+    'router/scripts/webui-pl-mount" "$ADDON_DIR/bin/webui-pl-mount" 0755' \
+    'router/scripts/webui-status" "$ADDON_DIR/bin/webui-status" 0755' \
+    'router/webui/EdgeGateway.asp" "$ADDON_DIR/webui/EdgeGateway.asp" 0644' \
+    'snapshot_path "$ADDON_DIR/webui" webui' \
+    'restore_path "$ADDON_DIR/webui" webui'
+do
+    grep -F "$webui_guard" "$REPO_DIR/scripts/install.sh" >/dev/null || {
+        echo "FAIL: installer WebUI integration missing: $webui_guard" >&2
+        exit 1
+    }
+done
+
+for webui_pl_build_guard in \
+    'WEBUI_PATCH_BIN="${EDGE_PATCH_BIN:-/opt/bin/patch}"' \
+    'opkg install patch' \
+    'router/webui/patches/$webui_patch' \
+    'webui-pl-build" "$ADDON_DIR/bin/webui-pl-build" 0755' \
+    'EDGE_ADDON_DIR="$ADDON_DIR"' \
+    'WADV_PATCHED_SHA=' \
+    'STATE_PATCHED_SHA=' \
+    'ROUTER_STATUS_PATCHED_SHA=' \
+    'ROUTER_PATCHED_SHA=' \
+    'WEBUI_PL_BUILD=PASS'
+do
+    grep -F "$webui_pl_build_guard" \
+        "$REPO_DIR/scripts/install.sh" \
+        "$REPO_DIR/router/scripts/webui-pl-build" >/dev/null || {
+        echo "FAIL: Polish WebUI build guard missing: $webui_pl_build_guard" >&2
+        exit 1
+    }
+done
+
+for webui_patch in \
+    PL.dict.patch \
+    help.js.patch \
+    Tools_Sysinfo.asp.patch \
+    Tools_OtherSettings.asp.patch \
+    Advanced_WAdvanced_Content.asp.patch \
+    state.js.patch \
+    router_status.asp.patch \
+    router.asp.patch
+do
+    [ -s "$REPO_DIR/router/webui/patches/$webui_patch" ] || {
+        echo "FAIL: Polish WebUI patch missing or empty: $webui_patch" >&2
+        exit 1
+    }
+done
+
+grep -F 'mount_project_webui' "$REPO_DIR/router/scripts/services-start" >/dev/null || {
+    echo "FAIL: services-start does not persist the Edge Gateway WebUI" >&2
+    exit 1
+}
+
+for webui_pl_guard in \
+    'PL_WEBUI_HELPER="/jffs/addons/asus-edge/bin/webui-pl-mount"' \
+    'mount_polish_overlay' \
+    'unmount_polish_overlay' \
+    '/usr/sbin/openssl' \
+    'WEBUI_PL_OVERLAY=PASS' \
+    'WEBUI_PL_OVERLAY_UNMOUNT=PASS' \
+    'menuName: "Informacje o systemie"' \
+    'tabName: "Dostrajanie"' \
+    'Advanced_WAdvanced_Content.asp' \
+    'STATE_TARGET="/www/state.js"' \
+    'ROUTER_STATUS_TARGET="/www/device-map/router_status.asp"' \
+    'ROUTER_TARGET="/www/device-map/router.asp"'
+do
+    grep -F "$webui_pl_guard" \
+        "$REPO_DIR/router/scripts/webui-mount" \
+        "$REPO_DIR/router/scripts/webui-pl-mount" >/dev/null || {
+        echo "FAIL: Polish WebUI overlay guard missing: $webui_pl_guard" >&2
+        exit 1
+    }
+done
+
+for webui_status_guard in \
+    'configure_webui_status' \
+    'cru a AsusEdgeWebUIStatus' \
+    'unset LD_LIBRARY_PATH' \
+    'preserving previous status.js' \
+    'stats_noreset' \
+    'num.answer.rcode.SERVFAIL' \
+    'num.answer.bogus' \
+    '/ext/asus-edge/status.js'
+do
+    grep -F "$webui_status_guard" \
+        "$REPO_DIR/router/scripts/services-start" \
+        "$REPO_DIR/router/scripts/webui-status" \
+        "$REPO_DIR/router/webui/EdgeGateway.asp" >/dev/null || {
+        echo "FAIL: Edge Gateway WebUI Phase 2 guard missing: $webui_status_guard" >&2
+        exit 1
+    }
+done
+
+grep -F '/usr/sbin/cru d "$STATUS_CRON_ID"' "$REPO_DIR/router/scripts/webui-mount" >/dev/null || {
+    echo "FAIL: WebUI unmount does not remove the Phase 2 refresh schedule" >&2
+    exit 1
+}
+
+
+duplicate_webui_ids="$(
+    grep -o 'id="[^"]*"' "$REPO_DIR/router/webui/EdgeGateway.asp" |
+        sort |
+        uniq -d
+)"
+if [ -n "$duplicate_webui_ids" ]; then
+    echo "FAIL: duplicate HTML id(s) in Edge Gateway WebUI: $duplicate_webui_ids" >&2
+    exit 1
+fi
+
+for webui_phase3_guard in \
+    'window.edgeGatewayStatus' \
+    'system: {' \
+    'services: {' \
+    'tailscale: {' \
+    'policy: {' \
+    'firewall: {' \
+    'lanDnsRedirectPackets' \
+    'projectOwnsNetfilter' \
+    'edge_svc_pihole' \
+    'edge_fw_input_accept' \
+    'edgeRunningState' \
+    'edgeSchedulerState' \
+    'totalKiB < 1048576' \
+    'edge_unbound_snapshot'
+do
+    grep -F "$webui_phase3_guard" \
+        "$REPO_DIR/router/scripts/webui-status" \
+        "$REPO_DIR/router/webui/EdgeGateway.asp" >/dev/null || {
+        echo "FAIL: Edge Gateway WebUI Phase 3 guard missing: $webui_phase3_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F 'window.edgeGatewayStatus' "$REPO_DIR/router/scripts/webui-status" |
+    grep -E '100\.[0-9]+\.|192\.168\.' >/dev/null; then
+    echo "FAIL: Phase 3 WebUI snapshot contains hard-coded private deployment addresses" >&2
+    exit 1
+fi
+
+grep -F '"$ADDON_DIR/bin/webui-mount" unmount' "$REPO_DIR/scripts/uninstall.sh" >/dev/null || {
+    echo "FAIL: uninstall does not remove Edge Gateway WebUI runtime state" >&2
+    exit 1
+}
+
+grep -F 'unmount_polish_overlay || return 1' "$REPO_DIR/router/scripts/webui-mount" >/dev/null || {
+    echo "FAIL: WebUI unmount does not remove the Polish overlay first" >&2
+    exit 1
+}
+
 if grep -F '"$service" restart' "$REPO_DIR/router/scripts/services-start" >/dev/null; then
     echo "FAIL: Entware service restart present in boot path" >&2
     exit 1

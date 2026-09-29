@@ -1,0 +1,338 @@
+--- a/Tools_Sysinfo.asp
++++ b/Tools_Sysinfo.asp
+@@ -8,7 +8,7 @@
+ <meta HTTP-EQUIV="Expires" CONTENT="-1">
+ <link rel="shortcut icon" href="images/favicon.png">
+ <link rel="icon" href="images/favicon.png">
+-<title><#976#> - System Information</title>
++<title><#976#> - Informacje o systemie</title>
+ <link rel="stylesheet" type="text/css" href="index_style.css">
+ <link rel="stylesheet" type="text/css" href="form_style.css">
+ <style>
+@@ -138,7 +138,7 @@
+ memchartPie = new Chart(memchart, {
+ type: 'doughnut',
+ data: {
+-labels: ["Used", "Reclaimable", "Free"],
++labels: ["Używana", "Możliwa do odzyskania", "Wolna"],
+ datasets: [{
+ label: "Memory",
+ data: memdata,
+@@ -221,7 +221,7 @@
+ nvram_total = <% sysinfo("nvram.total"); %>;
+ used_percentage = Math.round((mem_stats_arr[6]/nvram_total)*100);
+ $("#nvram_bar").css("width", used_percentage +"%");
+-$("#nvram_label").html("<span>NVRAM Usage :</span> " + mem_stats_arr[6] + " / " + nvram_total + " bytes");
++$("#nvram_label").html("<span>Użycie NVRAM :</span> " + mem_stats_arr[6] + " / " + nvram_total + " bytes");
+ if (used_percentage > 90)
+ $("#nvram_bar").css("background-color", "orange");
+ else
+@@ -236,7 +236,7 @@
+ jffs_used = jffs_total - jffs_free;
+ used_percentage = Math.round((jffs_used) / jffs_total * 100);
+ $("#jffs_bar").css("width", used_percentage +"%");
+-$("#jffs_label").html("<span>JFFS Usage: </span>" + jffs_used.toFixed(2) + " / " + jffs_total.toFixed(2) + " MB");
++$("#jffs_label").html("<span>Użycie JFFS: </span>" + jffs_used.toFixed(2) + " / " + jffs_total.toFixed(2) + " MB");
+ if (used_percentage > 90)
+ $("#jffs_bar").css("background-color", "orange");
+ else
+@@ -386,14 +386,14 @@
+ show_menu();
+ document.getElementById("tempchartId").style.backgroundColor = canvasColor
+ if (wl_info.band5g_2_support) {
+-document.getElementById("wifi51_clients_th").innerHTML = "Wireless Clients (5 GHz-1)";
++document.getElementById("wifi51_clients_th").innerHTML = "Klienci Wi-Fi (5 GHz-1)";
+ document.getElementById("wifi52_clients_tr").style.display = "";
+ }
+ if (wl_info.band6g_support) {
+ document.getElementById("wifi6_clients_tr").style.display = "";
+ }
+ if (wl_info.band6g_2_support) {
+-document.getElementById("wifi6_clients_th").innerHTML = "Wireless Clients (6 GHz-1)";
++document.getElementById("wifi6_clients_th").innerHTML = "Klienci Wi-Fi (6 GHz-1)";
+ document.getElementById("wifi62_clients_tr").style.display = "";
+ }
+ if (band5g_support) {
+@@ -493,9 +493,17 @@
+ else
+ code = "<span>Runner:</span> ";
+ var state = "<% sysinfo("hwaccel.runner"); %>";
++if (state == "Enabled")
++state = "Włączone";
++else if (state == "Disabled")
++state = "Wyłączone";
+ code += state;
+ code += "&nbsp;&nbsp;-&nbsp;&nbsp;<span>Flow Cache:</span> ";
+ state = "<% sysinfo("hwaccel.fc"); %>";
++if (state == "Enabled")
++state = "Włączone";
++else if (state == "Disabled")
++state = "Wyłączone";
+ code += state;
+ }
+ document.getElementById("hwaccel").innerHTML = code;
+@@ -513,7 +521,7 @@
+ setTimeout("showbootTime()", 1000);
+ }
+ function show_connstate(){
+-document.getElementById("conn_td").innerHTML = conn_stats_arr[0] + " / <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;" + conn_stats_arr[1] + " active";
++document.getElementById("conn_td").innerHTML = conn_stats_arr[0] + " / <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;" + conn_stats_arr[1] + " aktywnych";
+ if (based_modelid === 'GT-AXE16000') {
+ wlc_24_arr = wlc_3_arr;
+ wlc_51_arr = wlc_0_arr;
+@@ -533,28 +541,28 @@
+ else if (wl_info.band6g_support)
+ wlc_6_arr = wlc_2_arr;
+ }
+-document.getElementById("wlc_24_td").innerHTML = (!wifi7_support ? "<span>Associated: </span>" + wlc_24_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
+-"<span>Authorized: </span>" + wlc_24_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
+-"<span>Authenticated: </span>" + wlc_24_arr[2];
++document.getElementById("wlc_24_td").innerHTML = (!wifi7_support ? "<span>Połączonych: </span>" + wlc_24_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
++"<span>Autoryzowanych: </span>" + wlc_24_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
++"<span>Uwierzytelnionych: </span>" + wlc_24_arr[2];
+ if (band5g_support) {
+-document.getElementById("wlc_51_td").innerHTML = (!wifi7_support ? "<span>Associated: </span>" + wlc_51_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
+-"<span>Authorized: </span>" + wlc_51_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
+-"<span>Authenticated: </span>" + wlc_51_arr[2];
++document.getElementById("wlc_51_td").innerHTML = (!wifi7_support ? "<span>Połączonych: </span>" + wlc_51_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
++"<span>Autoryzowanych: </span>" + wlc_51_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
++"<span>Uwierzytelnionych: </span>" + wlc_51_arr[2];
+ }
+ if (wl_info.band5g_2_support) {
+-document.getElementById("wlc_52_td").innerHTML = (!wifi7_support ? "<span>Associated: </span>" + wlc_52_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
+-"<span>Authorized: </span>" + wlc_52_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
+-"<span>Authenticated: </span>" + wlc_52_arr[2];
++document.getElementById("wlc_52_td").innerHTML = (!wifi7_support ? "<span>Połączonych: </span>" + wlc_52_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
++"<span>Autoryzowanych: </span>" + wlc_52_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
++"<span>Uwierzytelnionych: </span>" + wlc_52_arr[2];
+ }
+ if (wl_info.band6g_support) {
+-document.getElementById("wlc_6_td").innerHTML = (!wifi7_support ? "<span>Associated: </span>" + wlc_6_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
+-"<span>Authorized: </span>" + wlc_6_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
+-"<span>Authenticated: </span>" + wlc_6_arr[2];
++document.getElementById("wlc_6_td").innerHTML = (!wifi7_support ? "<span>Połączonych: </span>" + wlc_6_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
++"<span>Autoryzowanych: </span>" + wlc_6_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
++"<span>Uwierzytelnionych: </span>" + wlc_6_arr[2];
+ }
+ if (wl_info.band6g_2_support) {
+-document.getElementById("wlc_62_td").innerHTML = (!wifi7_support ? "<span>Associated: </span>" + wlc_62_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
+-"<span>Authorized: </span>" + wlc_62_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
+-"<span>Authenticated: </span>" + wlc_62_arr[2];
++document.getElementById("wlc_62_td").innerHTML = (!wifi7_support ? "<span>Połączonych: </span>" + wlc_62_arr[0] + "&nbsp;&nbsp;-&nbsp;&nbsp;" : "") +
++"<span>Autoryzowanych: </span>" + wlc_62_arr[1] + "&nbsp;&nbsp;-&nbsp;&nbsp;" +
++"<span>Uwierzytelnionych: </span>" + wlc_62_arr[2];
+ }
+ }
+ function show_memcpu(){
+@@ -566,7 +574,7 @@
+ document.getElementById("mem_buffer_div").innerHTML = mem_stats_arr[2] + " MB";
+ document.getElementById("mem_cache_div").innerHTML = mem_stats_arr[3] + " MB";
+ if (parseInt(mem_stats_arr[5]) == 0) {
+-document.getElementById("mem_swap_total_div").innerHTML = "<span>No swap</span>";
++document.getElementById("mem_swap_total_div").innerHTML = "<span>Brak pamięci wymiany</span>";
+ document.getElementById("swap_div").style.display="none";
+ } else {
+ document.getElementById("mem_swap_total_div").innerHTML = mem_stats_arr[5] + " MB";
+@@ -669,7 +677,7 @@
+ <tr bgcolor="#4D595D">
+ <td valign="top">
+ <div>&nbsp;</div>
+-<div class="formfonttitle">System Information</div>
++<div class="formfonttitle">Informacje o systemie</div>
+ <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ <thead>
+@@ -682,11 +690,11 @@
+ <td id="model_id"><% nvram_get("productid"); %></td>
+ </tr>
+ <tr>
+-<th>Firmware Version</th>
++<th>Wersja oprogramowania</th>
+ <td id="fwver"></td>
+ </tr>
+ <tr>
+-<th>Firmware Build</th>
++<th>Kompilacja oprogramowania</th>
+ <td><% nvram_get("buildinfo"); %></td>
+ </tr>
+ <tr>
+@@ -694,11 +702,11 @@
+ <td><% sysinfo("cfe_version"); %></td>
+ </tr>
+ <tr>
+-<th>Wireless Driver Version</th>
++<th>Wersja sterownika Wi-Fi</th>
+ <td id="wifi_version_td"></td>
+ </tr>
+ <tr>
+-<th>Features</th>
++<th>Funkcje</th>
+ <td id="rc_td"></td>
+ </tr>
+ <tr>
+@@ -713,19 +721,19 @@
+ </tr>
+ </thead>
+ <tr>
+-<th>CPU Model</th>
++<th>Model CPU</th>
+ <td><% sysinfo("cpu.model"); %> @ <% sysinfo("cpu.freq"); %> MHz</td>
+ </tr>
+ <tr>
+-<th>CPU Load Average (1, 5, 15 mins)</th>
++<th>Średnie obciążenie CPU (1, 5, 15 min)</th>
+ <td id="cpu_stats_td"></td>
+ </tr>
+ </table>
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ <thead>
+ <tr>
+-<td width="50%">Memory</td>
+-<td width="50%">Swap</td>
++<td width="50%">Pamięć RAM</td>
++<td width="50%">Pamięć wymiany</td>
+ </tr>
+ </thead>
+ <tr>
+@@ -736,27 +744,27 @@
+ <td>
+ <div class="memgrid">
+ <div class="memrow">
+-<span class="memlabel" style="color: #FFCC00;"> Total :</span>
++<span class="memlabel" style="color: #FFCC00;">Łącznie :</span>
+ <span class="memvalue" id="mem_total_div"></span>
+ </div>
+ <div class="memrow">
+-<span class="memlabel" style="color: #FFCC00;">Used :</span>
++<span class="memlabel" style="color: #FFCC00;">Używana :</span>
+ <span class="memvalue" id="mem_used_div"></span>
+ </div>
+ <div class="memrow">
+-<span class="memlabel" style="color: #FFCC00;">Available :</span>
++<span class="memlabel" style="color: #FFCC00;">Dostępna :</span>
+ <span class="memvalue" id="mem_available_div"></span>
+ </div>
+ <div class="memrow">
+-<span class="memlabel" style="color: #FFCC00;">Free :</span>
++<span class="memlabel" style="color: #FFCC00;">Wolna :</span>
+ <span class="memvalue" id="mem_free_div"></span>
+ </div>
+ <div class="memrow">
+-<span class="memlabel" style="color: #FFCC00;">Buffers :</span>
++<span class="memlabel" style="color: #FFCC00;">Bufory :</span>
+ <span class="memvalue" id="mem_buffer_div"></span>
+ </div>
+ <div class="memrow">
+-<span class="memlabel" style="color: #FFCC00;">Cache :</span>
++<span class="memlabel" style="color: #FFCC00;">Pamięć podręczna :</span>
+ <span class="memvalue" id="mem_cache_div"></span>
+ </div>
+ </div>
+@@ -764,11 +772,11 @@
+ <td style="vertical-align:top;">
+ <div class="memgrid">
+ <div class="memrow">
+-<span class="memlabel" style="color: #FFCC00;">Total Swap :</span>
++<span class="memlabel" style="color: #FFCC00;">Łącznie pamięci wymiany :</span>
+ <span class="memvalue" id="mem_swap_total_div"></span>
+ </div>
+ <div class="mewrow" id="swap_div">
+-<span class="memlabel" style="color: #FFCC00;">Used Swap :</span>
++<span class="memlabel" style="color: #FFCC00;">Użyta pamięć wymiany :</span>
+ <span class="memvalue" id="mem_swap_used_div"></span>
+ </div>
+ </div>
+@@ -778,7 +786,7 @@
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ <thead>
+ <tr>
+-<td colspan="2">Internal Storage</td>
++<td colspan="2">Pamięć wewnętrzna</td>
+ </tr>
+ </thead>
+ <tr>
+@@ -786,13 +794,13 @@
+ <div class="bar-container" style="width:60%;">
+ <div id="nvram_bar" class="core-color-container"></div>
+ </div>
+-<div style="padding-top:5px;" id="nvram_label"><span>NVRAM Usage: </span></div>
++<div style="padding-top:5px;" id="nvram_label"><span>Użycie NVRAM: </span></div>
+ </td>
+ <td width="50%" style="padding: 10px;">
+ <div id="jffs_div" class="bar-container" style="width:60%;">
+ <div id="jffs_bar" class="core-color-container"></div>
+ </div>
+-<div style="padding-top:5px;" id="jffs_label"><span>JFFS Usage: </span></div>
++<div style="padding-top:5px;" id="jffs_label"><span>Użycie JFFS: </span></div>
+ </td>
+ </tr>
+ </table>
+@@ -810,7 +818,7 @@
+ <th>Hardware</th>
+ <td id="ai_board_hw_td"></td>
+ <tr>
+-<th>Firmware Version</th>
++<th>Wersja oprogramowania</th>
+ <td id="ai_board_fwver_td"></td>
+ </tr>
+ <tr>
+@@ -821,49 +829,49 @@
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ <thead>
+ <tr>
+-<td colspan="2">Temperatures</td>
++<td colspan="2">Temperatury</td>
+ </tr>
+ </thead>
+ <tr>
+ <td colspan="2" style="padding:14px;" width="100%"><canvas style="border-radius:10px;width: 100% !important; height:275px;"id="tempchartId" ></canvas></td>
+ </tr>
+ <tr>
+-<th>Temperatures</th>
++<th>Temperatury</th>
+ <td id="temp_td"></td>
+ </tr>
+ </table>
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ <thead>
+ <tr>
+-<td colspan="2">Network</td>
++<td colspan="2">Sieć</td>
+ </tr>
+ </thead>
+ <tr>
+-<th>HW acceleration</th>
++<th>Akceleracja sprzętowa</th>
+ <td id="hwaccel"></td>
+ </tr>
+ <tr>
+-<th>Connections</th>
++<th>Połączenia</th>
+ <td id="conn_td"></td>
+ </tr>
+ <tr>
+-<th>Wireless Clients (2.4 GHz)</th>
++<th>Klienci Wi-Fi (2,4 GHz)</th>
+ <td id="wlc_24_td"></td>
+ </tr>
+ <tr id="wifi5_clients_tr" style="display:none;">
+-<th id="wifi51_clients_th">Wireless Clients (5 GHz)</th>
++<th id="wifi51_clients_th">Klienci Wi-Fi (5 GHz)</th>
+ <td id="wlc_51_td"></td>
+ </tr>
+ <tr id="wifi52_clients_tr" style="display:none;">
+-<th>Wireless Clients (5 GHz-2)</th>
++<th>Klienci Wi-Fi (5 GHz-2)</th>
+ <td id="wlc_52_td"></td>
+ </tr>
+ <tr id="wifi6_clients_tr" style="display:none;">
+-<th id="wifi6_clients_th">Wireless Clients (6 GHz)</th>
++<th id="wifi6_clients_th">Klienci Wi-Fi (6 GHz)</th>
+ <td id="wlc_6_td"></td>
+ </tr>
+ <tr id="wifi62_clients_tr" style="display:none;">
+-<th>Wireless Clients (6 GHz-2)</th>
++<th>Klienci Wi-Fi (6 GHz-2)</th>
+ <td id="wlc_62_td"></td>
+ </tr>
+ </table>

@@ -1,0 +1,1390 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "ad92bsh"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "builtIn": true,
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "query": {
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "group": "grafana",
+            "kind": "DataQuery",
+            "spec": {},
+            "version": "v0"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "description": "Dashboard CI/DevSecOps dla repozytorium Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure. GitHub Actions, status workflowów, Issues i Pull Requesty.",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "github"
+                      },
+                      "group": "grafana-github-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "options": {
+                          "branch": "main",
+                          "workflow": "shellcheck.yml"
+                        },
+                        "owner": "wojko6",
+                        "queryType": "Workflow_Runs",
+                        "repository": "Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": [
+                {
+                  "group": "organize",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "created_at": true,
+                        "head_sha": true,
+                        "id": true,
+                        "name": true,
+                        "run_number": true,
+                        "status": true,
+                        "updated_at": true,
+                        "url": true,
+                        "workflow_id": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "conclusion": "Wynik",
+                        "event": "Zdarzenie",
+                        "head_branch": "Gałąź",
+                        "head_sha": "",
+                        "html_url": "GitHub",
+                        "run_started_at": "Uruchomiono",
+                        "status": "",
+                        "url": ""
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "description": "",
+          "id": 1,
+          "links": [],
+          "title": "Ostatnie uruchomienia CI",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "mappings": [
+                    {
+                      "options": {
+                        "cancelled": {
+                          "color": "dark-yellow",
+                          "index": 2,
+                          "text": "Anulowano"
+                        },
+                        "failure": {
+                          "color": "dark-red",
+                          "index": 1,
+                          "text": "Błąd"
+                        },
+                        "skipped": {
+                          "color": "#808080",
+                          "index": 3,
+                          "text": "Pominięto"
+                        },
+                        "success": {
+                          "color": "dark-green",
+                          "index": 0,
+                          "text": "Sukces"
+                        }
+                      },
+                      "type": "value"
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Wynik",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "GitHub",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Otwórz run",
+                            "url": "${__value.raw}"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "data-links"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Uruchomiono"
+                  }
+                ]
+              }
+            },
+            "version": "13.2.2"
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "github"
+                      },
+                      "group": "grafana-github-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "options": {
+                          "branch": "main",
+                          "workflow": "shellcheck.yml"
+                        },
+                        "owner": "wojko6",
+                        "queryType": "Workflow_Runs",
+                        "repository": "Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": [
+                {
+                  "group": "sortBy",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "desc": true,
+                          "field": "run_started_at"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "group": "limit",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "limitField": "1"
+                    }
+                  }
+                },
+                {
+                  "group": "organize",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "created_at": true,
+                        "event": true,
+                        "head_branch": true,
+                        "head_sha": true,
+                        "html_url": true,
+                        "id": true,
+                        "name": true,
+                        "run_number": true,
+                        "run_started_at": true,
+                        "status": true,
+                        "updated_at": true,
+                        "url": true,
+                        "workflow_id": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "conclusion": "Wynik",
+                        "event": "Zdarzenie",
+                        "head_branch": "Gałąź",
+                        "head_sha": "",
+                        "html_url": "GitHub",
+                        "run_started_at": "Uruchomiono",
+                        "status": "",
+                        "url": ""
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "description": "",
+          "id": 2,
+          "links": [],
+          "title": "Ostatni wynik CI",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "mappings": [
+                    {
+                      "options": {
+                        "cancelled": {
+                          "color": "dark-yellow",
+                          "index": 2,
+                          "text": "Anulowano"
+                        },
+                        "failure": {
+                          "color": "dark-red",
+                          "index": 1,
+                          "text": "Błąd"
+                        },
+                        "skipped": {
+                          "color": "#808080",
+                          "index": 3,
+                          "text": "Pominięto"
+                        },
+                        "success": {
+                          "color": "dark-green",
+                          "index": 0,
+                          "text": "Sukces"
+                        }
+                      },
+                      "type": "value"
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Wynik",
+                      "scope": "series"
+                    },
+                    "properties": []
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "GitHub",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Otwórz run",
+                            "url": "${__value.raw}"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "/.*/",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.2.2"
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "github"
+                      },
+                      "group": "grafana-github-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "options": {
+                          "query": "is:issue is:open"
+                        },
+                        "owner": "wojko6",
+                        "queryType": "Issues",
+                        "repository": "Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {
+                "timeFrom": "10y"
+              },
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 3,
+          "links": [],
+          "title": "Otwarte Issues",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "dark-green",
+                        "value": 0
+                      },
+                      {
+                        "color": "#EAB839",
+                        "value": 10
+                      },
+                      {
+                        "color": "red",
+                        "value": 20
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "count"
+                  ],
+                  "fields": "/^number$/",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.2.2"
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "github"
+                      },
+                      "group": "grafana-github-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "options": {
+                          "query": "is:open",
+                          "timeField": 4
+                        },
+                        "owner": "wojko6",
+                        "queryType": "Pull_Requests",
+                        "repository": "Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 4,
+          "links": [],
+          "title": "Otwarte Pull Requesty",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "noValue": "0",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "#EAB839",
+                        "value": 1
+                      },
+                      {
+                        "color": "dark-red",
+                        "value": 3
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "count"
+                  ],
+                  "fields": "/^number$/",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.2.2"
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "github"
+                      },
+                      "group": "grafana-github-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "options": {
+                          "query": "is:merged",
+                          "timeField": 2
+                        },
+                        "owner": "wojko6",
+                        "queryType": "Pull_Requests",
+                        "repository": "Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": [
+                {
+                  "group": "organize",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "additions": true,
+                        "author_company": true,
+                        "author_email": true,
+                        "author_login": false,
+                        "author_name": true,
+                        "closed": true,
+                        "closed_at": true,
+                        "created_at": true,
+                        "deletions": true,
+                        "is_draft": true,
+                        "labels": true,
+                        "locked": true,
+                        "mergeable": true,
+                        "merged": true,
+                        "merged_at": false,
+                        "merged_by_company": true,
+                        "merged_by_email": true,
+                        "merged_by_login": true,
+                        "merged_by_name": true,
+                        "open_time": true,
+                        "repository": true,
+                        "state": true,
+                        "updated_at": true,
+                        "url": false
+                      },
+                      "includeByName": {},
+                      "indexByName": {},
+                      "renameByName": {
+                        "author_login": "Autor",
+                        "merged": "",
+                        "merged_at": "Zmergowano",
+                        "number": "PR",
+                        "title": "Tytuł",
+                        "url": "GitHub"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "description": "",
+          "id": 5,
+          "links": [],
+          "title": "Ostatnio zmergowane PR-y",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "GitHub",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Otwórz PR",
+                            "url": "${__value.raw}"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "data-links"
+                        }
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 140
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Tytuł",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 532
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Autor",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 122
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "PR",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 103
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              }
+            },
+            "version": "13.2.2"
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "github"
+                      },
+                      "group": "grafana-github-datasource",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "options": {
+                          "gitRef": "main"
+                        },
+                        "owner": "wojko6",
+                        "queryType": "Commits",
+                        "repository": "Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": [
+                {
+                  "group": "organize",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "author": true,
+                        "author_company": true,
+                        "author_email": true,
+                        "author_login": false,
+                        "pushed_at": true
+                      },
+                      "includeByName": {},
+                      "indexByName": {
+                        "author": 4,
+                        "author_company": 6,
+                        "author_email": 5,
+                        "author_login": 2,
+                        "committed_at": 3,
+                        "id": 0,
+                        "message": 1,
+                        "pushed_at": 7
+                      },
+                      "renameByName": {
+                        "author_login": "Autor",
+                        "committed_at": "Data",
+                        "id": "Commit",
+                        "message": "Opis"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "description": "",
+          "id": 6,
+          "links": [],
+          "title": "Ostatnie commity",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Commit",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "links",
+                        "value": [
+                          {
+                            "targetBlank": true,
+                            "title": "Otwórz commit",
+                            "url": "https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/commit/${__value.raw}"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "data-links"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Autor",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 525
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Opis",
+                      "scope": "series"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 679
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Data"
+                  }
+                ]
+              }
+            },
+            "version": "13.2.2"
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "asus_wifi_exporter_up{job=\"asus_wifi_clients\"}",
+                        "instant": true,
+                        "interval": "",
+                        "legendFormat": "Collector SSH",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "asus_router_wan_link_up{job=\"asus_wifi_clients\"}",
+                        "instant": true,
+                        "interval": "",
+                        "legendFormat": "WAN",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "B"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "probe_success{job=\"internet_https\"}",
+                        "instant": true,
+                        "interval": "",
+                        "legendFormat": "Internet HTTPS",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "C"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "probe_success{job=\"internet_icmp\"}",
+                        "instant": true,
+                        "legendFormat": "Internet ICMP",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "D"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "probe_success{job=\"internet_dns\"}",
+                        "instant": true,
+                        "legendFormat": "Router DNS",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "E"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "probe_success{job=\"monitoring_http_health\",instance=\"http://127.0.0.1:8428/-/healthy\"}",
+                        "instant": true,
+                        "interval": "",
+                        "legendFormat": "VictoriaMetrics",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "F"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "probe_success{job=\"monitoring_http_health\",instance=\"http://127.0.0.1:3000/api/health\"}",
+                        "instant": true,
+                        "legendFormat": "Grafana",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "G"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 7,
+          "links": [],
+          "title": "Infrastructure Health",
+          "vizConfig": {
+            "group": "grafana-polystat-panel",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "options": {
+                        "0": {
+                          "color": "dark-red",
+                          "index": 1,
+                          "text": "BŁĄD"
+                        },
+                        "1": {
+                          "color": "dark-green",
+                          "index": 0,
+                          "text": "OK"
+                        }
+                      },
+                      "type": "value"
+                    }
+                  ]
+                },
+                "overrides": []
+              },
+              "options": {
+                "autoSizeColumns": true,
+                "autoSizePolygons": true,
+                "autoSizeRows": true,
+                "compositeConfig": {
+                  "animationSpeed": "1500",
+                  "composites": [],
+                  "enabled": true
+                },
+                "compositeGlobalAliasingEnabled": false,
+                "ellipseCharacters": 18,
+                "ellipseEnabled": false,
+                "globalAutoScaleFonts": true,
+                "globalClickthrough": "",
+                "globalClickthroughCustomTarget": "",
+                "globalClickthroughCustomTargetEnabled": false,
+                "globalClickthroughNewTabEnabled": true,
+                "globalClickthroughSanitizedEnabled": true,
+                "globalCompositeValueFontSize": 14,
+                "globalDecimals": 2,
+                "globalDisplayMode": "all",
+                "globalDisplayTextTriggeredEmpty": "OK",
+                "globalFillColor": "rgba(10, 85, 161, 1)",
+                "globalGradientsEnabled": true,
+                "globalLabelFontSize": 12,
+                "globalOperator": "mean",
+                "globalPolygonBorderColor": "rgba(0, 0, 0, 0)",
+                "globalPolygonBorderSize": 2,
+                "globalPolygonSize": "25",
+                "globalRegexPattern": "",
+                "globalShape": "hexagon_pointed_top",
+                "globalShowTimestampEnabled": false,
+                "globalShowTimestampFontSize": 12,
+                "globalShowTimestampFormat": "YYYY-MM-DD HH:mm:ss",
+                "globalShowTimestampPosition": "below_value",
+                "globalShowTimestampYOffset": 0,
+                "globalShowTooltipColumnHeadersEnabled": true,
+                "globalShowValueEnabled": true,
+                "globalTextFontAutoColorEnabled": true,
+                "globalTextFontColor": "#000000",
+                "globalTextFontFamily": "Roboto",
+                "globalThresholdsConfig": [],
+                "globalTooltipsEnabled": true,
+                "globalTooltipsFontFamily": "Roboto",
+                "globalTooltipsShowTimestampEnabled": true,
+                "globalTooltipsShowValueEnabled": true,
+                "globalUnitFormat": "short",
+                "globalValueFontSize": 14,
+                "layoutDisplayLimit": 100,
+                "layoutNumColumns": 8,
+                "layoutNumRows": 8,
+                "overrideConfig": {
+                  "overrides": []
+                },
+                "sortByDirection": 1,
+                "sortByField": "name",
+                "tooltipDisplayMode": "all",
+                "tooltipDisplayTextTriggeredEmpty": "OK",
+                "tooltipPrimarySortByField": "thresholdLevel",
+                "tooltipPrimarySortDirection": 1,
+                "tooltipSecondarySortByField": "value",
+                "tooltipSecondarySortDirection": 1
+              }
+            },
+            "version": "2.1.16"
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              },
+              "height": 16,
+              "width": 12,
+              "x": 12,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 0,
+              "y": 8
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 0,
+              "y": 16
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 12,
+              "y": 16
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 0,
+              "y": 24
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 12,
+              "y": 24
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    },
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "fiscalYearStartMonth": 0,
+      "from": "now-30d",
+      "hideTimepicker": false,
+      "timezone": "browser",
+      "to": "now"
+    },
+    "title": "ASUS Edge Gateway — Engineering / CI",
+    "variables": []
+  }
+}

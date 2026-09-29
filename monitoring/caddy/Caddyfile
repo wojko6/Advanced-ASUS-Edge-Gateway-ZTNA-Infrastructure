@@ -7,3 +7,13 @@ https://grafana.home.arpa {
 	tls internal
 	reverse_proxy 127.0.0.1:3000
 }
+
+https://pihole.home.arpa {
+	bind 127.0.0.1
+	tls internal
+
+	@root path /
+	redir @root /admin/login 302
+
+	reverse_proxy 192.168.50.253:8080
+}

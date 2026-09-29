@@ -19,6 +19,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes shellcheck
       - name: Run static, recovery and evidence-redaction tests
         run: sh tests/test-static.sh
+      - name: Run Polish WebUI overlay unit tests
+        run: python3 tests/test-asus-webui-pl-overlay.py
       - name: Run Python recovery integration tests
         run: python3 tests/test-recovery.py
       - name: Run Pi-hole DNS collector unit tests

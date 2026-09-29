@@ -1,0 +1,755 @@
+--- a/PL.dict
++++ b/PL.dict
+@@ -37,13 +37,13 @@
+ Połącz ponownie router AiMesh z urządzeniem przenośnym/notebookiem/komputerem PC.
+ Chcę skonfigurować to urządzenie jako router AiMesh
+ Połącz urządzenie przenośne/notebook/komputer PC z routerem AiMesh.
+-Congratulations! TUF-AX5400 can be added to your AiMesh system.
++Gratulacje! TUF-AX5400 można dodać do systemu AiMesh.
+ Węzeł sieci AiMesh zostanie zresetowany do ustawień domyślnych, ponownie przekieruj urządzenie mobilne/komputer do routera sieci AiMesh
+ Węzeł AiMesh zostanie zresetowany do ustawień domyślnych, po czym rozpocznie się kolejny proces. Czy na pewno chcesz kontynuować?
+ Jeśli nie możesz znaleźć w pobliżu routera AiMesh, upewnij się, że bieżące urządzenie przenośne/notebook/komputer PC są już połączone z routerem AiMesh za pomocą kabla Ethernet lub przez sieć WiFi.
+ W przypadku połączenia przewodowego połącz port LAN routera AiMesh z bieżącym notebookiem/komputerem PC przy użyciu kabla Ethernet.
+ W przypadku połączenia WiFi wyszukaj nazwę sieci (SSID) routera AiMesh za pomocą urządzenia przenośnego/notebooka/komputera PC i nawiąż połączenie.
+-Please log in AiMesh router and then add this AiMesh node to your AiMesh system.
++Zaloguj się do routera AiMesh, a następnie dodaj ten węzeł AiMesh do systemu AiMesh.
+ Możesz dodać węzły AiMesh w celu utworzenia systemu WiFi AiMesh i zwiększenia zasięgu sieci WiFi.
+ Router ten można ustawić jako węzeł AiMesh w celu zwiększenia zasięgu sieci WiFi istniejących routerów AiMesh.
+ Po przywróceniu ustawień fabrycznych router ten będzie mógł dołączyć do istniejącej sieci AiMesh.
+@@ -51,7 +51,7 @@
+ Zmiany ustawień sieci bezprzewodowej będą miały wpływ na sieć mesh!
+ Czy chcesz dodać kolejny węzeł?
+ Dodaj kolejny węzeł
+-is now used as dedicated WiFi backhaul under AiMesh mode.
++jest teraz używane jako dedykowane łącze dosyłowe WiFi w trybie AiMesh.
+ Szczegóły ustawień bezprzewodowych znajdują się <span class="faq-link" onclick="parent.location.href=\'/Advanced_Wireless_Content.asp\'">tam</span>.
+ Wybierz inny węzeł
+ Wykryto routery w pobliżu
+@@ -233,17 +233,17 @@
+ Korzystanie z funkcji AiProtection, Kontrola rodzicielska( Filtry Sieci i Aplikacji ), Traffic analyzer (Analizator ruchu), Apps analyzer (Analizator aplikacji), Adaptive QoS (Adaptacyjna funkcja QoS)/Game boost (Przyspieszenie gier), Web history (Historia stron sieci Web) oznacza zgodę na postanowienia <a id="eula_url" style="text-decoration:underline;" target="_blank"> Umowy licencyjnej użytkownika oprogramowania firmy Trend Micro</a>.
+ Należy pamiętać, że firma Trend Micro będzie gromadzić informacje użytkownika za pośrednictwem funkcji AiProtection, Kontrola rodzicielska( Filtry Sieci i Aplikacji ), Traffic analyzer (Analizator ruchu), Apps analyzer (Analizator aplikacji), Adaptive QoS (Adaptacyjna funkcja QoS) i Web history (Historia stron sieci Web). Użytkownik przyjmuje ponadto do wiadomości i zgadza się na to, że firma ASUS nie ponosi odpowiedzialności za żadne umowy między użytkownikiem a firmą Trend Micro ani za jakąkolwiek zawartość usługi zapewnianej przez firmę Trend Micro. W razie jakichkolwiek pytań dotyczących sposobów gromadzenia, przetwarzania i wykorzystywania powyższych informacji użytkownika przez firmę Trend Micro, należy zapoznać się z oświadczeniem firmy Trend Micro w sprawie ochrony prywatności lub skontaktować się z firmą Trend Micro w celu uzyskania szczegółowych informacji.
+ Aby wyłączyć udostępnianie informacji użytkownika firmie Trend Micro za pośrednictwem powyższych funkcji, należy przejść kolejno do pozycji:  Interfejs Web GUI routera > Advanced settings (Ustawienia zaawansowane) > Administration (Administracja) > Privacy (Prywatność).
+-<a id="tm_eula_url" style="text-decoration:underline;" target="_blank">TrendMicro Privacy Policy</a>
++<a id="tm_eula_url" style="text-decoration:underline;" target="_blank">Polityka prywatności Trend Micro</a>
+ <a id="tm_disclosure_url" style="text-decoration:underline;" target="_blank">Uwagi dotyczące prywatności i gromadzenia danych osobowych</a>
+ W przypadku funkcji AiProtection, Kontrola rodzicielska( Filtry Sieci i Aplikacji ), Traffic Analyzer (Analizator ruchu), Apps analyzer (Analizator aplikacji), Adaptive QoS (Adaptacyjna funkcja QoS)/Game boost (Przyspieszenie gier), Web history (Historia stron sieci Web):
+-Please noted that your information will be collected by Trend Micro through the above functionsNależy pamiętać, że firma Trend Micro będzie gromadzić informacje użytkownika za pośrednictwem powyższych funkcji.
++Należy pamiętać, że firma Trend Micro będzie gromadzić informacje użytkownika za pośrednictwem powyższych funkcji.
+ Aby wyłączyć udostępnianie informacji użytkownika firmie Trend Micro za pośrednictwem tych funkcji, należy kliknąć pozycję <span style="font-weight: bold;">[Withdraw] (Wycofaj)</span> poniżej. Należy jednak pamiętać, że po zaprzestaniu udostępniania informacji użytkownika firmie Trend Micro funkcje te mogą nie działać.
+ Czy na pewno chcesz wycofać zgodę?
+ Wycofaj
+ Wpisz imię
+ Nazwa hosta została powiązana z kontem logowania aplikacji Router, zarejestruje w aplikacji Router lub usuń je z niej.
+ Automat
+-Automatic Setting
++Ustawienie automatyczne
+ Funkcja ograniczenia przepustowości
+ Funkcja ograniczenia przepustowości pomaga w kontrolowaniu maksymalnej szybkości pobierania i przesyłania urządzeńklienta.
+ Funkcja QoS menedżera ruchu zostanie funkcja zostanie domyślnie włączona i ustawiona jako tryb Ogranicznika przepustowości.
+@@ -303,7 +303,7 @@
+ Pomiń
+ Nieznany
+ Aktualizuj w nocy
+-Upgrade Now
++Aktualizuj teraz
+ Użyj domyślnego hasła logowania lokalnego
+ Domyślne, zaszyfrowane hasło logowania lokalnego zapewnia bezpieczeństwo procesu logowania po nawiązaniu połączenia lokalnego z tym urządzeniem sieciowym ASUS.
+ Więcej informacji można znaleźć w witrynie <a style="font-weight: bolder;text-decoration: underline;color:#000000;" href="https://www.asus.com/support/" target="_blank">https://www.asus.com/support/</a>
+@@ -315,7 +315,7 @@
+ Nie możesz otworzyć strony konfiguracyjnej TUF-AX5400 ponieważ po przejściu do trybu AP funkcja DHCP została wyłączona.<p>Zalecamy użycie ASUS Utility / Device Discovery oraz odszukanie adresu IP Access Pointa aby dostać się do strony konfiguracyjnej ponownie.</p>
+ Dual WAN
+ Ustawienie Dual WAN
+-Dual Ethernet WAN Connection Status
++Stan połączenia Dual Ethernet WAN
+ DNSFilter
+ DNSFilter umożliwia ochronę konkretnych urządzeń w sieci LAN przed szkodliwymi treściami online, wymuszając na nich korzystanie z serwera DNS, który udostępnia usługi filtrowania. Następujące usługi są obecnie obsługiwane (możesz także ręcznie określić inny serwer DNS we wpisach niestandardowych)
+ CleanBrowsing
+@@ -354,7 +354,7 @@
+ Trwa odświeżanie adresu IP. Jeżeli proces ten potrwa dłużej niż dwie minuty, wykonać trzy poniższe kroki, celem ręcznego odnowienia adresu IP: (1) odłączyć kabel sieciowy; (2) odczekać około dziesięć sekund i (3) ponownie podłączyć kabel sieciowy, aby uzyskać nowy adres IP.
+ Komunikat o błędzie
+ Dostępne jest najnowsze oprogramowanie sprzętowe. W celu zapewnienia najwyższej wydajności zalecane jest zaktualizowanie oprogramowania sprzętowego routera do najnowszej wersji. Czy chcesz zaktualizować oprogramowanie sprzętowe teraz?
+-Your router will be automatically upgraded to the latest firmware at night. Or you can check your firmware version by visiting <b>Administration</b> > <b>Firmware Upgrade</b> page and decide if updating the latest firmware version to your router.
++Router zostanie automatycznie zaktualizowany do najnowszej wersji oprogramowania układowego w nocy. Wersję oprogramowania można również sprawdzić na stronie <b>Administracja</b> > <b>Aktualizacja oprogramowania</b> i zdecydować, czy zainstalować najnowszą wersję.
+ IP WAN nie jest zewnętrznym adresem IP. Zewnętrzne usługi wykorzystujące adresacjęIP nie będądziałać.
+ Zmiana hasła logowania nie powiodła się.
+ Zmiana nazwy logowania nie powiodła się.
+@@ -368,7 +368,7 @@
+ Trwa aktualizacja firmware. Potrwa to około 3 minuty.
+ Aktualizacja oprogramowania sprzętowego została zakończona. Zamknij to okno i uzyskaj ponownie dostęp do routera AiMesh.
+ Aktualizacja firmware została wykonana. Uruchom ponownie TUF-AX5400 ręcznie.
+-To comply with regulatory amendments, we have modified our certificate rule to ensure better firmware quality. This version is not compatible with all previously released ASUS firmware and uncertified third party firmware. Please check our official websites for the certified firmware.
++Aby spełnić zmienione wymagania regulacyjne, zmodyfikowaliśmy zasady dotyczące certyfikatów w celu zapewnienia wyższej jakości oprogramowania układowego. Ta wersja nie jest zgodna ze wszystkimi wcześniej wydanymi wersjami oprogramowania ASUS ani z niecertyfikowanym oprogramowaniem firm trzecich. Listę certyfikowanego oprogramowania można znaleźć w naszych oficjalnych serwisach internetowych.
+ 5 razy podano niepoprawne hasło. Nastąpi wylogowanie.
+ 2025 ASUSTeK Computer Inc. Wszystkie prawa zastrzeżone.
+ Parametry konfiguracyjne zachowają swoje ustawienia podczas procesu aktualizacji firmware/zabezpieczeń.
+@@ -383,20 +383,20 @@
+ %@ znajduje się na etykiecie z tyłu/na spodzie urządzenia ASUS.
+ Użyj portu z zakresu 1024–65535.
+ Because of security and compatibility concerns,  IE8 / IE9 / IE10 are no longer supported.
+-Things might be bound to broken and perhaps unusable.
++Niektóre funkcje mogą przestać działać lub stać się niedostępne.
+ We recommend an upgrade to latest version of Internet Explorer.
+ Please refer to <a style="font-weight: bolder;text-decoration: underline;" href="https://www.microsoft.com/en-us/WindowsForBusiness/End-of-IE-support" target="_blank">Microsoft® announce</a> for more detail.
+ * Wpisz bieżące hasło logowania.
+ Jeśli połączenie WAN wymaga statycznego adresu IP, w tym polu należy wprowadzić adres IP.
+ Adres IP
+ Ustawiłeś IP WAN jako bramę TUF-AX5400, stąd TUF-AX5400 nie może uzyskać połączenia z Internetem. Podaj poprawną wartość Bramy domyślnej.
+-Default status
++Stan domyślny
+ Automatycznie uzyskaj adres IP serwera DNS od swojego dostawcy ISP.
+-Default Mode
++Tryb domyślny
+ To pole wskazuje adres IP z DNS, z którym skontaktował się TUF-AX5400.
+-DNS Server1
++Serwer DNS 1
+ To pole wskazuje adres IP z DNS, z którym skontaktował się TUF-AX5400.
+-DNS Server2
++Serwer DNS 2
+ Wybierz ten serwer DNS, aby blokować reklamy internetowe
+ Wybierz ten serwer DNS, aby blokować dostęp do wszystkich treści dla dorosłych i wymusić bezpieczne wyszukiwanie w przeglądarce
+ Wybierz ten serwer DNS, aby zapewnić sobie szybkie i prywatne przeglądanie stron internetowych
+@@ -417,8 +417,8 @@
+ Maska podsieci
+ Adres MAC jest nieprawidłowy.
+ Router posiada najnowszą wersje oprogramowania sprzętowego.
+-You must press add icon to add a new rule first.
+-We suggest you to try a mix of letters, numbers, and symbols. Do you want to continue?
++Najpierw naciśnij ikonę dodawania, aby dodać nową regułę.
++Zalecamy użycie kombinacji liter, cyfr i symboli. Czy chcesz kontynuować?
+ wypełnimy prawidłowy adres maski podsieci.
+ jest przetrzymywany dla adresu localhost, proszę wpisać wartośc pomiędzu 1 a 233.
+ Proszę wprowadzić wartość pomiędzy 1 a 233.
+@@ -481,7 +481,7 @@
+ Proszę czekać,
+ Nie wyłączaj zasilania TUF-AX5400 podczas procesu aktualizacji firmware.
+ Uaktualnianie...
+-Rebooting the router will cause all connected devices to lose the Internet connectivity and may take a few minutes. All devices will be reconnected again while the reboot completed. Are you sure you want to reboot ?
++Ponowne uruchomienie routera spowoduje chwilową utratę połączenia z Internetem przez wszystkie podłączone urządzenia i może potrwać kilka minut. Po zakończeniu restartu urządzenia połączą się ponownie. Czy na pewno chcesz ponownie uruchomić router?
+ Ustaw. ręczne
+ Dziennik DSL
+ Ustawienia DSL
+@@ -489,20 +489,20 @@
+ Aplikacja USB
+ Mapa sieci
+ Ustawienia Zaawansowane
+-Wireless
++Sieć bezprzewodowa
+ Ogólne
+ WPS
+-Bridge
++Most
+ Filtr MAC karty sieci bezprzewodowej
+ Ustawienia RADIUS
+-Professional
++Profesjonalne
+ LAN
+-LAN IP
++Adres IP sieci LAN
+ Serwer DHCP
+-Route
++Trasa
+ WAN
+ Połączenie Internetowe
+-Port Trigger
++Wyzwalanie portów
+ Przekierowanie portów
+ DMZ
+ DDNS
+@@ -510,8 +510,8 @@
+ Udostępnianie miejsca sieciowego
+ Udostępnianie FTP
+ Ustawienia różne
+-USB Modem
+-Firewall
++Modem USB
++Zapora sieciowa
+ Filtr URL
+ Filtr MAC
+ Filtr usług sieciowych
+@@ -525,7 +525,7 @@
+ Odtworzenie
+ Ogólny log
+ Dzierżawy DHCP
+-Wireless Log
++Dziennik sieci bezprzewodowej
+ Przekierowanie portów
+ Tablica routingu
+ Potrwa to około 3 minuty.
+@@ -549,14 +549,14 @@
+ Można także przejść pod adres <a href=\"http://findasus.local\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">http://findasus.local</a> aby wyszukać i przejść na stronę konfiguracji urządzenia.
+ Tryb punktu dostępowego (AP)
+ Tryb punktu dostępu (AP) / Router AiMesh w trybie AP
+-Choose operation mode
++Wybierz tryb pracy
+ TUF-AX5400 obsługuje kilka tryby pracy. Wybierz pożądany przez Ciebie tryb:
+ W Tryb routera bezprzewodowego, TUF-AX5400 łączy się z Internetem przez PPPoE, DHCP, PPTP, L2TP lub statyczny adres IP i udostępnia sieć bezprzewodową klientom lub urządzeniom LAN. W tym trybie domyślnie włączona jest funkcja NAT, firewall i serwer DHCP. UPnP i Dynamic DNS (Dymamiczny DNS), są obsługiwane dla użytkowników SOHO i użytkowników domowych. Wybierz ten tryb, przy pierwszym użyciu, lub gdy nie są aktualnie używane routery przewodowe/bezprzewodowe.
+ Tryb routera AiMesh to standardowy tryb z obsługą systemu AiMesh, w którym można łączyć się z Internetem za pośrednictwem PPPoE, DHCP, PPTP, L2TP lub statycznego adresu IP. Router udostępnia następnie sieć bezprzewodową klientom lub urządzeniom w sieci LAN. W trybie tym domyślnie włączone są NAT, zapora i serwery DHCP. W przypadku użytkowników SOHO oraz użytkowników domowych obsługiwane są UPnP i Dynamic DNS (Dynamiczny DNS). Wybierz ten tryb podczas pierwszego użycia lub gdy nie są aktualnie używane żadne routery przewodowe/bezprzewodowe.
+ Tryb routera bezprzewodowego (domyślna)
+ Tryb routera bezprzewodowego / Tryb routera AiMesh (domyślny)
+ Tryb routera bezprzewodowego / Tryb routera AiMesh
+-Media Bridge
++Most multimedialny
+ TUF-AX5400 można skonfigurować w trybie Media Bridge.
+ Tryb Media Bridge zapewnia najszybsze połączenie WiFi, jednocześnie dla wielu urządzeń multimedialnych.
+ Do ustawienia trybu Media Bridge, wymagane są dwa urządzenia TUF-AX5400: jedno skonfigurowane jako stacja multimediów, a drugie jako router.
+@@ -593,9 +593,9 @@
+ Hasło do sieci WiFi
+ Kod PIN jest niepoprawny. Wprowadź prawidłowy kod PIN i podłącz ponownie kartę USB. Jeśli ten sam błąd wystąpi ponownie, wyłącz funkcję kodu PIN, a następnie włącz ją i spróbuj ponownie.
+ Numer telefonu
+-Access Number
+-Co-user Number
+-ID Connection
++Numer dostępowy
++Numer współużytkownika
++Identyfikator połączenia
+ Hasło
+ Użytkownik PPP
+ Ustawienia konta
+@@ -608,7 +608,7 @@
+ Gdy ISP obsługuje wyższy od wybranego poziom szyfrowania MPPE, dla zwiększenia bezpieczeństwa zastosowany zostanie wyższy poziom.
+ Gdy serwer VPN obsługuje wyższy od wybranego poziom szyfrowania MPPE, dla zwiększenia bezpieczeństwa zastosowany zostanie wyższy poziom.
+ Wydrukuj dane połączenia z WiFi
+-Quick Internet Setup
++Szybka konfiguracja Internetu
+ Nowe hasło jest takie same jak hasło systemowe. Zdecydowanie zalecamy ustawienie bardziej złożonego hasła.
+ Jeśli nie zostanie zmienione domyślne hasło (admin ), router będzie podatny na zagrożenia bezpieczeństwa i inni użytkownicy będą łatwo mogli odgadnąć hasło logowania. Czy na pewno chcesz zachować to niebezpieczne hasło?
+ Użyj ustawienia domyślnego (użyj tego samego hasła jak dla nadrzędnego punktu dostępowego [AP])
+@@ -627,9 +627,9 @@
+ W przypadku braku pewności co do używanego trybu ANNEX skontaktuj się z usługodawcą internetowym w celu uzyskania pomocy.
+ Nie został wybrany tryb ANNEX (Dodatek).
+ Usilnie zalecamy, aby najpierw ustawić ustawienia zabezpieczenia połączenia bezprzewodowego, czy chcesz kontynuować?
+-Please plug in the cable to WAN port. System will detect your network setting automatically.
+-Expert mode, offline settings
+-Please plug in the cable to DSL port. System will detect your network setting automatically.
++Podłącz kabel do portu WAN. System automatycznie wykryje ustawienia sieci.
++Tryb eksperta, ustawienia offline
++Podłącz kabel do portu DSL. System automatycznie wykryje ustawienia sieci.
+ Wykryto połączenie PPPoE/DSL.
+ Kreator instalacji wykrył, że rodzaj Twojego połączenia internetowego to PPPoE/DSL.
+ Kliknij przycisk "Następne", aby wpisać nazwę konta i hasło dostarczone przez dostawcę usług internetowych (ISP).
+@@ -646,19 +646,19 @@
+ Nie powiodło się połączenie z siecią Ethernet WAN.
+ Udane połączenie z szerokopasmową siecią komórkową.
+ Karta SIM niewłaściwie włożona.
+-Successfully connected to the Primary Ethernet WAN network.
+-Successfully connected to the Secondary Ethernet WAN network.
++Pomyślnie połączono z podstawową siecią Ethernet WAN.
++Pomyślnie połączono z dodatkową siecią Ethernet WAN.
+ Uwaga: Aby połączyć się z usługą Internetu przez \"Szerokopasmową sieć komórkową\", kliknij <a onclick=\"redirect_page('unplug_sim');\">\"Configure Another WAN (Skonfiguruj inną sieć WAN)\"</a>.
+ Następujący proces przeprowadzi przez ustawienia szerokopasmowego dostępu do Internetu.
+ Uwaga: Jeżeli chcesz połączyć się z usługami Internetu za pośrednictwem \"Ethernet WAN\", kliknij <a onclick=\"redirect_page('unplug_ewan');\">\"Konfiguruj inną sieć WAN\"</a>.
+ Poniższy proces umożliwi wykonanie ustawień sieci Ethernet WAN.
+-Note: If you want to connect to the internet service via &quot;Secondary Ethernet WAN&quot;, check the connection of secondary ethernet wan and click &quot;Detect Again&quot;.
+-Note: If you want to connect to the internet service via &quot;Primary Ethernet WAN&quot;, check the connection of primary ethernet wan and click &quot;Detect Again&quot;.
++Uwaga: aby połączyć się z Internetem przez &quot;dodatkową sieć Ethernet WAN&quot;, sprawdź połączenie dodatkowego WAN Ethernet i kliknij &quot;Wykryj ponownie&quot;.
++Uwaga: aby połączyć się z Internetem przez &quot;podstawową sieć Ethernet WAN&quot;, sprawdź połączenie podstawowego WAN Ethernet i kliknij &quot;Wykryj ponownie&quot;.
+ Stan połączenia sieci Ethernet WAN i sieci komórkowej
+ Edycja istniejących ustawień sieci WAN, kliknąć <a href="" onclick="gotoWANSetting();">tutaj</a>.
+ Dodanie nowych ustawień sieci WAN, kliknąć <a href="QIS_manual_setting.htm">tutaj</a>.
+ Ustawienia sieci WAN zostały już skonfigurowane.
+-Select the WiFi network you would like to extend.
++Wybierz sieć WiFi, którą chcesz rozszerzyć.
+ Czy chcesz zastosować domyślne ustawienia zabezpieczeń sieci bezprzewodowej?
+ TUF-AX5400 cannot find the connection type. Your ADSL setting may belong to one of the following modes: MER Static IP, IPoA or Bridge. Please click Manual Setting to configure the WAN settings manually.
+ Uwierzytelnienie zakończyło się niepowodzeniem.
+@@ -676,9 +676,9 @@
+ Hasło administratora routera
+ TUF-AX5400 został skonfigurowany z następującymi ustawieniami Internetu i sieci bezprzewodowej.
+ Podsumowanie
+-Tips
++Wskazówki
+ Sieć skonfigurowana
+-Congratulations! TUF-AX5400 is creating new WiFi network for you, please use the following settings to connect your WiFi network.
++Gratulacje! TUF-AX5400 tworzy nową sieć WiFi. Użyj poniższych ustawień, aby się z nią połączyć.
+ Nazwa sieci (SSID)
+ Bezpieczeństwo sieci bezprzewodowej
+ Hasło sieciowe
+@@ -717,22 +717,22 @@
+ Proszę poniżej wprowadzić potrzebne informacje.
+ Uzyskać od dostawcy usług internetowych nazwę konta i hasło.
+ Jeżeli jesteś subskrybentem połączenia PPPoE, PPTP lub L2TP Twój dostawcza usług internetowych powinien przekazać Tobie kartę lub dokument zawierający nawę konta i hasło dostępu do niego. Nazwa konta i hasło podane przez dostawcę usług internetowych służą do łączenia z Internetem. Nie są one takie same jak nazwa i hasło używane do administrowania routerem.
+-Enable PPTP or L2TP client (optional)
++Włącz klienta PPTP lub L2TP (opcjonalnie)
+ Czy chcesz użyć poprzednie ustawienia zabezpieczenia połączenia bezprzewodowego?
+ Usilnie zalecamy, aby najpierw ustawić ustawienia zabezpieczenia połączenia bezprzewodowego.
+ Skanuj ponownie
+-You can now follow information below and connect to extended WiFi network
+-You have already selected the 2.4 GHz wireless network. Do you want to select the 5 GHz wireless network? If no, click [Pomiń]
+-You have already selected the 5 GHz wireless network. Do you want to select the 2.4 GHz wireless network? If no, click [Pomiń]
+-Extend WiFi network will follow the same settings of WiFi network you just selected.
+-Same with parent AP SSID/Password
+-You can turn on/off LED by touching ASUS logo.
+-Sort by ALPHABET
+-Sort by SIGNAL
+-Sort by FREQUENCY
+-Try to connect to Internet...
+-Router to repeater use 5GHz only, repeater to client use 2.4GHz only
+-Router to repeater use 2.4GHz only, repeater to client use 5GHz only
++Możesz teraz skorzystać z poniższych informacji, aby połączyć się z rozszerzoną siecią WiFi.
++Wybrano już sieć bezprzewodową 2,4 GHz. Czy chcesz wybrać sieć bezprzewodową 5 GHz? Jeśli nie, kliknij [Pomiń]
++Wybrano już sieć bezprzewodową 5 GHz. Czy chcesz wybrać sieć bezprzewodową 2,4 GHz? Jeśli nie, kliknij [Pomiń]
++Rozszerzona sieć WiFi będzie używać tych samych ustawień co wybrana sieć WiFi.
++Takie samo jak SSID/hasło nadrzędnego punktu dostępowego
++Diodę LED można włączać i wyłączać, dotykając logo ASUS.
++Sortuj ALFABETYCZNIE
++Sortuj według SIŁY SYGNAŁU
++Sortuj według CZĘSTOTLIWOŚCI
++Trwa łączenie z Internetem...
++Router z repeaterem używa tylko 5 GHz, a repeater z klientem tylko 2,4 GHz
++Router z repeaterem używa tylko 2,4 GHz, a repeater z klientem tylko 5 GHz
+ Service (Usługa)
+ Pokaż hasło
+ (zalecane)
+@@ -754,7 +754,7 @@
+ Sprawdzenie połączenia
+ Ustawienia Internetu
+ Ustawienia routera
+-Quick Internet Setup
++Szybka konfiguracja Internetu
+ Aby uzyskać połączenie klienta lub komputera do Twojej sieci bezprzewodowej, wykonaj następujące czynności:
+ 1. W pasku powiadomień kliknij ikonę sieci ( <img src="/images/qis/win7_network_icon1.jpg"> ) lub ( <img src="/images/qis/win7_network_icon2.jpg"> ).
+ 2. Na liście sieci kliknij sieć, z która chcesz się połączyć, a następnie kliknij przycisk "Połącz".
+@@ -783,7 +783,7 @@
+ Podwójne gniazdo USB do podłączenia pamięci masowej USB i drukarki wielofunkcyjnej.
+ Przeglądanie Internetu z prędkościami gigabitowymi z wykorzystaniem turbo NAT.
+ Wysoki poziom bieżącego wykorzystania dla lepszego pobierania i wydajności w grach oraz połączeń wielu użytkowników.
+-Enterprise-grade Security - ASUS AiProtection provides advanced protection for all devices connected to your home network.
++Zabezpieczenia klasy biznesowej — ASUS AiProtection zapewnia zaawansowaną ochronę wszystkim urządzeniom podłączonym do sieci domowej.
+ Aby uzyskać 600Mb/s / 2.4 GHz, TUF-AX5400 należy podłączyć do PCE-AC68 lub TUF-AX5400 w trybie Media Bridge.
+ Witamy w ASUS Networking!
+ Nazwa sieci lub SSID są unikalnymi nazwami identyfikującymi sieć bezprzewodową. Urządzenia WiFi automatycznie wykrywają wszystkie sieci znajdujące się w zasięgu.
+@@ -791,8 +791,8 @@
+ Przypisz unikalną nazwę sieci (SSID), aby pomóc w identyfikacji sieci bezprzewodowej.
+ Wpisz klucz sieciowy o długości od 8 do 63 znaków (litery, cyfry lub połączenie obu) bądź 64 znaki hex. Domyślnym ustawieniem zabezpieczenia sieci bezprzewodowej jest WPA2-Personal AES. Jeżeli nie chcesz ustawiać zabezpieczenia sieci, pozostaw pole klucza sieci puste, ale narazi to Twoja sieć na nieautoryzowany dostęp.
+ Wpisz klucz sieciowy o długości od 8 do 63 znaków (litery, cyfry lub połączenie obu). Domyślnym ustawieniem zabezpieczenia sieci bezprzewodowej jest WPA2-Personal AES.
+-Separate 2.4 GHz and 5 GHz
+-Separate 2.4 GHz, 5 GHz and 6 GHz
++Rozdziel pasma 2,4 GHz i 5 GHz
++Rozdziel pasma 2,4 GHz, 5 GHz i 6 GHz
+ Główna sieć bezprzewodowa została skonfigurowana.
+ Niektóre urządzenia IoT lub starsze mogą mieć problemy z kompatybilnością z Twoją zaawansowaną technologią WiFi 7.
+ Aby zapewnić płynne działanie, zalecamy utworzenie oddzielnej sieci dla tych urządzeń.
+@@ -800,7 +800,7 @@
+ Nazwa konta nie może być pusta
+ Pola Nazwa użytkownika/Hasło, nie mogą być puste.
+ Ustawienia konta ISP
+-Quick Start
++Szybki start
+ Detekcja typu połączenia
+ Detekcja statusu połączenia
+ Wykryj ponownie
+@@ -904,7 +904,7 @@
+ Tryb transferu
+ Trójzakresowe inteligentne podłączanie
+ dynamicznie i płynnie przełącza urządzenia na różne zakresy w oparciu o położenie, siłę sygnału oraz protokół komunikacji bezprzewodowej, zapewniając spójną wydajność każdego urządzenia w Twojej sieci.
+-Media Server
++Serwer multimediów
+ Nazwą konta użytkownika nie może być 'root', 'guest', 'anonymous'! Proszę wpisać poprawną nazwę konta.
+ Przejdź do Ustawienia > Sieci komórkowe, dotknij Skonfiguruj osobisty hotspot.
+ Podłącz telefon komórkowy do portu USB w routerze.
+@@ -918,7 +918,7 @@
+ Nieprawidłowa nazwa użytkownika.
+ Nieprawidłowe hasło.
+ Uwierzytelnianie PPP
+-WAN type detected
++Wykryty typ WAN
+ Automatyczne wykrywanie WAN
+ Upewnij się, że kabel został podłączony do portu WAN urządzenia TUF-AX5400 i do modemu.
+ Sprawdź, czy pozycja <a style='color:#FFF' href='/Advanced_OperationMode_Content.asp'>Tryb działania</a> wymaga zmiany.
+@@ -991,15 +991,15 @@
+ TUF-AX5400 zmieni szyfrowanie WEP lub TKIP na AES w trybie [n Only] (Wyłącznie n), co umożliwia prawidłowe połączenie klientów.
+ Połączenie ustaniowione poprawnie.
+ Utwórz własne konto Lyra. Skonfiguruj nawę użytkownika i hasło, aby zalogować się i zarządzać siecią Lyra.
+-By using ASUS Lyra, you agree to the
++Korzystając z ASUS Lyra, akceptujesz
+ Witamy w Lyra
+ Utwórz nową sieć
+-Or login to existing Lyra network
++Lub zaloguj się do istniejącej sieci Lyra
+ Polityka prywatności firmy ASUS
+ Warunki korzystania ASUS
+-Trend Micro End User License Agreement
+-Primary Lyra
+-Before creating a new Lyra network, please make sure you are connecting to primary Lyra via WiFi. If you are connecting to primary Lyra with Ethernet cable, please unplug the Ethernet cable on Lyra, then connect to primary Lyra via WiFi “ASUS_XX_AMAPS” to continue.
++Umowa licencyjna użytkownika końcowego Trend Micro
++Główna jednostka Lyra
++Przed utworzeniem nowej sieci Lyra upewnij się, że urządzenie jest połączone z główną jednostką Lyra przez WiFi. Jeśli główna jednostka Lyra jest połączona kablem Ethernet, odłącz kabel, a następnie połącz się z nią przez WiFi „ASUS_XX_AMAPS”, aby kontynuować.
+ UTF-8
+ Polski
+ Kontrola dostępu
+@@ -1015,20 +1015,20 @@
+ Adaptacyjna
+ W tej kategorii znajdują się gry Diablo, WOW, gry Steam, XBOX itp. Przenieś tę kategorię do góry, aby uzyskać lepszą jakość rozgrywki.
+ Do tej kategorii należą aplikacje Youtube, Vimeo, iTunes, Hulu, Netflix, Spotify itp. Przenieś tę kategorię do góry, aby uzyskać lepszą jakość połączenia sieciowego.
+-This category includes VoIP, instant messaging, mail service, etc. You can adjust the priority according to your preference.
++Ta kategoria obejmuje VoIP, komunikatory internetowe, pocztę itd. Priorytet można dostosować do własnych preferencji.
+ W tej kategorii znajdują się ogólne usługi i aplikacje społecznościowe, takie jak lickr, twitter, facebook, tumblr, google toolbar itp.
+ W tej kategorii znajdują się takie aplikacje, jak uTorrent, BitTorrent, Dropbox, 4Shared oraz aplikacje FTP. Zaleca się, aby kategoria przesyłania plików miała niższy priorytet.
+ Wszelkie aplikacje, których nie obejmują kategorie: Gry, Strumieniowanie multimediów, Komunikacja, Przeglądanie stron i Przesyłanie plików.
+-This category includes Coursera, Khan, Udemy, TED, edX, etc. Move this category up to optimize online learning experience.
++Ta kategoria obejmuje Coursera, Khan, Udemy, TED, edX itd. Przenieś ją wyżej, aby zoptymalizować naukę online.
+ Zmień tryb priorytetu
+ Nadaj ręcznie priorytet preferowanym aplikacjom.
+ Przesyłanie plików
+ Gry
+-For optimize online gaming process bandwidth including  Diablo, WOW, Steam games and XBOX, etc.
++Optymalizuje przepustowość dla gier online, takich jak Diablo, WOW, gry Steam i XBOX.
+ Historia
+ Historia pokazuje listę stron, które odwiedzano przy pomocy urządzeń klienckich.
+-Work-From-Home
+-Choose this mode for a smooth streaming of online video-learning experience. This category includes VoIP, instant messaging, mail service, etc.
++Praca z domu
++Wybierz ten tryb, aby zapewnić płynne przesyłanie materiałów do nauki online. Kategoria obejmuje VoIP, komunikatory internetowe, pocztę itd.
+ Inne
+ Adaptacyjny QoS
+ Konfiguracja QoS
+@@ -1036,10 +1036,10 @@
+ Wybierz tryb priorytetu w zależności od otoczenia sieciowego. Możesz teżwybraćtryb niestandardowy w celu nadania priorytetu kategorii aplikacji.
+ Nie wybrano trybu priorytetu QoS.
+ Strumieniowanie audio i video
+-For faster video streaming experience including Youtube, Netflix and Spotify, etc.
++Zapewnia płynniejsze strumieniowanie wideo, m.in. z YouTube, Netflix i Spotify.
+ Przeglądanie stron
+ Ten tryb jest odpowiedni do standardowego przeglądania sieci Web, ponieważ zapobiega opóźnieniom sieci podczas transferu plików.
+-Learn-From-Home
++Nauka z domu
+ Wybierz ten tryb w celu płynnego strumieniowania edukacyjnych materiałów wideo dostępnych online. Do tej kategorii należą serwisy Coursera, Khan, Udemy, TED, edX itp.
+ Wybierz ten tryb, aby zapewnić płynny przebieg wideokonferencji online. Do tej kategorii należą usługi VoIP, komunikatorów, poczty itp.
+ Nowe konto nie ma posiada prawo odczytu/Zapisu.
+@@ -1111,7 +1111,7 @@
+ TUF-AX5400 oferuje trzy rodzaje praw dostępu udostępnianych zasobów:<P>a) nieograniczone prawa dostępu, każdy może uzyskać dostęp do dysku USB na serwerze FTP.</p> <p>b) ograniczone prawa dostępu, gdzie dostęp do dysku USB jest uzależniony od nadanych uprawnień. Dla tego ustawienia TUF-AX5400 tworzy konta \"\admin/Family/\". </p> <p>c) Uprawnienia administracyjne, TUF-AX5400 tworzy konto \"admin\" z pełnymi prawami dostępu.</p><p>Uwaga: Ustawienia zezwoleń usuną oryginalny zestaw kont.</p>
+ PS. Funkcja zarządzanie kontem nie działa z systemem plików NTFS.
+ Tworzenie praw dostępu
+-ASUS DDNS tworzy nazwę domeny z dynamicznym adresem IP. Jeśli potrzebujesz skonfigurować inne usługi DDNS, odnieś się do <a href='/Advanced_ASUSDDNS_Content.asp' target='_top'>DDNS</a></p>
++ASUS DDNS tworzy nazwę domeny z dynamicznym adresem IP. <p>Jeśli chcesz skonfigurować inne usługi DDNS, przejdź do <a href='/Advanced_ASUSDDNS_Content.asp' target='_top'>Zaawansowane DDNS</a></p>
+ Ustawienia usługi DDNS
+ <a href='../Advanced_AiDisk_samba.asp' target='_top'>Udostępniony przez otoczenie sieciowe</a>: Możesz korzystać z zasobów serwera samba.<br/><a href='../Advanced_AiDisk_ftp.asp' target='_top'>Udostępniony przez FTP</a>: Możesz korzystać z zasobów poprzez serwer FTP.
+ Ustawienia udostępnionego dysku
+@@ -1127,7 +1127,7 @@
+ Udostępnij pliki z dysku USB poprzez Internet
+ Utwórz własną nazwę domeny dla serwera FTP
+ Witamy w AiDisk Wizard
+-AiDisk Wizard
++Kreator AiDisk
+ AiDisk łączy ustawienia FTP z ASUS DDNS, aby ułatwić udostępnianie plików w dowolnym miejscu i czasie.
+ Utwórz własną nazwę domeny DDNS.
+ nazwa hosta jest ustawiana przez DDNS.
+@@ -1152,7 +1152,7 @@
+ Ze względu na kompatybilność systemu AiMesh i urządzeń końcowych zalecamy korzystanie z trybu WPA2-Personal. Czy chcesz przełączyć na tryb #AUTHMODE?\n*W razie problemów z połączeniem przełącz na tryb WPA2-Personal lub zapoznaj się z informacjami dostarczonymi przez producenta.
+ Aby zapewnić bezproblemową łączność systemu AiMesh i urządzeń końcowych, zapoznaj się z tą stroną <a id="wpa3FaqLink">FAQ</a> przed przełączeniem w tryb WPA3-Personal.
+ Obecnie używasz trybu WPA3-personal. W ramach tworzenia systemu AiMesh metoda uwierzytelniania zostanie zmieniona na WPA2/WPA3-personal. Czy chcesz kontynuować?
+-You can read this <a id='wpa3FaqLink'>FAQ</a> for more information.
++Więcej informacji można znaleźć w <a id='wpa3FaqLink'>FAQ</a>.
+ Więcej informacji można znaleźć w witrynie <a style='font-weight: bolder;text-decoration: underline;' href='' target='_blank'>tym FAQ</a>
+ Zaawansowany system ASUS AiMesh to innowacyjna nowa funkcja routerów, umożliwiająca połączenie wielu routerów ASUS w celu utworzenia sieci WiFi w całym domu.
+ Dowiedz się więcej o funkcji ASUS AiMesh
+@@ -1179,7 +1179,7 @@
+ Oprogramowanie sprzętowe węzła AiMesh zostało zaktualizowane do wersji zapewniającej obsługę systemu AiMesh.
+ Węzeł AiMesh
+ Czy chcesz dodać ten węzeł AiMesh do systemu AiMesh?
+-You just setup <span class='amesh_device_info'></span> as an AiMesh node, please wait for the <span class='amesh_device_info'></span> to be online...
++Skonfigurowano <span class='amesh_device_info'></span> jako węzeł AiMesh. Poczekaj, aż <span class='amesh_device_info'></span> przejdzie w tryb online...
+ Pomyślnie dodano <span class='amesh_device_info'></span> do systemu AiMesh. Wyświetlenie stanu połączenia na liście routerów AiMesh może chwilę potrwać.
+ Umieść węzeł AiMesh:
+ Między routerem AiMesh a istniejącą martwą strefą.
+@@ -1332,17 +1332,17 @@
+ Te funkcje są tymczasowo wyłączone, gdy węzeł AiMesh nie jest połączony.
+ Jeśli wyłączysz funkcję Radio, wpłynie to na możliwości połączeń Twoich routerów i urządzeń końcowych AiMesh.
+ Aby zapewnić możliwości połączeń swojego systemu AiMesh, dopilnuj, aby połączyć ten węzeł przewodem Ethernet z nadrzędnym punktem dostępu.
+-Powerline Master
++Główne urządzenie Powerline
+ W sieci Powerline w topologii siatki jedno z urządzeń Powerline musi pracować jako urządzenie Powerline Master, które może być routerem AiMesh lub węzłem AiMesh ze stałą siecią dosyłową, aby umożliwić innemu węzłowi sieci w topologii siatki połączenie z nią przy użyciu łącza dosyłowego Powerline. Domyślnie system sieci w topologii siatki wybiera router AiMesh jako urządzenie Powerline Master. Możesz wybrać inny węzeł z obsługą PLC jako urządzenie Powerline, jeśli wydajność sieci PLC na routerze AiMesh nie jest dość dobra.
+ Zagrażające aktywności
+-Security Alert
++Alert bezpieczeństwa
+ Zainstaluj aplikację, aby otrzymywać powiadomienia push, gdy wykryte i zablokowane zostanie podejrzane połączenie między Twoimi urządzeniami klienckimi a złośliwym celem.
+ Preferencje powiadomień
+ Wybierz nazwę klienta
+ AiProtection z Trend Micro wykorzystuje monitorowanie sieci w czasie rzeczywistym i  wykrywa złośliwe oprogramowanie, wirusy i włamania zanim dostaną się one do komputera lub podłączonych urządzeń. Kontrola rodzicielska pozwala na ustawienie przedziału godzin, w których urządzenie ma dostęp do Internetu. Możliwe jest również blokowanie niechcianych stron i aplikacji.
+ Funkcja wykrywania i blokowania zainfekowanych urządzeńuniemożliwia zniewolenie zainfekowanego urządzenia sieciowego przez botnety lub zombie, a także używanie go do wykradania poufnych informacji lub atakowania innych komputerów.
+ Wykrywanie i blokowanie zarażonych wirusami urządzeń
+-AiProtection, Traffic analyzer, Apps analyzer and Adaptive QoS contains services provided by Trend Micro, please be aware that ASUS shall bear no responsibility for any and all information security, the privacy practices and the services provided or implemented by Trend Micro. ASUS encourage you to read and be aware of the privacy statements or terms and conditions of Trend Micro before your use of these service.
++AiProtection, Analizator ruchu, Analizator aplikacji i Adaptive QoS korzystają z usług firmy Trend Micro. ASUS nie ponosi odpowiedzialności za bezpieczeństwo informacji, praktyki ochrony prywatności ani usługi świadczone lub wdrażane przez Trend Micro. Przed skorzystaniem z tych usług zapoznaj się z oświadczeniami dotyczącymi prywatności oraz warunkami firmy Trend Micro.
+ Nazwa domeny nie może być pusta
+ Nazwa domeny już znajduje się na białej liście
+ Osiągnięto maksymalną liczbę pozycji na białej liście (64)
+@@ -1376,7 +1376,7 @@
+ Przesyłanie plików i P2P
+ Blokuj transfer plików i połączenia P2P, aby zachować wysoką jakość transmisji sieciowej.
+ Przesyłanie plików
+-Peer to Peer
++Peer-to-Peer
+ Strumieniowanie i rozrywka
+ Gry
+ Strumieniowanie multimediów
+@@ -1461,7 +1461,7 @@
+ E-mail
+ Wyszukiwanie obrazów
+ Mechanizm wyszukiwania
+-Click going to Trend Micro website to check more information.
++Kliknij, aby przejść do witryny Trend Micro i uzyskać więcej informacji.
+ Nie można odczytać uprawnień po zmianie opcji!
+ Błąd podczas wyświetlania drzewa folderów!
+ Nie udało się ustawić uprawnień dostępu/praw zapisu
+@@ -1510,9 +1510,9 @@
+ Steruj routerem ASUS za pomocą asystenta Amazon Alexa Skill
+ Steruj routerem ASUS za pomocą prostych poleceń głosowych dzięki asystentowi Amazon Alexa i technologii routera ASUS. Po sparowaniu z asystentem Amazon Alexa można żądać od routera ASUS wykonania różnych zadań bez konieczności logowania się do jego aplikacji lub interfejsu użytkownika w sieci Web. Na przykład:
+ Spróbuj powiedzieć:
+-Alexa, ask ASUS ROUTER to turn on the Guest Network
+-Alexa, ask ASUS ROUTER to upgrade the firmware
+-Alexa, ask ASUS ROUTER to pause the Internet
++Alexa, poproś ASUS ROUTER o włączenie sieci dla gości
++Alexa, poproś ASUS ROUTER o aktualizację oprogramowania układowego
++Alexa, poproś ASUS ROUTER o wstrzymanie dostępu do Internetu
+ OSTRZEŻENIE: Polecenie „Alexa, ask ASUS Router to cut internet on all devices” spowoduje zastąpienie aktualnej zasady filtra usług sieciowych zapory.
+ Pobierz kod aktywacyjny
+ Wklej kod aktywacyjny, aby powiązać konto Amazon z routerem ASUS
+@@ -1550,7 +1550,7 @@
+ Nie powiodło się uzyskanie informacji o IP.
+ Adres IP punktu dostępowego
+ Wyszukiwanie punktów dostępowych
+-Apps
++Aplikacje
+ Konfiguracja APN
+ Trwa ładowanie listy APP...
+ ASUS Router to rewolucyjna aplikacja do zarządzania siecią domową.
+@@ -1580,7 +1580,7 @@
+ Analiza aplikacji
+ Nie wykryto ruchu.
+ Monitor przepustowości WAN/LAN
+-Bandwidth Setting
++Ustawienie przepustowości
+ Włącz filtr DHCP
+ Uruchom Download Master ?
+ Uruchom Udostępnianie Pobranych Danych ?
+@@ -1670,13 +1670,13 @@
+ Wyłączony
+ Włączony
+ Eksportuj
+-GO
++DALEJ
+ Idź do menu Ustawienia
+ Usuń
+ Wysłać
+ ustawienia WAN
+ Możliwość
+-Captcha
++CAPTCHA
+ Przejdźdo captcha.
+ Aby ją włączyć, zaznacz <a id = \"setting_link\" target=\"_blank\" style=\"text-decoration:underline;\">tutaj</a> i zmień ustawienia.
+ Upewnij się,że kabel Ethernet/sieciowy jest prawidłowo podłączony
+@@ -1716,7 +1716,7 @@
+ Tablet z systemem Android
+ Repeater
+ Serwer/NAS
+-Notebook
++Laptop
+ Notebook Windows
+ Macbook
+ Notebook ASUS
+@@ -1756,7 +1756,7 @@
+ Sterownik smartplug
+ Robot
+ Format Zegara
+-Cloud Disk
++Dysk w chmurze
+ Hasło powinno składać się z co najmniej 8 znaków.
+ Browser (Przeglądarka)
+ Masz nowe zaproszenie.
+@@ -1784,32 +1784,32 @@
+ Typ połączenia
+ Połączenia
+ Status połączenia
+-Asia
++Azja
+ Australia
+-China
+-Europe
++Chiny
++Europa
+ Korea
+-Russia
+-Singapore
+-The United States
+-Canada
++Rosja
++Singapur
++Stany Zjednoczone
++Kanada
+ Utwórz konto
+ Nie masz konta?
+ Utwórz bezpłatne konto
+ Poziom 2 CTF nie jest obsługiwany w PPPoE, PPTP lub L2TP. W celu zmiany na Poziom 1 CTF, kliknij  Potwierdź.
+ Uruchom HW Accelerator
+ System zostanie uruchomiony ponownie po włączeniu funkcji AiProtection dla funkcji działającej prawidłowo. Kliknij zastosuj, aby włączyć tę funkcję lub kliknij anuluj, aby powrócić do strony.
+-Click <a style="text-decoration:underline" href="Advanced_SwitchCtrl_Content.asp?af=ctf_disable_force">HERE</a> to disable NAT Acceleration.
++Kliknij <a style="text-decoration:underline" href="Advanced_SwitchCtrl_Content.asp?af=ctf_disable_force">TUTAJ</a>, aby wyłączyć przyspieszanie NAT.
+ Włącz
+ Dodaj
+ Zgadzam się
+-Change
++Zmień
+ Dziennik kontroli
+ Wyczyść
+ Zamknij
+ Usuń
+ Wyłącz
+-Default
++Domyślne
+ Wyłączony
+ Nie zgadzam się
+ Rozłączony
+@@ -1827,19 +1827,19 @@
+ Zapisz
+ Automatyczne ponowne połączenie
+ Odswież
+-Reset
++Resetuj
+ Przywróć
+ Skan
+ Szukaj
+ Zabezpiecz router
+ Upgrade Firmware
+ Uploaduj
+-Initialize
++Inicjalizuj
+ bieżący
+ Aktualna częstotliwość
+ Aktualne ustawienia
+ Niestandardowy
+-Customize
++Dostosuj
+ Data
+ Pt
+ Pon
+@@ -1864,9 +1864,9 @@
+ Jeśli w środowisku sieciowym klienta jest używany adres sieciowy IPv6, włączenie tej funkcji będzie najpierw tłumaczyć domenę na adres IPv6 w przypadku dostępu zdalnego urządzenia.
+ Certyfikat SSL
+ Zasady korzystania ze strony
+-Transfer ASUS DDNS name
++Przenieś nazwę ASUS DDNS
+ IP WAN i weryfikacja nazwy hosta
+-Check every
++Sprawdzaj co
+ Będę używał usługi
+ To konto będzie skasowane razem z jego uprawnieniami w otoczeniu sieciowym oraz serwerze FTP. Czy chcesz kontynuować?
+ Usuń to konto
+@@ -1903,7 +1903,7 @@
+ Rozłącz połączenie z Internetem
+ Odmontowany
+ Etykieta dysku
+-Health Scanner
++Skaner stanu
+ Wykryto błędy dysku twardego. Usuń wszelkie uszkodzone pliki lub napraw błędy systemowe za pomocą komputera.
+ Codziennie
+ Wyniki skanowania
+@@ -2414,7 +2414,7 @@
+ *Korzystając z GearUP Console Booster, zgadzasz się z <a style="text-decoration: underline;" href="https://www.gearupbooster.com/license/user-agreement.html" target="_blank">Umową użytkownika</a> i <a style="text-decoration: underline;" href="https://www.gearupbooster.com/license/privacy-policy.html" target="_blank">Polityką prywatności</a> GearUP.
+ Enable GeForce NOW QoS UPnP control
+ Czas który upłynął od startu routera:
+-Data startu
++Czas pracy
+ Na tej stronie pokazywane są szczegółowe działania systemu.
+ Get Beta Firmware
+ Połącz się z Siecią gościnną
+@@ -2488,7 +2488,7 @@
+ Jeśli włączysz przełącznik LED sieci dla dzieci, zauważysz specjalny efekt LED pojawiający się w środku wskaźników LED routera na obudowie.
+ Dostosowania LED %1$@ mają zastosowanie do wszystkich profili %2$@.
+ Wersja sprzętu
+-Help
++Pomoc
+ Pomoc poprowadzi Cię przez podręcznik i informację na temat używania funkcji routera. Kliknij
+ Odnośniki do słów z żółtym i niebieskim podkreśleniem
+ by uzyskać pomoc
+@@ -2900,7 +2900,7 @@
+ ostatnich 24 godzin
+ codziennie
+ QoS
+-System Status
++Stan systemu
+ Ustawienia dynamicznego adresu IP
+ MER
+ Tablica wiadomości
+@@ -3292,7 +3292,7 @@
+ Interfejs sieciowy do którego odnoszą się reguły routingu.
+ Użyj tej funkcji do uruchomienia aplikacji IPTV (takich jak VLC) w kilku komputerach, w tym samym czasie. Funkcja ta może przekonwertować strumienie UDP multicast do strumieni HTTP unicast. Wprowadź port (taki jak 4000), który ma zostać przydzielony do aplikacji IPTV, a następnie użyj ten format do wprowadzenia adresu na liście odtwarzania w celu oglądania strumieni IPTV: http://[IP routera]:[Port Udpxy]/[protokół]/[adres kanału IP]:[port kanału] (taki jak http://192.168.1.1:4000/udp/239.255.1.1:5000 lub http://192.168.1.1:4000/rtp/239.255.1.2:5000). Wprowadź 0 (zero) w celu wyłączenia tej funkcji.
+ Pomocnik przesyłania
+-Disconnect clients with RSSI lower than :
++Odłącz klientów z RSSI niższym niż:
+ Urządzenia dodane do listy blokowania roamingu nie będą mieć możliwości roamingu między różnymi węzłami AiMesh.
+ Włącz listę blokowania roamingu
+ Włącz LED
+@@ -4195,14 +4195,14 @@
+ Lista odległych punktów dostępowych
+ Nazwa sieci lub SSID to unikatowa nazwa, która identyfikuje sieć bezprzewodową. Urządzenia WiFi automatycznie wykrywają wszystkie sieci w zasięgu. Przydziel ciąg identyfikacji zawierający do 32 znaków dla połączenia bezprzewodowego.
+ Zgodnie z przepisami CE, wartość Tx Power (Moc Tx) nie powinna przekraczać 100mW.
+-Tx power adjustment for TPC(Transmit power control) and power saving.
++Regulacja mocy Tx dla TPC (kontrola mocy nadawania) i oszczędzania energii.
+ Regulacja Tx Power (Moc Tx)
+-Power Saving
+-Fair
+-Balance
+-Good
+-Performance
+-Target Wake Time
++Oszczędzanie energii
++Umiarkowana
++Zrównoważona
++Dobra
++Wydajność
++Docelowy czas wybudzania
+ Ustaw klucz WEP do transmisji danych w sieci bezprzewodowej/
+ Klucz WEP #1.
+ Klucz WEP #2.
+@@ -4235,8 +4235,8 @@
+ Przedział beacon
+ Jeżeli wybierzesz [Tak] rozgłaszanie nazwy SSID sieci bezprzewodowej będzie wyłączone.
+ Ukryj SSID
+-Bluetooth Coexistence
+-Enable/Disable Bluetooth Coexistence. Data rate 1Mbps and 2 Mbps are not allowed in Pre-emptive mode. TX Bursting is also not allowed in Pre-emptive mode.
++Współistnienie Bluetooth
++Włącza lub wyłącza współistnienie Bluetooth. Prędkości transmisji 1 Mb/s i 2 Mb/s są niedostępne w trybie Pre-emptive. Funkcja TX Bursting jest również niedostępna w trybie Pre-emptive.
+ Pre-emptive
+ Wybierz (Tak) w celu połączenia TUF-AX5400 z innymi punktami dostępowymi, wymienionymi w Remote AP List (Lista odległych punktów dostępowych).
+ Połącz do zdalnych AP z listy?
+@@ -4267,7 +4267,7 @@
+ Izolacja AP
+ Ustaw zdolność dla mocy transmisji. Maksymalna wartość to
+ i rzeczywista moc transmisji będzie dynamicznie dostosowana do lokalnych regulacji.
+-Protected Management Frames (Zabezpieczone ramki zarządzania)
++Zabezpieczone ramki zarządzania
+ Obsługiwane
+ Wymagane
+ Element ten umożliwia wybór dowolnej z tych opcji dla trybu bezprzewodowego interfejsu 802.11n. <p>[automat]: Umożliwia połączenie urządzeń 802.11n, 802.11g i 802.11b z TUF-AX5400.</p><p>[Legacy]: Umożliwia połączenie urządzeń 802.11b/g/n z TUF-AX5400, ale urządzenia 802.11n działają jedynie z szybkością 54Mbps. Wybierz tryb Legacy, aby móc skorzystać z większej liczby opcji dla metody uwierzytelniania.</p><p>[N Only]: Maksymalizacja wydajności, ale bez możliwości połączenia urządzeń 802.11g i 802.11b z posiadanym urządzeniem.</p><p>Zaznacz b/g Protection (Zabezpieczenie b/g), aby zezwolić urządzeniom b/g na połączenie z TUF-AX5400, bez wpływu na urządzenia 11n, jednak zwiększa to obciążenie routera.</p>
+@@ -4278,9 +4278,9 @@
+ Tryb bezprzewodowy
+ Zabezpieczenie b/g
+ Zoptymalizowany dla Xbox
+-Modulation Scheme
++Schemat modulacji
+ [No-Acknowledgement] to zasada braku potwierdzeń na poziomie MAC. Jeżeli opcja jest włączona, efektem jest większa przepływność ale zarazem zwiększona ilośc błędów transmisji bezprzewodowej z uwagi na większe obciążenie interfejsu WLAN.
+-Enable WMM-No acknowledgement
++Włącz tryb WMM bez potwierdzeń
+ Po wybraniu WEP Encryption (Szyfrowanie WEP), do tego pola można wprowadzić kilka wyrazów w celu automatycznego wygenerowania kluczy WEP.
+ Hasło dostepu:
+ Wybranie opcji [Włączony] włącza funkcję agregacji pakietów celem zwiększenia pasma oferowanego w Twojej sieci.
+@@ -4328,8 +4328,8 @@
+ Tryb [N+AC] nie jest zgodny z bieżącą metodą uwierzytelniania sieci dla gości (TKIP lub WEP). Przejdź do pozycji <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">Sieć dla gości</a> i zmień metodę uwierzytelniania.
+ Tryb [N Only] nie jest zgodny z bieżącą metodą uwierzytelniania sieci dla gości (TKIP lub WEP). Przejdź do pozycji <a id="gn_link" href="/Guest_network.asp?af=wl_NOnly_note" target="_blank" style="color:#FFCC00;font-family:Lucida Console;text-decoration:underline;">Sieć dla gości</a> i zmień metodę uwierzytelniania.
+ By enabling AX only mode, if devices do not support 802.11ax(WiFi 6), will not able to connect to this band.
+-Typ Preamble (Preambuła) definiuje długość bloku CRC (Cyclic Redundancy Check (Cykliczne sprawdzanie redundancji)), który jest techniką wykrywania błędów transmisji wśród urządzeń bezprzewodowych. Zalecamy skonfigurowanie wszystkich urządzeń bezprzewodowych na ten sam typ preambuły. Krótką preambułę należy stosować dla urządzeń bezprzewodowych w miejscach o dużym ruchu sieciowym. Długą preambułę należy stosować dla starszych urządzeń bezprzewodowych.
+-Preamble Type
++Typ preambuły określa długość bloku CRC (Cyclic Redundancy Check — cykliczna kontrola nadmiarowa), który służy do wykrywania błędów transmisji danych między urządzeniami bezprzewodowymi. Zaleca się ustawienie tego samego typu preambuły na wszystkich urządzeniach bezprzewodowych. Krótka preambuła jest zalecana w miejscach o dużym ruchu sieciowym, a długa dla starszych urządzeń bezprzewodowych.
++Typ preambuły
+ Długi
+ Krótki
+ Na tej stronie pokazywane są szczegółowe informacje dotyczące stanu sieci bezprzewodowej.
+@@ -4518,7 +4518,7 @@
+ W przypadku korzystania z modemu kablowego lub modemu o statycznym adresie IP należy wykonać następujące czynności:
+ Once the new SSID is connected, go back to ZVDOMAIN_NAMEVZ for more advanced settings.
+ Disable Web Access from WAN will not allow you to control your router via $Apps$ from Internet. Do you want to continue?
+-ASUS ROUTER APP
++Aplikacja ASUS Router
+ Alexa enabled device or IFTTT
+ Polityka
+ INFORMACJE FIRMY ASUS (dotyczące prywatności)
