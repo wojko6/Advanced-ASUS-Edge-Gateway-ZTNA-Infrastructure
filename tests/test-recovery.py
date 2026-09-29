@@ -197,6 +197,19 @@ exec /bin/cp "$@"
     def prepare_install(self):
         (self.project / "config/edge.conf").write_text("EDGE_RUN_LEGACY_HOOKS=0\n")
         (self.project / "router/scripts/firewall-start").write_text("#!/bin/sh\nexit 1\n")
+
+        # Installer recovery tests exercise snapshot/rollback and symlink safety,
+        # not the firmware-pinned WebUI builder. Stub that independently tested
+        # builder and provide the executable dependency expected by install.sh.
+        webui_builder = self.project / "router/scripts/webui-pl-build"
+        webui_builder.write_text("#!/bin/sh\nexit 0\n")
+        webui_builder.chmod(0o755)
+
+        patch_stub = self.root / "opt/bin/patch"
+        patch_stub.parent.mkdir(parents=True, exist_ok=True)
+        patch_stub.write_text("#!/bin/sh\nexit 0\n")
+        patch_stub.chmod(0o755)
+
         return self.script("install.sh")
 
     def test_failed_upgrade_restores_all_previous_files(self):
