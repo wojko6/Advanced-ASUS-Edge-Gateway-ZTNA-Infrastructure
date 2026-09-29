@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** the deferred Grafana GitHub/CI dashboard work and issue #127 LAN-management/WAN-exposure hardening are complete; continue the short post-audit hardening round with #128 and #130, then return to the bounded remaining #108 retention/storage, rollback/uninstall and LAN interception-correlation gaps.
+**Current phase:** the deferred Grafana GitHub/CI dashboard work plus issues #127 and #128 are complete; finish the short post-audit hardening round with #130 (GitHub main ruleset / required validation), then return to the bounded remaining #108 retention/storage, rollback/uninstall and LAN interception-correlation gaps.
 
 ## Executive status
 
@@ -18,11 +18,15 @@ On 2026-09-28 the Fedora Grafana instance was extended with the read-only GitHub
 
 On 2026-09-29 issue #127 closed the remaining normal-LAN management and automatic-exposure gap. A stale static TCP 20/21 forwarding rule to an inactive LAN host was removed after rollback capture and runtime verification; UPnP/NAT-PMP had no active daemon/listeners or dynamic mappings, Port Trigger and DMZ were inactive, and WAN WebUI access remained disabled. The Fedora administration workstation received a stable DHCP reservation and ASUS access restriction now permits router HTTPS/8443 and SSH/1122 only from that authorized LAN host. Positive administration tests passed, a controlled non-admin source was denied with firewall DROP counters, the project health check remained `0 failure(s), 0 warning(s)`, and a GeForce NOW session worked normally after the changes.
 
+Issue #128 was also completed on 2026-09-29. Native WAN/LAN IPv6 is intentionally disabled on the reference deployment, while the project-owned Tailscale IPv6 guards remain fail-closed. The active trusted WLANs were documented with AES-only WPA2/WPA3 security, WEP/TKIP absent, PMF state recorded, WPS disabled, and client-side WPA3 confirmation on the active 5 GHz WLAN. Guest BSSs were disabled, so no live guest-isolation claim is made.
+
+Issue #133 completed the persistent Polish ASUS/GNUton WebUI localization path on the same day. Eight version-pinned WebUI resources are reconstructed from reviewed patch deltas, verified by exact SHA-256 hashes, bind-mounted at runtime, and were confirmed to return automatically after a controlled reboot with one bind mount per resource and a clean project health check.
+
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
 
 On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_tuf`. The project `v2.1.4-dev` scripts were deployed from source revision `de1cf10`, and a later private configuration change limited tailnet administration to the Fedora workstation and Android phone. A same-day reboot and bounded router/workstation/phone checks passed. The previously outstanding negative management-access check was then completed from a distinct unauthorized Windows tailnet client and published as sanitized live evidence; see the [dated worklog](docs/worklog/2026-09-23.md) and [negative-management validation](evidence/2026-09-23/unauthorized-tailnet-management-denial.md).
 
-The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Pi-hole main-LAN filtering, Unbound/DNSSEC integration, firmware dnsmasq for DHCP/local naming and existing interception paths, syslog-ng logging, project-owned least-privilege firewall chains, recovery tooling, health checks, evidence collection, external observability and automated repository validation.
+The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Pi-hole main-LAN filtering, Unbound/DNSSEC integration, firmware dnsmasq for DHCP/local naming and existing interception paths, syslog-ng logging, project-owned least-privilege firewall chains, a read-only project-native Edge Gateway WebUI with persistent Polish localization, recovery tooling, health checks, evidence collection, external observability and automated repository validation.
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
 
