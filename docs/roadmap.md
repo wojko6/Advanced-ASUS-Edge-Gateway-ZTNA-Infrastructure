@@ -40,11 +40,12 @@ messages after collector restoration.
 the end of 2026-09-28: merged-PR visibility, recent repository activity/commits,
 dashboard layout cleanup and a separate Polystat infrastructure-health view.
 
-After that checkpoint, continue with #127 (LAN management and exposure audit),
-#128 (IPv6/Wi-Fi security parity evidence) and #130 (GitHub main ruleset /
-required validation). Then finish the bounded #108 retention, rollback and
-LAN-interception correlation gaps, followed by #68 encrypted-DNS assessment
-and #129 Pi-hole-aware disaster-recovery refresh.
+The #127 LAN-management/WAN-exposure hardening and #128 IPv6/Wi-Fi security
+parity evidence were completed on 2026-09-29. The remaining short hardening
+item is #130 (GitHub main ruleset / required validation). After that, finish the
+bounded #108 retention, rollback and LAN-interception correlation gaps,
+followed by #68 encrypted-DNS assessment and #129 Pi-hole-aware
+disaster-recovery refresh.
 
 ## In progress — Network DNS Visibility / Client Activity Analytics
 
