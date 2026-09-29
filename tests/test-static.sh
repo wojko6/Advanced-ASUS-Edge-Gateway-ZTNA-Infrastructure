@@ -111,6 +111,8 @@ grep -F 'mount_project_webui' "$REPO_DIR/router/scripts/services-start" >/dev/nu
 for webui_status_guard in \
     'configure_webui_status' \
     'cru a AsusEdgeWebUIStatus' \
+    'unset LD_LIBRARY_PATH' \
+    'preserving previous status.js' \
     'stats_noreset' \
     'num.answer.rcode.SERVFAIL' \
     'num.answer.bogus' \

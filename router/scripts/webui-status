@@ -4,6 +4,12 @@
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+# Merlin's cru inherits the firmware LD_LIBRARY_PATH. Entware Unbound tools must
+# resolve their own runtime loader paths; inheriting the firmware library path
+# causes the collector commands to fail. Do not force /opt/lib here either:
+# live validation showed that doing so can crash these binaries.
+unset LD_LIBRARY_PATH
+
 OUT_DIR="${EDGE_WEBUI_STATUS_DIR:-/www/ext/asus-edge}"
 OUT_TMP="$OUT_DIR/status.js.tmp"
 OUT_FILE="$OUT_DIR/status.js"
@@ -26,6 +32,7 @@ prefetch="0"
 expired="0"
 rec_avg="0"
 rec_median="0"
+stats_ok=0
 
 safe_token() {
     case "${1:-}" in
@@ -62,7 +69,11 @@ if [ -x /opt/sbin/unbound-control ] && [ -r "$CONF" ]; then
 
     uptime="$(printf '%s\n' "$control" | awk -F': ' '/^uptime:/ {print $2}' | awk '{print $1}')"
 
-    stats="$(/opt/sbin/unbound-control -c "$CONF" stats_noreset 2>/dev/null || true)"
+    if stats="$(/opt/sbin/unbound-control -c "$CONF" stats_noreset 2>/dev/null)"; then
+        stats_ok=1
+    else
+        stats=""
+    fi
 
     value() {
         printf '%s\n' "$stats" | awk -F= -v key="$1" '$1 == key {print $2; exit}'
@@ -91,6 +102,18 @@ prefetch="$(number_or_zero "$prefetch")"
 expired="$(number_or_zero "$expired")"
 rec_avg="$(number_or_zero "$rec_avg")"
 rec_median="$(number_or_zero "$rec_median")"
+
+# When the resolver process exists, never replace the last known-good snapshot
+# with fabricated zero/unknown values because one helper command failed. The
+# separate ASP process-status field still reports whether Unbound is running.
+if pidof unbound >/dev/null 2>&1; then
+    if [ "$version" = "unknown" ] || [ "$port" = "unknown" ] || \
+       [ "$interface" = "unknown" ] || [ "$status" != "running" ] || \
+       [ "$stats_ok" != "1" ]; then
+        echo "ERROR: incomplete Unbound runtime snapshot; preserving previous status.js" >&2
+        exit 1
+    fi
+fi
 
 cat >"$OUT_TMP" <<JS
 window.edgeUnboundStatus = {
