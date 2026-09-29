@@ -189,10 +189,15 @@ fi
 # ---- System ---------------------------------------------------------------
 system_uptime="$(awk '{print $1; exit}' /proc/uptime 2>/dev/null)"
 system_uptime="$(number_or_zero "$system_uptime")"
-set -- $(awk '{print $1, $2, $3; exit}' /proc/loadavg 2>/dev/null)
-load1="$(number_or_zero "${1:-0}")"
-load5="$(number_or_zero "${2:-0}")"
-load15="$(number_or_zero "${3:-0}")"
+load1="0"
+load5="0"
+load15="0"
+if [ -r /proc/loadavg ]; then
+    read -r load1 load5 load15 _ < /proc/loadavg || true
+fi
+load1="$(number_or_zero "$load1")"
+load5="$(number_or_zero "$load5")"
+load15="$(number_or_zero "$load15")"
 
 mem_total="$(awk '/^MemTotal:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"
 mem_available="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"
