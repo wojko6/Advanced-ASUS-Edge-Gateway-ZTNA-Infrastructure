@@ -135,10 +135,31 @@ for webui_patch in \
     router_status.asp.patch \
     router.asp.patch
 do
-    [ -s "$REPO_DIR/router/webui/patches/$webui_patch" ] || {
+    patch_path="$REPO_DIR/router/webui/patches/$webui_patch"
+    [ -s "$patch_path" ] || {
         echo "FAIL: Polish WebUI patch missing or empty: $webui_patch" >&2
         exit 1
     }
+
+    patch_target="${webui_patch%.patch}"
+    old_header="$(awk 'NR == 1 && $1 == "---" { print $2 }' "$patch_path")"
+    new_header="$(awk 'NR == 2 && $1 == "+++" { print $2 }' "$patch_path")"
+
+    case "$old_header" in
+        */"$patch_target") ;;
+        *)
+            echo "FAIL: Polish WebUI patch old path is not -p1 compatible: $webui_patch -> $old_header" >&2
+            exit 1
+            ;;
+    esac
+
+    case "$new_header" in
+        */"$patch_target") ;;
+        *)
+            echo "FAIL: Polish WebUI patch new path is not -p1 compatible: $webui_patch -> $new_header" >&2
+            exit 1
+            ;;
+    esac
 done
 
 grep -F 'mount_project_webui' "$REPO_DIR/router/scripts/services-start" >/dev/null || {
