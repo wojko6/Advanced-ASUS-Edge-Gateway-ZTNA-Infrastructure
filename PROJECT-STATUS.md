@@ -350,7 +350,7 @@ Disabling SNBForums ad support removed a hard-coded exception that allowed `page
 
 The Large profile materially broadened DNS blocking, but visible advertising still remained on representative real-world sites even while many observed advertising/RTB hostnames returned `NXDOMAIN` from the Android client. One focused denylist experiment for `sdk-videoplayer.optad360.info` also did not remove the observed advertising by itself.
 
-Current post-test filtering state:
+Historical 2026-09-22 post-test filtering state:
 
 ```text
 Diversion: enabled
