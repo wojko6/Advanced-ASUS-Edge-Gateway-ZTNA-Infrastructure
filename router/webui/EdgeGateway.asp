@@ -55,6 +55,55 @@
       return '<span class="edge-muted">Unknown</span>';
     }
 
+    function edgeUnboundRuntimeState(value) {
+      return String(value) === "running"
+        ? '<span class="edge-ok">Running</span>'
+        : '<span class="edge-bad">Stopped / unavailable</span>';
+    }
+
+    function edgeNumber(value) {
+      var number = Number(value);
+      if (!isFinite(number))
+        return "N/A";
+      return String(Math.round(number));
+    }
+
+    function edgePercent(hits, misses) {
+      var hitCount = Number(hits);
+      var missCount = Number(misses);
+      var total = hitCount + missCount;
+      if (!isFinite(total) || total <= 0)
+        return "N/A";
+      return ((hitCount / total) * 100).toFixed(1) + "%";
+    }
+
+    function edgeMilliseconds(seconds) {
+      var value = Number(seconds);
+      if (!isFinite(value))
+        return "N/A";
+      return (value * 1000).toFixed(1) + " ms";
+    }
+
+    function edgeDuration(seconds) {
+      var remaining = Math.floor(Number(seconds));
+      if (!isFinite(remaining) || remaining < 0)
+        return "N/A";
+
+      var days = Math.floor(remaining / 86400);
+      remaining %= 86400;
+      var hours = Math.floor(remaining / 3600);
+      remaining %= 3600;
+      var minutes = Math.floor(remaining / 60);
+      var secs = remaining % 60;
+      var parts = [];
+
+      if (days) parts.push(days + " d");
+      if (hours || days) parts.push(hours + " h");
+      if (minutes || hours || days) parts.push(minutes + " min");
+      parts.push(secs + " s");
+      return parts.join(" ");
+    }
+
     function SetCurrentPage() {
       if (document.form) {
         if (document.form.next_page)
@@ -62,6 +111,50 @@
         if (document.form.current_page)
           document.form.current_page.value = window.location.pathname.substring(1);
       }
+    }
+
+    function setText(id, value) {
+      var element = document.getElementById(id);
+      if (element)
+        element.innerHTML = value;
+    }
+
+    function renderUnboundSnapshot() {
+      var data = window.edgeUnboundStatus;
+      if (!data) {
+        setText("edge_unbound_snapshot", '<span class="edge-muted">Snapshot unavailable</span>');
+        return;
+      }
+
+      setText("edge_unbound_snapshot", edgeUnboundRuntimeState(data.status));
+      setText("edge_unbound_version", data.version || "N/A");
+      setText("edge_unbound_listener", data.interface || ("127.0.0.1@" + data.port));
+      setText("edge_unbound_uptime", edgeDuration(data.uptime));
+      setText("edge_unbound_queries", edgeNumber(data.queries));
+      setText("edge_unbound_cachehits", edgeNumber(data.cachehits));
+      setText("edge_unbound_cachemiss", edgeNumber(data.cachemiss));
+      setText("edge_unbound_hitratio", edgePercent(data.cachehits, data.cachemiss));
+      setText("edge_unbound_servfail", edgeNumber(data.servfail));
+      setText("edge_unbound_secure", edgeNumber(data.secure));
+      setText("edge_unbound_bogus", edgeNumber(data.bogus));
+      setText("edge_unbound_prefetch", edgeNumber(data.prefetch));
+      setText("edge_unbound_expired", edgeNumber(data.expired));
+      setText("edge_unbound_recavg", edgeMilliseconds(data.recursionAvg));
+      setText("edge_unbound_recmedian", edgeMilliseconds(data.recursionMedian));
+      setText("edge_unbound_generated", data.generated || "N/A");
+    }
+
+    function loadUnboundSnapshot() {
+      $.ajax({
+        url: "/ext/asus-edge/status.js?_=" + new Date().getTime(),
+        dataType: "script",
+        cache: false,
+        timeout: 3000,
+        success: renderUnboundSnapshot,
+        error: function() {
+          setText("edge_unbound_snapshot", '<span class="edge-muted">Snapshot unavailable</span>');
+        }
+      });
     }
 
     function refreshEdgeStatus() {
@@ -76,13 +169,11 @@
         edgeWanWebuiState("<% nvram_get("misc_http_x"); %>");
       document.getElementById("edge_access_restriction").innerHTML =
         edgeBooleanState("<% nvram_get("enable_acc_restriction"); %>", "Enabled", "Disabled");
+
+      loadUnboundSnapshot();
     }
 
     function initial() {
-      /*
-       * Render project status before invoking the ASUS menu helper.  This keeps
-       * the status page useful even if a firmware-specific menu helper fails.
-       */
       refreshEdgeStatus();
 
       try {
@@ -102,11 +193,6 @@
   <div id="TopBanner"></div>
   <div id="Loading" class="popup_bg"></div>
 
-  <!--
-    ASUSWRT's show_menu() helper expects the standard named form scaffold.
-    This Phase 1 form has no submit controls or apply action and remains
-    read-only.
-  -->
   <form method="post" name="form" action="">
     <input type="hidden" name="current_page" value="" />
     <input type="hidden" name="next_page" value="" />
@@ -139,8 +225,9 @@
               </div>
 
               <div class="edge-note">
-                Phase 1 is read-only. This page does not apply configuration, restart
-                services, change DNS, modify firewall rules, or write custom settings.
+                Phase 2 remains read-only. Runtime statistics are collected locally and
+                exposed only through the authenticated ASUS WebUI surface. No Apply,
+                restart, DNS configuration, firewall write, or custom-settings action is present.
               </div>
 
               <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
@@ -148,28 +235,14 @@
                 <thead>
                   <tr><td colspan="2">Overview</td></tr>
                 </thead>
-                <tr>
-                  <th>Model</th>
-                  <td><% nvram_get("productid"); %></td>
-                </tr>
+                <tr><th>Model</th><td><% nvram_get("productid"); %></td></tr>
                 <tr>
                   <th>Firmware</th>
-                  <td>
-                    <% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %>
-                  </td>
+                  <td><% nvram_get("firmver"); %>.<% nvram_get("buildno"); %>_<% nvram_get("extendno"); %></td>
                 </tr>
-                <tr>
-                  <th>IPv6 service</th>
-                  <td><% nvram_get("ipv6_service"); %></td>
-                </tr>
-                <tr>
-                  <th>WAN WebUI</th>
-                  <td><span id="edge_wan_webui">Unknown</span></td>
-                </tr>
-                <tr>
-                  <th>LAN access restriction</th>
-                  <td><span id="edge_access_restriction">Unknown</span></td>
-                </tr>
+                <tr><th>IPv6 service</th><td><% nvram_get("ipv6_service"); %></td></tr>
+                <tr><th>WAN WebUI</th><td><span id="edge_wan_webui">Unknown</span></td></tr>
+                <tr><th>LAN access restriction</th><td><span id="edge_access_restriction">Unknown</span></td></tr>
               </table>
 
               <div>&nbsp;</div>
@@ -177,43 +250,58 @@
               <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
                      bordercolor="#6b8fa3" class="FormTable">
                 <thead>
-                  <tr><td colspan="2">DNS</td></tr>
+                  <tr><td colspan="2">DNS services</td></tr>
                 </thead>
-                <tr>
-                  <th>dnsmasq</th>
-                  <td><span id="edge_dnsmasq">Unknown</span></td>
-                </tr>
-                <tr>
-                  <th>Unbound</th>
-                  <td><span id="edge_unbound">Unknown</span></td>
-                </tr>
-                <tr>
-                  <th>DNSSEC firmware flag</th>
-                  <td><% nvram_get("dnssec_enable"); %></td>
-                </tr>
+                <tr><th>dnsmasq</th><td><span id="edge_dnsmasq">Unknown</span></td></tr>
+                <tr><th>Unbound process</th><td><span id="edge_unbound">Unknown</span></td></tr>
+                <tr><th>DNSSEC firmware flag</th><td><% nvram_get("dnssec_enable"); %></td></tr>
               </table>
 
               <div>&nbsp;</div>
+
+              <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
+                     bordercolor="#6b8fa3" class="FormTable">
+                <thead>
+                  <tr><td colspan="2">Unbound runtime — refreshed every minute</td></tr>
+                </thead>
+                <tr><th>Collector status</th><td><span id="edge_unbound_snapshot">Loading...</span></td></tr>
+                <tr><th>Version</th><td><span id="edge_unbound_version">Loading...</span></td></tr>
+                <tr><th>Listener</th><td><span id="edge_unbound_listener">Loading...</span></td></tr>
+                <tr><th>Uptime</th><td><span id="edge_unbound_uptime">Loading...</span></td></tr>
+                <tr><th>Queries</th><td><span id="edge_unbound_queries">Loading...</span></td></tr>
+                <tr><th>Cache hits</th><td><span id="edge_unbound_cachehits">Loading...</span></td></tr>
+                <tr><th>Cache misses</th><td><span id="edge_unbound_cachemiss">Loading...</span></td></tr>
+                <tr><th>Cache hit ratio</th><td><span id="edge_unbound_hitratio">Loading...</span></td></tr>
+                <tr><th>SERVFAIL answers</th><td><span id="edge_unbound_servfail">Loading...</span></td></tr>
+                <tr><th>DNSSEC secure answers</th><td><span id="edge_unbound_secure">Loading...</span></td></tr>
+                <tr><th>DNSSEC bogus answers</th><td><span id="edge_unbound_bogus">Loading...</span></td></tr>
+                <tr><th>Prefetch</th><td><span id="edge_unbound_prefetch">Loading...</span></td></tr>
+                <tr><th>Serve-expired</th><td><span id="edge_unbound_expired">Loading...</span></td></tr>
+                <tr><th>Recursion average</th><td><span id="edge_unbound_recavg">Loading...</span></td></tr>
+                <tr><th>Recursion median</th><td><span id="edge_unbound_recmedian">Loading...</span></td></tr>
+                <tr><th>Snapshot generated</th><td><span id="edge_unbound_generated">Loading...</span></td></tr>
+              </table>
+
+              <div class="edge-note">
+                Unbound counters are cumulative for the current resolver process. SERVFAIL
+                and DNSSEC-bogus counters are diagnostic counters and may overlap; they are
+                not treated here as independent outage counts. End-to-end DNSSEC validation
+                remains the responsibility of the project health check.
+              </div>
 
               <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
                      bordercolor="#6b8fa3" class="FormTable">
                 <thead>
                   <tr><td colspan="2">Health</td></tr>
                 </thead>
-                <tr>
-                  <th>Tailscale daemon</th>
-                  <td><span id="edge_tailscale">Unknown</span></td>
-                </tr>
-                <tr>
-                  <th>WebUI mode</th>
-                  <td><span class="edge-ok">Read-only</span></td>
-                </tr>
+                <tr><th>Tailscale daemon</th><td><span id="edge_tailscale">Unknown</span></td></tr>
+                <tr><th>WebUI mode</th><td><span class="edge-ok">Read-only</span></td></tr>
               </table>
 
               <div class="edge-note">
-                Scope boundary: this page reports selected firmware and process state only.
-                It does not replace the project health check and does not claim end-to-end
-                DNS, Tailscale, firewall, or Internet health.
+                Scope boundary: this page reports selected firmware, process and resolver
+                runtime state only. It does not replace the project health check and does
+                not claim end-to-end DNS, Tailscale, firewall, or Internet health.
               </div>
             </td>
           </tr>

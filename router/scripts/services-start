@@ -230,6 +230,27 @@ mount_project_webui() {
     fi
 }
 
+configure_webui_status() {
+    status_helper="/jffs/addons/asus-edge/bin/webui-status"
+    [ -x "$status_helper" ] || {
+        log "WARNING: optional Edge Gateway WebUI status collector is unavailable"
+        return 0
+    }
+
+    if "$status_helper" >/tmp/asus-edge-webui-status.log 2>&1; then
+        log "Edge Gateway WebUI status snapshot refreshed"
+    else
+        log "WARNING: Edge Gateway WebUI status refresh failed; inspect /tmp/asus-edge-webui-status.log"
+    fi
+
+    if executable_exists cru >/dev/null 2>&1; then
+        cru a AsusEdgeWebUIStatus "* * * * * $status_helper >/dev/null 2>&1"
+        log "Edge Gateway WebUI status refresh scheduled"
+    else
+        log "WARNING: cru unavailable; Edge Gateway WebUI status will not refresh automatically"
+    fi
+}
+
 # The WebUI is optional and must never block recovery of required network
 # services. Merlin's services-start event is the persistent mount trigger.
 mount_project_webui
@@ -342,6 +363,7 @@ start_entware_service_if_stopped() {
 }
 
 start_unbound_direct_if_stopped || startup_failed=1
+configure_webui_status
 start_entware_service_if_stopped syslog-ng /tmp/asus-edge-syslog-ng-start.log "" /opt/etc/init.d/S*syslog-ng || log "WARNING: optional syslog-ng service unavailable"
 if [ -x /jffs/scripts/firewall-start ]; then
     /jffs/scripts/firewall-start || { log "ERROR: firewall policy failed"; startup_failed=1; }

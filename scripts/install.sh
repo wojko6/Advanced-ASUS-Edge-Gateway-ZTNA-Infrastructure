@@ -76,6 +76,7 @@ for file in \
     "$REPO_DIR/router/scripts/wan-event" \
     "$REPO_DIR/router/scripts/wan-event-handler" \
     "$REPO_DIR/router/scripts/webui-mount" \
+    "$REPO_DIR/router/scripts/webui-status" \
     "$REPO_DIR/scripts/healthcheck.sh" \
     "$REPO_DIR/scripts/check-usb-exposure.sh" \
     "$REPO_DIR/scripts/collect-evidence.sh" \
@@ -245,6 +246,7 @@ install_file "$REPO_DIR/router/scripts/services-start" "$ADDON_DIR/bin/services-
 install_file "$REPO_DIR/router/scripts/wan-event" "$ADDON_DIR/bin/wan-event" 0755
 install_file "$REPO_DIR/router/scripts/wan-event-handler" "$ADDON_DIR/bin/wan-event-handler" 0755
 install_file "$REPO_DIR/router/scripts/webui-mount" "$ADDON_DIR/bin/webui-mount" 0755
+install_file "$REPO_DIR/router/scripts/webui-status" "$ADDON_DIR/bin/webui-status" 0755
 install_file "$REPO_DIR/router/webui/EdgeGateway.asp" "$ADDON_DIR/webui/EdgeGateway.asp" 0644
 install_file "$REPO_DIR/scripts/healthcheck.sh" "$ADDON_DIR/bin/healthcheck.sh" 0755
 install_file "$REPO_DIR/scripts/check-usb-exposure.sh" "$ADDON_DIR/bin/check-usb-exposure.sh" 0755

@@ -92,6 +92,7 @@ fi
 
 for webui_guard in \
     'router/scripts/webui-mount" "$ADDON_DIR/bin/webui-mount" 0755' \
+    'router/scripts/webui-status" "$ADDON_DIR/bin/webui-status" 0755' \
     'router/webui/EdgeGateway.asp" "$ADDON_DIR/webui/EdgeGateway.asp" 0644' \
     'snapshot_path "$ADDON_DIR/webui" webui' \
     'restore_path "$ADDON_DIR/webui" webui'
@@ -104,6 +105,28 @@ done
 
 grep -F 'mount_project_webui' "$REPO_DIR/router/scripts/services-start" >/dev/null || {
     echo "FAIL: services-start does not persist the Edge Gateway WebUI" >&2
+    exit 1
+}
+
+for webui_status_guard in \
+    'configure_webui_status' \
+    'cru a AsusEdgeWebUIStatus' \
+    'stats_noreset' \
+    'num.answer.rcode.SERVFAIL' \
+    'num.answer.bogus' \
+    '/ext/asus-edge/status.js'
+do
+    grep -F "$webui_status_guard" \
+        "$REPO_DIR/router/scripts/services-start" \
+        "$REPO_DIR/router/scripts/webui-status" \
+        "$REPO_DIR/router/webui/EdgeGateway.asp" >/dev/null || {
+        echo "FAIL: Edge Gateway WebUI Phase 2 guard missing: $webui_status_guard" >&2
+        exit 1
+    }
+done
+
+grep -F '/usr/sbin/cru d "$STATUS_CRON_ID"' "$REPO_DIR/router/scripts/webui-mount" >/dev/null || {
+    echo "FAIL: WebUI unmount does not remove the Phase 2 refresh schedule" >&2
     exit 1
 }
 

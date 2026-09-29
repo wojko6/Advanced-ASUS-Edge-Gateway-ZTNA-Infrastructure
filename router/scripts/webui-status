@@ -1,0 +1,117 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Generate a sanitized, read-only Unbound status snapshot for the ASUS Edge WebUI.
+
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+OUT_DIR="${EDGE_WEBUI_STATUS_DIR:-/www/ext/asus-edge}"
+OUT_TMP="$OUT_DIR/status.js.tmp"
+OUT_FILE="$OUT_DIR/status.js"
+CONF="${EDGE_UNBOUND_CONFIG:-/opt/var/lib/unbound/unbound.conf}"
+
+mkdir -p "$OUT_DIR" || exit 1
+
+version="unknown"
+port="unknown"
+interface="unknown"
+status="stopped"
+uptime="0"
+queries="0"
+cachehits="0"
+cachemiss="0"
+servfail="0"
+secure="0"
+bogus="0"
+prefetch="0"
+expired="0"
+rec_avg="0"
+rec_median="0"
+
+safe_token() {
+    case "${1:-}" in
+        ""|*[!0-9A-Za-z_.:@-]*) printf '%s\n' "unknown" ;;
+        *) printf '%s\n' "$1" ;;
+    esac
+}
+
+number_or_zero() {
+    case "${1:-}" in
+        ""|*[!0-9.]*|*.*.*) printf '%s\n' "0" ;;
+        *) printf '%s\n' "$1" ;;
+    esac
+}
+
+if [ -x /opt/sbin/unbound ]; then
+    version="$(/opt/sbin/unbound -V 2>/dev/null | awk '/^Version / {print $2; exit}')"
+    version="$(safe_token "$version")"
+fi
+
+if [ -x /opt/sbin/unbound-checkconf ] && [ -r "$CONF" ]; then
+    port="$(/opt/sbin/unbound-checkconf -o port "$CONF" 2>/dev/null | head -n 1)"
+    interface="$(/opt/sbin/unbound-checkconf -o interface "$CONF" 2>/dev/null | head -n 1)"
+    port="$(safe_token "$port")"
+    interface="$(safe_token "$interface")"
+fi
+
+if [ -x /opt/sbin/unbound-control ] && [ -r "$CONF" ]; then
+    control="$(/opt/sbin/unbound-control -c "$CONF" status 2>/dev/null || true)"
+
+    if printf '%s\n' "$control" | grep -q 'is running'; then
+        status="running"
+    fi
+
+    uptime="$(printf '%s\n' "$control" | awk -F': ' '/^uptime:/ {print $2}' | awk '{print $1}')"
+
+    stats="$(/opt/sbin/unbound-control -c "$CONF" stats_noreset 2>/dev/null || true)"
+
+    value() {
+        printf '%s\n' "$stats" | awk -F= -v key="$1" '$1 == key {print $2; exit}'
+    }
+
+    queries="$(value total.num.queries)"
+    cachehits="$(value total.num.cachehits)"
+    cachemiss="$(value total.num.cachemiss)"
+    servfail="$(value num.answer.rcode.SERVFAIL)"
+    secure="$(value num.answer.secure)"
+    bogus="$(value num.answer.bogus)"
+    prefetch="$(value total.num.prefetch)"
+    expired="$(value total.num.expired)"
+    rec_avg="$(value total.recursion.time.avg)"
+    rec_median="$(value total.recursion.time.median)"
+fi
+
+uptime="$(number_or_zero "$uptime")"
+queries="$(number_or_zero "$queries")"
+cachehits="$(number_or_zero "$cachehits")"
+cachemiss="$(number_or_zero "$cachemiss")"
+servfail="$(number_or_zero "$servfail")"
+secure="$(number_or_zero "$secure")"
+bogus="$(number_or_zero "$bogus")"
+prefetch="$(number_or_zero "$prefetch")"
+expired="$(number_or_zero "$expired")"
+rec_avg="$(number_or_zero "$rec_avg")"
+rec_median="$(number_or_zero "$rec_median")"
+
+cat >"$OUT_TMP" <<JS
+window.edgeUnboundStatus = {
+  version: "$version",
+  status: "$status",
+  port: "$port",
+  interface: "$interface",
+  uptime: $uptime,
+  queries: $queries,
+  cachehits: $cachehits,
+  cachemiss: $cachemiss,
+  servfail: $servfail,
+  secure: $secure,
+  bogus: $bogus,
+  prefetch: $prefetch,
+  expired: $expired,
+  recursionAvg: $rec_avg,
+  recursionMedian: $rec_median,
+  generated: "$(date '+%Y-%m-%d %H:%M:%S')"
+};
+JS
+
+mv -f "$OUT_TMP" "$OUT_FILE"
+chmod 0644 "$OUT_FILE"

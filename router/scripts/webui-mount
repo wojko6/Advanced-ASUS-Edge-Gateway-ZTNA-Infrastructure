@@ -13,6 +13,10 @@ MENU_ORIGINAL="/www/require/modules/menuTree.js"
 MENU_TMP="/tmp/menuTree.js"
 LOCKFILE="/tmp/addonwebui.lock"
 STATE_FILE="/tmp/asus-edge-webui.page"
+STATUS_DIR="/www/ext/asus-edge"
+STATUS_FILE="$STATUS_DIR/status.js"
+STATUS_TMP="$STATUS_DIR/status.js.tmp"
+STATUS_CRON_ID="AsusEdgeWebUIStatus"
 
 [ -r /usr/sbin/helper.sh ] || {
     echo "ERROR: Merlin helper API is unavailable" >&2
@@ -96,6 +100,12 @@ unmount_webui() {
         rm -f "/www/user/$page"
     fi
     rm -f "$STATE_FILE"
+
+    if [ -x /usr/sbin/cru ]; then
+        /usr/sbin/cru d "$STATUS_CRON_ID" >/dev/null 2>&1 || true
+    fi
+    rm -f "$STATUS_FILE" "$STATUS_TMP"
+    rmdir "$STATUS_DIR" 2>/dev/null || true
 
     if [ -f "$MENU_TMP" ]; then
         sed -i "\~tabName: \"$WEBUI_TITLE\"},~d" "$MENU_TMP"
