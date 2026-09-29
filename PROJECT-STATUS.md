@@ -10,7 +10,7 @@
 
 ## Executive status
 
-This status document was reconciled on 2026-09-28. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
+This status document was reconciled through 2026-09-29. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
 
 The centralized logging path is now also live-validated: router syslog-ng forwards the Asuswrt log over Tailscale and mutually authenticated TLS to the Fedora collector, with source-restricted firewall policy and successful short-outage recovery (3/3 test messages delivered after collector restoration). Grafana 13 uses its native Polish interface option; the project dashboard remains explicitly localized in JSON because application language settings do not translate project-owned panel content.
 
@@ -36,7 +36,7 @@ The final checkpoint observed approximately 128 MiB memory available; Pi-hole FT
 
 The claim remains bounded: DHCP-managed main-LAN clients use Pi-hole, but the existing firewall interception of arbitrary external classic DNS and the historical Tailscale redirect still terminate at firmware dnsmasq before Unbound. Those paths require separate revalidation if they are moved behind Pi-hole.
 
-### Current phase — Pi-hole-visible DNS activity analytics
+### Validated baseline — Pi-hole-visible DNS activity analytics
 
 Issue #108 Phase 0 passed against the deployed Pi-hole v6 API. The preflight
 validated the required query schema, authenticated read-only access through a
