@@ -1,0 +1,130 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Project-native ASUSWRT-Merlin WebUI mount helper.
+# Phase 1 mounts/unmounts a read-only page only; it does not touch DNS/services.
+
+set -eu
+
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+WEBUI_SOURCE="${EDGE_WEBUI_SOURCE:-/jffs/addons/asus-edge/webui/EdgeGateway.asp}"
+WEBUI_TITLE="Edge Gateway"
+MENU_ORIGINAL="/www/require/modules/menuTree.js"
+MENU_TMP="/tmp/menuTree.js"
+LOCKFILE="/tmp/addonwebui.lock"
+STATE_FILE="/tmp/asus-edge-webui.page"
+
+[ -r /usr/sbin/helper.sh ] || {
+    echo "ERROR: Merlin helper API is unavailable" >&2
+    exit 1
+}
+# shellcheck disable=SC1091
+. /usr/sbin/helper.sh
+
+addon_supported() {
+    nvram get rc_support 2>/dev/null | tr ' ' '\n' | grep -F -x 'am_addons' >/dev/null 2>&1
+}
+
+remount_menu_tree() {
+    umount "$MENU_ORIGINAL" 2>/dev/null || true
+    mount -o bind "$MENU_TMP" "$MENU_ORIGINAL"
+}
+
+mount_webui() {
+    addon_supported || {
+        echo "ERROR: firmware does not advertise am_addons support" >&2
+        exit 1
+    }
+    [ -f "$WEBUI_SOURCE" ] || {
+        echo "ERROR: missing WebUI source: $WEBUI_SOURCE" >&2
+        exit 1
+    }
+    [ -f "$MENU_ORIGINAL" ] || {
+        echo "ERROR: missing menu tree: $MENU_ORIGINAL" >&2
+        exit 1
+    }
+
+    exec 386>"$LOCKFILE"
+    flock -x 386
+
+    am_get_webui_page "$WEBUI_SOURCE"
+    [ "$am_webui_page" != "none" ] || {
+        echo "ERROR: no free Merlin addon WebUI page" >&2
+        exit 1
+    }
+
+    cp "$WEBUI_SOURCE" "/www/user/$am_webui_page"
+    chmod 0644 "/www/user/$am_webui_page"
+
+    if [ ! -f "$MENU_TMP" ]; then
+        cp "$MENU_ORIGINAL" "$MENU_TMP"
+    fi
+
+    if ! grep -F "tabName: \"$WEBUI_TITLE\"" "$MENU_TMP" >/dev/null 2>&1; then
+        grep -F 'url: "Tools_OtherSettings.asp", tabName:' "$MENU_TMP" >/dev/null 2>&1 || {
+            rm -f "/www/user/$am_webui_page"
+            echo "ERROR: Tools menu anchor not found" >&2
+            exit 1
+        }
+        sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"$WEBUI_TITLE\"}," "$MENU_TMP"
+    fi
+
+    remount_menu_tree
+    printf '%s\n' "$am_webui_page" >"$STATE_FILE"
+
+    echo "Mounted $WEBUI_TITLE as $am_webui_page"
+    echo "URL: /$am_webui_page"
+}
+
+unmount_webui() {
+    exec 386>"$LOCKFILE"
+    flock -x 386
+
+    page=""
+    if [ -r "$STATE_FILE" ]; then
+        read -r page <"$STATE_FILE" || true
+    fi
+
+    if [ -z "$page" ] && [ -f "$WEBUI_SOURCE" ]; then
+        am_get_webui_page "$WEBUI_SOURCE"
+        [ "$am_webui_page" = "none" ] || page="$am_webui_page"
+    fi
+
+    if [ -n "$page" ] && [ -f "/www/user/$page" ]; then
+        rm -f "/www/user/$page"
+    fi
+    rm -f "$STATE_FILE"
+
+    if [ -f "$MENU_TMP" ]; then
+        sed -i "\~tabName: \"$WEBUI_TITLE\"},~d" "$MENU_TMP"
+        umount "$MENU_ORIGINAL" 2>/dev/null || true
+        if cmp -s "$MENU_TMP" "$MENU_ORIGINAL"; then
+            rm -f "$MENU_TMP"
+        else
+            mount -o bind "$MENU_TMP" "$MENU_ORIGINAL"
+        fi
+    fi
+
+    echo "Unmounted $WEBUI_TITLE"
+}
+
+status_webui() {
+    if [ -r "$STATE_FILE" ]; then
+        read -r page <"$STATE_FILE" || true
+        printf 'page=%s\n' "${page:-unknown}"
+    else
+        echo "page=untracked"
+    fi
+    grep -F "tabName: \"$WEBUI_TITLE\"" "$MENU_TMP" 2>/dev/null || true
+    mount | grep -F "$MENU_ORIGINAL" || true
+}
+
+case "${1:-}" in
+    mount) mount_webui ;;
+    unmount) unmount_webui ;;
+    status) status_webui ;;
+    *)
+        echo "Usage: $0 {mount|unmount|status}" >&2
+        exit 2
+        ;;
+esac
