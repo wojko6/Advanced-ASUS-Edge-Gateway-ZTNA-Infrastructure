@@ -7,8 +7,8 @@
     "firmware_context": "TUF-AX5400 / GNUton 3004.388.11_1-gnuton1_tuf"
   },
   "batch": {
-    "name": "reviewed-pl-001",
-    "description": "Initial reviewed Polish localization corrections and structural repairs."
+    "name": "reviewed-pl-002",
+    "description": "Reviewed Polish localization corrections, structural repairs and remaining visible Wi-Fi labels."
   },
   "overrides": {
     "40": "Gratulacje! TUF-AX5400 można dodać do systemu AiMesh.",
@@ -128,6 +128,8 @@
     "1842": "Dostosuj",
     "1867": "Przenieś nazwę ASUS DDNS",
     "1869": "Sprawdzaj co",
-    "1906": "Skaner stanu"
+    "1906": "Skaner stanu",
+    "4205": "Docelowy czas wybudzania",
+    "4270": "Zabezpieczone ramki zarządzania"
   }
 }
