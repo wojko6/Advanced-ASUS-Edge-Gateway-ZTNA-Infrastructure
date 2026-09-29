@@ -1,8 +1,10 @@
 # Polish ASUS WebUI localization overlay
 
+**Status:** CURRENT — implementation completed and live-validated 2026-09-29
+
 ## Scope
 
-Issue #133 tracks a project-owned Polish localization layer for the ASUS/GNUton
+Issue #133 tracked a project-owned Polish localization layer for the ASUS/GNUton
 WebUI used by the reference TUF-AX5400.
 
 The complete firmware WebUI resources are **not** stored in this repository.
@@ -179,3 +181,6 @@ The reference TUF-AX5400 passed the following controlled checks on
 
 The production build therefore reproduces the same byte-identical resources
 that were validated during the live runtime and reboot tests.
+
+Sanitized validation evidence: [Issue #133 — Polish WebUI localization
+validation](../evidence/2026-09-29/issue-133-polish-webui-localization-validation.md).

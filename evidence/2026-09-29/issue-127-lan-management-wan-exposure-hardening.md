@@ -174,3 +174,11 @@ remain separate follow-up scope under issue #128.
 
 Deployment-specific public IP addresses, Tailscale node addresses, client MAC
 addresses and unrelated raw logs are intentionally omitted.
+
+
+## Subsequent same-day status
+
+Issue #128 was completed later on 2026-09-29. The statement above that
+IPv6/Wi-Fi parity remained follow-up scope reflects the state at the end of the
+#127 validation itself; the later result is recorded separately in
+[issue-128-ipv6-wifi-security-parity.md](issue-128-ipv6-wifi-security-parity.md).
