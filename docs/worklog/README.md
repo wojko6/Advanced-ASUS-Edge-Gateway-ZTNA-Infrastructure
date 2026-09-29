@@ -17,3 +17,4 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-09-25](2026-09-25.md) — fresh router health checkpoint, current-firmware DNS/DoT counter correlation, bounded Exit Node diagnostic and GeForce NOW normal-use follow-up.
 - [2026-09-26](2026-09-26.md) — Wi-Fi 6 HE80/HE160 MT7922 interoperability investigation, driver A/B comparison, Android HE160 reference validation, sanitized case-study publication and deferred Fedora Live follow-up.
 - [2026-09-27](2026-09-27.md) — current-firmware DNS/Diversion/startup/Android validation closure, canonical Mermaid architecture set, and completed router disaster-recovery baseline with clean-room restore.
+- [2026-09-28](2026-09-28.md) — Pi-hole main-LAN migration, swap-startup recovery, Pi-hole DNS analytics collector/Alloy/Loki/Grafana validation, two-client coverage testing, non-DFS HE80 profile and GitHub/CI Grafana observability.
