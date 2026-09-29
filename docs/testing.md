@@ -19,35 +19,52 @@ The unchanged-state router observation was closed on 2026-09-22 after continuous
 sh tests/test-static.sh
 ```
 
-Run this suite on a Linux workstation or CI runner with Python 3, not on the
-router. Python is used only by the test harness; deployed scripts remain POSIX
-shell. The suite performs shell syntax checks, optional ShellCheck analysis,
-boot-path regression checks, a mocked firewall render test and isolated recovery
-tests. Recovery tests exercise a backup/restore round trip, manifest rejection,
-copy failures, full installer rollback, first-install cleanup, firewall bypass
-detection and exact printer-port matching. The evidence test also checks that
-private healthcheck diagnostics are omitted.
+Run this suite on a Linux workstation or CI runner, not on the router. The
+static suite performs shell syntax checks, optional ShellCheck analysis and
+source-level regression guards for installer, boot, WebUI, firewall, recovery
+and evidence contracts. It also runs the focused USB-exposure mock. Python is
+used by separate CI test harnesses; deployed router scripts remain POSIX shell.
 
-GitHub Actions runs the main static/recovery/evidence suite plus focused regression
-checks for configuration validation and maintenance/recovery paths:
+GitHub Actions runs the static suite plus the following focused repository,
+recovery and documentation checks:
 
 ```sh
+python3 tests/test-doc-links.py
+python3 tests/test-asus-webui-pl-overlay.py
 python3 tests/test-recovery.py
+python3 tests/test-pihole-dns-collector.py
 sh tests/test-firewall-mock.sh
+sh tests/test-firewall-temp-guard-cleanup.sh
 sh tests/test-config-validation.sh
 sh tests/test-evidence-collector.sh
+sh tests/test-dr-manifest.sh
 sh tests/test-log-retention.sh
 sh tests/test-services-config-validation.sh
+sh tests/test-services-lock.sh
 sh tests/test-services-tailscale-policy-static.sh
+sh tests/test-services-firewall-hook-static.sh
 sh tests/test-healthcheck-config-validation.sh
 sh tests/test-healthcheck-exit-node-contract.sh
+sh tests/test-healthcheck-drift-guards.sh
+sh tests/test-healthcheck-lan-dns-contract.sh
+sh tests/test-healthcheck-lan-dot-contract.sh
 sh tests/test-update-tailscale-static.sh
 sh tests/test-restore-validation.sh
+sh tests/test-cleanroom-restore.sh
+sh tests/test-uninstall.sh
 sh tests/test-fedora-dr-restore.sh
 sh tests/test-wan-event-handler.sh
 sh tests/test-wan-config-validation.sh
+sh tests/test-install-preflight-static.sh
 sh tests/test-install-rollback.sh
+sh tests/test-wan-prevalidation-static.sh
 ```
+
+The Markdown-link test checks repository-local links and image targets across
+all Markdown documents so renamed or removed files fail CI instead of silently
+leaving stale navigation. The Polish WebUI tests validate dictionary overlay
+structure, while the static suite also verifies that every production WebUI
+patch header remains compatible with the builder's `patch -p1` contract.
 
 The Python recovery integration tests exercise backup/restore round trips and rollback semantics. The firewall mock/configuration tests exercise rendered policy and pre-mutation rejection. Evidence-collector and retention tests verify sanitization, manifests, compression, expiry, and safety guards. The configuration-validation tests reject invalid startup, healthcheck, firewall,
 and WAN-event inputs before those values can reach runtime commands. The
