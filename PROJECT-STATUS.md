@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud one-way synchronization (#136) is completed. Browser-based LAN/Tailscale access (#137) is now the active milestone: the HTTPS/Tailscale/split-DNS/reboot-persistence baseline is live-validated, while mobile-client acceptance, safe rename, storage usage and final negative-boundary tests remain open. Versioned snapshots (#138) follow afterward; unrelated hardening/analytics follow-ups remain tracked separately.
+**Current phase:** Personal Cloud one-way synchronization (#136) is completed. Browser-based LAN/Tailscale access (#137) is now the active milestone: the HTTPS/Tailscale/split-DNS/reboot-persistence baseline and Android/Poco remote-client acceptance are live-validated, while safe rename, storage usage, final negative-boundary tests and UI completion remain open. Versioned snapshots (#138) follow afterward; unrelated hardening/analytics follow-ups remain tracked separately.
 
 ## Executive status
 
@@ -41,9 +41,16 @@ through a source-scoped Tailscale firewall rule, split DNS for
 `cloud.home.arpa`, and recovery from delayed `ROUTER_DATA` mounting have
 been live-validated through a real reboot and mobile-hotspot test.
 
+Android/Poco remote-client acceptance is now complete over LTE/5G using the
+active project development Tailscale client. Tailscale DNS and subnet routes
+were enabled on that client, the active node identity was source-allowlisted,
+the RouterCloud firewall counter increased on the mobile connection, and the
+public RouterCloud CA certificate was installed so the browser accepted the
+private TLS chain and dedicated login succeeded.
+
 The issue is not complete: rename remains intentionally unavailable while
-delete is disabled, and storage-usage UI, second/mobile-client acceptance plus
-explicit outside-root and WAN-negative validation are still pending. See
+delete is disabled, and storage-usage UI plus explicit outside-root and
+WAN-negative validation are still pending. See
 [the design guide](docs/personal-cloud-browser-access.md) and
 [sanitized validation](evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md).
 
