@@ -9,8 +9,9 @@ Personal Cloud access. It is intentionally sanitized and does not publish
 Tailscale node addresses, authentication hashes, passwords, private keys or CA
 private material.
 
-Issue #137 remains open because rename, storage usage and additional client /
-negative-boundary acceptance are not yet complete.
+Issue #137 remains open because rename, storage usage and explicit
+negative-boundary acceptance are not yet complete. Android/Poco remote-client
+acceptance is complete.
 
 ## Service boundary
 
@@ -130,9 +131,9 @@ cloud.home.arpa. A 192.168.50.254
 ```
 
 The tailnet was configured with a restricted/split nameserver for
-`home.arpa` pointing to the router's Tailscale DNS listener. With Tailscale
-DNS and subnet routes enabled on the remote Fedora client, normal system
-resolution and browser access to:
+`home.arpa` pointing to the router LAN DNS address reachable through the
+advertised subnet route. With Tailscale DNS and subnet routes enabled on the
+remote Fedora client, normal system resolution and browser access to:
 
 ```text
 https://cloud.home.arpa/
@@ -141,6 +142,31 @@ https://cloud.home.arpa/
 worked over the mobile hotspot without `--resolve`.
 
 Deployment-specific Tailscale addresses are intentionally omitted.
+
+## Android/Poco remote-client acceptance
+
+A second authorized remote-client test was completed from the Android phone over
+LTE/5G using the project development Tailscale client.
+
+Troubleshooting showed that the development client and the previously installed
+official Android client were separate tailnet nodes. The active development
+client also required both Tailscale DNS and subnet routes to be enabled. Once
+the active node identity was placed in the dedicated RouterCloud allowlist, the
+phone resolved and opened:
+
+```text
+https://cloud.home.arpa/
+```
+
+over the mobile network.
+
+After policy reload, the dedicated RouterCloud rule started at zero and then
+recorded two new TCP connection packets from the authorized mobile node. The
+stale allowlist entry for the removed official Android client was deleted.
+
+The public RouterCloud CA certificate was installed in the Android trust store.
+The browser then accepted the private TLS chain without a certificate warning,
+and dedicated RouterCloud login succeeded.
 
 ## Security claim boundary
 
@@ -152,13 +178,15 @@ This evidence supports the following claims only:
 - Dufs is rooted at the dedicated Personal Cloud directory and delete/symlink
   features are disabled in the current profile;
 - service startup survives the observed Entware/data-volume mount ordering;
-- split DNS allows the same private hostname to work remotely.
+- split DNS allows the same private hostname to work remotely;
+- authorized Android/Poco access over LTE/5G is live-validated;
+- the Android browser trusts the RouterCloud TLS chain after installation of
+  the public CA certificate and dedicated login succeeds.
 
 Not yet claimed:
 
 - completed rename support;
 - completed storage-usage UI;
-- completed Android/Poco client acceptance;
 - explicit negative traversal tests against every router-internal path;
 - explicit external-WAN negative scan;
 - direct Tailscale peer-to-peer transport.
