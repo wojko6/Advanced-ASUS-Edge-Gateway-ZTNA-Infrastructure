@@ -70,12 +70,22 @@ fi
 : "${EDGE_UNBOUND_CONFIG:=}"
 : "${EDGE_SYSLOG_HOST:=}"
 : "${EDGE_SYSLOG_PORT:=6514}"
+: "${EDGE_REQUIRE_WAN_WEBUI_DISABLED:=1}"
+: "${EDGE_REQUIRE_ACCESS_RESTRICTION:=1}"
+: "${EDGE_EXPECT_HTTP_AUTOLOGOUT:=}"
 
 valid_port() {
     case "$1" in ''|*[!0-9]*) return 1 ;; esac
     [ "$1" -ge 1 ] 2>/dev/null && [ "$1" -le 65535 ] 2>/dev/null
 }
 valid_boolean() { case "$1" in 0|1) return 0 ;; *) return 1 ;; esac; }
+valid_http_autologout() {
+    case "$1" in
+        0) return 0 ;;
+        ""|*[!0-9]*) return 1 ;;
+    esac
+    [ "$1" -ge 10 ] 2>/dev/null && [ "$1" -le 999 ] 2>/dev/null
+}
 valid_interface() {
     case "$1" in ''|*[!A-Za-z0-9_.:+-]*) return 1 ;; *) [ "${#1}" -le 15 ] ;; esac
 }
@@ -113,6 +123,9 @@ valid_boolean "$EDGE_ENABLE_EXIT_NODE" || fail "invalid EDGE_ENABLE_EXIT_NODE va
 valid_boolean "$EDGE_INTERCEPT_DNS" || fail "invalid EDGE_INTERCEPT_DNS value: $EDGE_INTERCEPT_DNS"
 valid_boolean "$EDGE_ENFORCE_LAN_DNS" || fail "invalid EDGE_ENFORCE_LAN_DNS value: $EDGE_ENFORCE_LAN_DNS"
 valid_boolean "$EDGE_BLOCK_LAN_DOT" || fail "invalid EDGE_BLOCK_LAN_DOT value: $EDGE_BLOCK_LAN_DOT"
+valid_boolean "$EDGE_REQUIRE_WAN_WEBUI_DISABLED" || fail "invalid EDGE_REQUIRE_WAN_WEBUI_DISABLED value: $EDGE_REQUIRE_WAN_WEBUI_DISABLED"
+valid_boolean "$EDGE_REQUIRE_ACCESS_RESTRICTION" || fail "invalid EDGE_REQUIRE_ACCESS_RESTRICTION value: $EDGE_REQUIRE_ACCESS_RESTRICTION"
+[ -z "$EDGE_EXPECT_HTTP_AUTOLOGOUT" ] || valid_http_autologout "$EDGE_EXPECT_HTTP_AUTOLOGOUT" || fail "invalid EDGE_EXPECT_HTTP_AUTOLOGOUT value: $EDGE_EXPECT_HTTP_AUTOLOGOUT"
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
 valid_ipv4 "$EDGE_ROUTER_LAN_IP" || fail "invalid EDGE_ROUTER_LAN_IP value: $EDGE_ROUTER_LAN_IP"
@@ -138,6 +151,39 @@ esac
 if [ "$FAILURES" -ne 0 ]; then
     printf '\nSummary: %s failure(s), %s warning(s)\n' "$FAILURES" "$WARNINGS"
     exit 1
+fi
+
+if [ "$EDGE_REQUIRE_WAN_WEBUI_DISABLED" = "1" ]; then
+    wan_webui_state="$(nvram get misc_http_x 2>/dev/null)"
+    if [ "$wan_webui_state" = "0" ]; then
+        ok "router WebUI disabled from WAN"
+    else
+        fail "router WebUI WAN exposure drift: misc_http_x=$wan_webui_state"
+    fi
+fi
+
+if [ "$EDGE_REQUIRE_ACCESS_RESTRICTION" = "1" ]; then
+    access_restriction_state="$(nvram get enable_acc_restriction 2>/dev/null)"
+    access_restriction_rules="$(nvram get restrict_rulelist 2>/dev/null)"
+    if [ "$access_restriction_state" = "1" ]; then
+        ok "router management access restriction enabled"
+    else
+        fail "router management access restriction disabled"
+    fi
+    if [ -n "$access_restriction_rules" ]; then
+        ok "router management access restriction rule list present"
+    else
+        fail "router management access restriction rule list empty"
+    fi
+fi
+
+if [ -n "$EDGE_EXPECT_HTTP_AUTOLOGOUT" ]; then
+    actual_http_autologout="$(nvram get http_autologout 2>/dev/null)"
+    if [ "$actual_http_autologout" = "$EDGE_EXPECT_HTTP_AUTOLOGOUT" ]; then
+        ok "WebUI auto logout matches expected policy: $actual_http_autologout"
+    else
+        fail "WebUI auto logout drift: expected $EDGE_EXPECT_HTTP_AUTOLOGOUT, found $actual_http_autologout"
+    fi
 fi
 
 if opt_is_ready 2>/dev/null; then
