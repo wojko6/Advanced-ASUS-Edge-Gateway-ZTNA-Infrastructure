@@ -1,12 +1,12 @@
 # Project status
 
-**Status date:** 2026-09-29
+**Status date:** 2026-09-30
 
-**Latest live router checkpoint:** 2026-09-29
+**Latest live router checkpoint:** 2026-09-30
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** the deferred Grafana GitHub/CI dashboard work plus issues #127 and #128 are complete; finish the short post-audit hardening round with #130 (GitHub main ruleset / required validation), then return to the bounded remaining #108 retention/storage, rollback/uninstall and LAN interception-correlation gaps.
+**Current phase:** Personal Cloud one-way synchronization (#136) is completed and reboot-validated. The next Personal Cloud milestone is #137 (browser-based LAN/Tailscale file access), followed by #138 (versioned snapshots); unrelated hardening/analytics follow-ups remain tracked separately.
 
 ## Executive status
 
@@ -31,6 +31,26 @@ On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_
 The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Pi-hole main-LAN filtering, Unbound/DNSSEC integration, firmware dnsmasq for DHCP/local naming and existing interception paths, syslog-ng logging, project-owned least-privilege firewall chains, a read-only project-native Edge Gateway WebUI with persistent Polish localization, recovery tooling, health checks, evidence collection, external observability and automated repository validation.
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
+
+## 2026-09-30 Personal Cloud one-way sync
+
+Issue #136 is complete on the reference Fedora workstation and ASUS router.
+The validated path synchronizes `~/RouterCloud/` to the dedicated
+`ROUTER_DATA/RouterCloud/` SSD directory with `rsync -rtv` over SSH. The Fedora
+client uses a dedicated key and explicitly suppresses SSH config/default-key and
+agent fallback; the router key is restricted to the project-owned
+`personal-cloud-rsync` forced-command wrapper.
+
+Acceptance included create/update transfer, local-delete preservation, bounded
+authentication failure and recovery, denial of arbitrary commands through the
+automation identity, SSH-service regeneration, full router reboot persistence,
+post-reboot synchronization, and final automatic `systemd.path` delivery. A
+five-minute user timer remains the full-tree reconciliation fallback.
+
+The browser-access layer and versioned snapshots are not part of this completed
+baseline and remain tracked as #137 and #138 respectively. See
+[the design guide](docs/personal-cloud-sync.md) and
+[sanitized live validation](evidence/2026-09-30/issue-136-personal-cloud-sync-validation.md).
 
 ## 2026-09-29 LAN management and WAN exposure hardening
 
