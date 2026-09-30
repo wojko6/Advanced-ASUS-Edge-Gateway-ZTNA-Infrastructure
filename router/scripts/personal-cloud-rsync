@@ -1,0 +1,26 @@
+#!/bin/sh
+set -u
+
+LIVE="/opt/bin/rsync --server -vtre.iLsfxCIvu . /tmp/mnt/ROUTER_DATA/RouterCloud/"
+DRY="/opt/bin/rsync --server -vntre.iLsfxCIvu . /tmp/mnt/ROUTER_DATA/RouterCloud/"
+
+case "${SSH_ORIGINAL_COMMAND:-}" in
+    "$LIVE")
+        exec /opt/bin/rsync \
+            --server \
+            -vtre.iLsfxCIvu \
+            . \
+            /tmp/mnt/ROUTER_DATA/RouterCloud/
+        ;;
+    "$DRY")
+        exec /opt/bin/rsync \
+            --server \
+            -vntre.iLsfxCIvu \
+            . \
+            /tmp/mnt/ROUTER_DATA/RouterCloud/
+        ;;
+    *)
+        echo "Personal Cloud: command denied" >&2
+        exit 126
+        ;;
+esac
