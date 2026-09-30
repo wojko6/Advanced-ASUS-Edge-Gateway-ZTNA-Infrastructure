@@ -27,7 +27,7 @@ do
     }
 done
 
-for config_guard in     'EDGE_ROUTERCLOUD_TS_SOURCES=""'     'EDGE_ROUTERCLOUD_IP=""'     'EDGE_ROUTERCLOUD_PORT="443"'     'EDGE_ROUTERCLOUD_ROOT="/tmp/mnt/ROUTER_DATA/RouterCloud"'
+for config_guard in     'EDGE_ROUTERCLOUD_TS_SOURCES=""'     'EDGE_ROUTERCLOUD_IP=""'     'EDGE_ROUTERCLOUD_PORT="443"'     'EDGE_ROUTERCLOUD_ROOT="/tmp/mnt/ROUTER_DATA/RouterCloud"'     'EDGE_ROUTER_HTTPS_PORT="8443"'     'EDGE_ROUTER_HTTPS_TARGET_PORT="443"'
 do
     grep -F "$config_guard" "$EDGE_CONFIG" >/dev/null || {
         echo "FAIL: RouterCloud example configuration missing: $config_guard" >&2
@@ -35,7 +35,7 @@ do
     }
 done
 
-for dufs_guard in     'serve-path: /tmp/mnt/ROUTER_DATA/RouterCloud'     'allow-delete: false'     'allow-symlink: false'     'tls-cert: /opt/etc/routercloud/tls/cloud.home.arpa.crt'     'tls-key: /opt/etc/routercloud/tls/cloud.home.arpa.key'
+for dufs_guard in     'serve-path: /tmp/mnt/ROUTER_DATA/RouterCloud'     'allow-move: true'     'allow-delete: false'     'allow-symlink: false'     'tls-cert: /opt/etc/routercloud/tls/cloud.home.arpa.crt'     'tls-key: /opt/etc/routercloud/tls/cloud.home.arpa.key'
 do
     grep -F "$dufs_guard" "$DUFS_CONFIG" >/dev/null || {
         echo "FAIL: Dufs hardening setting missing: $dufs_guard" >&2
@@ -67,6 +67,18 @@ grep -F 'RouterCloud startup completed after mount event' "$POST_MOUNT" >/dev/nu
     echo "FAIL: RouterCloud post-mount recovery logging missing" >&2
     exit 1
 }
+
+for management_guard in \
+    'EDGE_ROUTER_HTTPS_TARGET_PORT:=443}' \
+    'router HTTPS ingress port conflicts with RouterCloud port' \
+    '-d "$EDGE_ROUTER_LAN_IP/32" -p tcp --dport "$EDGE_ROUTER_HTTPS_TARGET_PORT"' \
+    '--to-destination "$EDGE_ROUTER_LAN_IP:$EDGE_ROUTER_HTTPS_TARGET_PORT"'
+do
+    grep -F -- "$management_guard" "$FIREWALL" >/dev/null || {
+        echo "FAIL: router-management ingress/target split missing: $management_guard" >&2
+        exit 1
+    }
+done
 
 sh -n "$S66"
 sh -n "$S67"
