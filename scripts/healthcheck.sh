@@ -640,6 +640,7 @@ if [ -n "$EDGE_ROUTERCLOUD_TS_SOURCES" ] || [ -n "$EDGE_ROUTERCLOUD_IP" ]; then
         if [ -d "$EDGE_ROUTERCLOUD_ROOT" ]; then ok "RouterCloud root present"; else fail "RouterCloud root missing: $EDGE_ROUTERCLOUD_ROOT"; fi
         if [ -r "$EDGE_ROUTERCLOUD_DUFS_CONFIG" ]; then
             ok "RouterCloud Dufs configuration readable"
+            grep -F -x 'allow-move: true' "$EDGE_ROUTERCLOUD_DUFS_CONFIG" >/dev/null 2>&1 && ok "RouterCloud safe move enabled" || fail "RouterCloud safe-move guard missing"
             grep -F -x 'allow-delete: false' "$EDGE_ROUTERCLOUD_DUFS_CONFIG" >/dev/null 2>&1 && ok "RouterCloud global delete remains disabled" || fail "RouterCloud global delete guard missing"
             grep -F -x 'allow-symlink: false' "$EDGE_ROUTERCLOUD_DUFS_CONFIG" >/dev/null 2>&1 && ok "RouterCloud symlinks remain disabled" || fail "RouterCloud symlink guard missing"
         else
