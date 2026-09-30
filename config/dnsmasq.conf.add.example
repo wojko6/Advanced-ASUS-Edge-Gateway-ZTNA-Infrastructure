@@ -5,3 +5,7 @@ interface=tailscale0
 no-resolv
 server=127.0.0.1#53535
 cache-size=0
+
+# Reference Personal Cloud local name. Adjust the address if the dedicated
+# RouterCloud LAN alias differs in a deployment.
+host-record=cloud.home.arpa,192.168.50.254
