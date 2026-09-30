@@ -146,22 +146,39 @@ A later phase will assess residual mobile telemetry without restoring applicatio
 
 Full telemetry/capture changes that require modifying router configuration may now proceed as controlled post-observation work.
 
-## Near-term — Personal cloud / automated file sync
+## Completed and validated — Personal Cloud automated file sync
 
-- Create a workstation sync directory (for example `~/RouterCloud`) on Fedora Workstation.
-- Implement incremental synchronization with `rsync` over SSH.
-- Store synchronized data on the dedicated `ROUTER_DATA` filesystem, isolated from Entware and router-service files.
-- Support secure remote synchronization through Tailscale without exposing file-sharing services to the public Internet.
-- Automate synchronization with a systemd user timer and/or a filesystem-triggered workflow.
-- Default to upload/copy semantics so accidental local deletion does not automatically remove the remote copy.
-- Validate LAN and Tailscale transfers, interrupted-transfer recovery, router/workstation reboot behaviour, permissions, and unauthorized-access handling.
-- Verify transferred-file integrity with SHA-256 and record measured throughput.
-- Document synchronization, failure handling, recovery, and rollback procedures.
-- Retain sanitized test evidence suitable for portfolio documentation.
+**Status: issue #136 completed 2026-09-30.**
 
-Target end state: the SSD remains the router's persistent storage for Entware and related services while `ROUTER_DATA` provides a separate private cloud-like data area synchronized automatically from Fedora Workstation.
+The Fedora workstation now has an evidence-backed one-way sync path from
+`~/RouterCloud/` to the dedicated `ROUTER_DATA/RouterCloud/` directory on the
+router SSD.
 
-The synchronization feature must only be documented as **Completed and validated** after file synchronization, recovery, integrity, permissions, and reboot tests have actually been completed.
+The accepted v1 design uses `rsync -rtv` over the existing SSH service, a
+dedicated client identity, a fail-closed router-side forced-command wrapper,
+`systemd.path` for low-latency top-level triggers, and a five-minute
+`systemd.timer` for reconciliation. Automatic deletion is intentionally absent.
+
+Acceptance covered controlled copy, local-delete safety, fail-closed behavior
+with the dedicated identity unavailable, recovery after identity restoration,
+administrator-access preservation, arbitrary-shell denial for the automation
+key, SSH-key regeneration, a full router reboot, successful post-reboot sync,
+and a final automatic path-trigger transfer.
+
+The final client also prevents fallback to ordinary workstation SSH identities.
+A failed intermediate authorization design containing two forced commands was
+identified during persistence testing and corrected to one project-owned
+`personal-cloud-rsync` wrapper command.
+
+See:
+
+- [Personal Cloud design and operations](personal-cloud-sync.md)
+- [sanitized #136 live validation](../evidence/2026-09-30/issue-136-personal-cloud-sync-validation.md)
+
+**Next Personal Cloud work:** issue #137 adds browser-based file access while
+remaining LAN/Tailscale-only; issue #138 adds independent versioned snapshot and
+restore history. Those capabilities are not implied by the completed #136 sync
+baseline.
 
 ## Stability follow-up
 
