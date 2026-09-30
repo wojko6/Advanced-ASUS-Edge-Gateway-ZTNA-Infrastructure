@@ -9,9 +9,11 @@ Personal Cloud access. It is intentionally sanitized and does not publish
 Tailscale node addresses, authentication hashes, passwords, private keys or CA
 private material.
 
-Issue #137 remains open because rename, storage usage and explicit
-negative-boundary acceptance are not yet complete. Android/Poco remote-client
-acceptance is complete.
+Issue #137 remains open only for the planned trusted-device DELETE policy,
+final post-change regression/reboot acceptance and source-control of the exact
+project-owned Dufs patch/build recipe. Safe rename, storage usage, explicit
+negative-boundary checks, Android/Poco acceptance and no-WAN validation are
+complete.
 
 ## Service boundary
 
@@ -22,8 +24,9 @@ name:       cloud.home.arpa
 LAN alias:  192.168.50.254/24 on br0:routercloud
 transport:  HTTPS/TCP 443
 serve root: /tmp/mnt/ROUTER_DATA/RouterCloud
-service:    Dufs 0.46.0
-delete:     disabled
+service:    project-patched Dufs 0.46.0
+rename:     independently enabled, same-directory only
+delete:     globally disabled
 symlinks:   disabled
 ```
 
@@ -35,15 +38,20 @@ router-management address or a wildcard listener.
 Authenticated browser/API checks passed for:
 
 ```text
-browse directory: PASS
-create directory: PASS
-upload:           PASS
-download:         PASS
-delete denied:    PASS
+browse directory:             PASS
+create directory:             PASS
+upload:                       PASS
+download:                     PASS
+safe same-directory rename:   PASS
+destination overwrite denied: PASS
+cross-directory move denied:  PASS
+delete denied globally:       PASS
+storage usage display:        PASS
+Polish UI / cache refresh:     PASS
 ```
 
-Rename remains pending because Dufs 0.46.0 couples `MOVE` authorization to the
-delete permission. The safe baseline kept delete disabled.
+The deployed project patch separates safe rename from upstream Dufs 0.46.0's
+delete coupling. The production build keeps global destructive delete disabled.
 
 ## Reboot / mount-order recovery
 
@@ -173,6 +181,37 @@ The public RouterCloud CA certificate was installed in the Android trust store.
 The browser then accepted the private TLS chain without a certificate warning,
 and dedicated RouterCloud login succeeded.
 
+
+## Boundary and no-WAN validation
+
+Explicit negative tests were completed against the production-safe build.
+Attempts involving the service root, parent traversal, encoded traversal and a
+symlink destination outside the RouterCloud root were rejected, and outside
+sentinel data remained unchanged. Root rename was also rejected.
+
+The RouterCloud listener remained bound to the dedicated LAN alias on TCP/443;
+no wildcard RouterCloud listener and no WAN DNAT/port-forward to that alias were
+present. With Wi-Fi and Tailscale disabled, a real cellular client could not
+reach the RouterCloud service. These checks support the bounded claim that the
+validated configuration does not directly expose RouterCloud on the public WAN.
+
+## Dual-client management-policy reconciliation
+
+The authorized Android/Poco device was aligned with the Fedora administration
+workstation for both normal-LAN and Tailscale management access. The live audit
+found and removed a stale Android tailnet identity from the management policy.
+
+The audit also found a management NAT inconsistency: the Tailnet-facing
+management ingress port was being reused as the local ASUS WebUI target even
+though the active `httpds` listener had moved to TCP/443. The corrected design
+keeps the distinct Tailnet ingress port but DNATs to the actual
+`192.168.50.1:443` listener. RouterCloud remains separately addressed on its
+own alias TCP/443, so the two HTTPS services do not collide.
+
+The live private configuration contained repeated consecutive entries from
+earlier maintenance. It was backed up and deduplicated; deployment-specific
+source addresses remain intentionally omitted here.
+
 ## Security claim boundary
 
 This evidence supports the following claims only:
@@ -180,18 +219,19 @@ This evidence supports the following claims only:
 - RouterCloud HTTPS works on the LAN and through an authorized Tailscale source;
 - the Tailscale allow is destination/port/source scoped and does not broaden
   router-management SSH/HTTPS;
-- Dufs is rooted at the dedicated Personal Cloud directory and delete/symlink
-  features are disabled in the current profile;
+- Dufs is rooted at the dedicated Personal Cloud directory, symlinks and
+  global destructive delete are disabled, and safe rename is independently
+  gated by the project patch;
 - service startup survives the observed Entware/data-volume mount ordering;
 - split DNS allows the same private hostname to work remotely;
-- authorized Android/Poco access over LTE/5G is live-validated;
+- authorized Android/Poco access over LAN and LTE/5G is live-validated;
 - the Android browser trusts the RouterCloud TLS chain after installation of
-  the public CA certificate and dedicated login succeeds.
+  the public CA certificate and dedicated login succeeds;
+- safe rename, storage reporting, root/traversal/symlink negative checks and the
+  tested no-WAN boundary are live-validated.
 
 Not yet claimed:
 
-- completed rename support;
-- completed storage-usage UI;
-- explicit negative traversal tests against every router-internal path;
-- explicit external-WAN negative scan;
+- trusted-device destructive DELETE;
+- reproducible rebuild from a repository-owned Dufs patch set/build recipe;
 - direct Tailscale peer-to-peer transport.
