@@ -9,6 +9,9 @@ PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 WEBUI_SOURCE="${EDGE_WEBUI_SOURCE:-/jffs/addons/asus-edge/webui/EdgeGateway.asp}"
 WEBUI_TITLE="Edge Gateway"
+MENU_INDEX="menu_Dashboard"
+MENU_BEGIN_MARKER="/* ASUS-EDGE-MENU-BEGIN */"
+MENU_END_MARKER="/* ASUS-EDGE-MENU-END */"
 PL_WEBUI_HELPER="/jffs/addons/asus-edge/bin/webui-pl-mount"
 MENU_ORIGINAL="/www/require/modules/menuTree.js"
 MENU_TMP="/tmp/menuTree.js"
@@ -93,14 +96,109 @@ mount_webui() {
         cp "$MENU_ORIGINAL" "$MENU_TMP"
     fi
 
-    if ! grep -F "tabName: \"$WEBUI_TITLE\"" "$MENU_TMP" >/dev/null 2>&1; then
-        grep -F 'url: "Tools_OtherSettings.asp", tabName:' "$MENU_TMP" >/dev/null 2>&1 || {
-            rm -f "/www/user/$am_webui_page"
-            echo "ERROR: Tools menu anchor not found" >&2
+    menu_stage="/tmp/asus-edge-menu-build.$$"
+    menu_clean="/tmp/asus-edge-menu-clean.$$"
+    rm -f "$menu_stage" "$menu_clean"
+
+    # Remove either the legacy Administration tab or a previous project-owned
+    # standalone block before rebuilding the menu entry idempotently.
+    sed \
+        -e '/ASUS-EDGE-MENU-BEGIN/,/ASUS-EDGE-MENU-END/d' \
+        -e "\~tabName: \"$WEBUI_TITLE\"},~d" \
+        "$MENU_TMP" >"$menu_clean" || {
+            rm -f "$menu_stage" "$menu_clean" "/www/user/$am_webui_page"
+            echo "ERROR: failed to prepare Edge Gateway menu base" >&2
             exit 1
         }
-        sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"$WEBUI_TITLE\"}," "$MENU_TMP"
+
+    # The stock firmware already provides CSS for menu_Dashboard but no menu
+    # object uses that index. Fail closed if a future firmware starts using it.
+    if grep -F "index: \"$MENU_INDEX\"" "$menu_clean" >/dev/null 2>&1; then
+        rm -f "$menu_stage" "$menu_clean" "/www/user/$am_webui_page"
+        echo "ERROR: reserved menu index already in use: $MENU_INDEX" >&2
+        exit 1
     fi
+
+    awk \
+        -v page="$am_webui_page" \
+        -v title="$WEBUI_TITLE" \
+        -v index="$MENU_INDEX" \
+        -v begin="$MENU_BEGIN_MARKER" \
+        -v end="$MENU_END_MARKER" '
+        BEGIN {
+            pending = ""
+            inserted = 0
+        }
+        {
+            if (pending != "") {
+                if ($0 ~ /^menuName: "<#519#>",[[:space:]]*$/) {
+                    print begin
+                    print "{"
+                    print "menuName: \"" title "\","
+                    print "index: \"" index "\","
+                    print "tab: ["
+                    print "{url: \"" page "\", tabName: \"" title "\"},"
+                    print "{url: \"NULL\", tabName: \"__INHERIT__\"}"
+                    print "]"
+                    print "},"
+                    print end
+                    print pending
+                    print $0
+                    pending = ""
+                    inserted++
+                    next
+                }
+                print pending
+                pending = ""
+            }
+
+            if ($0 ~ /^[[:space:]]*\{[[:space:]]*$/) {
+                pending = $0
+                next
+            }
+
+            print
+        }
+        END {
+            if (pending != "")
+                print pending
+            if (inserted != 1)
+                exit 42
+        }
+        ' "$menu_clean" >"$menu_stage" || {
+            rm -f "$menu_stage" "$menu_clean" "/www/user/$am_webui_page"
+            echo "ERROR: Administration menu anchor not found exactly once" >&2
+            exit 1
+        }
+    rm -f "$menu_clean"
+
+    edge_index_count="$(grep -F -c "index: \"$MENU_INDEX\"" "$menu_stage" || true)"
+    edge_title_count="$(grep -F -c "tabName: \"$WEBUI_TITLE\"" "$menu_stage" || true)"
+    edge_begin_count="$(grep -F -c "$MENU_BEGIN_MARKER" "$menu_stage" || true)"
+    edge_end_count="$(grep -F -c "$MENU_END_MARKER" "$menu_stage" || true)"
+
+    [ "$edge_index_count" = "1" ] &&
+    [ "$edge_title_count" = "1" ] &&
+    [ "$edge_begin_count" = "1" ] &&
+    [ "$edge_end_count" = "1" ] || {
+        rm -f "$menu_stage" "/www/user/$am_webui_page"
+        echo "ERROR: Edge Gateway standalone menu validation failed" >&2
+        exit 1
+    }
+
+    awk -v index="$MENU_INDEX" '
+        $0 ~ "index: \"" index "\"" { edge = NR }
+        $0 ~ /index: "menu_Setting"/ { settings = NR }
+        END { exit !(edge > 0 && settings > edge) }
+    ' "$menu_stage" || {
+        rm -f "$menu_stage" "/www/user/$am_webui_page"
+        echo "ERROR: Edge Gateway menu is not positioned before Administration" >&2
+        exit 1
+    }
+
+    # Preserve the inode because menuTree.js may already be bind-mounted.
+    cat "$menu_stage" >"$MENU_TMP"
+    rm -f "$menu_stage"
 
     remount_menu_tree
     printf '%s\n' "$am_webui_page" >"$STATE_FILE"
@@ -140,7 +238,18 @@ unmount_webui() {
     rmdir "$STATUS_DIR" 2>/dev/null || true
 
     if [ -f "$MENU_TMP" ]; then
-        sed -i "\~tabName: \"$WEBUI_TITLE\"},~d" "$MENU_TMP"
+        menu_stage="/tmp/asus-edge-menu-unmount.$$"
+        sed \
+            -e '/ASUS-EDGE-MENU-BEGIN/,/ASUS-EDGE-MENU-END/d' \
+            -e "\~tabName: \"$WEBUI_TITLE\"},~d" \
+            "$MENU_TMP" >"$menu_stage" || {
+                rm -f "$menu_stage"
+                echo "ERROR: failed to remove Edge Gateway menu entry" >&2
+                return 1
+            }
+        cat "$menu_stage" >"$MENU_TMP"
+        rm -f "$menu_stage"
+
         umount "$MENU_ORIGINAL" 2>/dev/null || true
         if cmp -s "$MENU_TMP" "$MENU_ORIGINAL"; then
             rm -f "$MENU_TMP"
