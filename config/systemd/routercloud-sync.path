@@ -1,0 +1,9 @@
+[Unit]
+Description=Trigger RouterCloud sync on local changes
+
+[Path]
+PathChanged=%h/RouterCloud
+Unit=routercloud-sync.service
+
+[Install]
+WantedBy=default.target
