@@ -769,7 +769,9 @@ for management_health_guard in \
     'source-scoped router HTTPS ingress/target policy' \
     'router HTTPS DNAT policy contains unexpected/stale rules' \
     'stale router HTTPS same-port DNAT rule present' \
+    'stale router HTTPS ingress-port INPUT rule present' \
     'source-scoped RouterCloud HTTPS policy' \
+    'RouterCloud INPUT policy contains unexpected/stale source rules' \
     'RouterCloud global delete remains disabled' \
     'RouterCloud port has no wildcard listener'
 do
