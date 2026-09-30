@@ -130,16 +130,21 @@ A direct Tailscale DNS query subsequently returned:
 cloud.home.arpa. A 192.168.50.254
 ```
 
-The tailnet was configured with a restricted/split nameserver for
-`home.arpa` pointing to the router LAN DNS address reachable through the
-advertised subnet route. With Tailscale DNS and subnet routes enabled on the
-remote Fedora client, normal system resolution and browser access to:
+The initial remote Fedora acceptance used a restricted/split nameserver for
+`home.arpa` pointing to the router Tailscale DNS listener. With Tailscale DNS
+and subnet routes enabled on that Fedora client, normal system resolution and
+browser access to:
 
 ```text
 https://cloud.home.arpa/
 ```
 
 worked over the mobile hotspot without `--resolve`.
+
+During the later Android troubleshooting, the restricted `home.arpa`
+nameserver was changed to the router LAN DNS address reachable through the
+advertised subnet route. That final form was then validated from the Android
+client over LTE/5G.
 
 Deployment-specific Tailscale addresses are intentionally omitted.
 
