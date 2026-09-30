@@ -763,4 +763,6 @@ grep -F 'EDGE_WAN_DNS_WAIT_SECONDS="90"' \
     exit 1
 }
 
+sh "$REPO_DIR/tests/test-routercloud-browser-static.sh"
+
 printf '%s\n' "Static tests passed."
