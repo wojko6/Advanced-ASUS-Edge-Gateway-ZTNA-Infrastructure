@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud one-way synchronization (#136) is completed and reboot-validated. The next Personal Cloud milestone is #137 (browser-based LAN/Tailscale file access), followed by #138 (versioned snapshots); unrelated hardening/analytics follow-ups remain tracked separately.
+**Current phase:** Personal Cloud one-way synchronization (#136) is completed. Browser-based LAN/Tailscale access (#137) is now the active milestone: the HTTPS/Tailscale/split-DNS/reboot-persistence baseline is live-validated, while mobile-client acceptance, safe rename, storage usage and final negative-boundary tests remain open. Versioned snapshots (#138) follow afterward; unrelated hardening/analytics follow-ups remain tracked separately.
 
 ## Executive status
 
@@ -31,6 +31,21 @@ On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_
 The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Pi-hole main-LAN filtering, Unbound/DNSSEC integration, firmware dnsmasq for DHCP/local naming and existing interception paths, syslog-ng logging, project-owned least-privilege firewall chains, a read-only project-native Edge Gateway WebUI with persistent Polish localization, recovery tooling, health checks, evidence collection, external observability and automated repository validation.
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
+
+## 2026-09-30 Personal Cloud browser access
+
+Issue #137 is in progress. The reference router now runs a dedicated
+HTTPS file-access service rooted at the Personal Cloud SSD directory on a
+separate LAN alias. LAN browser access, dedicated authentication, remote access
+through a source-scoped Tailscale firewall rule, split DNS for
+`cloud.home.arpa`, and recovery from delayed `ROUTER_DATA` mounting have
+been live-validated through a real reboot and mobile-hotspot test.
+
+The issue is not complete: rename remains intentionally unavailable while
+delete is disabled, and storage-usage UI, second/mobile-client acceptance plus
+explicit outside-root and WAN-negative validation are still pending. See
+[the design guide](docs/personal-cloud-browser-access.md) and
+[sanitized validation](evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md).
 
 ## 2026-09-30 Personal Cloud one-way sync
 
