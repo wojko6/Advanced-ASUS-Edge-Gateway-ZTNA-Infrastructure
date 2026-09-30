@@ -672,7 +672,34 @@
                         "url": false
                       },
                       "includeByName": {},
-                      "indexByName": {},
+                      "indexByName": {
+                        "additions": 2,
+                        "author_company": 9,
+                        "author_email": 8,
+                        "author_login": 7,
+                        "author_name": 6,
+                        "closed": 10,
+                        "closed_at": 15,
+                        "created_at": 23,
+                        "deletions": 3,
+                        "is_draft": 11,
+                        "labels": 25,
+                        "locked": 12,
+                        "mergeable": 14,
+                        "merged": 13,
+                        "merged_at": 16,
+                        "merged_by_company": 20,
+                        "merged_by_email": 19,
+                        "merged_by_login": 18,
+                        "merged_by_name": 17,
+                        "number": 0,
+                        "open_time": 24,
+                        "repository": 4,
+                        "state": 5,
+                        "title": 1,
+                        "updated_at": 21,
+                        "url": 22
+                      },
                       "renameByName": {
                         "author_login": "Autor",
                         "merged": "",
@@ -797,7 +824,8 @@
               },
               "options": {
                 "cellHeight": "sm",
-                "showHeader": true
+                "showHeader": true,
+                "enablePagination": true
               }
             },
             "version": "13.2.2"
@@ -934,32 +962,6 @@
                         }
                       }
                     ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Autor",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 525
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Opis",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 679
-                      }
-                    ]
                   }
                 ]
               },
@@ -971,7 +973,8 @@
                     "desc": true,
                     "displayName": "Data"
                   }
-                ]
+                ],
+                "enablePagination": true
               }
             },
             "version": "13.2.2"
