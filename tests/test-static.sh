@@ -763,6 +763,22 @@ grep -F 'EDGE_WAN_DNS_WAIT_SECONDS="90"' \
     exit 1
 }
 
+for management_health_guard in \
+    'EDGE_ROUTER_HTTPS_TARGET_PORT:=443' \
+    'router HTTPS ingress port conflicts with RouterCloud port' \
+    'source-scoped router HTTPS ingress/target policy' \
+    'router HTTPS DNAT policy contains unexpected/stale rules' \
+    'stale router HTTPS same-port DNAT rule present' \
+    'source-scoped RouterCloud HTTPS policy' \
+    'RouterCloud global delete remains disabled' \
+    'RouterCloud port has no wildcard listener'
+do
+    grep -F "$management_health_guard" "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: management/RouterCloud health guard missing: $management_health_guard" >&2
+        exit 1
+    }
+done
+
 sh "$REPO_DIR/tests/test-routercloud-browser-static.sh"
 
 printf '%s\n' "Static tests passed."
