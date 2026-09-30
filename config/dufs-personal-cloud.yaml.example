@@ -1,0 +1,21 @@
+# RouterCloud / Dufs reference configuration.
+# Copy to /opt/etc/dufs-personal-cloud.yaml, replace the authentication hash,
+# and keep the deployed file mode at 0600.
+serve-path: /tmp/mnt/ROUTER_DATA/RouterCloud
+bind:
+  - 192.168.50.254
+port: 443
+auth:
+  - 'cloudadmin:REPLACE_WITH_SHA512_CRYPT_HASH@/:rw'
+allow-all: false
+allow-upload: true
+allow-delete: false
+allow-search: true
+allow-symlink: false
+allow-archive: true
+allow-hash: false
+enable-cors: false
+log-format: '$remote_addr $remote_user "$request" $status'
+log-file: /tmp/dufs-personal-cloud.log
+tls-cert: /opt/etc/routercloud/tls/cloud.home.arpa.crt
+tls-key: /opt/etc/routercloud/tls/cloud.home.arpa.key
