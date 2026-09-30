@@ -43,6 +43,10 @@ expect_rejected() {
 }
 
 expect_rejected EDGE_ROUTER_HTTPS_PORT 70000 'invalid port: 70000'
+expect_rejected EDGE_ROUTER_HTTPS_TARGET_PORT 70000 'invalid port: 70000'
+expect_rejected EDGE_ROUTERCLOUD_PORT 70000 'invalid port: 70000'
+expect_rejected EDGE_ROUTERCLOUD_TS_SOURCES '100.64.0.1/99' 'invalid Tailscale source: 100.64.0.1/99'
+expect_rejected EDGE_ROUTERCLOUD_IP '192.168.50.999' 'invalid RouterCloud IPv4: 192.168.50.999'
 
 cp "$REPO_DIR/config/edge.conf.example" "$TMP_DIR/printer-edge.conf"
 echo 'EDGE_PRINTER_TS_SOURCES="192.0.2.95/32"' >>"$TMP_DIR/printer-edge.conf"
@@ -64,6 +68,32 @@ grep -F 'printer sources configured without EDGE_PRINTER_LAN_IP' "$MOCK_LOGGER_L
 }
 [ ! -s "$MOCK_IPTABLES_LOG" ] || {
     echo "FAIL: firewall was mutated before rejecting incomplete printer policy" >&2
+    exit 1
+}
+
+cp "$REPO_DIR/config/edge.conf.example" "$TMP_DIR/routercloud-collision.conf"
+cat >>"$TMP_DIR/routercloud-collision.conf" <<'EOF'
+EDGE_ROUTERCLOUD_TS_SOURCES="100.64.0.10/32"
+EDGE_ROUTERCLOUD_IP="192.168.50.254"
+EDGE_ROUTERCLOUD_PORT="8443"
+EOF
+: >"$MOCK_IPTABLES_LOG"
+: >"$MOCK_LOGGER_LOG"
+
+if EDGE_CONFIG_FILE="$TMP_DIR/routercloud-collision.conf" \
+    EDGE_IPTABLES="$TEST_DIR/mocks/iptables" \
+    EDGE_IP6TABLES="$TEST_DIR/mocks/ip6tables" \
+    EDGE_LOGGER="$TEST_DIR/mocks/logger" \
+    sh "$REPO_DIR/router/scripts/firewall-start"; then
+    echo "FAIL: router HTTPS / RouterCloud ingress collision was accepted" >&2
+    exit 1
+fi
+grep -F 'router HTTPS ingress port conflicts with RouterCloud port: 8443' "$MOCK_LOGGER_LOG" >/dev/null || {
+    echo "FAIL: RouterCloud ingress collision rejection was not logged" >&2
+    exit 1
+}
+[ ! -s "$MOCK_IPTABLES_LOG" ] || {
+    echo "FAIL: firewall was mutated before rejecting RouterCloud ingress collision" >&2
     exit 1
 }
 
