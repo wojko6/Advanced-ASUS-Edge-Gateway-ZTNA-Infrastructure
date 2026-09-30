@@ -175,10 +175,13 @@ See:
 - [Personal Cloud design and operations](personal-cloud-sync.md)
 - [sanitized #136 live validation](../evidence/2026-09-30/issue-136-personal-cloud-sync-validation.md)
 
-**Next Personal Cloud work:** issue #137 adds browser-based file access while
-remaining LAN/Tailscale-only; issue #138 adds independent versioned snapshot and
-restore history. Those capabilities are not implied by the completed #136 sync
-baseline.
+**Current Personal Cloud work:** issue #137 has implemented and live-validated
+the LAN/Tailscale browser-access baseline, safe rename, Polish UI, storage
+reporting and explicit containment/no-WAN checks. It remains open for the
+trusted-device DELETE policy, reproducible source-control of the project-owned
+Dufs patch/build recipe and final regression/reboot acceptance. Issue #138 then
+adds independent versioned snapshot and restore history. Those browser/snapshot
+capabilities remain separate from the completed #136 one-way sync baseline.
 
 ## Stability follow-up
 
