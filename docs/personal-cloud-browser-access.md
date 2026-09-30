@@ -4,13 +4,16 @@ Issue: #137
 
 ## Status
 
-The browser-access baseline is implemented and live-validated for the reference
-ASUS/Fedora deployment. The network, TLS, authentication, reboot persistence,
-source-scoped Tailscale firewall path and split-DNS path are working.
+The browser-access baseline and the current RouterCloud v1 feature set are
+live-validated for the reference ASUS/Fedora/Android deployment. Network
+access, TLS, authentication, reboot persistence, source-scoped Tailscale
+firewalling, split DNS, safe rename, Polish UI, storage-usage presentation and
+the explicit no-WAN/root-containment negative checks are working.
 
-The issue remains open because safe rename, storage-usage presentation,
-explicit boundary-negative testing and the final custom UI still require
-separate validation. Android/Poco remote-client acceptance is complete.
+Issue #137 remains open because destructive delete is still intentionally
+disabled globally. The next change is a separate trusted-device delete policy,
+followed by final regression/reboot validation and source-control of the exact
+project-owned Dufs patch set/build recipe.
 
 ## Architecture
 
@@ -39,16 +42,19 @@ is the dedicated Personal Cloud directory.
 
 ## Selected implementation
 
-The reference deployment uses Dufs 0.46.0. The ARMv7 static-musl binary is not
-vendored in this repository. The reviewed release asset used during validation
-had SHA-256:
+The reference deployment started from Dufs 0.46.0 and now runs a small
+project-owned patch set on top of that version. The current ARMv7 static-musl
+production binary has SHA-256:
 
 ```text
-079f0b7ebfb50851a4c9f88c9b12e100322a1137eb57356d1e902f369618c9f6
+5da9f0960aaf92d243da1dffbca5b42bfce1c86150b643507db8df5fa496be03
 ```
 
-The version was selected after review of the upstream symlink/root containment
-fix present in 0.46.0.
+The patch set adds independently gated safe rename, Polish UI text, asset
+cache-busting and lightweight storage-capacity reporting while retaining the
+upstream 0.46.0 root/symlink containment baseline. The exact patched source and
+reproducible ARM build recipe are not yet committed to this repository; that is
+an explicit remaining reproducibility item before #137 closes.
 
 The hardened configuration template is
 [`config/dufs-personal-cloud.yaml.example`](../config/dufs-personal-cloud.yaml.example).
@@ -58,7 +64,8 @@ Important baseline settings:
 - dedicated listener on the RouterCloud LAN alias rather than `0.0.0.0`;
 - dedicated application authentication;
 - TLS enabled;
-- `allow-delete: false`;
+- project-patched independent `allow-move: true`;
+- global `allow-delete: false`;
 - `allow-symlink: false`;
 - application root fixed to the dedicated RouterCloud directory;
 - no WAN listener or WAN forwarding rule is added.
@@ -103,6 +110,11 @@ match:
 The rule is inserted before the final logged `DROP` in `EDGE_TS_INPUT`.
 This does not enable router SSH or broaden the existing management allowlist.
 
+Router-management HTTPS uses a separate Tailnet-facing ingress port and DNATs
+to the actual local ASUS `httpds` listener on TCP/443. Keeping that ingress
+port distinct from RouterCloud TCP/443 prevents the management DNAT from
+intercepting RouterCloud traffic.
+
 Example deployment values belong only in the private router configuration:
 
 ```sh
@@ -144,19 +156,25 @@ and dedicated RouterCloud authentication succeeded.
 
 The current reference validation has demonstrated:
 
-- authenticated browser access over the home LAN;
-- upload and directory creation;
-- download;
-- delete denied while `allow-delete: false`;
-- remote HTTPS over a real mobile hotspot through Tailscale;
-- a source-scoped firewall counter increment on the accepted remote connection;
+- authenticated browser access over the home LAN from the Fedora workstation
+  and the authorized Android/Poco client;
+- upload, directory creation and download;
+- safe same-directory rename without enabling global delete;
+- overwrite refusal and cross-directory move refusal;
+- Polish UI plus native filesystem-capacity reporting;
+- browser asset cache-busting after the custom UI rebuild;
+- delete denied while global `allow-delete: false`;
+- explicit root/traversal/symlink-escape negative tests;
+- remote HTTPS over a real mobile connection through Tailscale from both
+  authorized device classes;
+- source-scoped RouterCloud firewall rules for the authorized remote clients;
 - normal `cloud.home.arpa` resolution remotely after split-DNS configuration;
-- authorized Android/Poco access over LTE/5G through a distinct source-scoped
-  Tailscale node identity;
 - trusted Android TLS access after installing only the public RouterCloud CA
   certificate;
-- successful dedicated RouterCloud login from the Android browser;
-- automatic recovery after a real reboot and delayed `ROUTER_DATA` mount.
+- automatic recovery after a real reboot and delayed `ROUTER_DATA` mount;
+- explicit no-WAN validation: no wildcard RouterCloud listener, no WAN DNAT to
+  the RouterCloud alias and a cellular test with Tailscale disabled could not
+  reach the service.
 
 Sanitized evidence is in
 [`evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md`](../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md).
@@ -167,15 +185,19 @@ Do not close #137 yet.
 
 Remaining items are:
 
-1. provide rename without casually enabling destructive delete semantics;
-2. add a basic storage-usage presentation;
-3. perform explicit negative path-containment tests against router-internal paths;
-4. perform an explicit no-WAN-exposure validation;
-5. finish the custom RouterCloud UI only after the security behavior is frozen.
+1. implement trusted-device DELETE so the authenticated read/write user may
+   delete only when the actual socket peer address belongs to the authorized
+   Fedora or Android device set; keep global `allow-delete: false`;
+2. keep root deletion forbidden and repeat unauthenticated, untrusted-source,
+   traversal and symlink-escape negative tests for the new DELETE path;
+3. commit the exact Dufs patch set/source delta and reproducible ARMv7 build
+   recipe so the production binary can be independently rebuilt from the repo;
+4. repeat the complete production/reboot acceptance after the delete-policy
+   change, then reconcile the issue/PR and close #137.
 
-Dufs 0.46.0 gates `MOVE` behind both upload and delete permission, so the
-current safe profile intentionally leaves rename unavailable rather than
-enabling delete merely to satisfy the UI.
+The current safe-move patch deliberately separates rename from Dufs 0.46.0's
+upstream delete coupling. It allows only the reviewed rename behavior and does
+not make destructive DELETE generally available.
 
 
 ## Post-#137 RouterCloud evolution
