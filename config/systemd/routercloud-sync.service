@@ -1,0 +1,9 @@
+[Unit]
+Description=RouterCloud one-way sync to ASUS router SSD
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/routercloud-sync
+UMask=0077
+NoNewPrivileges=yes
+TimeoutStartSec=15min
