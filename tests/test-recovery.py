@@ -295,9 +295,24 @@ case "$1" in
 esac
 ''')
         self.command("nvram", r'''
-if [ "$1" = get ] && [ "$2" = usb_printer ]; then
-    [ "$SCENARIO" = usb_printer_enabled ] && echo 1 || echo 0
-    exit 0
+if [ "$1" = get ]; then
+    case "$2" in
+        usb_printer)
+            [ "$SCENARIO" = usb_printer_enabled ] && echo 1 || echo 0
+            exit 0 ;;
+        misc_http_x)
+            [ "$SCENARIO" = wan_webui_enabled ] && echo 1 || echo 0
+            exit 0 ;;
+        enable_acc_restriction)
+            [ "$SCENARIO" = access_restriction_disabled ] && echo 0 || echo 1
+            exit 0 ;;
+        restrict_rulelist)
+            [ "$SCENARIO" = access_rulelist_empty ] || echo '<1>192.0.2.10>3'
+            exit 0 ;;
+        http_autologout)
+            [ "$SCENARIO" = autologout_drift ] && echo 30 || echo 0
+            exit 0 ;;
+    esac
 fi
 exit 1
 ''')
@@ -327,6 +342,7 @@ exit 0
         (self.root / "opt/etc/unbound/unbound.conf").write_text("# fixture\n")
         config = self.root / "jffs/configs/asus-edge.conf"
         config.write_text('EDGE_INTERCEPT_DNS=0\nEDGE_REQUIRE_SWAP=0\n'
+                          'EDGE_EXPECT_HTTP_AUTOLOGOUT=0\n'
                           'EDGE_PRINTER_TS_SOURCES="192.0.2.95/32"\n'
                           'EDGE_PRINTER_LAN_IP="198.51.100.140"\n'
                           'EDGE_PRINTER_TCP_PORTS="80"\nEDGE_PRINTER_UDP_PORTS=" "\n')
@@ -366,6 +382,10 @@ esac
                 ("bypass", "is not the first parent rule"),
                 ("missing_drop", "missing terminal DROP"),
                 ("wrong_port", "missing printer TCP/80 rule"),
+                ("wan_webui_enabled", "router WebUI WAN exposure drift: misc_http_x=1"),
+                ("access_restriction_disabled", "router management access restriction disabled"),
+                ("access_rulelist_empty", "router management access restriction rule list empty"),
+                ("autologout_drift", "WebUI auto logout drift: expected 0, found 30"),
                 ("usb_printer_enabled", "ASUS USB print server enabled or unknown in NVRAM: 1"),
                 ("lpd_running", "lpd process running"),
                 ("u2ec_running", "u2ec process running"),
