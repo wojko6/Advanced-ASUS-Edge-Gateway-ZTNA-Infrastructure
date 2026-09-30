@@ -122,7 +122,7 @@ mount_webui() {
     awk \
         -v page="$am_webui_page" \
         -v title="$WEBUI_TITLE" \
-        -v index="$MENU_INDEX" \
+        -v menu_index="$MENU_INDEX" \
         -v begin="$MENU_BEGIN_MARKER" \
         -v end="$MENU_END_MARKER" '
         BEGIN {
@@ -135,7 +135,7 @@ mount_webui() {
                     print begin
                     print "{"
                     print "menuName: \"" title "\","
-                    print "index: \"" index "\","
+                    print "index: \"" menu_index "\","
                     print "tab: ["
                     print "{url: \"" page "\", tabName: \"" title "\"},"
                     print "{url: \"NULL\", tabName: \"__INHERIT__\"}"
@@ -186,8 +186,8 @@ mount_webui() {
         exit 1
     }
 
-    awk -v index="$MENU_INDEX" '
-        $0 ~ "index: \"" index "\"" { edge = NR }
+    awk -v menu_index="$MENU_INDEX" '
+        $0 ~ "index: \"" menu_index "\"" { edge = NR }
         $0 ~ /index: "menu_Setting"/ { settings = NR }
         END { exit !(edge > 0 && settings > edge) }
     ' "$menu_stage" || {
