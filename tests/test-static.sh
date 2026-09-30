@@ -410,6 +410,32 @@ do
     }
 done
 
+for webui_security_health_guard in \
+    'EDGE_REQUIRE_WAN_WEBUI_DISABLED:=1' \
+    'EDGE_REQUIRE_ACCESS_RESTRICTION:=1' \
+    'EDGE_EXPECT_HTTP_AUTOLOGOUT:=' \
+    'router WebUI disabled from WAN' \
+    'router management access restriction enabled' \
+    'router management access restriction rule list present' \
+    'WebUI auto logout matches expected policy'
+do
+    grep -F "$webui_security_health_guard" "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: WebUI security drift guard missing: $webui_security_health_guard" >&2
+        exit 1
+    }
+done
+
+for webui_security_config_guard in \
+    'EDGE_REQUIRE_WAN_WEBUI_DISABLED="1"' \
+    'EDGE_REQUIRE_ACCESS_RESTRICTION="1"' \
+    'EDGE_EXPECT_HTTP_AUTOLOGOUT=""'
+do
+    grep -F "$webui_security_config_guard" "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+        echo "FAIL: WebUI security drift config missing: $webui_security_config_guard" >&2
+        exit 1
+    }
+done
+
 for swap_health_guard in \
     'EDGE_REQUIRE_SWAP:=auto' \
     'required swap active' \
