@@ -410,7 +410,7 @@
               <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
                      bordercolor="#6b8fa3" class="FormTable">
                 <thead><tr><td colspan="3">Portal usług</td></tr></thead>
-                <tr><th>Usługa</th><th>Stan</th><th>Otwórz</th></tr>
+                <tr><th>Usługa</th><th>Stan / konfiguracja</th><th></th></tr>
                 <tr><th>Grafana</th><td><span id="edge_portal_grafana_state">Ładowanie...</span></td><td><span id="edge_portal_grafana_link">Ładowanie...</span></td></tr>
                 <tr><th>Dashboard sieci</th><td><span id="edge_portal_network_state">Ładowanie...</span></td><td><span id="edge_portal_network_link">Ładowanie...</span></td></tr>
                 <tr><th>Engineering / CI</th><td><span id="edge_portal_engineering_state">Ładowanie...</span></td><td><span id="edge_portal_engineering_link">Ładowanie...</span></td></tr>
