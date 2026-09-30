@@ -523,6 +523,24 @@ stale_admin_same_port_nat_count() {
         '
 }
 
+stale_admin_ingress_input_count() {
+    [ "$EDGE_ROUTER_HTTPS_PORT" = "$EDGE_ROUTER_HTTPS_TARGET_PORT" ] && { printf '0\n'; return; }
+    iptables -t filter -S EDGE_TS_INPUT 2>/dev/null |
+        awk -v port="$EDGE_ROUTER_HTTPS_PORT" '
+            $1 == "-A" && $2 == "EDGE_TS_INPUT" {
+                proto=""; dport=""; state=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "--ctstate" && i < NF) state=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (proto == "tcp" && dport == port && state == "NEW" && target == "ACCEPT") count++
+            }
+            END { print count + 0 }
+        '
+}
+
 routercloud_input_rule_count() {
     cloud_source="$1"
     iptables -t filter -S EDGE_TS_INPUT 2>/dev/null |
@@ -540,6 +558,26 @@ routercloud_input_rule_count() {
                 }
                 if (host(src) == host(source) && host(dst) == host(destination) &&
                     proto == "tcp" && dport == port && state == "NEW" && target == "ACCEPT") count++
+            }
+            END { print count + 0 }
+        '
+}
+
+routercloud_input_rule_total() {
+    iptables -t filter -S EDGE_TS_INPUT 2>/dev/null |
+        awk -v destination="$EDGE_ROUTERCLOUD_IP" -v port="$EDGE_ROUTERCLOUD_PORT" '
+            function host(value) { sub(/\/32$/, "", value); return value }
+            $1 == "-A" && $2 == "EDGE_TS_INPUT" {
+                dst=""; proto=""; dport=""; state=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-d" && i < NF) dst=$(i+1)
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "--ctstate" && i < NF) state=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (host(dst) == host(destination) && proto == "tcp" &&
+                    dport == port && state == "NEW" && target == "ACCEPT") count++
             }
             END { print count + 0 }
         '
@@ -572,6 +610,10 @@ if [ "$EDGE_ALLOW_ROUTER_HTTPS" = "1" ]; then
         fail "stale router HTTPS same-port DNAT rule present"
         admin_policy_failures=$((admin_policy_failures + 1))
     fi
+    if [ "$(stale_admin_ingress_input_count)" = "0" ]; then :; else
+        fail "stale router HTTPS ingress-port INPUT rule present"
+        admin_policy_failures=$((admin_policy_failures + 1))
+    fi
 
     [ "$admin_policy_failures" -eq 0 ] && ok "source-scoped router HTTPS ingress/target policy"
 fi
@@ -581,12 +623,18 @@ if [ -n "$EDGE_ROUTERCLOUD_TS_SOURCES" ] || [ -n "$EDGE_ROUTERCLOUD_IP" ]; then
         fail "RouterCloud source/IP configuration incomplete"
     else
         routercloud_policy_failures=0
+        routercloud_expected=0
         for source in $EDGE_ROUTERCLOUD_TS_SOURCES; do
+            routercloud_expected=$((routercloud_expected + 1))
             if [ "$(routercloud_input_rule_count "$source")" = "1" ]; then :; else
                 fail "RouterCloud INPUT rule missing or duplicated for $source"
                 routercloud_policy_failures=$((routercloud_policy_failures + 1))
             fi
         done
+        if [ "$(routercloud_input_rule_total)" = "$routercloud_expected" ]; then :; else
+            fail "RouterCloud INPUT policy contains unexpected/stale source rules"
+            routercloud_policy_failures=$((routercloud_policy_failures + 1))
+        fi
         [ "$routercloud_policy_failures" -eq 0 ] && ok "source-scoped RouterCloud HTTPS policy"
 
         if [ -d "$EDGE_ROUTERCLOUD_ROOT" ]; then ok "RouterCloud root present"; else fail "RouterCloud root missing: $EDGE_ROUTERCLOUD_ROOT"; fi
