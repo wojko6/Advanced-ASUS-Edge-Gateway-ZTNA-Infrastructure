@@ -238,6 +238,51 @@ if grep -F -- '-v index="$MENU_INDEX"' "$REPO_DIR/router/scripts/webui-mount" >/
 fi
 
 
+for webui_phase4_portal_guard in \
+    'safe_http_url()' \
+    'EDGE_PORTAL_GRAFANA_URL' \
+    'EDGE_PORTAL_NETWORK_DASHBOARD_URL' \
+    'EDGE_PORTAL_ENGINEERING_DASHBOARD_URL' \
+    'EDGE_PORTAL_DNS_ACTIVITY_URL' \
+    'EDGE_PORTAL_PIHOLE_URL' \
+    'EDGE_PORTAL_PERSONAL_CLOUD_URL' \
+    'portal: {' \
+    'edge_portal_grafana_link' \
+    'edge_portal_network_link' \
+    'edge_portal_engineering_link' \
+    'edge_portal_dns_link' \
+    'edge_portal_pihole_link' \
+    'edge_portal_cloud_link' \
+    'rel="noopener noreferrer"'
+do
+    grep -F "$webui_phase4_portal_guard" \
+        "$REPO_DIR/config/edge.conf.example" \
+        "$REPO_DIR/router/scripts/webui-status" \
+        "$REPO_DIR/router/webui/EdgeGateway.asp" >/dev/null || {
+        echo "FAIL: Edge Gateway WebUI Phase 4 portal guard missing: $webui_phase4_portal_guard" >&2
+        exit 1
+    }
+done
+
+for portal_default in \
+    EDGE_PORTAL_GRAFANA_URL \
+    EDGE_PORTAL_NETWORK_DASHBOARD_URL \
+    EDGE_PORTAL_ENGINEERING_DASHBOARD_URL \
+    EDGE_PORTAL_DNS_ACTIVITY_URL \
+    EDGE_PORTAL_PIHOLE_URL \
+    EDGE_PORTAL_PERSONAL_CLOUD_URL
+do
+    grep -F "$portal_default=\"\"" "$REPO_DIR/config/edge.conf.example" >/dev/null || {
+        echo "FAIL: service portal URL must default to empty: $portal_default" >&2
+        exit 1
+    }
+done
+
+if grep -E 'EDGE_PORTAL_[A-Z_]+_URL="https?://(192\.168\.|100\.)' "$REPO_DIR/config/edge.conf.example" >/dev/null; then
+    echo "FAIL: deployment-specific private service portal URL found in public example config" >&2
+    exit 1
+fi
+
 duplicate_webui_ids="$(
     grep -o 'id="[^"]*"' "$REPO_DIR/router/webui/EdgeGateway.asp" |
         sort |

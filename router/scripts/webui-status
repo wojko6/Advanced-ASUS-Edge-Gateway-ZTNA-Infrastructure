@@ -34,12 +34,35 @@ fi
 : "${EDGE_ADMIN_TS_SOURCES:=}"
 : "${EDGE_PRINTER_TS_SOURCES:=}"
 : "${EDGE_PRINTER_LAN_IP:=}"
+: "${EDGE_PORTAL_GRAFANA_URL:=}"
+: "${EDGE_PORTAL_NETWORK_DASHBOARD_URL:=}"
+: "${EDGE_PORTAL_ENGINEERING_DASHBOARD_URL:=}"
+: "${EDGE_PORTAL_DNS_ACTIVITY_URL:=}"
+: "${EDGE_PORTAL_PIHOLE_URL:=}"
+: "${EDGE_PORTAL_PERSONAL_CLOUD_URL:=}"
 
 safe_token() {
     case "${1:-}" in
         ""|*[!0-9A-Za-z_.:@/+%-]*) printf '%s\n' "unknown" ;;
         *) printf '%s\n' "$1" ;;
     esac
+}
+
+safe_http_url() {
+    value="${1:-}"
+
+    case "$value" in
+        "") printf '%s\n' ""; return 0 ;;
+        http://*|https://*) ;;
+        *) printf '%s\n' ""; return 0 ;;
+    esac
+
+    sanitized="$(safe_token "$value")"
+    if [ "$sanitized" = "unknown" ]; then
+        printf '%s\n' ""
+    else
+        printf '%s\n' "$sanitized"
+    fi
 }
 
 number_or_zero() {
@@ -302,6 +325,14 @@ fw_dot_reject="$(chain_target_packets iptables filter EDGE_LAN_DOT_FORWARD REJEC
 fw_ipv6_input_drop="$(chain_target_packets ip6tables filter EDGE_TS6_INPUT DROP)"
 fw_ipv6_forward_drop="$(chain_target_packets ip6tables filter EDGE_TS6_FORWARD DROP)"
 
+# ---- Service portal -------------------------------------------------------
+portal_grafana="$(safe_http_url "$EDGE_PORTAL_GRAFANA_URL")"
+portal_network="$(safe_http_url "$EDGE_PORTAL_NETWORK_DASHBOARD_URL")"
+portal_engineering="$(safe_http_url "$EDGE_PORTAL_ENGINEERING_DASHBOARD_URL")"
+portal_dns="$(safe_http_url "$EDGE_PORTAL_DNS_ACTIVITY_URL")"
+portal_pihole="$(safe_http_url "$EDGE_PORTAL_PIHOLE_URL")"
+portal_cloud="$(safe_http_url "$EDGE_PORTAL_PERSONAL_CLOUD_URL")"
+
 # ---- Scheduler ------------------------------------------------------------
 scheduler_ok=0
 if [ -x /usr/sbin/cru ] && /usr/sbin/cru l 2>/dev/null | grep -F '#AsusEdgeWebUIStatus#' >/dev/null 2>&1; then
@@ -335,6 +366,14 @@ window.edgeGatewayStatus = {
     syslogNg: $svc_syslog,
     piholeFtl: $svc_pihole,
     scheduler: $scheduler_ok
+  },
+  portal: {
+    grafana: "$portal_grafana",
+    networkDashboard: "$portal_network",
+    engineeringDashboard: "$portal_engineering",
+    dnsActivity: "$portal_dns",
+    pihole: "$portal_pihole",
+    personalCloud: "$portal_cloud"
   },
   tailscale: {
     version: "$ts_version",

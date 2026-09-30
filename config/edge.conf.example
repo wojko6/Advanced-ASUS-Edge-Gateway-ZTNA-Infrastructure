@@ -136,3 +136,13 @@ EDGE_TAILSCALED_LOG="/opt/var/log/tailscaled.log"
 # Optional centralized logging health target used by healthcheck.sh.
 EDGE_SYSLOG_HOST=""
 EDGE_SYSLOG_PORT="6514"
+
+# Optional read-only Edge Gateway service portal links.
+# Keep deployment-specific/private addresses in /jffs/configs/asus-edge.conf,
+# not in the public repository. Empty values render as "Nie skonfigurowano".
+EDGE_PORTAL_GRAFANA_URL=""
+EDGE_PORTAL_NETWORK_DASHBOARD_URL=""
+EDGE_PORTAL_ENGINEERING_DASHBOARD_URL=""
+EDGE_PORTAL_DNS_ACTIVITY_URL=""
+EDGE_PORTAL_PIHOLE_URL=""
+EDGE_PORTAL_PERSONAL_CLOUD_URL=""
