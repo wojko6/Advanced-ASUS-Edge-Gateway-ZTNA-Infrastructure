@@ -49,6 +49,15 @@ fi
 : "${EDGE_TS_IF:=tailscale0}"
 : "${EDGE_LAN_IF:=br0}"
 : "${EDGE_ROUTER_LAN_IP:=192.168.50.1}"
+: "${EDGE_ADMIN_TS_SOURCES:=}"
+: "${EDGE_ALLOW_ROUTER_HTTPS:=1}"
+: "${EDGE_ROUTER_HTTPS_PORT:=8443}"
+: "${EDGE_ROUTER_HTTPS_TARGET_PORT:=443}"
+: "${EDGE_ROUTERCLOUD_TS_SOURCES:=}"
+: "${EDGE_ROUTERCLOUD_IP:=}"
+: "${EDGE_ROUTERCLOUD_PORT:=443}"
+: "${EDGE_ROUTERCLOUD_ROOT:=/tmp/mnt/ROUTER_DATA/RouterCloud}"
+: "${EDGE_ROUTERCLOUD_DUFS_CONFIG:=/opt/etc/dufs-personal-cloud.yaml}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_NETFILTER_MODE:=off}"
 : "${EDGE_PRINTER_TS_SOURCES:=}"
@@ -118,6 +127,7 @@ valid_host() {
     done
 }
 
+valid_boolean "$EDGE_ALLOW_ROUTER_HTTPS" || fail "invalid EDGE_ALLOW_ROUTER_HTTPS value: $EDGE_ALLOW_ROUTER_HTTPS"
 valid_boolean "$EDGE_REQUIRE_USB_PRINTER_DISABLED" || fail "invalid EDGE_REQUIRE_USB_PRINTER_DISABLED value: $EDGE_REQUIRE_USB_PRINTER_DISABLED"
 valid_boolean "$EDGE_ENABLE_EXIT_NODE" || fail "invalid EDGE_ENABLE_EXIT_NODE value: $EDGE_ENABLE_EXIT_NODE"
 valid_boolean "$EDGE_INTERCEPT_DNS" || fail "invalid EDGE_INTERCEPT_DNS value: $EDGE_INTERCEPT_DNS"
@@ -129,6 +139,14 @@ valid_boolean "$EDGE_REQUIRE_ACCESS_RESTRICTION" || fail "invalid EDGE_REQUIRE_A
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
 valid_ipv4 "$EDGE_ROUTER_LAN_IP" || fail "invalid EDGE_ROUTER_LAN_IP value: $EDGE_ROUTER_LAN_IP"
+valid_port "$EDGE_ROUTER_HTTPS_PORT" || fail "invalid EDGE_ROUTER_HTTPS_PORT value: $EDGE_ROUTER_HTTPS_PORT"
+valid_port "$EDGE_ROUTER_HTTPS_TARGET_PORT" || fail "invalid EDGE_ROUTER_HTTPS_TARGET_PORT value: $EDGE_ROUTER_HTTPS_TARGET_PORT"
+valid_port "$EDGE_ROUTERCLOUD_PORT" || fail "invalid EDGE_ROUTERCLOUD_PORT value: $EDGE_ROUTERCLOUD_PORT"
+for source in $EDGE_ADMIN_TS_SOURCES $EDGE_ROUTERCLOUD_TS_SOURCES; do valid_ipv4_or_cidr "$source" || fail "invalid managed Tailscale source: $source"; done
+[ -z "$EDGE_ROUTERCLOUD_IP" ] || valid_ipv4 "$EDGE_ROUTERCLOUD_IP" || fail "invalid EDGE_ROUTERCLOUD_IP value: $EDGE_ROUTERCLOUD_IP"
+if [ "$EDGE_ALLOW_ROUTER_HTTPS" = "1" ] && [ -n "$EDGE_ROUTERCLOUD_TS_SOURCES" ] && [ "$EDGE_ROUTER_HTTPS_PORT" = "$EDGE_ROUTERCLOUD_PORT" ]; then
+    fail "router HTTPS ingress port conflicts with RouterCloud port: $EDGE_ROUTER_HTTPS_PORT"
+fi
 for dns_bypass_ip in $EDGE_LAN_DNS_BYPASS_IPS; do
     valid_ipv4 "$dns_bypass_ip" || fail "invalid EDGE_LAN_DNS_BYPASS_IPS IPv4: $dns_bypass_ip"
 done
@@ -406,6 +424,191 @@ check_filter_enforcement() {
 
 check_filter_enforcement iptables INPUT EDGE_TS_INPUT
 check_filter_enforcement iptables FORWARD EDGE_TS_FORWARD
+
+admin_input_rule_count() {
+    admin_source="$1"
+    iptables -t filter -S EDGE_TS_INPUT 2>/dev/null |
+        awk -v source="$admin_source" -v destination="$EDGE_ROUTER_LAN_IP" -v port="$EDGE_ROUTER_HTTPS_TARGET_PORT" '
+            function host(value) { sub(/\/32$/, "", value); return value }
+            $1 == "-A" && $2 == "EDGE_TS_INPUT" {
+                src=""; dst=""; proto=""; dport=""; state=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-s" && i < NF) src=$(i+1)
+                    if ($i == "-d" && i < NF) dst=$(i+1)
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "--ctstate" && i < NF) state=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (host(src) == host(source) && host(dst) == host(destination) &&
+                    proto == "tcp" && dport == port && state == "NEW" && target == "ACCEPT") count++
+            }
+            END { print count + 0 }
+        '
+}
+
+admin_input_rule_total() {
+    iptables -t filter -S EDGE_TS_INPUT 2>/dev/null |
+        awk -v destination="$EDGE_ROUTER_LAN_IP" -v port="$EDGE_ROUTER_HTTPS_TARGET_PORT" '
+            function host(value) { sub(/\/32$/, "", value); return value }
+            $1 == "-A" && $2 == "EDGE_TS_INPUT" {
+                dst=""; proto=""; dport=""; state=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-d" && i < NF) dst=$(i+1)
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "--ctstate" && i < NF) state=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (host(dst) == host(destination) && proto == "tcp" &&
+                    dport == port && state == "NEW" && target == "ACCEPT") count++
+            }
+            END { print count + 0 }
+        '
+}
+
+admin_nat_rule_count() {
+    admin_source="$1"
+    iptables -t nat -S EDGE_TS_PREROUTING 2>/dev/null |
+        awk -v source="$admin_source" -v port="$EDGE_ROUTER_HTTPS_PORT" -v target_ip="$EDGE_ROUTER_LAN_IP" -v target_port="$EDGE_ROUTER_HTTPS_TARGET_PORT" '
+            function host(value) { sub(/\/32$/, "", value); return value }
+            $1 == "-A" && $2 == "EDGE_TS_PREROUTING" {
+                src=""; proto=""; dport=""; target=""; to=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-s" && i < NF) src=$(i+1)
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                    if ($i == "--to-destination" && i < NF) to=$(i+1)
+                }
+                if (host(src) == host(source) && proto == "tcp" && dport == port &&
+                    target == "DNAT" && to == target_ip ":" target_port) count++
+            }
+            END { print count + 0 }
+        '
+}
+
+admin_nat_rule_total() {
+    iptables -t nat -S EDGE_TS_PREROUTING 2>/dev/null |
+        awk -v port="$EDGE_ROUTER_HTTPS_PORT" -v target_ip="$EDGE_ROUTER_LAN_IP" -v target_port="$EDGE_ROUTER_HTTPS_TARGET_PORT" '
+            $1 == "-A" && $2 == "EDGE_TS_PREROUTING" {
+                proto=""; dport=""; target=""; to=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                    if ($i == "--to-destination" && i < NF) to=$(i+1)
+                }
+                if (proto == "tcp" && dport == port && target == "DNAT" &&
+                    to == target_ip ":" target_port) count++
+            }
+            END { print count + 0 }
+        '
+}
+
+stale_admin_same_port_nat_count() {
+    [ "$EDGE_ROUTER_HTTPS_PORT" = "$EDGE_ROUTER_HTTPS_TARGET_PORT" ] && { printf '0\n'; return; }
+    iptables -t nat -S EDGE_TS_PREROUTING 2>/dev/null |
+        awk -v port="$EDGE_ROUTER_HTTPS_PORT" -v target_ip="$EDGE_ROUTER_LAN_IP" '
+            $1 == "-A" && $2 == "EDGE_TS_PREROUTING" {
+                dport=""; target=""; to=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                    if ($i == "--to-destination" && i < NF) to=$(i+1)
+                }
+                if (dport == port && target == "DNAT" && to == target_ip ":" port) count++
+            }
+            END { print count + 0 }
+        '
+}
+
+routercloud_input_rule_count() {
+    cloud_source="$1"
+    iptables -t filter -S EDGE_TS_INPUT 2>/dev/null |
+        awk -v source="$cloud_source" -v destination="$EDGE_ROUTERCLOUD_IP" -v port="$EDGE_ROUTERCLOUD_PORT" '
+            function host(value) { sub(/\/32$/, "", value); return value }
+            $1 == "-A" && $2 == "EDGE_TS_INPUT" {
+                src=""; dst=""; proto=""; dport=""; state=""; target=""
+                for (i=3; i<=NF; i++) {
+                    if ($i == "-s" && i < NF) src=$(i+1)
+                    if ($i == "-d" && i < NF) dst=$(i+1)
+                    if ($i == "-p" && i < NF) proto=$(i+1)
+                    if ($i == "--dport" && i < NF) dport=$(i+1)
+                    if ($i == "--ctstate" && i < NF) state=$(i+1)
+                    if ($i == "-j" && i < NF) target=$(i+1)
+                }
+                if (host(src) == host(source) && host(dst) == host(destination) &&
+                    proto == "tcp" && dport == port && state == "NEW" && target == "ACCEPT") count++
+            }
+            END { print count + 0 }
+        '
+}
+
+if [ "$EDGE_ALLOW_ROUTER_HTTPS" = "1" ]; then
+    admin_expected=0
+    admin_policy_failures=0
+    for source in $EDGE_ADMIN_TS_SOURCES; do
+        admin_expected=$((admin_expected + 1))
+        if [ "$(admin_input_rule_count "$source")" = "1" ]; then :; else
+            fail "router HTTPS INPUT rule missing or duplicated for $source"
+            admin_policy_failures=$((admin_policy_failures + 1))
+        fi
+        if [ "$(admin_nat_rule_count "$source")" = "1" ]; then :; else
+            fail "router HTTPS DNAT rule missing or duplicated for $source"
+            admin_policy_failures=$((admin_policy_failures + 1))
+        fi
+    done
+
+    if [ "$(admin_input_rule_total)" = "$admin_expected" ]; then :; else
+        fail "router HTTPS INPUT policy contains unexpected/stale rules"
+        admin_policy_failures=$((admin_policy_failures + 1))
+    fi
+    if [ "$(admin_nat_rule_total)" = "$admin_expected" ]; then :; else
+        fail "router HTTPS DNAT policy contains unexpected/stale rules"
+        admin_policy_failures=$((admin_policy_failures + 1))
+    fi
+    if [ "$(stale_admin_same_port_nat_count)" = "0" ]; then :; else
+        fail "stale router HTTPS same-port DNAT rule present"
+        admin_policy_failures=$((admin_policy_failures + 1))
+    fi
+
+    [ "$admin_policy_failures" -eq 0 ] && ok "source-scoped router HTTPS ingress/target policy"
+fi
+
+if [ -n "$EDGE_ROUTERCLOUD_TS_SOURCES" ] || [ -n "$EDGE_ROUTERCLOUD_IP" ]; then
+    if [ -z "$EDGE_ROUTERCLOUD_TS_SOURCES" ] || [ -z "$EDGE_ROUTERCLOUD_IP" ]; then
+        fail "RouterCloud source/IP configuration incomplete"
+    else
+        routercloud_policy_failures=0
+        for source in $EDGE_ROUTERCLOUD_TS_SOURCES; do
+            if [ "$(routercloud_input_rule_count "$source")" = "1" ]; then :; else
+                fail "RouterCloud INPUT rule missing or duplicated for $source"
+                routercloud_policy_failures=$((routercloud_policy_failures + 1))
+            fi
+        done
+        [ "$routercloud_policy_failures" -eq 0 ] && ok "source-scoped RouterCloud HTTPS policy"
+
+        if [ -d "$EDGE_ROUTERCLOUD_ROOT" ]; then ok "RouterCloud root present"; else fail "RouterCloud root missing: $EDGE_ROUTERCLOUD_ROOT"; fi
+        if [ -r "$EDGE_ROUTERCLOUD_DUFS_CONFIG" ]; then
+            ok "RouterCloud Dufs configuration readable"
+            grep -F -x 'allow-delete: false' "$EDGE_ROUTERCLOUD_DUFS_CONFIG" >/dev/null 2>&1 && ok "RouterCloud global delete remains disabled" || fail "RouterCloud global delete guard missing"
+            grep -F -x 'allow-symlink: false' "$EDGE_ROUTERCLOUD_DUFS_CONFIG" >/dev/null 2>&1 && ok "RouterCloud symlinks remain disabled" || fail "RouterCloud symlink guard missing"
+        else
+            fail "RouterCloud Dufs configuration missing: $EDGE_ROUTERCLOUD_DUFS_CONFIG"
+        fi
+        if netstat -lnt 2>/dev/null | awk -v endpoint="$EDGE_ROUTERCLOUD_IP:$EDGE_ROUTERCLOUD_PORT" 'NR > 1 && $4 == endpoint { found=1 } END { exit !found }'; then
+            ok "RouterCloud listener bound to dedicated address"
+        else
+            fail "RouterCloud dedicated listener missing: $EDGE_ROUTERCLOUD_IP:$EDGE_ROUTERCLOUD_PORT"
+        fi
+        if netstat -lnt 2>/dev/null | awk -v port="$EDGE_ROUTERCLOUD_PORT" 'NR > 1 { if ($4 == "0.0.0.0:" port || $4 == ":::" port) found=1 } END { exit !found }'; then
+            fail "RouterCloud port has wildcard listener"
+        else
+            ok "RouterCloud port has no wildcard listener"
+        fi
+    fi
+fi
 
 printer_forward_rule_exists() {
     printer_rule_source="$1"; printer_rule_protocol="$2"; printer_rule_port="$3"
