@@ -176,3 +176,31 @@ Remaining items are:
 Dufs 0.46.0 gates `MOVE` behind both upload and delete permission, so the
 current safe profile intentionally leaves rename unavailable rather than
 enabling delete merely to satisfy the UI.
+
+
+## Post-#137 RouterCloud evolution
+
+The browser-access baseline is intended to remain maintainable after #137 rather
+than becoming a frozen one-off Dufs binary. The preferred maintenance model is a
+version-pinned upstream Dufs release plus a small project-owned patch set, with
+rebase/update to newer upstream releases only after source review, automated
+regression tests and ARMv7 live validation.
+
+Planned candidates include:
+
+- complete Polish UI and RouterCloud-specific branding;
+- storage-capacity/free-space presentation;
+- independently gated safe file operations;
+- lightweight audit/event logging and integration with the existing external
+  monitoring stack;
+- more granular user/path authorization where it remains simple to audit;
+- optional recycle-bin/recovery behavior coordinated with #138 versioned
+  snapshots;
+- additional lightweight file previews;
+- optional entry point from the Edge Gateway portal (#84).
+
+The router remains the limiting execution environment. Heavy indexing, OCR,
+media transcoding, large databases or similar workloads should stay off-router.
+Any future feature must preserve the dedicated RouterCloud root, symlink/root
+containment protections, dedicated authentication, LAN/Tailscale-only exposure,
+source-scoped firewall policy and the existing no-WAN boundary.
