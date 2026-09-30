@@ -137,6 +137,13 @@ EDGE_TAILSCALED_LOG="/opt/var/log/tailscaled.log"
 EDGE_SYSLOG_HOST=""
 EDGE_SYSLOG_PORT="6514"
 
+# Management-plane drift guards. Keep WAN WebUI disabled and require the stock
+# ASUS access-restriction allowlist. EDGE_EXPECT_HTTP_AUTOLOGOUT is optional
+# because deployments may deliberately choose a finite timeout or 0 (disabled).
+EDGE_REQUIRE_WAN_WEBUI_DISABLED="1"
+EDGE_REQUIRE_ACCESS_RESTRICTION="1"
+EDGE_EXPECT_HTTP_AUTOLOGOUT=""
+
 # Optional read-only Edge Gateway service portal links.
 # Keep deployment-specific/private addresses in /jffs/configs/asus-edge.conf,
 # not in the public repository. Empty values render as "Nie skonfigurowano".
