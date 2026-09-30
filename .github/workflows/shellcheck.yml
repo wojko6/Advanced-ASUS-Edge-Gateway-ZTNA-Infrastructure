@@ -19,6 +19,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes shellcheck
       - name: Run static, recovery and evidence-redaction tests
         run: sh tests/test-static.sh
+      - name: Run Personal Cloud static policy test
+        run: sh tests/test-personal-cloud-static.sh
       - name: Run Markdown link integrity test
         run: python3 tests/test-doc-links.py
       - name: Run Polish WebUI overlay unit tests
