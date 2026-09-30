@@ -8,7 +8,10 @@ port: 443
 auth:
   - 'cloudadmin:REPLACE_WITH_SHA512_CRYPT_HASH@/:rw'
 allow-all: false
+# Requires the project-patched Dufs 0.46.0 build used by the reference
+# deployment. Stock upstream 0.46.0 does not provide independent allow-move.
 allow-upload: true
+allow-move: true
 allow-delete: false
 allow-search: true
 allow-symlink: false
