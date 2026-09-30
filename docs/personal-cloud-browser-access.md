@@ -8,8 +8,9 @@ The browser-access baseline is implemented and live-validated for the reference
 ASUS/Fedora deployment. The network, TLS, authentication, reboot persistence,
 source-scoped Tailscale firewall path and split-DNS path are working.
 
-The issue remains open because rename, storage-usage presentation and the mobile
-client acceptance still require separate validation.
+The issue remains open because safe rename, storage-usage presentation,
+explicit boundary-negative testing and the final custom UI still require
+separate validation. Android/Poco remote-client acceptance is complete.
 
 ## Architecture
 
@@ -21,7 +22,8 @@ LAN client
 remote Tailscale client            |
    |                               |
    +-- split DNS home.arpa         |
-   |      -> router Tailscale DNS  |
+   |      -> router LAN DNS         |
+   |         via subnet route       |
    |                               |
    +-- subnet route 192.168.50/24  |
                                    v
@@ -120,8 +122,10 @@ cloud.home.arpa -> 192.168.50.254
 ```
 
 The Tailscale control plane uses a restricted/split nameserver for
-`home.arpa`, pointing at the router's Tailscale DNS listener. This avoids
-sending unrelated DNS traffic through the router.
+`home.arpa`, pointing at the router LAN DNS address reachable through the
+advertised subnet route. This avoids sending unrelated DNS traffic through the
+router while keeping the private RouterCloud name resolvable for authorized
+remote clients.
 
 The public repository does not record deployment-specific Tailscale addresses.
 
@@ -131,7 +135,10 @@ The reference deployment uses a small private CA and a server certificate whose
 SAN contains `cloud.home.arpa` and the dedicated RouterCloud LAN address.
 
 Only the CA certificate is distributed to trusted clients. The CA private key
-remains off-router and must not be copied into the repository.
+remains off-router and must not be copied into the repository. The Android
+reference client was validated after importing only the public CA certificate:
+the browser accepted `https://cloud.home.arpa/` without a certificate warning
+and dedicated RouterCloud authentication succeeded.
 
 ## Validated behavior
 
@@ -144,6 +151,11 @@ The current reference validation has demonstrated:
 - remote HTTPS over a real mobile hotspot through Tailscale;
 - a source-scoped firewall counter increment on the accepted remote connection;
 - normal `cloud.home.arpa` resolution remotely after split-DNS configuration;
+- authorized Android/Poco access over LTE/5G through a distinct source-scoped
+  Tailscale node identity;
+- trusted Android TLS access after installing only the public RouterCloud CA
+  certificate;
+- successful dedicated RouterCloud login from the Android browser;
 - automatic recovery after a real reboot and delayed `ROUTER_DATA` mount.
 
 Sanitized evidence is in
@@ -155,12 +167,11 @@ Do not close #137 yet.
 
 Remaining items are:
 
-1. validate a second/mobile authorized Tailscale client;
-2. provide rename without casually enabling destructive delete semantics;
-3. add a basic storage-usage presentation;
-4. perform explicit negative path-containment tests against router-internal paths;
-5. perform an explicit no-WAN-exposure validation;
-6. finish the custom RouterCloud UI only after the security behavior is frozen.
+1. provide rename without casually enabling destructive delete semantics;
+2. add a basic storage-usage presentation;
+3. perform explicit negative path-containment tests against router-internal paths;
+4. perform an explicit no-WAN-exposure validation;
+5. finish the custom RouterCloud UI only after the security behavior is frozen.
 
 Dufs 0.46.0 gates `MOVE` behind both upload and delete permission, so the
 current safe profile intentionally leaves rename unavailable rather than
