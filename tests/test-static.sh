@@ -772,6 +772,7 @@ for management_health_guard in \
     'stale router HTTPS ingress-port INPUT rule present' \
     'source-scoped RouterCloud HTTPS policy' \
     'RouterCloud INPUT policy contains unexpected/stale source rules' \
+    'RouterCloud safe move enabled' \
     'RouterCloud global delete remains disabled' \
     'RouterCloud port has no wildcard listener'
 do
