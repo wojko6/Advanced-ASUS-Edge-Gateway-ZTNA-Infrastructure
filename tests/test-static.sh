@@ -217,7 +217,7 @@ for webui_top_level_menu_guard in \
     'MENU_INDEX="menu_Dashboard"' \
     'ASUS-EDGE-MENU-BEGIN' \
     'menuName: \"" title "\",' \
-    'index: \"" index "\",' \
+    'index: \"" menu_index "\",' \
     'reserved menu index already in use' \
     'Edge Gateway menu is not positioned before Administration'
 do
@@ -229,6 +229,11 @@ done
 
 if grep -F 'Tools menu anchor not found' "$REPO_DIR/router/scripts/webui-mount" >/dev/null; then
     echo "FAIL: legacy Administration-tab Edge Gateway mount path remains" >&2
+    exit 1
+fi
+
+if grep -F -- '-v index="$MENU_INDEX"' "$REPO_DIR/router/scripts/webui-mount" >/dev/null; then
+    echo "FAIL: AWK builtin name 'index' is used as a variable in WebUI mount" >&2
     exit 1
 fi
 
