@@ -184,6 +184,24 @@
         element.innerHTML = value;
     }
 
+    function edgePortalUrl(value) {
+      var url = String(value || "");
+      return /^https?:\/\/[0-9A-Za-z_.:@\/+%\-]+$/.test(url) ? url : "";
+    }
+
+    function edgePortalConfigured(value) {
+      return edgePortalUrl(value)
+        ? '<span class="edge-ok">Skonfigurowane</span>'
+        : '<span class="edge-muted">Nie skonfigurowano</span>';
+    }
+
+    function edgePortalLink(value) {
+      var url = edgePortalUrl(value);
+      if (!url)
+        return '<span class="edge-muted">Brak</span>';
+      return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">Otwórz</a>';
+    }
+
     function renderGatewaySnapshot() {
       var data = window.edgeGatewayStatus;
       if (!data) {
@@ -193,6 +211,7 @@
 
       var system = data.system || {};
       var services = data.services || {};
+      var portal = data.portal || {};
       var tailscale = data.tailscale || {};
       var policy = data.policy || {};
       var firewall = data.firewall || {};
@@ -217,6 +236,19 @@
       setText("edge_svc_syslog", edgeRunningState(services.syslogNg));
       setText("edge_svc_scheduler", edgeSchedulerState(services.scheduler));
       setText("edge_dns_pihole", edgeRunningState(services.piholeFtl));
+
+      setText("edge_portal_grafana_state", edgePortalConfigured(portal.grafana));
+      setText("edge_portal_grafana_link", edgePortalLink(portal.grafana));
+      setText("edge_portal_network_state", edgePortalConfigured(portal.networkDashboard));
+      setText("edge_portal_network_link", edgePortalLink(portal.networkDashboard));
+      setText("edge_portal_engineering_state", edgePortalConfigured(portal.engineeringDashboard));
+      setText("edge_portal_engineering_link", edgePortalLink(portal.engineeringDashboard));
+      setText("edge_portal_dns_state", edgePortalConfigured(portal.dnsActivity));
+      setText("edge_portal_dns_link", edgePortalLink(portal.dnsActivity));
+      setText("edge_portal_pihole_state", edgeRunningState(services.piholeFtl));
+      setText("edge_portal_pihole_link", edgePortalLink(portal.pihole));
+      setText("edge_portal_cloud_state", edgePortalConfigured(portal.personalCloud));
+      setText("edge_portal_cloud_link", edgePortalLink(portal.personalCloud));
 
       setText("edge_ts_version", tailscale.version || "Brak danych");
       setText("edge_ts_connected", edgeSnapshotBoolean(tailscale.connected, "Połączono", "Rozłączono"));
@@ -359,12 +391,13 @@
               </div>
 
               <div class="edge-note">
-                Faza 3 pozostaje tylko do odczytu. Panel udostępnia wyłącznie oczyszczony lokalny stan
+                Faza 4 pozostaje tylko do odczytu. Panel udostępnia wyłącznie oczyszczony lokalny stan
                 operacyjny: na stronie nie są publikowane tożsamości tailnetu, dane uwierzytelniające ani prywatne
                 adresy polityk.
               </div>
 
               <div class="edge-nav">
+                <a href="#portal">Portal usług</a>
                 <a href="#overview">Przegląd</a>
                 <a href="#services">Usługi</a>
                 <a href="#tailscale">Tailscale</a>
@@ -372,6 +405,26 @@
                 <a href="#dns">DNS / Unbound</a>
                 <a href="#health">Stan</a>
               </div>
+
+              <a class="edge-section-anchor" id="portal"></a>
+              <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
+                     bordercolor="#6b8fa3" class="FormTable">
+                <thead><tr><td colspan="3">Portal usług</td></tr></thead>
+                <tr><th>Usługa</th><th>Stan</th><th>Otwórz</th></tr>
+                <tr><th>Grafana</th><td><span id="edge_portal_grafana_state">Ładowanie...</span></td><td><span id="edge_portal_grafana_link">Ładowanie...</span></td></tr>
+                <tr><th>Dashboard sieci</th><td><span id="edge_portal_network_state">Ładowanie...</span></td><td><span id="edge_portal_network_link">Ładowanie...</span></td></tr>
+                <tr><th>Engineering / CI</th><td><span id="edge_portal_engineering_state">Ładowanie...</span></td><td><span id="edge_portal_engineering_link">Ładowanie...</span></td></tr>
+                <tr><th>Aktywność DNS</th><td><span id="edge_portal_dns_state">Ładowanie...</span></td><td><span id="edge_portal_dns_link">Ładowanie...</span></td></tr>
+                <tr><th>Pi-hole</th><td><span id="edge_portal_pihole_state">Ładowanie...</span></td><td><span id="edge_portal_pihole_link">Ładowanie...</span></td></tr>
+                <tr><th>Personal Cloud</th><td><span id="edge_portal_cloud_state">Ładowanie...</span></td><td><span id="edge_portal_cloud_link">Ładowanie...</span></td></tr>
+              </table>
+
+              <div class="edge-note">
+                Portal przechowuje wyłącznie opcjonalne adresy usług z lokalnej konfiguracji routera.
+                Nie osadza poświadczeń ani interfejsów administracyjnych i nie zmienia ich granic dostępu LAN/Tailscale.
+              </div>
+
+              <div>&nbsp;</div>
 
               <a class="edge-section-anchor" id="overview"></a>
               <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0"
