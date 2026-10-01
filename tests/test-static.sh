@@ -686,6 +686,22 @@ grep -F '"/tmp/syslog.log"' "$REPO_DIR/config/syslog-ng.conf.example" >/dev/null
     exit 1
 }
 
+# Local archival must not be stopped by backpressure from the remote collector.
+# A 2026-10-01 live fault test reproduced that failure when hard flow-control
+# was applied to the shared local+remote log path.
+if grep -F 'flags(flow-control);' "$REPO_DIR/config/syslog-ng.conf.example" >/dev/null; then
+    echo "FAIL: hard syslog-ng flow-control can block the local archive during collector outage" >&2
+    exit 1
+fi
+
+for syslog_fanout_guard in     'destination(d_local_archive);'     'destination(d_remote_tls);'
+do
+    grep -F "$syslog_fanout_guard" "$REPO_DIR/config/syslog-ng.conf.example" >/dev/null || {
+        echo "FAIL: syslog-ng local/remote fan-out guard missing: $syslog_fanout_guard" >&2
+        exit 1
+    }
+done
+
 if grep -F 'system();' "$REPO_DIR/config/syslog-ng.conf.example" >/dev/null; then
     echo "FAIL: router syslog-ng conflicts with the firmware logging sockets" >&2
     exit 1
