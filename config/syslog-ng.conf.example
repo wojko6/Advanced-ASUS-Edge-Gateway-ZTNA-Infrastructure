@@ -57,9 +57,12 @@ destination d_remote_tls {
     );
 };
 
+# Keep the local archive independent from remote collector backpressure.
+# Do not enable hard flow-control on this fan-out path: if the remote
+# destination stalls, /tmp/syslog.log must still be consumed locally.
+# The remote destination retains its own reliable disk buffer.
 log {
     source(s_asuswrt_file);
     destination(d_local_archive);
     destination(d_remote_tls);
-    flags(flow-control);
 };
