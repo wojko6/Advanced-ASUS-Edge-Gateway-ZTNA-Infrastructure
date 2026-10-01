@@ -694,7 +694,7 @@ if grep -F 'flags(flow-control);' "$REPO_DIR/config/syslog-ng.conf.example" >/de
     exit 1
 fi
 
-for syslog_fanout_guard in     'destination(d_local_archive);'     'destination(d_remote_tls);'
+for syslog_fanout_guard in 'destination(d_local_archive);' 'destination(d_remote_tls);'
 do
     grep -F "$syslog_fanout_guard" "$REPO_DIR/config/syslog-ng.conf.example" >/dev/null || {
         echo "FAIL: syslog-ng local/remote fan-out guard missing: $syslog_fanout_guard" >&2
