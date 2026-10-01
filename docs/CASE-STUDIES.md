@@ -148,6 +148,25 @@ A staged DNS-filtering migration on the 512 MiB ASUS TUF-AX5400 covering:
 The case study treats the discovered startup failure as evidence and remediation,
 not as a result to omit from the portfolio narrative.
 
+## 9. syslog-ng local archive resilience under collector outage
+
+**File:** [syslog-ng Local Archive Resilience](syslog-ng-flow-control-resilience-case-study.md)
+
+A centralized-logging failure and recovery case covering:
+
+- a live syslog-ng source that stopped advancing while Asuswrt continued writing;
+- inode/FD-position analysis that ruled out a stale rotated-file handle;
+- separation of transport/TLS health from source-consumption state;
+- identification of hard flow-control as the architectural coupling between
+  the remote collector and the local archive;
+- removal of hard flow-control while retaining the remote reliable disk buffer;
+- controlled collector outage proving that local archival continues;
+- post-recovery delivery of the marker generated while the collector was down;
+- a static regression guard preventing reintroduction of the blocking policy.
+
+The case distinguishes directly observed source-position and delivery evidence
+from the unmeasured internal queue depth at the moment of the original stall.
+
 ## How to read these cases
 
 Where applicable, case studies separate:
