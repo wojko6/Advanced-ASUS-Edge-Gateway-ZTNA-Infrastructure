@@ -2,7 +2,7 @@
 
 This design forwards the Asuswrt local log to a Linux collector over Tailscale and mutually authenticated TLS (mTLS). The router authenticates the collector certificate, the collector authenticates the router certificate, and a reliable disk buffer preserves messages while the collector is unavailable.
 
-> **Reference-router status:** live end-to-end mTLS logging was validated on **2026-09-27**. The router and Fedora collector were tested with authenticated TLS, source-restricted Tailscale firewalling, an end-to-end unique message, and a short collector-outage recovery test. Reboot persistence of this specific logging path remains a separate validation item.
+> **Reference-router status:** live end-to-end mTLS logging was validated on **2026-09-27**. On **2026-10-01**, a longer troubleshooting/fault-injection session identified and remediated a local-archive availability defect caused by hard flow-control coupling the local archive to the remote destination. Post-fix tests validated normal delivery, continued local archival while the collector was intentionally unreachable, and delayed delivery from the reliable buffer after collector recovery. Reboot persistence of this specific logging path remains a separate validation item.
 
 ## Data path
 
@@ -166,6 +166,52 @@ This supports short-outage store-and-forward behavior for the tested running
 router process. It does **not** by itself prove disk-queue durability across a
 router reboot or power loss. The disk-buffer directory is preallocated, so
 unchanged `du` size during this test is not treated as queue-depth evidence.
+
+### Local archive resilience validation — 2026-10-01
+
+A later live incident exposed a coupling problem in the original router log
+path. The shared local+remote path used `flags(flow-control)`. During an
+extended period in which the collector rejected or did not accept connections,
+the router syslog-ng process remained alive but stopped advancing its read
+position in `/tmp/syslog.log`. The open file descriptor referenced the same
+inode as the active log file, ruling out a stale rotated-file handle. The read
+position remained at 65,536 bytes while the source file continued growing past
+243 KiB, and newly generated markers appeared in `/tmp/syslog.log` but not in
+the local archive.
+
+Restarting syslog-ng released the stalled state and immediately advanced the
+reader to the current end of the source file. The remediation then removed hard
+`flags(flow-control)` from the fan-out log path while retaining the reliable
+disk buffer on the remote TLS destination.
+
+A controlled post-fix fault test temporarily made only the collector's
+TCP/6514 path unavailable. During the outage:
+
+- the router had no established collector connection;
+- a unique test marker was written to `/tmp/syslog.log`;
+- the same marker reached the local archive;
+- the source read position caught up exactly to the source size.
+
+After the collector path was restored, syslog-ng re-established the TLS
+connection and the outage marker appeared on the collector, demonstrating
+store-and-forward recovery for the tested outage.
+
+This validates the intended failure-domain separation:
+
+```text
+/tmp/syslog.log -> router syslog-ng
+                    |-> local archive (continues during collector outage)
+                    \-> reliable disk buffer -> mTLS collector (recovers later)
+```
+
+Do **not** reintroduce hard `flags(flow-control)` on this combined local+remote
+path. A static regression check enforces that invariant. The exact reliable
+queue depth at the time of the original stall was not directly measured, so the
+evidence supports a backpressure/flow-control coupling failure without claiming
+a specific queue-full threshold.
+
+See [2026-10-01 sanitized resilience evidence](../evidence/2026-10-01/syslog-ng-flow-control-resilience-validation.md)
+and the [incident case study](syslog-ng-flow-control-resilience-case-study.md).
 
 A reboot test is also a planned maintenance test. When a reboot is intentionally scheduled, verify all of the following:
 
