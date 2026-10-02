@@ -12,9 +12,9 @@ flowchart LR
 
     subgraph MGMT["Router management plane"]
         T --> NP["nat PREROUTING<br/>EDGE_TS_PREROUTING"]
-        NP -->|"configured admin source + HTTPS enabled"| DN["source-scoped DNAT<br/>to router LAN IP :8443"]
+        NP -->|"admin source + ingress TCP/8443"| DN["source-scoped DNAT<br/>router LAN IP :443"]
         DN --> IN["filter INPUT<br/>EDGE_TS_INPUT"]
-        IN -->|"EDGE_ADMIN_TS_SOURCES + configured port"| MS["Router management service"]
+        IN -->|"admin source + router LAN IP + target TCP/443"| MS["ASUS httpds<br/>192.168.50.1:443"]
         IN -->|"unauthorized / unmatched"| MD["Default DROP"]
     end
 
@@ -34,8 +34,9 @@ flowchart LR
 ## Validated scope and limitations
 
 - Tailscale is configured with **netfilter-mode=off**; project-owned EDGE_TS_* chains provide local firewall enforcement.
-- Router-management access is source-scoped. In the reference policy, HTTPS management is enabled on port 8443 while router SSH is disabled.
-- The HTTPS management DNAT rule in EDGE_TS_PREROUTING is created only for configured admin Tailscale sources. EDGE_TS_INPUT independently requires an allowed source and service port, then ends in DROP.
+- Router-management access is source-scoped. In the reference policy, Tailnet clients use TCP/8443 as the management ingress while the active ASUS `httpds` listener remains on the router LAN address TCP/443; router SSH is disabled.
+- `EDGE_ROUTER_HTTPS_PORT` is the Tailnet-facing ingress and `EDGE_ROUTER_HTTPS_TARGET_PORT` is the post-DNAT local listener. The HTTPS management DNAT rule in EDGE_TS_PREROUTING is created only for configured admin Tailscale sources. EDGE_TS_INPUT independently requires the allowed source, exact router LAN destination and target TCP/443, then ends in DROP.
+- The management ingress is deliberately distinct from RouterCloud TCP/443 on its separate LAN alias so the management DNAT cannot steal RouterCloud traffic.
 - A 2026-09-23 negative test confirmed that a distinct tailnet client outside the admin source set retained peer reachability but could not establish TCP/8443 management access.
 - EDGE_TS_FORWARD permits only explicit selected-LAN rules plus the optional exit-node rule to the detected WAN interface; unmatched forwarded traffic reaches the default DROP.
 - Exit-node source NAT is **platform-owned**. Current-firmware live evidence correlated the Tailscale-side flow with ppp0 egress after platform source translation.

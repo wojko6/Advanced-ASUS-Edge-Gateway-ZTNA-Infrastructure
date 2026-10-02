@@ -6,7 +6,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud one-way synchronization (#136) is completed and reboot-validated. The next Personal Cloud milestone is #137 (browser-based LAN/Tailscale file access), followed by #138 (versioned snapshots); unrelated hardening/analytics follow-ups remain tracked separately.
+**Current phase:** Personal Cloud one-way synchronization (#136) is completed. Browser-based LAN/Tailscale access (#137) is the active milestone: RouterCloud v1 now has live-validated HTTPS/Tailscale/split-DNS/reboot persistence, dual-client LAN/Tailscale acceptance, safe rename, Polish UI, storage reporting and explicit containment/no-WAN checks. Trusted-device DELETE plus reproducible source-control of the project-owned Dufs patch/build recipe remain before closure. Versioned snapshots (#138) follow afterward; unrelated hardening/analytics follow-ups remain tracked separately.
 
 ## Executive status
 
@@ -16,7 +16,7 @@ The centralized logging path is now also live-validated: router syslog-ng forwar
 
 On 2026-09-28 the Fedora Grafana instance was extended with the read-only GitHub datasource plus Polystat and Business Charts plugins. On 2026-09-29 the deferred `ASUS Edge Gateway — Engineering / CI` work was completed: merged-PR and recent-commit tables, final layout cleanup and a seven-signal Polystat infrastructure-health overview were added and live-checked. The dashboard is now source-controlled as a Grafana v2 resource under `monitoring/grafana/dashboards/`. Business Charts remains installed but optional and unused by this dashboard.
 
-On 2026-09-29 issue #127 closed the remaining normal-LAN management and automatic-exposure gap. A stale static TCP 20/21 forwarding rule to an inactive LAN host was removed after rollback capture and runtime verification; UPnP/NAT-PMP had no active daemon/listeners or dynamic mappings, Port Trigger and DMZ were inactive, and WAN WebUI access remained disabled. The Fedora administration workstation received a stable DHCP reservation and ASUS access restriction now permits router HTTPS/8443 and SSH/1122 only from that authorized LAN host. Positive administration tests passed, a controlled non-admin source was denied with firewall DROP counters, the project health check remained `0 failure(s), 0 warning(s)`, and a GeForce NOW session worked normally after the changes.
+On 2026-09-29 issue #127 closed the remaining normal-LAN management and automatic-exposure gap. A stale static TCP 20/21 forwarding rule to an inactive LAN host was removed after rollback capture and runtime verification; UPnP/NAT-PMP had no active daemon/listeners or dynamic mappings, Port Trigger and DMZ were inactive, and WAN WebUI access remained disabled. The Fedora administration workstation received a stable DHCP reservation and ASUS access restriction now permits router HTTPS/443 and SSH/1122 only from that authorized LAN host. Positive administration tests passed, a controlled non-admin source was denied with firewall DROP counters, the project health check remained `0 failure(s), 0 warning(s)`, and a GeForce NOW session worked normally after the changes.
 
 Issue #128 was also completed on 2026-09-29. Native WAN/LAN IPv6 is intentionally disabled on the reference deployment, while the project-owned Tailscale IPv6 guards remain fail-closed. The active trusted WLANs were documented with AES-only WPA2/WPA3 security, WEP/TKIP absent, PMF state recorded, WPS disabled, and client-side WPA3 confirmation on the active 5 GHz WLAN. Guest BSSs were disabled, so no live guest-isolation claim is made.
 
@@ -31,6 +31,38 @@ On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_
 The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Pi-hole main-LAN filtering, Unbound/DNSSEC integration, firmware dnsmasq for DHCP/local naming and existing interception paths, syslog-ng logging, project-owned least-privilege firewall chains, a read-only project-native Edge Gateway WebUI with persistent Polish localization, recovery tooling, health checks, evidence collection, external observability and automated repository validation.
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
+
+## 2026-09-30 Personal Cloud browser access
+
+Issue #137 is in progress. The reference router runs a dedicated HTTPS
+file-access service rooted at the Personal Cloud SSD directory on a separate LAN
+alias. LAN browser access, dedicated authentication, source-scoped Tailscale
+access, split DNS for `cloud.home.arpa`, and recovery from delayed
+`ROUTER_DATA` mounting are live-validated through real reboot and mobile-data
+tests.
+
+The project-patched Dufs 0.46.0 build now provides independently gated
+same-directory rename while global destructive delete remains disabled. Safe
+rename, no-overwrite and cross-directory refusal, root/traversal/symlink escape
+negative tests, Polish UI, asset cache-busting and native storage-capacity
+reporting have been validated on the reference router. Explicit no-WAN
+validation also passed: RouterCloud has no wildcard listener or WAN DNAT, and a
+cellular client with Tailscale disabled could not reach the service.
+
+Android/Poco acceptance is complete on both the home LAN and LTE/5G Tailscale
+path. The authorized phone and Fedora workstation now have symmetric
+source-scoped router-management and RouterCloud access. A stale Android
+tailnet identity was removed. The management-policy audit also corrected a
+real port-model inconsistency: the Tailnet-facing WebUI ingress remains
+separate while DNAT targets the actual local ASUS HTTPS listener on TCP/443,
+preventing collision with RouterCloud on its dedicated alias TCP/443.
+
+Issue #137 is not complete yet. Trusted-device DELETE remains intentionally
+unimplemented, and the exact project-owned Dufs patch set plus reproducible
+ARMv7 build recipe still need to be committed before final regression/reboot
+acceptance and closure. See
+[the design guide](docs/personal-cloud-browser-access.md) and
+[sanitized validation](evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md).
 
 ## 2026-09-30 Personal Cloud one-way sync
 

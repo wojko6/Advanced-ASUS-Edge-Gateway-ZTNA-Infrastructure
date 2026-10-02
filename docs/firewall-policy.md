@@ -20,9 +20,11 @@ each managed chain, it deletes duplicate project-owned jumps and inserts exactly
 one interface-scoped jump.
 
 Before the first iptables mutation, `firewall-start` validates the configured
-booleans, ports, interface names, router IPv4 address, tailnet IPv4 CIDR, admin
-and printer source addresses/CIDRs, allowed LAN destination addresses/CIDRs, and
-optional printer IPv4 address. When exit-node mode is enabled, a configured WAN
+booleans, ingress/target/service ports, interface names, router IPv4 address,
+tailnet IPv4 CIDR, admin/RouterCloud/printer source addresses/CIDRs, allowed LAN
+destination addresses/CIDRs, and optional printer/RouterCloud IPv4 addresses.
+When RouterCloud is configured, the script also rejects a router-management
+Tailnet ingress port that collides with the RouterCloud HTTPS port. When exit-node mode is enabled, a configured WAN
 interface is validated or dynamic WAN auto-detection is resolved and validated
 at the same pre-mutation boundary. Malformed policy input or failure to determine
 a valid WAN interface is therefore rejected before the temporary fail-closed
@@ -31,7 +33,13 @@ guards or managed chains are changed.
 During the first migration, the script removes exact legacy `tailscale+` rules created by the earlier documented configuration: broad INPUT/FORWARD accepts, direct DNS accepts/DNAT, and the unrestricted router-HTTPS DNAT. It does not remove arbitrary third-party rules. Native Tailscale netfilter chains
 left from an earlier configuration are treated as an invalid runtime state and
 must be resolved before final validation. Router HTTPS DNAT is recreated inside
-the managed NAT chain for `EDGE_ADMIN_TS_SOURCES` only.
+the managed NAT chain for `EDGE_ADMIN_TS_SOURCES` only. The Tailnet-facing
+`EDGE_ROUTER_HTTPS_PORT` and local `EDGE_ROUTER_HTTPS_TARGET_PORT` are separate
+values: the reference deployment accepts management on Tailnet TCP/8443 and
+DNATs it to the actual ASUS `httpds` listener on `192.168.50.1:443`. The INPUT
+rule is evaluated after DNAT and therefore matches the exact router LAN
+destination plus target TCP/443. RouterCloud stays on a distinct LAN alias
+TCP/443 and has its own source/destination/port-scoped INPUT rules.
 
 During re-application, temporary interface-scoped IPv4 and IPv6 drop rules keep the transition fail-closed while managed chains are rebuilt. They are removed only after the corresponding policy and jump rules succeed. Apply from LAN because an error intentionally leaves these guards in place until firewall restart/recovery.
 
@@ -41,7 +49,7 @@ During re-application, temporary interface-scoped IPv4 and IPv6 drop rules keep 
 
 1. Allow established/related return traffic.
 2. Allow DNS from the CGNAT tailnet range when interception is enabled.
-3. Allow HTTPS/SSH only from `EDGE_ADMIN_TS_SOURCES` and only when enabled.
+3. Allow router HTTPS only from `EDGE_ADMIN_TS_SOURCES`, to the exact router LAN address and post-DNAT target port; allow SSH only from the same source set when explicitly enabled.
 4. Rate-limit security logging.
 5. Drop everything else arriving from `tailscale0`.
 
@@ -131,6 +139,26 @@ Tailscale subnet route:
 Treat cellular-only printing as client-dependent and unsupported unless it is
 validated with the exact Android build and print service. Do not broaden the
 firewall when packet capture shows no attempted print connection.
+
+## Router-management HTTPS port model
+
+Do not interpret TCP/8443 as a local ASUS listener in the reference deployment.
+It is the Tailnet-facing management ingress only:
+
+```text
+authorized Tailnet source :8443
+        -> EDGE_TS_PREROUTING DNAT
+        -> router LAN address :443
+        -> EDGE_TS_INPUT exact source/destination/target-port allow
+        -> ASUS httpds
+```
+
+This split became necessary after the active firmware WebUI listener was
+confirmed on TCP/443. Reusing 8443 as both ingress and destination produced a
+dead DNAT target. Conversely, changing the ingress itself to 443 would collide
+with RouterCloud's TCP/443 service path. The health check therefore validates
+the configured ingress/target pair, exact per-source rules, absence of stale
+same-port DNAT/INPUT rules, and the separate RouterCloud source policy.
 
 ## Policy limitations
 

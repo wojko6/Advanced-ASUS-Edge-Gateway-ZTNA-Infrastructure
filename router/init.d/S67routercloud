@@ -1,0 +1,163 @@
+#!/bin/sh
+# shellcheck shell=dash
+
+CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
+[ -r "$CONFIG_FILE" ] || {
+    echo "ERROR: missing configuration: $CONFIG_FILE" >&2
+    exit 1
+}
+# shellcheck disable=SC1090
+. "$CONFIG_FILE"
+
+BIN="${EDGE_ROUTERCLOUD_BIN:-/opt/bin/dufs-personal-cloud}"
+DAEMONIZE="/opt/bin/daemonize"
+CONFIG="${EDGE_ROUTERCLOUD_DUFS_CONFIG:-/opt/etc/dufs-personal-cloud.yaml}"
+PIDFILE="/var/run/routercloud-dufs.pid"
+LOCKFILE="/var/run/routercloud-dufs.lock"
+LOG="/tmp/dufs-launch.log"
+ROOT="${EDGE_ROUTERCLOUD_ROOT:-/tmp/mnt/ROUTER_DATA/RouterCloud}"
+ADDR="${EDGE_ROUTERCLOUD_IP:-}"
+PORT="${EDGE_ROUTERCLOUD_PORT:-443}"
+WAIT_SECONDS="${EDGE_ROUTERCLOUD_STORAGE_WAIT_SECONDS:-5}"
+
+log_msg() {
+    logger -t routercloud "$*"
+    echo "$*"
+}
+
+configured() {
+    [ -n "$ADDR" ] || {
+        log_msg "ERROR: EDGE_ROUTERCLOUD_IP is not configured"
+        return 1
+    }
+}
+
+pid_alive() {
+    [ -r "$PIDFILE" ] || return 1
+    PID="$(cat "$PIDFILE" 2>/dev/null)"
+    case "$PID" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    [ -d "/proc/$PID" ] || return 1
+}
+
+listener_ready() {
+    netstat -lnt 2>/dev/null \
+        | grep -F "${ADDR}:${PORT}" \
+        | grep -F "LISTEN" >/dev/null 2>&1
+}
+
+wait_for_root() {
+    n=0
+    while [ "$n" -lt "$WAIT_SECONDS" ]; do
+        [ -d "$ROOT" ] && return 0
+        n=$((n + 1))
+        sleep 1
+    done
+    return 1
+}
+
+start_service() {
+    configured || return 1
+
+    if pid_alive && listener_ready; then
+        log_msg "already running: pid=$(cat "$PIDFILE")"
+        return 0
+    fi
+
+    rm -f "$PIDFILE" "$LOCKFILE"
+
+    [ -x "$BIN" ] || {
+        log_msg "ERROR: missing $BIN"
+        return 1
+    }
+
+    [ -x "$DAEMONIZE" ] || {
+        log_msg "ERROR: missing $DAEMONIZE"
+        return 1
+    }
+
+    [ -r "$CONFIG" ] || {
+        log_msg "ERROR: missing $CONFIG"
+        return 1
+    }
+
+    wait_for_root || {
+        log_msg "deferred: RouterCloud storage not ready; post-mount will retry"
+        return 1
+    }
+
+    ip -4 -o addr show dev "${EDGE_LAN_IF:-br0}" 2>/dev/null \
+        | grep -F " ${ADDR}/" >/dev/null 2>&1 || {
+        log_msg "ERROR: RouterCloud address $ADDR missing"
+        return 1
+    }
+
+    : > "$LOG"
+
+    "$DAEMONIZE" \
+        -p "$PIDFILE" \
+        -l "$LOCKFILE" \
+        -c "$ROOT" \
+        -o "$LOG" \
+        -e "$LOG" \
+        "$BIN" \
+        --config "$CONFIG"
+
+    sleep 2
+
+    if ! pid_alive; then
+        log_msg "ERROR: process failed to start"
+        return 1
+    fi
+
+    if ! listener_ready; then
+        log_msg "ERROR: listener ${ADDR}:${PORT} missing"
+        return 1
+    fi
+
+    log_msg "started: pid=$(cat "$PIDFILE") https://${ADDR}:${PORT}"
+}
+
+stop_service() {
+    if ! pid_alive; then
+        rm -f "$PIDFILE" "$LOCKFILE"
+        log_msg "not running"
+        return 0
+    fi
+
+    PID="$(cat "$PIDFILE")"
+    kill "$PID" 2>/dev/null || true
+
+    n=0
+    while [ -d "/proc/$PID" ] && [ "$n" -lt 10 ]; do
+        n=$((n + 1))
+        sleep 1
+    done
+
+    if [ -d "/proc/$PID" ]; then
+        kill -9 "$PID" 2>/dev/null || true
+    fi
+
+    rm -f "$PIDFILE" "$LOCKFILE"
+    log_msg "stopped"
+}
+
+case "$1" in
+    start) start_service ;;
+    stop) stop_service ;;
+    restart) stop_service && start_service ;;
+    check)
+        configured || exit 1
+        if pid_alive && listener_ready; then
+            echo "alive: pid=$(cat "$PIDFILE") https://${ADDR}:${PORT}"
+            exit 0
+        fi
+        echo "dead"
+        exit 1
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|check}" >&2
+        exit 1
+        ;;
+esac

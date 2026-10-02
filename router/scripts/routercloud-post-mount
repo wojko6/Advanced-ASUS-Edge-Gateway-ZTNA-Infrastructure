@@ -1,0 +1,28 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Invoke from Merlin post-mount after the AMTM/Entware hook. The helper is
+# idempotent and only acts once both the data root and Entware init scripts exist.
+
+CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
+[ -r "$CONFIG_FILE" ] || exit 0
+# shellcheck disable=SC1090
+. "$CONFIG_FILE"
+
+ROOT="${EDGE_ROUTERCLOUD_ROOT:-/tmp/mnt/ROUTER_DATA/RouterCloud}"
+S66="/opt/etc/init.d/S66routercloud-ip"
+S67="/opt/etc/init.d/S67routercloud"
+LOG="/tmp/routercloud-post-mount.log"
+
+[ -d "$ROOT" ] || exit 0
+[ -x "$S66" ] || exit 0
+[ -x "$S67" ] || exit 0
+
+: > "$LOG"
+
+if "$S66" start >>"$LOG" 2>&1 && "$S67" start >>"$LOG" 2>&1; then
+    logger -t routercloud-post-mount "RouterCloud startup completed after mount event"
+    exit 0
+fi
+
+logger -t routercloud-post-mount "WARNING: RouterCloud post-mount startup failed"
+exit 1

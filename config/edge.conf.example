@@ -17,10 +17,26 @@ EDGE_TAILNET_V4_CIDR="100.64.0.0/10"
 EDGE_ADMIN_TS_SOURCES=""
 
 # Router-local services available to EDGE_ADMIN_TS_SOURCES.
+# EDGE_ROUTER_HTTPS_PORT is the Tailnet-facing ingress port. The target
+# port is the actual local httpds listener after DNAT; keep them separate so
+# RouterCloud TCP/443 is not intercepted by router-management NAT.
 EDGE_ALLOW_ROUTER_HTTPS="1"
 EDGE_ROUTER_HTTPS_PORT="8443"
+EDGE_ROUTER_HTTPS_TARGET_PORT="443"
 EDGE_ALLOW_ROUTER_SSH="0"
 EDGE_ROUTER_SSH_PORT="22"
+
+# Optional browser-based Personal Cloud service. Keep the source allowlist
+# empty until the dedicated RouterCloud listener and authentication have
+# been validated. The service is separate from router-management HTTPS.
+EDGE_ROUTERCLOUD_TS_SOURCES=""
+EDGE_ROUTERCLOUD_IP=""
+EDGE_ROUTERCLOUD_PREFIX="24"
+EDGE_ROUTERCLOUD_PORT="443"
+EDGE_ROUTERCLOUD_ROOT="/tmp/mnt/ROUTER_DATA/RouterCloud"
+EDGE_ROUTERCLOUD_BIN="/opt/bin/dufs-personal-cloud"
+EDGE_ROUTERCLOUD_DUFS_CONFIG="/opt/etc/dufs-personal-cloud.yaml"
+EDGE_ROUTERCLOUD_STORAGE_WAIT_SECONDS="5"
 
 # Force classic DNS from Tailscale clients through the router's resolver.
 # This does not intercept DoH, DoT, or DoQ; control those with endpoint policy.

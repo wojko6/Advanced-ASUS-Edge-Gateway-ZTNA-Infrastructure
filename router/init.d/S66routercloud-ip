@@ -1,0 +1,79 @@
+#!/bin/sh
+# shellcheck shell=dash
+
+CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
+[ -r "$CONFIG_FILE" ] || {
+    echo "ERROR: missing configuration: $CONFIG_FILE" >&2
+    exit 1
+}
+# shellcheck disable=SC1090
+. "$CONFIG_FILE"
+
+IFACE="${EDGE_LAN_IF:-br0}"
+ADDR="${EDGE_ROUTERCLOUD_IP:-}"
+PREFIX="${EDGE_ROUTERCLOUD_PREFIX:-24}"
+LABEL="${IFACE}:routercloud"
+
+log_msg() {
+    logger -t routercloud-ip "$*"
+    echo "$*"
+}
+
+configured() {
+    [ -n "$ADDR" ] || {
+        log_msg "ERROR: EDGE_ROUTERCLOUD_IP is not configured"
+        return 1
+    }
+}
+
+is_present() {
+    ip -4 -o addr show dev "$IFACE" 2>/dev/null \
+        | grep -F " ${ADDR}/${PREFIX} " \
+        | grep -F " ${LABEL}" >/dev/null 2>&1
+}
+
+start_ip() {
+    configured || return 1
+    if is_present; then
+        log_msg "$ADDR already present as $LABEL"
+        return 0
+    fi
+
+    if ip -4 -o addr show dev "$IFACE" 2>/dev/null \
+        | grep -F " ${ADDR}/${PREFIX} " >/dev/null 2>&1; then
+        log_msg "ERROR: $ADDR already exists with unexpected label"
+        return 1
+    fi
+
+    ip -4 addr add "${ADDR}/${PREFIX}" brd + dev "$IFACE" label "$LABEL" || return 1
+    log_msg "added ${ADDR}/${PREFIX} as $LABEL"
+}
+
+stop_ip() {
+    configured || return 1
+    if is_present; then
+        ip -4 addr del "${ADDR}/${PREFIX}" dev "$IFACE" || return 1
+        log_msg "removed ${ADDR}/${PREFIX}"
+    else
+        log_msg "$ADDR not present"
+    fi
+}
+
+case "$1" in
+    start) start_ip ;;
+    stop) stop_ip ;;
+    restart|reconfigure) stop_ip && start_ip ;;
+    check)
+        configured || exit 1
+        if is_present; then
+            echo "alive: ${ADDR}/${PREFIX} ${LABEL}"
+            exit 0
+        fi
+        echo "dead"
+        exit 1
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|reconfigure|check}" >&2
+        exit 1
+        ;;
+esac

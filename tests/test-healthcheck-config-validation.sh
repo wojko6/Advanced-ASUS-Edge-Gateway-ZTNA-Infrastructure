@@ -29,6 +29,12 @@ expect_rejected EDGE_ENFORCE_LAN_DNS maybe 'invalid EDGE_ENFORCE_LAN_DNS value: 
 expect_rejected EDGE_BLOCK_LAN_DOT maybe 'invalid EDGE_BLOCK_LAN_DOT value: maybe'
 expect_rejected EDGE_DOT_PORT 70000 'invalid EDGE_DOT_PORT value: 70000'
 expect_rejected EDGE_ROUTER_LAN_IP '192.168.50.999' 'invalid EDGE_ROUTER_LAN_IP value: 192.168.50.999'
+expect_rejected EDGE_ROUTER_HTTPS_PORT 70000 'invalid EDGE_ROUTER_HTTPS_PORT value: 70000'
+expect_rejected EDGE_ROUTER_HTTPS_TARGET_PORT 70000 'invalid EDGE_ROUTER_HTTPS_TARGET_PORT value: 70000'
+expect_rejected EDGE_ROUTERCLOUD_PORT 70000 'invalid EDGE_ROUTERCLOUD_PORT value: 70000'
+expect_rejected EDGE_ADMIN_TS_SOURCES '100.64.0.1/99' 'invalid managed Tailscale source: 100.64.0.1/99'
+expect_rejected EDGE_ROUTERCLOUD_TS_SOURCES '100.64.0.1/99' 'invalid managed Tailscale source: 100.64.0.1/99'
+expect_rejected EDGE_ROUTERCLOUD_IP '192.168.50.999' 'invalid EDGE_ROUTERCLOUD_IP value: 192.168.50.999'
 expect_rejected EDGE_DNS_PORT 70000 'invalid EDGE_DNS_PORT value: 70000'
 expect_rejected EDGE_TS_IF 'tailscale0;bad' 'invalid EDGE_TS_IF value: tailscale0;bad'
 expect_rejected EDGE_LAN_IF 'br0 bad' 'invalid EDGE_LAN_IF value: br0 bad'
@@ -40,6 +46,24 @@ expect_rejected EDGE_SYSLOG_HOST '.collector.example' 'invalid EDGE_SYSLOG_HOST 
 expect_rejected EDGE_PRINTER_TS_SOURCES '100.64.0.1/99' 'invalid printer Tailscale source: 100.64.0.1/99'
 expect_rejected EDGE_PRINTER_LAN_IP '192.168.50.300' 'invalid printer LAN IPv4: 192.168.50.300'
 expect_rejected EDGE_PRINTER_TCP_PORTS 0 'invalid printer port: 0'
+cfg="$TMP_DIR/routercloud-collision.conf"
+cp "$REPO_DIR/config/edge.conf.example" "$cfg"
+cat >>"$cfg" <<'EOF'
+EDGE_ROUTERCLOUD_TS_SOURCES="100.64.0.10/32"
+EDGE_ROUTERCLOUD_IP="192.168.50.254"
+EDGE_ROUTERCLOUD_PORT="8443"
+EOF
+output="$TMP_DIR/routercloud-collision.out"
+if EDGE_CONFIG_FILE="$cfg" sh "$REPO_DIR/scripts/healthcheck.sh" >"$output" 2>&1; then
+    echo "FAIL: healthcheck accepted router HTTPS / RouterCloud ingress collision" >&2
+    exit 1
+fi
+grep -F 'router HTTPS ingress port conflicts with RouterCloud port: 8443' "$output" >/dev/null || {
+    echo "FAIL: healthcheck RouterCloud ingress collision rejection missing" >&2
+    cat "$output" >&2
+    exit 1
+}
+
 expect_rejected EDGE_REQUIRE_SWAP invalid 'invalid EDGE_REQUIRE_SWAP value: invalid'
 expect_rejected EDGE_TS_NETFILTER_MODE on 'EDGE_TS_NETFILTER_MODE must be off'
 
