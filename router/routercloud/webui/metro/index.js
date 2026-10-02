@@ -1351,9 +1351,42 @@ function parentDirectoryUrl() {
   return url.toString();
 }
 
-function discardChange() {
-  location.href =
+function isNewFileDraft() {
+  return new URLSearchParams(
+    location.search
+  ).get("new") === "1";
+}
+
+async function discardChange() {
+  const parentUrl =
     parentDirectoryUrl();
+
+  if (!isNewFileDraft()) {
+    location.href = parentUrl;
+    return;
+  }
+
+  try {
+    await checkAuth();
+
+    const res = await fetch(
+      baseUrl(),
+      {
+        method: "DELETE",
+        credentials: "same-origin",
+      }
+    );
+
+    await assertResOK(res);
+
+    location.replace(parentUrl);
+  } catch (err) {
+    await metroNotice({
+      title: "Nie udało się odrzucić nowego pliku",
+      message:
+        `Plik „${baseName(baseUrl())}” nie został usunięty.\n\n${err.message}`,
+    });
+  }
 }
 
 async function saveChange() {
@@ -1374,6 +1407,14 @@ async function saveChange() {
     );
 
     await assertResOK(res);
+
+    if (isNewFileDraft()) {
+      history.replaceState(
+        null,
+        "",
+        baseUrl() + "?edit"
+      );
+    }
 
     await metroNotice({
       title: "Zapisano",
@@ -1489,7 +1530,7 @@ async function createFile(name) {
       body: "",
     });
     await assertResOK(res);
-    location.href = url + "?edit";
+    location.href = url + "?edit&new=1";
   } catch (err) {
     await metroNotice({
       title: "Nie można utworzyć pliku",
