@@ -17,6 +17,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 - Migrated the persistent Entware environment from USB flash storage to SSD, restored swap-backed service startup, and directly validated SSD mounts, swap activation, Tailscale, Unbound, and resolver configuration after the controlled reboot.
 - Extended validation into latency-sensitive cloud workloads: compared GeForce NOW over Gigabit Ethernet and Wi-Fi 6, and analyzed an Xbox Cloud Gaming session with browser-native WebRTC RTP, jitter, ICE RTT, frame-delivery, bitrate, and decoder telemetry.
 - Isolated a Wi-Fi 6 HE160 interoperability problem by comparing HE80/HE160 on a MediaTek MT7922, repeating the matrix across two Windows drivers, and using an independent Android 2x2 HE160 client to separate AP-wide capability from client/pair-specific behavior.
+- Shipped RouterCloud Metro Web on the dedicated LAN/Tailscale-only HTTPS service, with custom login/session auth, branded Polish UI, safe rename/delete/edit workflows, WebDAV desktop integration, and server-side ZIP downloads for checkbox-selected files/folders while preserving empty directories and keeping generic `allow-delete: false`.
 - Captured sanitized live evidence instead of presenting expected behavior as observed results.
 
 ## Architecture
@@ -38,6 +39,8 @@ Remote access is enforced at two layers:
 Current-firmware validation is tied to dated evidence rather than inferred from the diagrams. AUDIT-02 exit-node forwarding/NAT ownership was revalidated on GNUton 388.11 on 2026-09-23, and AUDIT-03 classic IPv4 UDP/TCP port-53 packet correlation was revalidated on the same reference firmware on 2026-09-27. DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted DNS and IPv6 resolver paths remain outside any universal DNS-enforcement claim.
 
 See [architecture](docs/architecture.md), [swap and memory reliability](docs/swap-and-memory-reliability.md), [firewall policy](docs/firewall-policy.md), [security limitations](docs/security.md), and the [requirements and acceptance map](docs/requirements.md) for the detailed design, test methods and current validation limits.
+
+The final 2026-10-02 RouterCloud browser implementation is recorded in the [Metro production checkpoint](docs/routercloud-metro-production-checkpoint-2026-10-02.md).
 
 ## Key controls
 
