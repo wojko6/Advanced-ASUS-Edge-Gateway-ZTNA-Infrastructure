@@ -1,0 +1,12 @@
+[Unit]
+Description=RouterCloud encrypted versioned backup
+Documentation=https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/138
+
+[Service]
+EnvironmentFile=-%h/.config/routercloud-backup.env
+Type=oneshot
+ExecStart=%h/.local/bin/routercloud-backup
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+TimeoutStartSec=30min
