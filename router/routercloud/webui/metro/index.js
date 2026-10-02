@@ -831,11 +831,8 @@ async function setupAuth() {
     $userName.textContent = DATA.user;
   } else {
     $loginBtn.classList.remove("hidden");
-    $loginBtn.addEventListener("click", async () => {
-      try {
-        await checkAuth("login");
-      } catch { }
-      location.reload();
+    $loginBtn.addEventListener("click", () => {
+      location.href = "/__routercloud/login";
     });
   }
 }
@@ -1152,15 +1149,24 @@ async function checkAuth(variant) {
   $userName.textContent = await res.text();
 }
 
-function logout() {
+async function logout() {
   if (!DATA.auth) return;
-  const url = baseUrl();
-  const xhr = new XMLHttpRequest();
-  xhr.open("LOGOUT", url, true, DATA.user);
-  xhr.onload = () => {
-    location.href = url;
+
+  try {
+    const res = await fetch("/__routercloud/logout", {
+      method: "POST",
+      credentials: "same-origin",
+    });
+
+    await assertResOK(res);
+
+    location.replace("/__routercloud/login");
+  } catch (err) {
+    await metroNotice({
+      title: "Nie udało się wylogować",
+      message: err.message,
+    });
   }
-  xhr.send();
 }
 
 /**

@@ -16,6 +16,7 @@ cp "$HERE/index.js" "$PREVIEW/index.js"
 cp "$HERE/favicon.ico" "$PREVIEW/favicon.ico"
 cp "$HERE/login.html" "$PREVIEW/login.html"
 cp "$HERE/login.css" "$PREVIEW/login.css"
+cp "$HERE/login.js" "$PREVIEW/login.js"
 
 python3 - <<'PYLOGIN'
 from pathlib import Path
@@ -26,6 +27,16 @@ html = path.read_text(encoding="utf-8")
 html = html.replace(
     'method="post"\n        action="/__routercloud/login"',
     'method="post"\n        action="#"\n        onsubmit="event.preventDefault()"'
+)
+
+html = html.replace(
+    'href="/__routercloud/login.css"',
+    'href="login.css"'
+)
+
+html = html.replace(
+    '<script src="/__routercloud/login.js" defer></script>',
+    ''
 )
 
 path.write_text(html, encoding="utf-8")
@@ -153,7 +164,7 @@ if ! ss -ltnH | awk '{print $4}' | grep -q ":${PORT}$"; then
     sleep 1
 fi
 
-for file in index.html index.css index.js favicon.ico; do
+for file in index.html index.css index.js favicon.ico login.html login.css login.js; do
     code="$(
         curl -s \
             -o /dev/null \
