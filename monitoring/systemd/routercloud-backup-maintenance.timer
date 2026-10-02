@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly RouterCloud backup maintenance
+
+[Timer]
+OnCalendar=Sun *-*-* 03:30:00
+Persistent=true
+AccuracySec=5min
+Unit=routercloud-backup-maintenance.service
+
+[Install]
+WantedBy=timers.target

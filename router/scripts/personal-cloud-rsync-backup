@@ -1,0 +1,31 @@
+#!/bin/sh
+
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+ROOT="/tmp/mnt/ROUTER_DATA/RouterCloud/"
+
+LIVE="/opt/bin/rsync --server --sender -vtre.iLsfxCIvu . ${ROOT}"
+DRY="/opt/bin/rsync --server --sender -vntre.iLsfxCIvu . ${ROOT}"
+
+case "${SSH_ORIGINAL_COMMAND:-}" in
+    "$LIVE")
+        exec /opt/bin/rsync \
+            --server \
+            --sender \
+            -vtre.iLsfxCIvu \
+            . \
+            "$ROOT"
+        ;;
+    "$DRY")
+        exec /opt/bin/rsync \
+            --server \
+            --sender \
+            -vntre.iLsfxCIvu \
+            . \
+            "$ROOT"
+        ;;
+    *)
+        echo "Personal Cloud backup: command denied" >&2
+        exit 126
+        ;;
+esac

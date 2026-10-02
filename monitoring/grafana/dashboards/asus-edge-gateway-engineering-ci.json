@@ -1152,6 +1152,54 @@
                     },
                     "refId": "G"
                   }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "(last_over_time(routercloud_backup_last_run_success[30d]) * ((time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[30d])) < bool 28800)) or vector(0)",
+                        "instant": true,
+                        "interval": "",
+                        "legendFormat": "RouterCloud Backup",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "H"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "(last_over_time(routercloud_maintenance_last_run_success[30d]) * ((time() - last_over_time(routercloud_maintenance_last_run_timestamp_seconds[30d])) < bool 691200)) or vector(0)",
+                        "instant": true,
+                        "interval": "",
+                        "legendFormat": "Backup Integrity",
+                        "range": false
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "I"
+                  }
                 }
               ],
               "queryOptions": {},
