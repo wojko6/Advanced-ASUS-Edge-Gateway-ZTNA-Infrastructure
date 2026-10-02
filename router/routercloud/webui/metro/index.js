@@ -1530,16 +1530,49 @@ async function createFile(name) {
 
   try {
     await checkAuth();
+
+    const existing = await fetch(url, {
+      method: "HEAD",
+      credentials: "same-origin",
+    });
+
+    if (existing.ok) {
+      await metroNotice({
+        title: "Nie można utworzyć pliku",
+        message:
+          `Plik „${name}” nie został utworzony.\n\nPlik lub folder o tej nazwie już istnieje.`,
+      });
+      return;
+    }
+
+    if (
+      existing.status !== 404 &&
+      existing.status !== 403
+    ) {
+      await assertResOK(existing);
+    }
+
     const res = await fetch(url, {
       method: "PUT",
+      credentials: "same-origin",
       body: "",
     });
+
+    if (res.status === 403) {
+      throw new Error(
+        "Brak uprawnień do utworzenia pliku."
+      );
+    }
+
     await assertResOK(res);
-    location.href = url + "?edit&new=1";
+
+    location.href =
+      url + "?edit&new=1";
   } catch (err) {
     await metroNotice({
       title: "Nie można utworzyć pliku",
-      message: `Plik „${name}” nie został utworzony.\n\n${err.message}`,
+      message:
+        `Plik „${name}” nie został utworzony.\n\n${err.message}`,
     });
   }
 }
