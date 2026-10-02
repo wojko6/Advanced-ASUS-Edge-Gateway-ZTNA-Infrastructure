@@ -114,7 +114,8 @@ data = {
 
     "allow_upload": True,
     "allow_move": True,
-    "allow_delete": True,
+    "allow_delete": False,
+    "routercloud_allow_delete": True,
     "allow_search": True,
     "allow_archive": True,
 

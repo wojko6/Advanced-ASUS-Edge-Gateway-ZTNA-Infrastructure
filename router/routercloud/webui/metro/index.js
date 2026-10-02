@@ -22,6 +22,7 @@
  * @property {boolean} allow_upload
  * @property {boolean} allow_move
  * @property {boolean} allow_delete
+ * @property {boolean} routercloud_allow_delete
  * @property {boolean} allow_search
  * @property {boolean} allow_archive
  * @property {boolean} auth
@@ -815,7 +816,9 @@ function closePathContextMenu() {
 
 function openPathContextMenu(event, index, isDir) {
   const canRename = DATA.allow_move;
-  const canDelete = DATA.allow_delete;
+  const canDelete =
+    DATA.allow_delete ||
+    DATA.routercloud_allow_delete;
 
   if (!canRename && !canDelete) {
     return;
