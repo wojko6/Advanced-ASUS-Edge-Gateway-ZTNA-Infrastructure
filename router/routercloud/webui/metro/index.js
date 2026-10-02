@@ -1181,7 +1181,7 @@ async function createFolder(name) {
       method: "MKCOL",
     });
     await assertResOK(res);
-    location.href = url;
+    location.reload();
   } catch (err) {
     await metroNotice({
       title: "Nie można utworzyć folderu",
