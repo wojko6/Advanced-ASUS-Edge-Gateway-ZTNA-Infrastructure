@@ -823,6 +823,211 @@ function addPath(file, index) {
   row?.addEventListener("contextmenu", event => {
     openPathContextMenu(event, index, isDir);
   });
+
+  setupPathDragOut(
+    row,
+    file,
+    url,
+    isDir
+  );
+}
+
+function dragDownloadFilename(
+  name,
+  isDir
+) {
+  let output =
+    isDir
+      ? `${name}.zip`
+      : name;
+
+  // DownloadURL używa dwukropków jako separatorów.
+  output =
+    output.replace(
+      /[:/\\]/g,
+      "_"
+    );
+
+  return output;
+}
+
+async function buildDragDownloadUrl(
+  url,
+  isDir
+) {
+  const downloadUrl =
+    new URL(url, location.href);
+
+  if (isDir) {
+    downloadUrl.searchParams.set(
+      "zip",
+      ""
+    );
+  }
+
+  if (!DATA.user) {
+    return downloadUrl.toString();
+  }
+
+  const tokenUrl =
+    new URL(url, location.href);
+
+  tokenUrl.searchParams.set(
+    "tokengen",
+    ""
+  );
+
+  const tokenResponse =
+    await fetch(
+      tokenUrl,
+      {
+        credentials: "same-origin",
+      }
+    );
+
+  await assertResOK(tokenResponse);
+
+  const token =
+    (await tokenResponse.text()).trim();
+
+  if (!token) {
+    throw new Error(
+      "Nie udało się przygotować tokenu pobierania."
+    );
+  }
+
+  downloadUrl.searchParams.set(
+    "token",
+    token
+  );
+
+  return downloadUrl.toString();
+}
+
+function setupPathDragOut(
+  row,
+  file,
+  url,
+  isDir
+) {
+  if (!row) {
+    return;
+  }
+
+  if (
+    isDir &&
+    !DATA.allow_archive
+  ) {
+    return;
+  }
+
+  row.draggable = true;
+
+  row.classList.add(
+    "routercloud-draggable"
+  );
+
+  let downloadUrl = "";
+  let preparing = false;
+
+  const prepareDownloadUrl =
+    async () => {
+      if (
+        downloadUrl ||
+        preparing
+      ) {
+        return;
+      }
+
+      preparing = true;
+
+      try {
+        downloadUrl =
+          await buildDragDownloadUrl(
+            url,
+            isDir
+          );
+      } catch {
+        downloadUrl = "";
+      } finally {
+        preparing = false;
+      }
+    };
+
+  // Przygotowujemy token wcześniej, ponieważ podczas
+  // dragstart DataTransfer musi zostać ustawione synchronicznie.
+  void prepareDownloadUrl();
+
+  row.addEventListener(
+    "pointerenter",
+    () => {
+      void prepareDownloadUrl();
+    }
+  );
+
+  row.addEventListener(
+    "dragstart",
+    event => {
+      if (
+        !event.dataTransfer ||
+        !downloadUrl
+      ) {
+        event.preventDefault();
+
+        void metroNotice({
+          title:
+            "Przeciąganie jeszcze niegotowe",
+          message:
+            "RouterCloud przygotowuje bezpieczny link pobierania. Spróbuj ponownie za chwilę.",
+        });
+
+        void prepareDownloadUrl();
+        return;
+      }
+
+      const filename =
+        dragDownloadFilename(
+          file.name,
+          isDir
+        );
+
+      const mime =
+        isDir
+          ? "application/zip"
+          : "application/octet-stream";
+
+      event.dataTransfer.effectAllowed =
+        "copy";
+
+      event.dataTransfer.setData(
+        "DownloadURL",
+        `${mime}:${filename}:${downloadUrl}`
+      );
+
+      event.dataTransfer.setData(
+        "text/uri-list",
+        downloadUrl
+      );
+
+      event.dataTransfer.setData(
+        "text/plain",
+        downloadUrl
+      );
+
+      row.classList.add(
+        "routercloud-dragging-out"
+      );
+    }
+  );
+
+  row.addEventListener(
+    "dragend",
+    () => {
+      row.classList.remove(
+        "routercloud-dragging-out"
+      );
+    }
+  );
 }
 
 function closePathContextMenu() {
@@ -949,28 +1154,223 @@ function setupPathContextMenu() {
   );
 }
 
-function setupDropzone() {
-  ["drag", "dragstart", "dragend", "dragover", "dragenter", "dragleave", "drop"].forEach(name => {
-    document.addEventListener(name, e => {
-      e.preventDefault();
-      e.stopPropagation();
+function hasExternalFiles(event) {
+  const types =
+    Array.from(
+      event.dataTransfer?.types || []
+    );
+
+  return types.includes("Files");
+}
+
+function readDroppedFile(entry) {
+  return new Promise((resolve, reject) => {
+    entry.file(resolve, reject);
+  });
+}
+
+function readDroppedDirectoryBatch(reader) {
+  return new Promise((resolve, reject) => {
+    reader.readEntries(resolve, reject);
+  });
+}
+
+async function ensureDroppedDirectory(pathParts) {
+  const url =
+    newUrl(pathParts.join("/"));
+
+  const res =
+    await fetch(url, {
+      method: "MKCOL",
+      credentials: "same-origin",
     });
-  });
-  document.addEventListener("drop", async e => {
-    if (!e.dataTransfer.items[0].webkitGetAsEntry) {
-      const files = Array.from(e.dataTransfer.files).filter(v => v.size > 0);
-      for (const file of files) {
-        new Uploader(file, []).upload();
-      }
-    } else {
-      const entries = [];
-      const len = e.dataTransfer.items.length;
-      for (let i = 0; i < len; i++) {
-        entries.push(e.dataTransfer.items[i].webkitGetAsEntry());
-      }
-      addFileEntries(entries, []);
+
+  await assertResOK(res);
+}
+
+async function uploadDroppedEntry(
+  entry,
+  dirs = []
+) {
+  if (!entry) {
+    return;
+  }
+
+  if (entry.isFile) {
+    const file =
+      await readDroppedFile(entry);
+
+    new Uploader(file, dirs).upload();
+    return;
+  }
+
+  if (!entry.isDirectory) {
+    return;
+  }
+
+  const nextDirs =
+    [...dirs, entry.name];
+
+  // Dzięki temu zachowujemy również puste foldery.
+  await ensureDroppedDirectory(nextDirs);
+
+  const reader =
+    entry.createReader();
+
+  while (true) {
+    const entries =
+      await readDroppedDirectoryBatch(reader);
+
+    if (entries.length === 0) {
+      break;
     }
-  });
+
+    for (const child of entries) {
+      await uploadDroppedEntry(
+        child,
+        nextDirs
+      );
+    }
+  }
+}
+
+function clearDragInState() {
+  document.body.classList.remove(
+    "routercloud-drag-in"
+  );
+}
+
+function setupDropzone() {
+  let dragDepth = 0;
+
+  document.addEventListener(
+    "dragenter",
+    event => {
+      if (!hasExternalFiles(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      dragDepth += 1;
+
+      document.body.classList.add(
+        "routercloud-drag-in"
+      );
+    }
+  );
+
+  document.addEventListener(
+    "dragover",
+    event => {
+      if (!hasExternalFiles(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "copy";
+      }
+    }
+  );
+
+  document.addEventListener(
+    "dragleave",
+    event => {
+      if (dragDepth === 0) {
+        return;
+      }
+
+      event.preventDefault();
+
+      dragDepth =
+        Math.max(0, dragDepth - 1);
+
+      if (dragDepth === 0) {
+        clearDragInState();
+      }
+    }
+  );
+
+  document.addEventListener(
+    "drop",
+    async event => {
+      if (!hasExternalFiles(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      dragDepth = 0;
+      clearDragInState();
+
+      try {
+        await checkAuth();
+
+        const items =
+          Array.from(
+            event.dataTransfer?.items || []
+          ).filter(
+            item => item.kind === "file"
+          );
+
+        const entries =
+          items
+            .map(item => {
+              if (
+                typeof item.webkitGetAsEntry !==
+                "function"
+              ) {
+                return null;
+              }
+
+              return item.webkitGetAsEntry();
+            })
+            .filter(Boolean);
+
+        if (entries.length > 0) {
+          for (const entry of entries) {
+            await uploadDroppedEntry(
+              entry,
+              []
+            );
+          }
+
+          return;
+        }
+
+        // Fallback dla przeglądarek bez
+        // webkitGetAsEntry().
+        const files =
+          Array.from(
+            event.dataTransfer?.files || []
+          );
+
+        for (const file of files) {
+          new Uploader(file, []).upload();
+        }
+      } catch (err) {
+        await metroNotice({
+          title: "Nie udało się przesłać",
+          message:
+            "Nie udało się przetworzyć przeciągniętych plików lub folderów.\n\n" +
+            err.message,
+        });
+      }
+    }
+  );
+
+  window.addEventListener(
+    "blur",
+    () => {
+      dragDepth = 0;
+      clearDragInState();
+    }
+  );
 }
 
 async function setupAuth() {
@@ -1035,12 +1435,51 @@ function setupSearch() {
 }
 
 function setupUploadFile() {
-  document.querySelector(".upload-file").classList.remove("hidden");
-  document.getElementById("file").addEventListener("change", async e => {
-    const files = e.target.files;
-    for (let file of files) {
+  const $upload =
+    document.querySelector(".upload-file");
+
+  const $file =
+    document.getElementById("file");
+
+  $upload.classList.remove("hidden");
+
+  // Cały kafelek otwiera systemowy wybór plików.
+  $upload.setAttribute("role", "button");
+  $upload.setAttribute("tabindex", "0");
+
+  $upload.addEventListener("click", event => {
+    // Programmatic click() na input również bąbelkuje
+    // przez kafelek, dlatego nie uruchamiamy go drugi raz.
+    if (event.target === $file) {
+      return;
+    }
+
+    event.preventDefault();
+    $file.click();
+  });
+
+  $upload.addEventListener("keydown", event => {
+    if (
+      event.key !== "Enter" &&
+      event.key !== " "
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    $file.click();
+  });
+
+  $file.addEventListener("change", async event => {
+    const files =
+      Array.from(event.target.files || []);
+
+    for (const file of files) {
       new Uploader(file, []).upload();
     }
+
+    // Umożliwia ponowny wybór tego samego pliku.
+    event.target.value = "";
   });
 }
 
