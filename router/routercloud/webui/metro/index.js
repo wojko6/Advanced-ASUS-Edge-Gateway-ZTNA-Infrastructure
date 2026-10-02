@@ -923,6 +923,12 @@ function setupPathDragOut(
 
   row.draggable = true;
 
+  // Wyłączamy natywny drag linków znajdujących się
+  // wewnątrz wiersza. Drag kontroluje RouterCloud.
+  row.querySelectorAll("a").forEach(link => {
+    link.draggable = false;
+  });
+
   row.classList.add(
     "routercloud-draggable"
   );
@@ -996,22 +1002,16 @@ function setupPathDragOut(
           ? "application/zip"
           : "application/octet-stream";
 
+      // Usuwamy natywny payload linku. GNOME nie powinien
+      // wtedy zapisywać strony HTML zamiast pliku.
+      event.dataTransfer.clearData();
+
       event.dataTransfer.effectAllowed =
         "copy";
 
       event.dataTransfer.setData(
         "DownloadURL",
         `${mime}:${filename}:${downloadUrl}`
-      );
-
-      event.dataTransfer.setData(
-        "text/uri-list",
-        downloadUrl
-      );
-
-      event.dataTransfer.setData(
-        "text/plain",
-        downloadUrl
       );
 
       row.classList.add(
@@ -1308,29 +1308,36 @@ function setupDropzone() {
       dragDepth = 0;
       clearDragInState();
 
+      // Dane przeciągania pobieramy synchronicznie.
+      // Po pierwszym await DataTransfer może już wygasnąć.
+      const items =
+        Array.from(
+          event.dataTransfer?.items || []
+        ).filter(
+          item => item.kind === "file"
+        );
+
+      const entries =
+        items
+          .map(item => {
+            if (
+              typeof item.webkitGetAsEntry !==
+              "function"
+            ) {
+              return null;
+            }
+
+            return item.webkitGetAsEntry();
+          })
+          .filter(Boolean);
+
+      const files =
+        Array.from(
+          event.dataTransfer?.files || []
+        );
+
       try {
         await checkAuth();
-
-        const items =
-          Array.from(
-            event.dataTransfer?.items || []
-          ).filter(
-            item => item.kind === "file"
-          );
-
-        const entries =
-          items
-            .map(item => {
-              if (
-                typeof item.webkitGetAsEntry !==
-                "function"
-              ) {
-                return null;
-              }
-
-              return item.webkitGetAsEntry();
-            })
-            .filter(Boolean);
 
         if (entries.length > 0) {
           for (const entry of entries) {
@@ -1345,11 +1352,6 @@ function setupDropzone() {
 
         // Fallback dla przeglądarek bez
         // webkitGetAsEntry().
-        const files =
-          Array.from(
-            event.dataTransfer?.files || []
-          );
-
         for (const file of files) {
           new Uploader(file, []).upload();
         }
