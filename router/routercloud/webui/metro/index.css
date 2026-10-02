@@ -240,6 +240,14 @@ textarea {
   background: #6541bf;
 }
 
+.toolbox .editor-save {
+  background: #24754c;
+}
+
+.toolbox .editor-discard {
+  background: #555e6d;
+}
+
 .toolbox .delete-file {
   background: #9e3f48;
 }

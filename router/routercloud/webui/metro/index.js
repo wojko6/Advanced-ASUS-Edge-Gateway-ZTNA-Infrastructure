@@ -23,6 +23,7 @@
  * @property {boolean} allow_move
  * @property {boolean} allow_delete
  * @property {boolean} routercloud_allow_delete
+ * @property {boolean} routercloud_allow_edit
  * @property {boolean} allow_search
  * @property {boolean} allow_archive
  * @property {boolean} auth
@@ -350,6 +351,19 @@ function metroNotice({
     mode: "notice",
     primaryText,
   });
+}
+
+function withDefaultTextExtension(name) {
+  const value = name.trim();
+
+  if (
+    value.startsWith(".") ||
+    /\.[^./\\]+$/.test(value)
+  ) {
+    return value;
+  }
+
+  return `${value.replace(/\.+$/, "")}.txt`;
 }
 
 function validateNewName(name) {
@@ -1054,69 +1068,96 @@ function setupNewFile() {
 async function setupEditorPage() {
   const url = baseUrl();
 
-  const $download = document.querySelector(".download");
+  const $download =
+    document.querySelector(".download");
+
   $download.classList.remove("hidden");
   $download.href = url;
 
-  if (DATA.kind == "Edit") {
-    if (DATA.allow_move) {
-      const $moveFile = document.querySelector(".move-file");
-      $moveFile.classList.remove("hidden");
-      $moveFile.addEventListener("click", async () => {
-        const query = location.href.slice(url.length);
-        const newFileUrl = await doMovePath(url);
-        if (newFileUrl) {
-          location.href = newFileUrl + query;
-        }
-      });
-    }
+  const canRouterCloudEdit =
+    DATA.editable &&
+    DATA.routercloud_allow_edit === true;
 
-    if (DATA.allow_delete) {
-      const $deleteFile = document.querySelector(".delete-file");
-      $deleteFile.classList.remove("hidden");
-      $deleteFile.addEventListener("click", async () => {
-        const url = baseUrl();
-        const name = baseName(url);
-        await doDeletePath(name, url, () => {
-          location.href = location.href.split("/").slice(0, -1).join("/");
-        });
-      });
-    }
+  const $save =
+    document.querySelector(".editor-save");
 
-    if (DATA.editable) {
-      const $saveBtn = document.querySelector(".save-btn");
-      $saveBtn.classList.remove("hidden");
-      $saveBtn.addEventListener("click", saveChange);
-    }
-  } else if (DATA.kind == "View") {
-    $editor.readonly = true;
+  const $discard =
+    document.querySelector(".editor-discard");
+
+  if (canRouterCloudEdit) {
+    $save.classList.remove("hidden");
+    $discard.classList.remove("hidden");
+
+    $save.addEventListener(
+      "click",
+      saveChange
+    );
+
+    $discard.addEventListener(
+      "click",
+      discardChange
+    );
   }
 
+  $editor.readOnly = !canRouterCloudEdit;
+
   if (!DATA.editable) {
-    const $notEditable = document.querySelector(".not-editable");
-    const url = baseUrl();
-    const ext = extName(baseName(url));
-    if (IFRAME_FORMATS.find(v => v === ext)) {
-      $notEditable.insertAdjacentHTML("afterend", `<iframe src="${url}" sandbox width="100%" height="${window.innerHeight - 100}px"></iframe>`);
+    const $notEditable =
+      document.querySelector(".not-editable");
+
+    const ext =
+      extName(baseName(url));
+
+    if (
+      IFRAME_FORMATS.find(
+        value => value === ext
+      )
+    ) {
+      $notEditable.insertAdjacentHTML(
+        "afterend",
+        `<iframe
+          src="${url}"
+          sandbox
+          width="100%"
+          height="${window.innerHeight - 100}px">
+        </iframe>`
+      );
     } else {
       $notEditable.classList.remove("hidden");
-      $notEditable.textContent = "Nie można edytować: plik jest zbyt duży lub binarny.";
+      $notEditable.textContent =
+        "Nie można edytować: plik jest zbyt duży lub binarny.";
     }
+
     return;
   }
 
   $editor.classList.remove("hidden");
+
   try {
     const res = await fetch(baseUrl());
+
     await assertResOK(res);
-    const encoding = getEncoding(res.headers.get("content-type"));
+
+    const encoding =
+      getEncoding(
+        res.headers.get("content-type")
+      );
+
     if (encoding === "utf-8") {
-      $editor.value = await res.text();
+      $editor.value =
+        await res.text();
     } else {
-      const bytes = await res.arrayBuffer();
-      const dataView = new DataView(bytes);
-      const decoder = new TextDecoder(encoding);
-      $editor.value = decoder.decode(dataView);
+      const bytes =
+        await res.arrayBuffer();
+
+      const dataView =
+        new DataView(bytes);
+
+      const decoder =
+        new TextDecoder(encoding);
+
+      $editor.value =
+        decoder.decode(dataView);
     }
   } catch (err) {
     await metroNotice({
@@ -1285,13 +1326,60 @@ async function doMovePath(fileUrl) {
 /**
  * Save editor change
  */
+function parentDirectoryUrl() {
+  const url =
+    new URL(baseUrl());
+
+  const parts =
+    url.pathname.split("/");
+
+  parts.pop();
+
+  let parentPath =
+    parts.join("/");
+
+  if (!parentPath.endsWith("/")) {
+    parentPath += "/";
+  }
+
+  url.pathname =
+    parentPath || "/";
+
+  url.search = "";
+  url.hash = "";
+
+  return url.toString();
+}
+
+function discardChange() {
+  location.href =
+    parentDirectoryUrl();
+}
+
 async function saveChange() {
   try {
-    await fetch(baseUrl(), {
-      method: "PUT",
-      body: $editor.value,
+    await checkAuth();
+
+    const res = await fetch(
+      baseUrl(),
+      {
+        method: "ROUTERCLOUDSAVE",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type":
+            "text/plain; charset=utf-8",
+        },
+        body: $editor.value,
+      }
+    );
+
+    await assertResOK(res);
+
+    await metroNotice({
+      title: "Zapisano",
+      message:
+        `Plik „${baseName(baseUrl())}” został zapisany.`,
     });
-    location.reload();
   } catch (err) {
     await metroNotice({
       title: "Nie udało się zapisać pliku",
