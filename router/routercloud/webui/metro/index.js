@@ -119,6 +119,249 @@ let $logoutBtn;
  */
 let $userName;
 
+/**
+ * RouterCloud Metro dialog system
+ */
+
+function metroDialog({
+  title,
+  message = "",
+  mode = "notice",
+  label = "",
+  value = "",
+  primaryText = "OK",
+  cancelText = "Anuluj",
+  danger = false,
+  validate = null,
+}) {
+  return new Promise(resolve => {
+    const dialog = document.getElementById("metro-dialog");
+    const $title = document.getElementById("metro-dialog-title");
+    const $message = document.getElementById("metro-dialog-message");
+    const $field = document.getElementById("metro-dialog-field");
+    const $label = document.getElementById("metro-dialog-label");
+    const $input = document.getElementById("metro-dialog-input");
+    const $error = document.getElementById("metro-dialog-error");
+    const $cancel = document.getElementById("metro-dialog-cancel");
+    const $primary = document.getElementById("metro-dialog-primary");
+    const $close = dialog.querySelector(".metro-dialog-close");
+
+    if (!dialog) {
+      resolve(mode === "confirm" ? false : mode === "prompt" ? null : undefined);
+      return;
+    }
+
+    $title.textContent = title;
+    $message.textContent = message;
+    $message.classList.toggle("hidden", !message);
+
+    const needsInput = mode === "prompt";
+    $field.classList.toggle("hidden", !needsInput);
+    $label.textContent = label;
+    $input.textContent = value;
+    $input.dataset.placeholder = label;
+
+    $error.textContent = "";
+    $error.classList.add("hidden");
+
+    $primary.textContent = primaryText;
+    $primary.classList.toggle("metro-dialog-button-danger", danger);
+
+    const showCancel = mode !== "notice";
+    $cancel.classList.toggle("hidden", !showCancel);
+    $cancel.textContent = cancelText;
+
+    document.body.classList.add("metro-dialog-open");
+
+    let settled = false;
+
+    const cleanup = result => {
+      if (settled) return;
+      settled = true;
+
+      document.body.classList.remove("metro-dialog-open");
+
+      $primary.classList.remove("metro-dialog-button-danger");
+
+      dialog.removeEventListener("cancel", onCancel);
+      dialog.removeEventListener("close", onClose);
+      $cancel.removeEventListener("click", cancel);
+      $close.removeEventListener("click", cancel);
+      $primary.removeEventListener("click", submit);
+      $input.removeEventListener("keydown", onInputKeyDown);
+      $input.removeEventListener("input", onInputChange);
+
+      if (dialog.open) {
+        dialog.close();
+      }
+
+      resolve(result);
+    };
+
+    const cancel = () => {
+      if (mode === "confirm") {
+        cleanup(false);
+      } else if (mode === "prompt") {
+        cleanup(null);
+      } else {
+        cleanup(undefined);
+      }
+    };
+
+    const onCancel = event => {
+      event.preventDefault();
+      cancel();
+    };
+
+    const onClose = () => {
+      if (!settled) cancel();
+    };
+
+    const submit = event => {
+      event.preventDefault();
+
+      if (mode === "prompt") {
+        const result = ($input.textContent || "").trim();
+
+        if (validate) {
+          const validationError = validate(result);
+
+          if (validationError) {
+            $error.textContent = validationError;
+            $error.classList.remove("hidden");
+            $input.focus();
+            return;
+          }
+        }
+
+        cleanup(result);
+        return;
+      }
+
+      if (mode === "confirm") {
+        cleanup(true);
+        return;
+      }
+
+      cleanup(undefined);
+    };
+
+    const onInputKeyDown = event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submit(event);
+      }
+    };
+
+    const onInputChange = () => {
+      const text = $input.textContent || "";
+
+      if (text.length > 255) {
+        $input.textContent = text.slice(0, 255);
+
+        const selection = window.getSelection();
+        const range = document.createRange();
+
+        range.selectNodeContents($input);
+        range.collapse(false);
+
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    };
+
+    $input.addEventListener("keydown", onInputKeyDown);
+    $input.addEventListener("input", onInputChange);
+
+    dialog.addEventListener("cancel", onCancel);
+    dialog.addEventListener("close", onClose);
+    $cancel.addEventListener("click", cancel);
+    $close.addEventListener("click", cancel);
+    $primary.addEventListener("click", submit);
+
+    dialog.showModal();
+
+    requestAnimationFrame(() => {
+      if (needsInput) {
+        $input.focus();
+
+        const selection = window.getSelection();
+        const range = document.createRange();
+
+        range.selectNodeContents($input);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } else {
+        $primary.focus();
+      }
+    });
+  });
+}
+
+function metroPrompt({
+  title,
+  message = "",
+  label = "Nazwa",
+  value = "",
+  primaryText = "Zapisz",
+  validate = null,
+}) {
+  return metroDialog({
+    title,
+    message,
+    mode: "prompt",
+    label,
+    value,
+    primaryText,
+    validate,
+  });
+}
+
+function metroConfirm({
+  title,
+  message,
+  primaryText = "Potwierdź",
+  danger = false,
+}) {
+  return metroDialog({
+    title,
+    message,
+    mode: "confirm",
+    primaryText,
+    danger,
+  });
+}
+
+function metroNotice({
+  title,
+  message,
+  primaryText = "OK",
+}) {
+  return metroDialog({
+    title,
+    message,
+    mode: "notice",
+    primaryText,
+  });
+}
+
+function validateNewName(name) {
+  if (!name) {
+    return "Nazwa nie może być pusta.";
+  }
+
+  if (
+    name === "." ||
+    name === ".." ||
+    name.includes("/") ||
+    name.includes("\\")
+  ) {
+    return "Podaj wyłącznie nazwę pliku lub folderu, bez ścieżki.";
+  }
+
+  return "";
+}
+
 // manage unload event to prevent leaving with uploads in progress
 const beforeUnloadHandler = (event) => {
   if (Uploader.queues.length > 0 || Uploader.runnings > 0) {
@@ -132,7 +375,10 @@ const beforeUnloadHandler = (event) => {
 window.addEventListener("DOMContentLoaded", async () => {
   const $indexData = document.getElementById('index-data');
   if (!$indexData) {
-    alert("Brak danych");
+    await metroNotice({
+      title: "Brak danych",
+      message: "RouterCloud nie otrzymał danych potrzebnych do wyświetlenia widoku.",
+    });
     return;
   }
 
@@ -399,7 +645,7 @@ async function setupIndexPage() {
   if (DATA.allow_archive) {
     const $download = document.querySelector(".download");
     $download.href = baseUrl() + "?zip";
-    $download.title = "Pobierz folder jako plik .zip";
+    $download.title = "Pobierz jako .zip";
     $download.classList.add("dlwt");
     $download.classList.remove("hidden");
   }
@@ -615,7 +861,10 @@ function setupDownloadWithToken() {
         tempA.click();
         document.body.removeChild(tempA);
       } catch (err) {
-        alert(`Nie udało się pobrać pliku: ${err.message}`);
+        await metroNotice({
+          title: "Nie udało się pobrać pliku",
+          message: err.message,
+        });
       }
     });
   });
@@ -652,18 +901,36 @@ function setupUploadFile() {
 function setupNewFolder() {
   const $newFolder = document.querySelector(".new-folder");
   $newFolder.classList.remove("hidden");
-  $newFolder.addEventListener("click", () => {
-    const name = prompt("Podaj nazwę folderu");
-    if (name) createFolder(name);
+  $newFolder.addEventListener("click", async () => {
+    const name = await metroPrompt({
+      title: "Nowy folder",
+      message: "Utwórz nowy folder w bieżącej lokalizacji.",
+      label: "Nazwa folderu",
+      primaryText: "Utwórz",
+      validate: validateNewName,
+    });
+
+    if (name) {
+      await createFolder(name);
+    }
   });
 }
 
 function setupNewFile() {
   const $newFile = document.querySelector(".new-file");
   $newFile.classList.remove("hidden");
-  $newFile.addEventListener("click", () => {
-    const name = prompt("Podaj nazwę pliku");
-    if (name) createFile(name);
+  $newFile.addEventListener("click", async () => {
+    const name = await metroPrompt({
+      title: "Nowy plik",
+      message: "Utwórz nowy plik w bieżącej lokalizacji.",
+      label: "Nazwa pliku",
+      primaryText: "Utwórz",
+      validate: validateNewName,
+    });
+
+    if (name) {
+      await createFile(name);
+    }
   });
 }
 
@@ -735,7 +1002,10 @@ async function setupEditorPage() {
       $editor.value = decoder.decode(dataView);
     }
   } catch (err) {
-    alert(`Nie udało się pobrać pliku: ${err.message}`);
+    await metroNotice({
+      title: "Nie udało się pobrać pliku",
+      message: err.message,
+    });
   }
 }
 
@@ -759,7 +1029,14 @@ async function deletePath(index) {
 }
 
 async function doDeletePath(name, url, cb) {
-  if (!confirm(`Usunąć \`${name}\`?`)) return;
+  const confirmed = await metroConfirm({
+    title: "Usunąć element?",
+    message: `Element „${name}” zostanie trwale usunięty.`,
+    primaryText: "Usuń",
+    danger: true,
+  });
+
+  if (!confirmed) return;
   try {
     await checkAuth();
     const res = await fetch(url, {
@@ -768,7 +1045,10 @@ async function doDeletePath(name, url, cb) {
     await assertResOK(res);
     cb();
   } catch (err) {
-    alert(`Nie można usunąć \`${name}\`: ${err.message}`);
+    await metroNotice({
+      title: "Nie można usunąć",
+      message: `Element „${name}” nie został usunięty.\n\n${err.message}`,
+    });
   }
 }
 
@@ -796,18 +1076,16 @@ async function doMovePath(fileUrl) {
   const parentPath = filePath.slice(0, lastSlash + 1);
   const currentName = filePath.slice(lastSlash + 1);
 
-  const newName = prompt("Podaj nową nazwę", currentName);
-  if (!newName || newName === currentName) return;
+  const newName = await metroPrompt({
+    title: "Zmień nazwę",
+    message: `Zmieniasz nazwę elementu „${currentName}”.`,
+    label: "Nowa nazwa",
+    value: currentName,
+    primaryText: "Zmień nazwę",
+    validate: validateNewName,
+  });
 
-  if (
-    newName === "." ||
-    newName === ".." ||
-    newName.includes("/") ||
-    newName.includes("\\")
-  ) {
-    alert("Podaj wyłącznie nazwę pliku lub folderu, bez ścieżki.");
-    return;
-  }
+  if (!newName || newName === currentName) return;
 
   const newPath = parentPath + newName;
   const newFileUrl =
@@ -826,14 +1104,20 @@ async function doMovePath(fileUrl) {
     });
 
     if (res.status === 409) {
-      alert(`Nie można zmienić nazwy \`${currentName}\`: taka nazwa już istnieje.`);
+      await metroNotice({
+        title: "Nazwa jest już zajęta",
+        message: `W tym folderze istnieje już element o nazwie „${newName}”.`,
+      });
       return;
     }
 
     await assertResOK(res);
     return newFileUrl;
   } catch (err) {
-    alert(`Nie można zmienić nazwy \`${currentName}\` na \`${newName}\`: ${err.message}`);
+    await metroNotice({
+      title: "Nie udało się zmienić nazwy",
+      message: `Nie można zmienić nazwy „${currentName}” na „${newName}”.\n\n${err.message}`,
+    });
   }
 }
 
@@ -849,7 +1133,10 @@ async function saveChange() {
     });
     location.reload();
   } catch (err) {
-    alert(`Nie udało się zapisać pliku: ${err.message}`);
+    await metroNotice({
+      title: "Nie udało się zapisać pliku",
+      message: err.message,
+    });
   }
 }
 
@@ -890,7 +1177,10 @@ async function createFolder(name) {
     await assertResOK(res);
     location.href = url;
   } catch (err) {
-    alert(`Nie można utworzyć folderu \`${name}\`: ${err.message}`);
+    await metroNotice({
+      title: "Nie można utworzyć folderu",
+      message: `Folder „${name}” nie został utworzony.\n\n${err.message}`,
+    });
   }
 }
 
@@ -905,7 +1195,10 @@ async function createFile(name) {
     await assertResOK(res);
     location.href = url + "?edit";
   } catch (err) {
-    alert(`Nie można utworzyć pliku \`${name}\`: ${err.message}`);
+    await metroNotice({
+      title: "Nie można utworzyć pliku",
+      message: `Plik „${name}” nie został utworzony.\n\n${err.message}`,
+    });
   }
 }
 

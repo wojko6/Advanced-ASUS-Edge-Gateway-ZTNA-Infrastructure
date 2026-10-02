@@ -21,7 +21,34 @@
           <div class="brand-subtitle">Twój prywatny dysk w sieci domowej</div>
         </div>
       </div>
-    </header>
+
+    <div class="toolbox-right">
+      <div class="login-btn hidden" title="Zaloguj">
+        <svg width="16" height="16" viewBox="0 0 16 16">
+          <path fill-rule="evenodd"
+            d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z" />
+          <path fill-rule="evenodd"
+            d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
+        </svg>
+        <span class="login-label">Zaloguj</span>
+      </div>
+      <div class="metro-logout-tile logout-btn hidden" title="Wyloguj">
+        <svg width="16" height="16" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0z"/>
+          <path fill-rule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708z"/>
+        </svg>
+        <span class="logout-label">Wyloguj</span>
+        <span class="user-name"></span>
+      </div>
+      <div class="save-btn hidden" title="Zapisz plik">
+        <svg viewBox="0 0 1024 1024" width="24" height="24">
+          <path
+            d="M426.666667 682.666667v42.666666h170.666666v-42.666666h-170.666666z m-42.666667-85.333334h298.666667v128h42.666666V418.133333L605.866667 298.666667H298.666667v426.666666h42.666666v-128h42.666667z m260.266667-384L810.666667 379.733333V810.666667H213.333333V213.333333h430.933334zM341.333333 341.333333h85.333334v170.666667H341.333333V341.333333z"
+            fill="#444444" p-id="8311"></path>
+        </svg>
+      </div>
+    </div>
+  </header>
 
   <div class="head">
     <div class="breadcrumb"></div>
@@ -100,30 +127,7 @@
         tabindex="1">
       <input type="submit" hidden />
     </form>
-    <div class="toolbox-right">
-      <div class="login-btn hidden" title="Zaloguj">
-        <svg width="16" height="16" viewBox="0 0 16 16">
-          <path fill-rule="evenodd"
-            d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z" />
-          <path fill-rule="evenodd"
-            d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
-        </svg>
-      </div>
-      <div class="logout-btn hidden" title="Wyloguj">
-        <svg width="16" height="16" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0z"/>
-          <path fill-rule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708z"/>
-        </svg>
-        <span class="user-name"></span>
-      </div>
-      <div class="save-btn hidden" title="Zapisz plik">
-        <svg viewBox="0 0 1024 1024" width="24" height="24">
-          <path
-            d="M426.666667 682.666667v42.666666h170.666666v-42.666666h-170.666666z m-42.666667-85.333334h298.666667v128h42.666666V418.133333L605.866667 298.666667H298.666667v426.666666h42.666666v-128h42.666667z m260.266667-384L810.666667 379.733333V810.666667H213.333333V213.333333h430.933334zM341.333333 341.333333h85.333334v170.666667H341.333333V341.333333z"
-            fill="#444444" p-id="8311"></path>
-        </svg>
-      </div>
-    </div>
+
   </div>
   <div class="main">
     <div class="index-page hidden">
@@ -162,6 +166,57 @@
       <textarea id="editor" class="editor hidden" aria-label="Edytor" cols="10"></textarea>
     </div>
   </div>
+  <dialog id="metro-dialog" class="metro-dialog" aria-labelledby="metro-dialog-title">
+    <form method="dialog" class="metro-dialog-card">
+      <div class="metro-dialog-accent"></div>
+
+      <div class="metro-dialog-header">
+        <div class="metro-dialog-brand">RouterCloud</div>
+        <button
+          type="button"
+          class="metro-dialog-close"
+          aria-label="Zamknij"
+          title="Zamknij">×</button>
+      </div>
+
+      <div class="metro-dialog-body">
+        <h2 id="metro-dialog-title"></h2>
+        <p id="metro-dialog-message" class="metro-dialog-message hidden"></p>
+
+        <label id="metro-dialog-field" class="metro-dialog-field hidden">
+          <span id="metro-dialog-label"></span>
+          <div
+            id="metro-dialog-input"
+            class="metro-dialog-input"
+            role="textbox"
+            aria-labelledby="metro-dialog-label"
+            contenteditable="plaintext-only"
+            tabindex="0"
+            data-bwignore="true"
+            spellcheck="false"></div>
+        </label>
+
+        <div id="metro-dialog-error" class="metro-dialog-error hidden"></div>
+      </div>
+
+      <div class="metro-dialog-actions">
+        <button
+          type="button"
+          id="metro-dialog-cancel"
+          class="metro-dialog-button metro-dialog-button-secondary">
+          Anuluj
+        </button>
+
+        <button
+          type="submit"
+          id="metro-dialog-primary"
+          class="metro-dialog-button metro-dialog-button-primary">
+          OK
+        </button>
+      </div>
+    </form>
+  </dialog>
+
   <template id="index-data">__INDEX_DATA__</template>
   <script src="__ASSETS_PREFIX__index.js"></script>
   </div>
