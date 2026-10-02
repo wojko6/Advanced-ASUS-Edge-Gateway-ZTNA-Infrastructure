@@ -565,7 +565,9 @@ class Uploader {
     Uploader.runnings--;
     Uploader.runQueue();
 
-    // Aktualizujemy listę bez przeładowania całej strony.
+    // Po udanym odświeżeniu katalogu tymczasowy
+    // wiersz postępu zostanie usunięty.
+    completedUploadRows.add(this.idx);
     schedulePathRefresh();
   }
 
@@ -652,6 +654,28 @@ let pathRefreshTimer = null;
 let pathRefreshRunning = false;
 let pathRefreshPending = false;
 
+const completedUploadRows = new Set();
+
+function clearCompletedUploadRows() {
+  for (const idx of completedUploadRows) {
+    document
+      .getElementById(`upload${idx}`)
+      ?.remove();
+  }
+
+  completedUploadRows.clear();
+
+  if (
+    !$uploadersTable.querySelector(
+      "tr.uploader"
+    )
+  ) {
+    $uploadersTable.classList.add(
+      "hidden"
+    );
+  }
+}
+
 function schedulePathRefresh(delay = 250) {
   if (pathRefreshTimer) {
     clearTimeout(pathRefreshTimer);
@@ -736,6 +760,10 @@ async function refreshCurrentIndex() {
     if (DATA.user) {
       setupDownloadWithToken();
     }
+
+    // Dopiero po prawidłowym pobraniu nowej listy
+    // usuwamy zakończone wpisy z tabeli uploadu.
+    clearCompletedUploadRows();
   } catch (err) {
     console.warn(
       "RouterCloud list refresh failed:",
@@ -930,220 +958,12 @@ function addPath(file, index) {
     openPathContextMenu(event, index, isDir);
   });
 
-  setupPathDragOut(
-    row,
-    file,
-    url,
-    isDir
-  );
-}
-
-function dragDownloadFilename(
-  name,
-  isDir
-) {
-  let output =
-    isDir
-      ? `${name}.zip`
-      : name;
-
-  // DownloadURL używa dwukropków jako separatorów.
-  output =
-    output.replace(
-      /[:/\\]/g,
-      "_"
-    );
-
-  return output;
-}
-
-async function buildDragDownloadUrl(
-  url,
-  isDir
-) {
-  const downloadUrl =
-    new URL(url, location.href);
-
-  if (isDir) {
-    downloadUrl.searchParams.set(
-      "zip",
-      ""
-    );
-  }
-
-  if (!DATA.user) {
-    return downloadUrl.toString();
-  }
-
-  const tokenUrl =
-    new URL(url, location.href);
-
-  tokenUrl.searchParams.set(
-    "tokengen",
-    ""
-  );
-
-  const tokenResponse =
-    await fetch(
-      tokenUrl,
-      {
-        credentials: "same-origin",
-      }
-    );
-
-  await assertResOK(tokenResponse);
-
-  const token =
-    (await tokenResponse.text()).trim();
-
-  if (!token) {
-    throw new Error(
-      "Nie udało się przygotować tokenu pobierania."
-    );
-  }
-
-  downloadUrl.searchParams.set(
-    "token",
-    token
-  );
-
-  return downloadUrl.toString();
-}
-
-function setupPathDragOut(
-  row,
-  file,
-  url,
-  isDir
-) {
-  if (!row) {
-    return;
-  }
-
-  if (
-    isDir &&
-    !DATA.allow_archive
-  ) {
-    return;
-  }
-
-  row.draggable = true;
-
-  // Wyłączamy natywny drag linków znajdujących się
-  // wewnątrz wiersza. Drag kontroluje RouterCloud.
-  row.querySelectorAll("a").forEach(link => {
+  // Przeciąganie z przeglądarki do pulpitu nie jest
+  // niezawodne na GNOME. Transfer w tym kierunku
+  // będzie realizowany przez WebDAV.
+  row?.querySelectorAll("a").forEach(link => {
     link.draggable = false;
   });
-
-  row.classList.add(
-    "routercloud-draggable"
-  );
-
-  let downloadUrl = "";
-  let preparing = false;
-
-  const prepareDownloadUrl =
-    async () => {
-      if (
-        downloadUrl ||
-        preparing
-      ) {
-        return;
-      }
-
-      preparing = true;
-
-      try {
-        downloadUrl =
-          await buildDragDownloadUrl(
-            url,
-            isDir
-          );
-      } catch {
-        downloadUrl = "";
-      } finally {
-        preparing = false;
-      }
-    };
-
-  // Przygotowujemy token wcześniej, ponieważ podczas
-  // dragstart DataTransfer musi zostać ustawione synchronicznie.
-  void prepareDownloadUrl();
-
-  row.addEventListener(
-    "pointerenter",
-    () => {
-      void prepareDownloadUrl();
-    }
-  );
-
-  row.addEventListener(
-    "dragstart",
-    event => {
-      if (
-        !event.dataTransfer ||
-        !downloadUrl
-      ) {
-        event.preventDefault();
-
-        void metroNotice({
-          title:
-            "Przeciąganie jeszcze niegotowe",
-          message:
-            "RouterCloud przygotowuje bezpieczny link pobierania. Spróbuj ponownie za chwilę.",
-        });
-
-        void prepareDownloadUrl();
-        return;
-      }
-
-      const filename =
-        dragDownloadFilename(
-          file.name,
-          isDir
-        );
-
-      const mime =
-        isDir
-          ? "application/zip"
-          : "application/octet-stream";
-
-      // Usuwamy natywny payload linku. GNOME nie powinien
-      // wtedy zapisywać strony HTML zamiast pliku.
-      event.dataTransfer.clearData();
-
-      event.dataTransfer.effectAllowed =
-        "copy";
-
-      event.dataTransfer.setData(
-        "DownloadURL",
-        `${mime}:${filename}:${downloadUrl}`
-      );
-
-      // Na Linux/GNOME Nautilus potrafi pobrać URI
-      // do miejsca upuszczenia. Używamy tego fallbacku
-      // wyłącznie dla folderów eksportowanych jako ZIP.
-      if (isDir) {
-        event.dataTransfer.setData(
-          "text/uri-list",
-          `${downloadUrl}\r\n`
-        );
-      }
-
-      row.classList.add(
-        "routercloud-dragging-out"
-      );
-    }
-  );
-
-  row.addEventListener(
-    "dragend",
-    () => {
-      row.classList.remove(
-        "routercloud-dragging-out"
-      );
-    }
-  );
 }
 
 function closePathContextMenu() {
