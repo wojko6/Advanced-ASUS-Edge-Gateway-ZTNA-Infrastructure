@@ -151,7 +151,7 @@ textarea {
 .searchbar {
   grid-area: search;
   display: flex;
-  width: min(100%, 760px);
+  width: min(100%, 932px);
   height: 52px;
   margin: 0;
   padding: 0 14px;
@@ -198,7 +198,8 @@ textarea {
 .toolbox {
   grid-area: actions;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(142px, 180px));
+  width: min(100%, 932px);
+  grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
   gap: 8px;
   margin: 0;
 }
@@ -227,27 +228,31 @@ textarea {
     filter 120ms ease;
 }
 
-.toolbox .control:nth-child(1) {
+.toolbox .root-home {
+  background: #2868dd;
+}
+
+.toolbox .download {
   background: #225ebf;
 }
 
-.toolbox .control:nth-child(2) {
+.toolbox .move-file {
   background: #6541bf;
 }
 
-.toolbox .control:nth-child(3) {
+.toolbox .delete-file {
   background: #9e3f48;
 }
 
-.toolbox .control:nth-child(4) {
+.toolbox .upload-file {
   background: #087a89;
 }
 
-.toolbox .control:nth-child(5) {
+.toolbox .new-folder {
   background: #24754c;
 }
 
-.toolbox .control:nth-child(6) {
+.toolbox .new-file {
   background: #b66626;
 }
 
@@ -653,4 +658,40 @@ textarea {
     scroll-behavior: auto !important;
     transition: none !important;
   }
+}
+
+
+/* Root navigation lives in the first Metro tile. */
+.breadcrumb > a:first-child {
+  display: none;
+}
+
+.breadcrumb > a:first-child + .separator {
+  display: none;
+}
+
+/* At filesystem root the old breadcrumb contains only the home icon. */
+.breadcrumb:has(> a:first-child:only-child) {
+  display: none;
+}
+
+/* High-contrast sorting indicators. */
+.paths-table thead a > span {
+  display: inline-flex;
+  margin-left: 6px;
+  padding-left: 0;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.paths-table thead a > span svg {
+  width: 13px;
+  height: 13px;
+  fill: #d7e7ff;
+  opacity: 1;
+  filter: drop-shadow(0 0 2px rgba(87, 158, 255, 0.45));
+}
+
+.paths-table thead a:hover > span svg {
+  fill: #ffffff;
 }
