@@ -14,6 +14,22 @@ cp "$HERE/index.html" "$PREVIEW/index.html"
 cp "$HERE/index.css" "$PREVIEW/index.css"
 cp "$HERE/index.js" "$PREVIEW/index.js"
 cp "$HERE/favicon.ico" "$PREVIEW/favicon.ico"
+cp "$HERE/login.html" "$PREVIEW/login.html"
+cp "$HERE/login.css" "$PREVIEW/login.css"
+
+python3 - <<'PYLOGIN'
+from pathlib import Path
+
+path = Path("/tmp/routercloud-metro-preview/login.html")
+html = path.read_text(encoding="utf-8")
+
+html = html.replace(
+    'method="post"\n        action="/__routercloud/login"',
+    'method="post"\n        action="#"\n        onsubmit="event.preventDefault()"'
+)
+
+path.write_text(html, encoding="utf-8")
+PYLOGIN
 
 python3 - <<'PY'
 from pathlib import Path
