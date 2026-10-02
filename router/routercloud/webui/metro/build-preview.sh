@@ -142,12 +142,13 @@ encoded = base64.b64encode(
 html = path.read_text(encoding="utf-8")
 
 html = html.replace("__ASSETS_PREFIX__", "")
+html = html.replace("__ASSETS_REV__", "preview")
 html = html.replace("__INDEX_DATA__", encoded)
 
 path.write_text(html, encoding="utf-8")
 PY
 
-if grep -RqE '__ASSETS_PREFIX__|__INDEX_DATA__' "$PREVIEW"; then
+if grep -RqE '__ASSETS_PREFIX__|__ASSETS_REV__|__INDEX_DATA__' "$PREVIEW"; then
     echo "ERROR: zostały placeholdery DUFS"
     exit 2
 fi
