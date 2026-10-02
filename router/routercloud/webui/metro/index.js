@@ -886,6 +886,21 @@ function openPathContextMenu(event, index, isDir) {
 function setupPathContextMenu() {
   if (!$pathContextMenu) return;
 
+  document.addEventListener("contextmenu", event => {
+    const target = event.target;
+
+    if (
+      target instanceof Element &&
+      target.closest(
+        'textarea, input, select, [contenteditable]:not([contenteditable="false"])'
+      )
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+  });
+
   const renameButton =
     document.getElementById("context-rename");
 
