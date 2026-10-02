@@ -549,6 +549,41 @@ textarea {
   fill: #aeb9c8;
 }
 
+
+.path-select-control,
+.select-all-control {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  vertical-align: middle;
+}
+
+.path-select,
+.select-all-control input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.select-all-control {
+  margin-left: 7px;
+}
+
+.toolbox .download.selection-empty {
+  cursor: not-allowed;
+  opacity: 0.46;
+  filter: saturate(0.55);
+}
+
+.toolbox .download.selection-empty:hover {
+  transform: none;
+  border-color: transparent;
+  filter: saturate(0.55);
+}
+
 .uploaders-table .cell-status {
   width: 180px;
 }

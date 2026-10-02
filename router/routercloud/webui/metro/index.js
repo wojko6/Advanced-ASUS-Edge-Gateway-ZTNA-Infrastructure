@@ -656,6 +656,172 @@ let pathRefreshPending = false;
 
 const completedUploadRows = new Set();
 
+const selectedArchivePaths = new Set();
+
+function reconcileArchiveSelection() {
+  const available =
+    new Set(
+      (DATA.paths || [])
+        .filter(Boolean)
+        .map(file => file.name)
+    );
+
+  for (const name of selectedArchivePaths) {
+    if (!available.has(name)) {
+      selectedArchivePaths.delete(name);
+    }
+  }
+}
+
+function updateArchiveSelectionUi() {
+  const checkboxes =
+    Array.from(
+      document.querySelectorAll(
+        ".path-select"
+      )
+    );
+
+  const checked =
+    checkboxes.filter(
+      checkbox => checkbox.checked
+    );
+
+  const $selectAll =
+    document.getElementById(
+      "select-all-paths"
+    );
+
+  if ($selectAll) {
+    $selectAll.checked =
+      checkboxes.length > 0 &&
+      checked.length === checkboxes.length;
+
+    $selectAll.indeterminate =
+      checked.length > 0 &&
+      checked.length < checkboxes.length;
+  }
+
+  const $download =
+    document.querySelector(
+      ".toolbox .download"
+    );
+
+  if ($download) {
+    const empty =
+      selectedArchivePaths.size === 0;
+
+    $download.classList.toggle(
+      "selection-empty",
+      empty
+    );
+
+    $download.setAttribute(
+      "aria-disabled",
+      empty ? "true" : "false"
+    );
+  }
+}
+
+function submitSelectedArchiveDownload() {
+  reconcileArchiveSelection();
+
+  const selection =
+    Array.from(selectedArchivePaths);
+
+  if (selection.length === 0) {
+    void metroNotice({
+      title: "Brak zaznaczenia",
+      message:
+        "Zaznacz co najmniej jeden plik lub folder.",
+    });
+
+    return;
+  }
+
+  const action =
+    new URL(baseUrl(), location.href);
+
+  action.searchParams.set(
+    "zip-selected",
+    ""
+  );
+
+  const form =
+    document.createElement("form");
+
+  form.method = "POST";
+  form.action = action.toString();
+  form.style.display = "none";
+  form.acceptCharset = "UTF-8";
+
+  const input =
+    document.createElement("input");
+
+  input.type = "hidden";
+  input.name = "selection";
+  input.value =
+    JSON.stringify(selection);
+
+  form.appendChild(input);
+  document.body.appendChild(form);
+
+  form.submit();
+
+  window.setTimeout(
+    () => form.remove(),
+    1000
+  );
+}
+
+function setupSelectedArchiveDownload() {
+  const $download =
+    document.querySelector(
+      ".toolbox .download"
+    );
+
+  $download.removeAttribute("href");
+  $download.classList.remove("dlwt");
+  $download.title = "Pobierz jako .zip";
+  $download.setAttribute(
+    "aria-label",
+    "Pobierz zaznaczone jako .zip"
+  );
+  $download.setAttribute(
+    "role",
+    "button"
+  );
+  $download.setAttribute(
+    "tabindex",
+    "0"
+  );
+  $download.classList.remove("hidden");
+
+  $download.addEventListener(
+    "click",
+    event => {
+      event.preventDefault();
+      submitSelectedArchiveDownload();
+    }
+  );
+
+  $download.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key !== "Enter" &&
+        event.key !== " "
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      submitSelectedArchiveDownload();
+    }
+  );
+
+  updateArchiveSelectionUi();
+}
+
 function clearCompletedUploadRows() {
   for (const idx of completedUploadRows) {
     document
@@ -740,6 +906,8 @@ async function refreshCurrentIndex() {
         ? fresh.paths
         : [];
 
+    reconcileArchiveSelection();
+
     if (fresh.storage) {
       DATA.storage = fresh.storage;
     }
@@ -760,6 +928,8 @@ async function refreshCurrentIndex() {
     if (DATA.user) {
       setupDownloadWithToken();
     }
+
+    updateArchiveSelectionUi();
 
     // Dopiero po prawidłowym pobraniu nowej listy
     // usuwamy zakończone wpisy z tabeli uploadu.
@@ -801,11 +971,7 @@ async function setupIndexPage() {
   setupStorageInfo();
 
   if (DATA.allow_archive) {
-    const $download = document.querySelector(".download");
-    $download.href = baseUrl() + "?zip";
-    $download.title = "Pobierz jako .zip";
-    $download.classList.add("dlwt");
-    $download.classList.remove("hidden");
+    setupSelectedArchiveDownload();
   }
 
   if (DATA.allow_upload) {
@@ -869,9 +1035,64 @@ function renderPathsTableHead() {
     const icon = `<span>${svg}</span>`
     return `<th class="cell-${item.name}" ${item.props}><a href="?${qs}">${item.text}${icon}</a></th>`
   }).join("\n")}
-      <th class="cell-actions">Akcje</th>
+      <th class="cell-actions">
+        <span>Akcje</span>
+        <label
+          class="select-all-control"
+          title="Zaznacz lub odznacz wszystko">
+          <input
+            type="checkbox"
+            id="select-all-paths"
+            aria-label="Zaznacz lub odznacz wszystko">
+        </label>
+      </th>
     </tr>
   `);
+
+  const $selectAll =
+    document.getElementById(
+      "select-all-paths"
+    );
+
+  $selectAll?.addEventListener(
+    "change",
+    event => {
+      const checked =
+        event.target.checked;
+
+      document
+        .querySelectorAll(".path-select")
+        .forEach(checkbox => {
+          checkbox.checked = checked;
+
+          const index =
+            Number(
+              checkbox.dataset.pathIndex
+            );
+
+          const file =
+            DATA.paths[index];
+
+          if (!file) {
+            return;
+          }
+
+          if (checked) {
+            selectedArchivePaths.add(
+              file.name
+            );
+          } else {
+            selectedArchivePaths.delete(
+              file.name
+            );
+          }
+        });
+
+      updateArchiveSelectionUi();
+    }
+  );
+
+  updateArchiveSelectionUi();
 }
 
 /**
@@ -890,6 +1111,8 @@ function renderPathsTableBody() {
     $emptyFolder.textContent = DIR_EMPTY_NOTE;
     $emptyFolder.classList.remove("hidden");
   }
+
+  updateArchiveSelectionUi();
 }
 
 /**
@@ -901,8 +1124,6 @@ function addPath(file, index) {
   const encodedName = encodedStr(file.name);
   let url = newUrl(file.name);
   let actionDownload = "";
-  let actionEdit = "";
-  let actionView = "";
   let isDir = file.path_type.endsWith("Dir");
   if (isDir) {
     url += "/";
@@ -918,19 +1139,23 @@ function addPath(file, index) {
       <a class="dlwt" href="${url}" title="Pobierz plik" download>${ICONS.download}</a>
     </div>`;
   }
-  if (DATA.allow_delete) {
-    if (DATA.allow_upload && !isDir) {
-      actionEdit = `<a class="action-btn" title="Edytuj plik" target="_blank" href="${url}?edit">${ICONS.edit}</a>`;
-    }
-  }
-  if (!actionEdit && !isDir) {
-    actionView = `<a class="action-btn" title="Wyświetl plik" target="_blank" href="${url}?view">${ICONS.view}</a>`;
-  }
+  const checked =
+    selectedArchivePaths.has(file.name)
+      ? " checked"
+      : "";
+
   let actionCell = `
   <td class="cell-actions">
     ${actionDownload}
-    ${actionView}
-    ${actionEdit}
+    <label
+      class="path-select-control"
+      title="Zaznacz do archiwum .zip">
+      <input
+        type="checkbox"
+        class="path-select"
+        data-path-index="${index}"
+        aria-label="Zaznacz ${encodedName} do archiwum .zip"${checked}>
+    </label>
   </td>`;
 
   let sizeDisplay = isDir ? formatDirSize(file.size) : formatFileSize(file.size).join(" ");
@@ -953,6 +1178,26 @@ function addPath(file, index) {
 </tr>`);
 
   const row = document.getElementById(`addPath${index}`);
+
+  const $select =
+    row?.querySelector(".path-select");
+
+  $select?.addEventListener(
+    "change",
+    event => {
+      if (event.target.checked) {
+        selectedArchivePaths.add(
+          file.name
+        );
+      } else {
+        selectedArchivePaths.delete(
+          file.name
+        );
+      }
+
+      updateArchiveSelectionUi();
+    }
+  );
 
   row?.addEventListener("contextmenu", event => {
     openPathContextMenu(event, index, isDir);
@@ -1584,6 +1829,12 @@ async function deletePath(index) {
   await doDeletePath(file.name, newUrl(file.name), () => {
     document.getElementById(`addPath${index}`)?.remove();
     DATA.paths[index] = null;
+
+    selectedArchivePaths.delete(
+      file.name
+    );
+
+    updateArchiveSelectionUi();
 
     if (!DATA.paths.find(v => !!v)) {
       $pathsTable.classList.add("hidden");
