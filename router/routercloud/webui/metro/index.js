@@ -1495,9 +1495,14 @@ async function createFolder(name) {
     await assertResOK(res);
     location.reload();
   } catch (err) {
+    const message =
+      err.message === "Already exists"
+        ? `Folder „${name}” nie został utworzony.\n\nFolder o tej nazwie już istnieje.`
+        : `Folder „${name}” nie został utworzony.\n\n${err.message}`;
+
     await metroNotice({
       title: "Nie można utworzyć folderu",
-      message: `Folder „${name}” nie został utworzony.\n\n${err.message}`,
+      message,
     });
   }
 }
