@@ -564,6 +564,9 @@ class Uploader {
     failUploaders.delete(this.idx);
     Uploader.runnings--;
     Uploader.runQueue();
+
+    // Aktualizujemy listę bez przeładowania całej strony.
+    schedulePathRefresh();
   }
 
   fail(reason = "") {
@@ -643,6 +646,109 @@ function formatStorageBytes(size) {
   const [value, unit] = formatFileSize(size);
   const localizedValue = String(value).replace(".", ",");
   return `${localizedValue} ${unit}`;
+}
+
+let pathRefreshTimer = null;
+let pathRefreshRunning = false;
+let pathRefreshPending = false;
+
+function schedulePathRefresh(delay = 250) {
+  if (pathRefreshTimer) {
+    clearTimeout(pathRefreshTimer);
+  }
+
+  pathRefreshTimer =
+    setTimeout(() => {
+      pathRefreshTimer = null;
+      void refreshCurrentIndex();
+    }, delay);
+}
+
+async function refreshCurrentIndex() {
+  if (pathRefreshRunning) {
+    pathRefreshPending = true;
+    return;
+  }
+
+  pathRefreshRunning = true;
+
+  try {
+    const refreshUrl =
+      new URL(baseUrl(), location.href);
+
+    refreshUrl.searchParams.set(
+      "json",
+      ""
+    );
+
+    if (PARAMS.sort) {
+      refreshUrl.searchParams.set(
+        "sort",
+        PARAMS.sort
+      );
+    }
+
+    if (PARAMS.order) {
+      refreshUrl.searchParams.set(
+        "order",
+        PARAMS.order
+      );
+    }
+
+    const res =
+      await fetch(
+        refreshUrl,
+        {
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+          },
+        }
+      );
+
+    await assertResOK(res);
+
+    const fresh =
+      await res.json();
+
+    DATA.paths =
+      Array.isArray(fresh.paths)
+        ? fresh.paths
+        : [];
+
+    if (fresh.storage) {
+      DATA.storage = fresh.storage;
+    }
+
+    $pathsTableBody.replaceChildren();
+
+    $pathsTable.classList.add(
+      "hidden"
+    );
+
+    $emptyFolder.classList.add(
+      "hidden"
+    );
+
+    renderPathsTableBody();
+    setupStorageInfo();
+
+    if (DATA.user) {
+      setupDownloadWithToken();
+    }
+  } catch (err) {
+    console.warn(
+      "RouterCloud list refresh failed:",
+      err
+    );
+  } finally {
+    pathRefreshRunning = false;
+
+    if (pathRefreshPending) {
+      pathRefreshPending = false;
+      schedulePathRefresh(100);
+    }
+  }
 }
 
 function setupStorageInfo() {
@@ -1014,6 +1120,16 @@ function setupPathDragOut(
         `${mime}:${filename}:${downloadUrl}`
       );
 
+      // Na Linux/GNOME Nautilus potrafi pobrać URI
+      // do miejsca upuszczenia. Używamy tego fallbacku
+      // wyłącznie dla folderów eksportowanych jako ZIP.
+      if (isDir) {
+        event.dataTransfer.setData(
+          "text/uri-list",
+          `${downloadUrl}\r\n`
+        );
+      }
+
       row.classList.add(
         "routercloud-dragging-out"
       );
@@ -1186,6 +1302,10 @@ async function ensureDroppedDirectory(pathParts) {
     });
 
   await assertResOK(res);
+
+  // Ważne także dla pustych katalogów,
+  // w których nie wystąpi Uploader.complete().
+  schedulePathRefresh();
 }
 
 async function uploadDroppedEntry(
@@ -1390,6 +1510,14 @@ async function setupAuth() {
 
 function setupDownloadWithToken() {
   document.querySelectorAll("a.dlwt").forEach(link => {
+    if (
+      link.dataset.routercloudDownloadBound === "1"
+    ) {
+      return;
+    }
+
+    link.dataset.routercloudDownloadBound = "1";
+
     link.addEventListener("click", async e => {
       e.preventDefault();
       try {
