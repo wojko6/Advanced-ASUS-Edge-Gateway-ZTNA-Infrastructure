@@ -12,6 +12,17 @@
 </head>
 
 <body>
+  <div class="metro-shell">
+    <header class="routercloud-hero">
+      <div class="routercloud-brand">
+        <div class="brand-mark" aria-hidden="true">R</div>
+        <div>
+          <div class="brand-title">RouterCloud</div>
+          <div class="brand-subtitle">Twój prywatny dysk w sieci domowej</div>
+        </div>
+      </div>
+    </header>
+
   <div class="head">
     <div class="breadcrumb"></div>
     <div class="toolbox">
@@ -73,7 +84,14 @@
             d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
         </svg>
       </div>
-      <input id="search" title="Szukaj folderów lub plików" name="q" type="text" maxlength="128" autocomplete="off"
+      <input id="search"
+        title="Szukaj folderów lub plików"
+        placeholder="Szukaj plików i folderów..."
+        aria-label="Szukaj plików i folderów"
+        name="q"
+        type="text"
+        maxlength="128"
+        autocomplete="off"
         tabindex="1">
       <input type="submit" hidden />
     </form>
@@ -104,7 +122,20 @@
   </div>
   <div class="main">
     <div class="index-page hidden">
-      <div class="storage-info hidden"></div>
+      <section class="metro-overview">
+        <div class="overview-heading">
+          <span class="overview-kicker">Pamięć masowa</span>
+          <h1>Twoje pliki</h1>
+        </div>
+        <div class="storage-info hidden"></div>
+      </section>
+
+      <div class="content-heading">
+        <div>
+          <span class="content-kicker">RouterCloud</span>
+          <h2>Pliki i foldery</h2>
+        </div>
+      </div>
       <div class="empty-folder hidden"></div>
       <table class="uploaders-table hidden">
         <thead>
@@ -128,6 +159,7 @@
   </div>
   <template id="index-data">__INDEX_DATA__</template>
   <script src="__ASSETS_PREFIX__index.js"></script>
+  </div>
 </body>
 
 </html>
