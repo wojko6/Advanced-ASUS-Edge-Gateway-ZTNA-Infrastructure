@@ -75,15 +75,16 @@ textarea {
 }
 
 .brand-mark {
-  display: grid;
-  width: 58px;
-  height: 58px;
-  place-items: center;
-  background: var(--accent);
-  font-size: 30px;
-  font-weight: 300;
-  line-height: 1;
-  color: white;
+  display: block;
+  width: 96px;
+  height: 96px;
+  flex: 0 0 96px;
+  object-fit: contain;
+  background: transparent;
+  filter: drop-shadow(
+    0 6px 16px
+    rgba(25, 108, 255, 0.28)
+  );
 }
 
 .brand-title {
@@ -658,9 +659,9 @@ textarea {
   }
 
   .brand-mark {
-    width: 48px;
-    height: 48px;
-    font-size: 25px;
+    width: 68px;
+    height: 68px;
+    flex-basis: 68px;
   }
 
   .brand-subtitle {
