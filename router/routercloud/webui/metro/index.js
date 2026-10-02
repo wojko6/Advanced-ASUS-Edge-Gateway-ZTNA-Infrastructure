@@ -61,6 +61,10 @@ const IFRAME_FORMATS = [
 
 const MAX_SUBPATHS_COUNT = 1000;
 
+function isPreviewMode() {
+  return window.ROUTERCLOUD_PREVIEW === true;
+}
+
 const ICONS = {
   dir: `<svg height="16" viewBox="0 0 14 16" width="14"><path fill-rule="evenodd" d="M13 4H7V3c0-.66-.31-1-1-1H1c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1zM6 4H1V3h5v1z"></path></svg>`,
   symlinkFile: `<svg height="16" viewBox="0 0 12 16" width="12"><path fill-rule="evenodd" d="M8.5 1H1c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h10c.55 0 1-.45 1-1V4.5L8.5 1zM11 14H1V2h7l3 3v9zM6 4.5l4 3-4 3v-2c-.98-.02-1.84.22-2.55.7-.71.48-1.19 1.25-1.45 2.3.02-1.64.39-2.88 1.13-3.73.73-.84 1.69-1.27 2.88-1.27v-2H6z"></path></svg>`,
@@ -118,6 +122,8 @@ let $logoutBtn;
  * @type Element
  */
 let $userName;
+let $pathContextMenu;
+let contextPathIndex = null;
 
 /**
  * RouterCloud Metro dialog system
@@ -399,6 +405,9 @@ async function ready() {
   $loginBtn = document.querySelector(".login-btn");
   $logoutBtn = document.querySelector(".logout-btn");
   $userName = document.querySelector(".user-name");
+  $pathContextMenu = document.getElementById("path-context-menu");
+
+  setupPathContextMenu();
 
   window.addEventListener('beforeunload', beforeUnloadHandler);
 
@@ -742,9 +751,7 @@ function renderPathsTableBody() {
 function addPath(file, index) {
   const encodedName = encodedStr(file.name);
   let url = newUrl(file.name);
-  let actionDelete = "";
   let actionDownload = "";
-  let actionMove = "";
   let actionEdit = "";
   let actionView = "";
   let isDir = file.path_type.endsWith("Dir");
@@ -762,15 +769,10 @@ function addPath(file, index) {
       <a class="dlwt" href="${url}" title="Pobierz plik" download>${ICONS.download}</a>
     </div>`;
   }
-  if (DATA.allow_move) {
-    actionMove = `<div onclick="movePath(${index})" class="action-btn" id="moveBtn${index}" title="Zmień nazwę">${ICONS.move}</div>`;
-  }
   if (DATA.allow_delete) {
     if (DATA.allow_upload && !isDir) {
       actionEdit = `<a class="action-btn" title="Edytuj plik" target="_blank" href="${url}?edit">${ICONS.edit}</a>`;
     }
-    actionDelete = `
-    <div onclick="deletePath(${index})" class="action-btn" id="deleteBtn${index}" title="Usuń">${ICONS.delete}</div>`;
   }
   if (!actionEdit && !isDir) {
     actionView = `<a class="action-btn" title="Wyświetl plik" target="_blank" href="${url}?view">${ICONS.view}</a>`;
@@ -779,8 +781,6 @@ function addPath(file, index) {
   <td class="cell-actions">
     ${actionDownload}
     ${actionView}
-    ${actionMove}
-    ${actionDelete}
     ${actionEdit}
   </td>`;
 
@@ -798,6 +798,119 @@ function addPath(file, index) {
   <td class="cell-size">${sizeDisplay}</td>
   ${actionCell}
 </tr>`);
+
+  const row = document.getElementById(`addPath${index}`);
+
+  row?.addEventListener("contextmenu", event => {
+    openPathContextMenu(event, index, isDir);
+  });
+}
+
+function closePathContextMenu() {
+  if (!$pathContextMenu) return;
+
+  $pathContextMenu.classList.add("hidden");
+  contextPathIndex = null;
+}
+
+function openPathContextMenu(event, index, isDir) {
+  const canRename = DATA.allow_move;
+  const canDelete = DATA.allow_delete;
+
+  if (!canRename && !canDelete) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const renameButton =
+    document.getElementById("context-rename");
+
+  const deleteButton =
+    document.getElementById("context-delete");
+
+  renameButton.classList.toggle("hidden", !canRename);
+  deleteButton.classList.toggle("hidden", !canDelete);
+
+  contextPathIndex = index;
+
+  $pathContextMenu.classList.remove("hidden");
+
+  // Measure after showing the menu so it never runs outside the viewport.
+  const rect = $pathContextMenu.getBoundingClientRect();
+
+  const margin = 8;
+
+  const left = Math.max(
+    margin,
+    Math.min(
+      event.clientX,
+      window.innerWidth - rect.width - margin
+    )
+  );
+
+  const top = Math.max(
+    margin,
+    Math.min(
+      event.clientY,
+      window.innerHeight - rect.height - margin
+    )
+  );
+
+  $pathContextMenu.style.left = `${left}px`;
+  $pathContextMenu.style.top = `${top}px`;
+}
+
+function setupPathContextMenu() {
+  if (!$pathContextMenu) return;
+
+  const renameButton =
+    document.getElementById("context-rename");
+
+  const deleteButton =
+    document.getElementById("context-delete");
+
+  renameButton.addEventListener("click", async () => {
+    const index = contextPathIndex;
+
+    closePathContextMenu();
+
+    if (index == null) return;
+
+    await movePath(index);
+  });
+
+  deleteButton.addEventListener("click", async () => {
+    const index = contextPathIndex;
+
+    closePathContextMenu();
+
+    if (index == null) return;
+
+    await deletePath(index);
+  });
+
+  document.addEventListener("click", event => {
+    if (!$pathContextMenu.contains(event.target)) {
+      closePathContextMenu();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closePathContextMenu();
+    }
+  });
+
+  window.addEventListener("blur", closePathContextMenu);
+  window.addEventListener("resize", closePathContextMenu);
+
+  document.addEventListener(
+    "scroll",
+    closePathContextMenu,
+    true
+  );
 }
 
 function setupDropzone() {
@@ -1014,26 +1127,43 @@ async function setupEditorPage() {
 async function deletePath(index) {
   const file = DATA.paths[index];
   if (!file) return;
+  const isDir = file.path_type.endsWith("Dir");
+
   await doDeletePath(file.name, newUrl(file.name), () => {
     document.getElementById(`addPath${index}`)?.remove();
     DATA.paths[index] = null;
+
     if (!DATA.paths.find(v => !!v)) {
       $pathsTable.classList.add("hidden");
       $emptyFolder.textContent = DIR_EMPTY_NOTE;
       $emptyFolder.classList.remove("hidden");
     }
-  });
+  }, isDir);
 }
 
-async function doDeletePath(name, url, cb) {
+async function doDeletePath(name, url, cb, isDir = false) {
+  const title = isDir
+    ? "Usunąć folder?"
+    : "Usunąć plik?";
+
+  const message = isDir
+    ? `Folder „${name}” oraz cała jego zawartość zostaną trwale usunięte.`
+    : `Plik „${name}” zostanie trwale usunięty.`;
+
   const confirmed = await metroConfirm({
-    title: "Usunąć element?",
-    message: `Element „${name}” zostanie trwale usunięty.`,
+    title,
+    message,
     primaryText: "Usuń",
     danger: true,
   });
 
   if (!confirmed) return;
+
+  if (isPreviewMode()) {
+    cb();
+    return;
+  }
+
   try {
     await checkAuth();
     const res = await fetch(url, {
@@ -1059,8 +1189,30 @@ async function movePath(index) {
   if (!file) return;
   const fileUrl = newUrl(file.name);
   const newFileUrl = await doMovePath(fileUrl);
+
   if (newFileUrl) {
-    location.href = newFileUrl.split("/").slice(0, -1).join("/");
+    if (isPreviewMode()) {
+      const isDir = file.path_type.endsWith("Dir");
+      const newName = baseName(newFileUrl);
+
+      file.name = newName;
+
+      const row =
+        document.getElementById(`addPath${index}`);
+
+      const link =
+        row?.querySelector(".cell-name a");
+
+      if (link) {
+        link.textContent = newName;
+        link.href = newFileUrl + (isDir ? "/" : "");
+      }
+
+      closePathContextMenu();
+      return;
+    }
+
+    location.reload();
   }
 }
 
@@ -1089,6 +1241,10 @@ async function doMovePath(fileUrl) {
     fileUrlObj.origin +
     prefix +
     newPath.split("/").map(encodeURIComponent).join("/");
+
+  if (isPreviewMode()) {
+    return newFileUrl;
+  }
 
   try {
     await checkAuth();
@@ -1138,6 +1294,7 @@ async function saveChange() {
 }
 
 async function checkAuth(variant) {
+  if (isPreviewMode()) return;
   if (!DATA.auth) return;
   const qs = variant ? `?${variant}` : "";
   const res = await fetch(baseUrl() + qs, {
@@ -1175,6 +1332,25 @@ async function logout() {
  */
 async function createFolder(name) {
   const url = newUrl(name);
+
+  if (isPreviewMode()) {
+    const index = DATA.paths.length;
+    const item = {
+      path_type: "Dir",
+      name,
+      mtime: Date.now(),
+      size: 0,
+    };
+
+    DATA.paths.push(item);
+
+    $emptyFolder.classList.add("hidden");
+    $pathsTable.classList.remove("hidden");
+
+    addPath(item, index);
+    return;
+  }
+
   try {
     await checkAuth();
     const res = await fetch(url, {
@@ -1192,6 +1368,25 @@ async function createFolder(name) {
 
 async function createFile(name) {
   const url = newUrl(name);
+
+  if (isPreviewMode()) {
+    const index = DATA.paths.length;
+    const item = {
+      path_type: "File",
+      name,
+      mtime: Date.now(),
+      size: 0,
+    };
+
+    DATA.paths.push(item);
+
+    $emptyFolder.classList.add("hidden");
+    $pathsTable.classList.remove("hidden");
+
+    addPath(item, index);
+    return;
+  }
+
   try {
     await checkAuth();
     const res = await fetch(url, {

@@ -114,7 +114,7 @@ data = {
 
     "allow_upload": True,
     "allow_move": True,
-    "allow_delete": False,
+    "allow_delete": True,
     "allow_search": True,
     "allow_archive": True,
 
@@ -144,6 +144,22 @@ html = path.read_text(encoding="utf-8")
 html = html.replace("__ASSETS_PREFIX__", "")
 html = html.replace("__ASSETS_REV__", "preview")
 html = html.replace("__INDEX_DATA__", encoded)
+
+preview_marker = (
+    '<script>window.ROUTERCLOUD_PREVIEW = true;</script>\n'
+)
+
+script_pos = html.find("<script src=")
+
+if (
+    "window.ROUTERCLOUD_PREVIEW = true" not in html
+    and script_pos != -1
+):
+    html = (
+        html[:script_pos]
+        + preview_marker
+        + html[script_pos:]
+    )
 
 path.write_text(html, encoding="utf-8")
 PY
