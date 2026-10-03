@@ -1,5 +1,10 @@
 # RouterCloud Metro production checkpoint — 2026-10-02
 
+> Historical checkpoint. The current RouterCloud state is documented in the
+> [2026-10-03 production checkpoint](routercloud-production-checkpoint-2026-10-03.md).
+> This file remains the acceptance record for the first Metro/WebDAV browser
+> phase and should not be read as the latest feature inventory.
+
 ## Status
 
 RouterCloud Metro Web is live on the reference ASUS TUF-AX5400 deployment at the production HTTPS endpoint. This checkpoint records the browser/frontend and project-patched Dufs behavior that was live-validated before closing the current UI implementation phase.
