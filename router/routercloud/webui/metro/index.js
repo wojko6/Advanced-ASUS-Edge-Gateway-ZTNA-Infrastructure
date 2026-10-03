@@ -666,6 +666,7 @@ function formatStorageBytes(size) {
 let pathRefreshTimer = null;
 let pathRefreshRunning = false;
 let pathRefreshPending = false;
+let pathSortRunning = false;
 
 const completedUploadRows = new Set();
 
@@ -870,7 +871,7 @@ function schedulePathRefresh(delay = 250) {
 async function refreshCurrentIndex() {
   if (pathRefreshRunning) {
     pathRefreshPending = true;
-    return;
+    return false;
   }
 
   pathRefreshRunning = true;
@@ -883,6 +884,13 @@ async function refreshCurrentIndex() {
       "json",
       ""
     );
+
+    if (PARAMS.q) {
+      refreshUrl.searchParams.set(
+        "q",
+        PARAMS.q
+      );
+    }
 
     if (PARAMS.sort) {
       refreshUrl.searchParams.set(
@@ -948,11 +956,15 @@ async function refreshCurrentIndex() {
     // Dopiero po prawidłowym pobraniu nowej listy
     // usuwamy zakończone wpisy z tabeli uploadu.
     clearCompletedUploadRows();
+
+    return true;
   } catch (err) {
     console.warn(
       "RouterCloud list refresh failed:",
       err
     );
+
+    return false;
   } finally {
     pathRefreshRunning = false;
 
@@ -2353,10 +2365,89 @@ async function setupIndexPage() {
   }
 }
 
+// ROUTERCLOUD_AJAX_SORT_V1
+function updatePathSortUrl() {
+  const params =
+    new URLSearchParams();
+
+  for (const [key, value] of
+    Object.entries(PARAMS)) {
+    if (
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+    ) {
+      params.set(key, value);
+    }
+  }
+
+  const query =
+    params.toString();
+
+  history.replaceState(
+    {},
+    document.title,
+    location.pathname +
+      (query ? `?${query}` : "") +
+      location.hash
+  );
+}
+
+async function applyPathSort(
+  sort,
+  order
+) {
+  if (pathSortRunning) {
+    return;
+  }
+
+  pathSortRunning = true;
+
+  const previousSort =
+    PARAMS.sort;
+
+  const previousOrder =
+    PARAMS.order;
+
+  PARAMS.sort = sort;
+  PARAMS.order = order;
+
+  try {
+    const refreshed =
+      await refreshCurrentIndex();
+
+    if (!refreshed) {
+      if (previousSort === undefined) {
+        delete PARAMS.sort;
+      } else {
+        PARAMS.sort = previousSort;
+      }
+
+      if (previousOrder === undefined) {
+        delete PARAMS.order;
+      } else {
+        PARAMS.order = previousOrder;
+      }
+
+      showRouterCloudToast(
+        "Nie udało się zmienić sortowania."
+      );
+
+      return;
+    }
+
+    updatePathSortUrl();
+    renderPathsTableHead();
+  } finally {
+    pathSortRunning = false;
+  }
+}
+
 /**
  * Render path table thead
  */
 function renderPathsTableHead() {
+  $pathsTableHead.replaceChildren();
   const headerItems = [
     {
       name: "name",
@@ -2389,7 +2480,7 @@ function renderPathsTableHead() {
     }
     const qs = new URLSearchParams({ ...PARAMS, order, sort: item.name }).toString();
     const icon = `<span>${svg}</span>`
-    return `<th class="cell-${item.name}" ${item.props}><a href="?${qs}">${item.text}${icon}</a></th>`
+    return `<th class="cell-${item.name}" ${item.props}><a href="?${qs}" data-routercloud-sort="${item.name}" data-routercloud-order="${order}">${item.text}${icon}</a></th>`
   }).join("\n")}
       <th class="cell-actions">
         <span>Akcje</span>
@@ -2404,6 +2495,24 @@ function renderPathsTableHead() {
       </th>
     </tr>
   `);
+
+  $pathsTableHead
+    .querySelectorAll(
+      "a[data-routercloud-sort]"
+    )
+    .forEach(link => {
+      link.addEventListener(
+        "click",
+        event => {
+          event.preventDefault();
+
+          void applyPathSort(
+            link.dataset.routercloudSort,
+            link.dataset.routercloudOrder
+          );
+        }
+      );
+    });
 
   const $selectAll =
     document.getElementById(
