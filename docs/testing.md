@@ -93,6 +93,44 @@ relevant WAN drops. The focused regression test feeds validated and broken rule
 fixtures through the healthcheck's parser functions. Packet tests remain necessary
 to establish the end-to-end datapath after a material firmware/firewall change.
 
+## RouterCloud application validation
+
+RouterCloud combines repository-level UI/backend checks with controlled live
+browser validation. Do not treat one layer as proof of the other.
+
+Minimum validation after a material RouterCloud change:
+
+1. run the repository validation workflow and keep the relevant pull request
+   green before merge;
+2. stage the candidate external assets or backend binary without replacing the
+   active files first;
+3. verify expected feature markers/hashes and create rollback copies outside the
+   served RouterCloud data root;
+4. restart RouterCloud when an asset revision or backend process must be
+   recomputed;
+5. from Fedora, verify the protected root still has the expected
+   unauthenticated response and that the login page is reachable;
+6. exercise the changed browser behavior from `https://cloud.home.arpa/`;
+7. for password-recovery changes, repeat the bounded request/reset/login flow
+   without publishing the recovery address, reset token, password, cookie or SMTP
+   credential;
+8. keep source/CI evidence separate from visual/manual acceptance.
+
+The 2026-10-03 production baseline includes accepted AJAX sorting, desktop
+recent-panel alignment, contextual file-view cleanup and live AJAX search.
+Password recovery has its own full end-to-end artifact, including service
+restart and post-restart login.
+
+The favorites-panel drag-and-drop implementation is part of the current source
+baseline, but the 2026-10-03 UI evidence deliberately does not invent a separate
+standalone manual acceptance result for that gesture.
+
+See:
+
+- [RouterCloud 2026-10-03 production checkpoint](routercloud-production-checkpoint-2026-10-03.md)
+- [RouterCloud UI production validation](../evidence/2026-10-03/routercloud-ui-production-validation.md)
+- [RouterCloud password-recovery production validation](../evidence/2026-10-03/routercloud-password-recovery-production-validation.md)
+
 ## Router and remote-client security matrix
 
 | Source | Destination | Test | Expected |
