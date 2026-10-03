@@ -2262,3 +2262,16 @@ select,
   user-select: text;
   -webkit-user-select: text;
 }
+
+/* ==================================================
+   ROUTERCLOUD_RECENT_PANEL_ALIGN_V1
+   Align recent-files panel with action tiles when
+   the search field is hidden.
+   ================================================== */
+
+@media (min-width: 821px) {
+  .searchbar.hidden + .dashboard-aside {
+    grid-column: 2;
+    grid-row: 2 / 5;
+  }
+}
