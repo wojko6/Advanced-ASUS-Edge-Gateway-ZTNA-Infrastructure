@@ -34,6 +34,8 @@ On 2026-09-23 the reference router was updated to GNUton `3004.388.11_1-gnuton1_
 
 The project currently has a validated SSD-backed Entware deployment, Tailscale-based remote access and exit-node capability, Pi-hole main-LAN filtering, Unbound/DNSSEC integration, firmware dnsmasq for DHCP/local naming and existing interception paths, syslog-ng logging, project-owned least-privilege firewall chains, a read-only project-native Edge Gateway WebUI with persistent Polish localization, recovery tooling, health checks, evidence collection, external observability and automated repository validation.
 
+On 2026-10-03 issue #130 completed the repository supply-chain protection baseline. The active `Protect main` ruleset targets the default branch, has no bypass actors, blocks deletion and non-fast-forward/force-push updates by rule, requires pull requests, and requires the aggregate `Validation suite` with strict/up-to-date behavior. A post-activation normal PR passed and merged, while a controlled direct update of `main` was rejected by GitHub with HTTP 422. See [the protection runbook](docs/github-main-protection.md) and [sanitized post-activation validation](evidence/2026-10-03/issue-130-ruleset-post-activation-validation.md).
+
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
 
 ## 2026-10-03 Personal Cloud / RouterCloud stack
@@ -328,8 +330,7 @@ The 2026-09-28 worklog intentionally stopped Grafana work after the first useful
 1. **Finish the Grafana Engineering / CI dashboard:** merged PRs over a bounded recent period, recent repository activity/commits, final layout cleanup and a separate Polystat infrastructure-health overview.
 2. **#127 — LAN management / automatic exposure:** verify and, only where justified, restrict normal-LAN WebUI access and audit UPnP/NAT-PMP, Port Trigger, Port Forwarding and DMZ state.
 3. **#128 — IPv6 and Wi-Fi security parity evidence:** establish the current IPv6 WAN/LAN/client state plus WPA2/WPA3, PMF/802.11w and guest/client-isolation evidence before any enforcement change.
-4. **#130 — repository supply-chain protection:** add a `main` ruleset, require the Validation suite, and block force-push/branch deletion while preserving the PR workflow.
-5. **#108 — finish bounded DNS-analytics gaps:** measure retention/storage behavior, validate rollback/uninstall and correlate the hard-coded external LAN classic-DNS interception path.
+4. **#108 — finish bounded DNS-analytics gaps:** measure retention/storage behavior, validate rollback/uninstall and correlate the hard-coded external LAN classic-DNS interception path.
 6. **#68 — DoH/DoQ bypass assessment:** measure encrypted-DNS bypass paths before designing enforcement.
 7. **#129 — Pi-hole-aware disaster-recovery refresh:** extend the validated recovery mechanics to Pi-hole/FTL, dedicated listener/alias, Gravity, DHCP/reverse DNS and Pi-hole -> Unbound reconstruction.
 

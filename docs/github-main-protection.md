@@ -136,6 +136,28 @@ before claiming #130 complete.
 
 Do not use force-push as a test against production `main`.
 
+## Completed validation — 2026-10-03
+
+Issue #130 acceptance was completed after the ruleset was activated.
+
+Observed results:
+
+- active `Protect main` ruleset targeted `~DEFAULT_BRANCH` / `main`;
+- no bypass actors were configured;
+- deletion and non-fast-forward/force-push protections were present in ruleset
+  readback;
+- pull requests were required;
+- aggregate `Validation suite` was required with strict/up-to-date policy;
+- PR #170 passed workflow run #1424 and merged through the protected path;
+- a direct non-force `main` ref update was rejected with HTTP 422 because
+  changes must be made through a pull request.
+
+No destructive branch-deletion or force-push probe was run against production
+`main`; those two controls are accepted from the active ruleset readback.
+
+See the
+[2026-10-03 post-activation validation](../evidence/2026-10-03/issue-130-ruleset-post-activation-validation.md).
+
 ## Acceptance
 
 Issue #130 is complete only when all of the following are true:

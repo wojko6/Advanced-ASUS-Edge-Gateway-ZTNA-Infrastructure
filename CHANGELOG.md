@@ -65,6 +65,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Completed issue #130 repository supply-chain validation: the active `Protect main` ruleset targets the default branch with no bypass, requires pull requests and the aggregate `Validation suite`, blocks deletion and non-fast-forward/force-push updates by rule, allowed a normal post-activation PR after green CI, and rejected a controlled direct `main` ref update with HTTP 422.
 - Production-validated RouterCloud password recovery end to end on 2026-10-03: mail delivery, fragment-based reset flow, password change, login, service restart and post-restart login all passed.
 - Production-accepted RouterCloud AJAX sorting, desktop recent-panel alignment, contextual file-view cleanup and live AJAX search; repository CI passed before each merged UI change. The favorites-panel drag-and-drop flow was also manually verified in the production browser on 2026-10-03.
 - Live-validated syslog-ng collector-outage resilience on 2026-10-01: local archival continued with TCP/6514 intentionally unavailable, and the outage marker was delivered to Fedora after the collector path recovered.
