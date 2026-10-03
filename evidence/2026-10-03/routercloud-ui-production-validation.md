@@ -107,12 +107,13 @@ ROUTERCLOUD_LIVE_SEARCH=PASS
 PR #166 changes the drag-and-drop target from the green `Ulubione` shortcut tile
 to the right-hand panel that actually displays favorites.
 
-The source change and repository CI are complete and the deployment workflow was
-prepared/applied together with the current frontend asset set.
+The source change and repository CI are complete. A controlled deployment
+procedure was defined for the current external asset set.
 
 This artifact does **not** claim a separate standalone manual production
-acceptance for the drop gesture itself because no dedicated observed
-drag/drop-result record was captured in this validation note.
+acceptance, or independently prove active-asset parity, for the drop gesture
+because no dedicated observed drag/drop-result record was captured in this
+validation note.
 
 The implementation should therefore be described as current/deployed source
 behavior, with a quick manual revalidation recommended after future UI/browser
