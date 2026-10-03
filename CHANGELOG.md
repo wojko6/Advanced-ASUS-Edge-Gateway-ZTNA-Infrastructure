@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Added RouterCloud login by configured email alias while preserving the canonical DUFS account, password, permissions and session state.
 - Added the #130 main-branch protection runbook and an aggregate `Validation suite` CI job designed to serve as the single required status check for the GitHub ruleset.
 - Added the completed RouterCloud browser/application baseline: production-tested password recovery, persistent favorites, AJAX sorting, 250 ms live search, context-aware file views, selected server-side ZIP, WebDAV desktop integration, and the completed #138 versioned encrypted backup layer.
 - Added a 2026-10-03 RouterCloud production checkpoint plus bounded UI validation evidence, while retaining the 2026-10-02 Metro checkpoint as the historical first-phase baseline.
@@ -65,6 +66,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Production-validated RouterCloud login through both the canonical username and the configured email alias on 2026-10-03; both identifiers used the same password and resolved to the same account.
 - Completed issue #130 repository supply-chain validation: the active `Protect main` ruleset targets the default branch with no bypass, requires pull requests and the aggregate `Validation suite`, blocks deletion and non-fast-forward/force-push updates by rule, allowed a normal post-activation PR after green CI, and rejected a controlled direct `main` ref update with HTTP 422.
 - Production-validated RouterCloud password recovery end to end on 2026-10-03: mail delivery, fragment-based reset flow, password change, login, service restart and post-restart login all passed.
 - Production-accepted RouterCloud AJAX sorting, desktop recent-panel alignment, contextual file-view cleanup and live AJAX search; repository CI passed before each merged UI change. The favorites-panel drag-and-drop flow was also manually verified in the production browser on 2026-10-03.
