@@ -401,3 +401,33 @@ body {
   background: rgba(47, 128, 255, 0.08);
   color: white;
 }
+
+/* ==================================================
+   ROUTERCLOUD_PASSWORD_RESET_UI_V1
+   New-password form shown for reset_token links.
+   ================================================== */
+
+.routercloud-login-status.routercloud-status-error {
+  border-left-color: var(--login-error);
+
+  background:
+    rgba(237, 119, 119, 0.09);
+
+  color: #ffb0b0;
+}
+
+.routercloud-login-status.routercloud-status-success {
+  border-left-color: #54c68a;
+
+  background:
+    rgba(84, 198, 138, 0.10);
+
+  color: #bdf2d4;
+}
+
+.routercloud-login-submit:disabled,
+.routercloud-login-secondary:disabled {
+  cursor: default;
+  opacity: 0.62;
+  transform: none;
+}

@@ -145,6 +145,82 @@
         </button>
       </form>
 
+      <!-- ROUTERCLOUD_PASSWORD_RESET_UI_V1 -->
+      <form
+        id="routercloud-reset-form"
+        class="routercloud-login-form hidden"
+        method="post"
+        action="/__routercloud/password-reset/confirm">
+
+        <div class="routercloud-recovery-heading">
+          <h2>Ustaw nowe hasło</h2>
+          <p>
+            Nowe hasło musi mieć od 12 do 128 znaków.
+          </p>
+        </div>
+
+        <label class="routercloud-login-field">
+          <span
+            class="routercloud-login-icon"
+            aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-2a2 2 0 1 1 4 0v2h-4V6zm3 10.73V18h-2v-1.27a2 2 0 1 1 2 0z"/>
+            </svg>
+          </span>
+
+          <input
+            id="routercloud-reset-password"
+            name="password"
+            type="password"
+            placeholder="Nowe hasło"
+            autocomplete="new-password"
+            minlength="12"
+            maxlength="128"
+            required>
+        </label>
+
+        <label class="routercloud-login-field">
+          <span
+            class="routercloud-login-icon"
+            aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-2a2 2 0 1 1 4 0v2h-4V6zm3 10.73V18h-2v-1.27a2 2 0 1 1 2 0z"/>
+            </svg>
+          </span>
+
+          <input
+            id="routercloud-reset-password-confirm"
+            name="password_confirm"
+            type="password"
+            placeholder="Powtórz nowe hasło"
+            autocomplete="new-password"
+            minlength="12"
+            maxlength="128"
+            required>
+        </label>
+
+        <div
+          id="routercloud-reset-status"
+          class="routercloud-login-status hidden"
+          role="status"
+          aria-live="polite">
+        </div>
+
+        <button
+          id="routercloud-reset-submit"
+          class="routercloud-login-submit"
+          type="submit">
+          Zmień hasło
+        </button>
+
+        <button
+          id="routercloud-reset-back"
+          class="routercloud-login-secondary"
+          type="button">
+          Wróć do logowania
+        </button>
+      </form>
+
     </section>
   </main>
 </body>

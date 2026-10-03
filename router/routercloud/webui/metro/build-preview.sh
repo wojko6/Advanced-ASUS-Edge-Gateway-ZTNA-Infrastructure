@@ -276,3 +276,5 @@ done
 
 echo "PREVIEW_BUILD=PASS"
 echo "PREVIEW_URL=http://127.0.0.1:${PORT}/"
+echo "LOGIN_PREVIEW=http://127.0.0.1:${PORT}/login.html"
+echo "RESET_PREVIEW=http://127.0.0.1:${PORT}/login.html#reset_token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
