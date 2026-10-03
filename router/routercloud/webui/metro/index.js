@@ -135,6 +135,11 @@ let routerCloudFavorites = new Map();
 let routerCloudFavoritesAvailable = false;
 let dashboardPanelMode = "recent";
 
+// ROUTERCLOUD_LIVE_SEARCH_V1
+// Keep the dashboard's recent-files source independent
+// from the AJAX-filtered table shown during live search.
+let routerCloudRecentPaths = [];
+
 // ROUTERCLOUD_FAVORITES_HANDLE_DND_V1
 let routerCloudFavoriteDragIndex = null;
 
@@ -927,6 +932,22 @@ async function refreshCurrentIndex() {
         ? fresh.paths
         : [];
 
+    DIR_EMPTY_NOTE =
+      PARAMS.q
+        ? "Brak wyników"
+        : DATA.dir_exists
+          ? "Pusty folder"
+          : "Folder zostanie utworzony po przesłaniu pliku";
+
+    // ROUTERCLOUD_LIVE_SEARCH_V1
+    // A filtered response updates only the main table.
+    // The right-hand recent-files panel keeps the last
+    // unfiltered directory snapshot.
+    if (!PARAMS.q) {
+      routerCloudRecentPaths =
+        [...DATA.paths];
+    }
+
     reconcileArchiveSelection();
 
     if (fresh.storage) {
@@ -945,7 +966,10 @@ async function refreshCurrentIndex() {
 
     renderPathsTableBody();
     setupStorageInfo();
-    refreshDashboardPanel();
+
+    if (!PARAMS.q) {
+      refreshDashboardPanel();
+    }
 
     if (DATA.user) {
       setupDownloadWithToken();
@@ -991,8 +1015,8 @@ function setupRecentFiles() {
   }
 
   const paths =
-    Array.isArray(DATA.paths)
-      ? [...DATA.paths]
+    Array.isArray(routerCloudRecentPaths)
+      ? [...routerCloudRecentPaths]
       : [];
 
   $recentFiles.replaceChildren();
@@ -1017,15 +1041,18 @@ function setupRecentFiles() {
   }
 
   // ROUTERCLOUD_RECENT_CONTEXT_MENU_V1
-  // Keep the original DATA.paths index so the recent
-  // list can reuse the same rename/delete actions as
-  // the main files table.
+  // Resolve each recent item against the current
+  // unfiltered DATA.paths list before opening actions.
   const recent =
     paths
       .map(
-        (file, index) => ({
+        file => ({
           file,
-          index,
+          index:
+            DATA.paths.findIndex(
+              candidate =>
+                candidate?.name === file?.name
+            ),
         })
       )
       .filter(
@@ -1081,6 +1108,16 @@ function setupRecentFiles() {
     item.addEventListener(
       "contextmenu",
       event => {
+        // During live search DATA.paths contains only
+        // filtered results, so keep recent items
+        // navigation-only until the full list returns.
+        if (
+          PARAMS.q ||
+          index < 0
+        ) {
+          return;
+        }
+
         openPathContextMenu(
           event,
           index,
@@ -2335,6 +2372,14 @@ async function setupIndexPage() {
 
   await loadRouterCloudFavorites();
 
+  // ROUTERCLOUD_LIVE_SEARCH_V1
+  // Initial snapshot used by the dashboard panel while
+  // the main file table is filtered live.
+  routerCloudRecentPaths =
+    Array.isArray(DATA.paths)
+      ? [...DATA.paths]
+      : [];
+
   refreshDashboardPanel();
   setupDashboardShortcuts();
 
@@ -3195,21 +3240,112 @@ function setupDownloadWithToken() {
 }
 
 function setupSearch() {
-  const $searchbar = document.querySelector(".searchbar");
-  $searchbar.classList.remove("hidden");
-  $searchbar.addEventListener("submit", event => {
-    event.preventDefault();
-    const formData = new FormData($searchbar);
-    const q = formData.get("q");
-    let href = baseUrl();
-    if (q) {
-      href += "?q=" + q;
+  const $searchbar =
+    document.querySelector(
+      ".searchbar"
+    );
+
+  const $search =
+    document.getElementById(
+      "search"
+    );
+
+  const LIVE_SEARCH_DELAY_MS = 250;
+  let liveSearchTimer = null;
+
+  const applyLiveSearch = () => {
+    liveSearchTimer = null;
+
+    const query =
+      String($search.value || "")
+        .trim();
+
+    const previousQuery =
+      String(PARAMS.q || "");
+
+    if (query) {
+      PARAMS.q = query;
+    } else {
+      delete PARAMS.q;
     }
-    location.href = href;
-  });
+
+    if (query === previousQuery) {
+      return;
+    }
+
+    DIR_EMPTY_NOTE =
+      query
+        ? "Brak wyników"
+        : DATA.dir_exists
+          ? "Pusty folder"
+          : "Folder zostanie utworzony po przesłaniu pliku";
+
+    // Keep the current search in the address bar
+    // without navigating away from the page.
+    updatePathSortUrl();
+
+    // Reuse the existing AJAX list refresh pipeline.
+    // If another refresh is running, it will queue a
+    // follow-up request with the newest PARAMS.q value.
+    schedulePathRefresh(0);
+  };
+
+  const queueLiveSearch = () => {
+    if (liveSearchTimer) {
+      clearTimeout(
+        liveSearchTimer
+      );
+    }
+
+    liveSearchTimer =
+      window.setTimeout(
+        applyLiveSearch,
+        LIVE_SEARCH_DELAY_MS
+      );
+  };
+
+  $searchbar.classList.remove(
+    "hidden"
+  );
+
   if (PARAMS.q) {
-    document.getElementById('search').value = PARAMS.q;
+    $search.value =
+      PARAMS.q;
   }
+
+  // ROUTERCLOUD_LIVE_SEARCH_V1
+  $search.addEventListener(
+    "input",
+    event => {
+      if (event.isComposing) {
+        return;
+      }
+
+      queueLiveSearch();
+    }
+  );
+
+  $search.addEventListener(
+    "compositionend",
+    queueLiveSearch
+  );
+
+  $searchbar.addEventListener(
+    "submit",
+    event => {
+      event.preventDefault();
+
+      if (liveSearchTimer) {
+        clearTimeout(
+          liveSearchTimer
+        );
+
+        liveSearchTimer = null;
+      }
+
+      applyLiveSearch();
+    }
+  );
 }
 
 function setupUploadFile() {
