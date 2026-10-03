@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pl-PL">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RouterCloud — logowanie</title>
+  <link
+    rel="icon"
+    type="image/x-icon"
+    href="/__dufs_v0.46.0__/favicon.ico?v=routercloud-brand-v1">
+  <link rel="stylesheet" href="/__routercloud/login.css">
+  <script src="/__routercloud/login.js" defer></script>
+</head>
+
+<body class="routercloud-login-body">
+  <main class="routercloud-login-shell">
+    <section class="routercloud-login-card" aria-labelledby="login-title">
+
+      <header class="routercloud-login-brand">
+        <img
+          class="routercloud-login-mark"
+          src="/__dufs_v0.46.0__/favicon.ico?v=routercloud-brand-v1"
+          alt=""
+          aria-hidden="true">
+
+        <div>
+          <h1 id="login-title">RouterCloud</h1>
+          <p>Twój prywatny dysk w sieci domowej</p>
+        </div>
+      </header>
+
+      <form
+        id="routercloud-login-form"
+        class="routercloud-login-form"
+        method="post"
+        action="/__routercloud/login">
+
+        <label class="routercloud-login-field">
+          <span class="routercloud-login-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/>
+            </svg>
+          </span>
+
+          <input
+            id="routercloud-username"
+            name="username"
+            type="text"
+            placeholder="Nazwa użytkownika"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            required>
+        </label>
+
+        <label class="routercloud-login-field">
+          <span class="routercloud-login-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-2a2 2 0 1 1 4 0v2h-4V6zm3 10.73V18h-2v-1.27a2 2 0 1 1 2 0z"/>
+            </svg>
+          </span>
+
+          <input
+            id="routercloud-password"
+            name="password"
+            type="password"
+            placeholder="Hasło"
+            autocomplete="current-password"
+            required>
+        </label>
+
+        <div
+          id="routercloud-login-error"
+          class="routercloud-login-error hidden"
+          role="alert">
+        </div>
+
+        <button
+          class="routercloud-login-submit"
+          type="submit">
+          Zaloguj
+        </button>
+
+        <button
+          id="routercloud-forgot-password"
+          class="routercloud-login-link"
+          type="button">
+          Nie pamiętasz hasła?
+        </button>
+      </form>
+
+      <!-- ROUTERCLOUD_PASSWORD_RECOVERY_UI_V1 -->
+      <form
+        id="routercloud-recovery-form"
+        class="routercloud-login-form routercloud-recovery-form hidden"
+        method="post"
+        action="/__routercloud/password-reset/request">
+
+        <div class="routercloud-recovery-heading">
+          <h2>Odzyskaj dostęp</h2>
+          <p>
+            Podaj adres e-mail powiązany z kontem RouterCloud.
+          </p>
+        </div>
+
+        <label class="routercloud-login-field">
+          <span
+            class="routercloud-login-icon"
+            aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          </span>
+
+          <input
+            id="routercloud-recovery-email"
+            name="email"
+            type="email"
+            placeholder="Adres e-mail"
+            autocomplete="email"
+            autocapitalize="none"
+            spellcheck="false"
+            required>
+        </label>
+
+        <div
+          id="routercloud-recovery-status"
+          class="routercloud-login-status hidden"
+          role="status">
+        </div>
+
+        <button
+          id="routercloud-recovery-submit"
+          class="routercloud-login-submit"
+          type="submit">
+          Wyślij link resetujący
+        </button>
+
+        <button
+          id="routercloud-recovery-back"
+          class="routercloud-login-secondary"
+          type="button">
+          Wróć do logowania
+        </button>
+      </form>
+
+      <!-- ROUTERCLOUD_PASSWORD_RESET_UI_V1 -->
+      <form
+        id="routercloud-reset-form"
+        class="routercloud-login-form hidden"
+        method="post"
+        action="/__routercloud/password-reset/confirm">
+
+        <div class="routercloud-recovery-heading">
+          <h2>Ustaw nowe hasło</h2>
+          <p>
+            Nowe hasło musi mieć od 12 do 128 znaków.
+          </p>
+        </div>
+
+        <label class="routercloud-login-field">
+          <span
+            class="routercloud-login-icon"
+            aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-2a2 2 0 1 1 4 0v2h-4V6zm3 10.73V18h-2v-1.27a2 2 0 1 1 2 0z"/>
+            </svg>
+          </span>
+
+          <input
+            id="routercloud-reset-password"
+            name="password"
+            type="password"
+            placeholder="Nowe hasło"
+            autocomplete="new-password"
+            minlength="12"
+            maxlength="128"
+            required>
+        </label>
+
+        <label class="routercloud-login-field">
+          <span
+            class="routercloud-login-icon"
+            aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-2a2 2 0 1 1 4 0v2h-4V6zm3 10.73V18h-2v-1.27a2 2 0 1 1 2 0z"/>
+            </svg>
+          </span>
+
+          <input
+            id="routercloud-reset-password-confirm"
+            name="password_confirm"
+            type="password"
+            placeholder="Powtórz nowe hasło"
+            autocomplete="new-password"
+            minlength="12"
+            maxlength="128"
+            required>
+        </label>
+
+        <div
+          id="routercloud-reset-status"
+          class="routercloud-login-status hidden"
+          role="status"
+          aria-live="polite">
+        </div>
+
+        <button
+          id="routercloud-reset-submit"
+          class="routercloud-login-submit"
+          type="submit">
+          Zmień hasło
+        </button>
+
+        <button
+          id="routercloud-reset-back"
+          class="routercloud-login-secondary"
+          type="button">
+          Wróć do logowania
+        </button>
+      </form>
+
+    </section>
+  </main>
+</body>
+
+</html>

@@ -58,6 +58,9 @@ write_status() {
     chmod 0600 "$STATUS_FILE"
 
     "$HOME/.local/bin/routercloud-backup-metrics" backup >/dev/null 2>&1 || true
+
+    # ROUTERCLOUD_BACKUP_STATUS_PUBLISH_V1
+    "$HOME/.local/bin/routercloud-backup-status-publish" >/dev/null 2>&1 || true
 }
 
 fail_run() {
@@ -69,6 +72,37 @@ fail_run() {
 }
 
 echo "RouterCloud backup: started at $START_TIME"
+
+# ROUTERCLOUD_NETWORK_READINESS_V1
+NETWORK_WAIT_SECONDS="${ROUTERCLOUD_BACKUP_NETWORK_WAIT_SECONDS:-90}"
+NETWORK_WAIT_INTERVAL="${ROUTERCLOUD_BACKUP_NETWORK_WAIT_INTERVAL:-5}"
+
+wait_for_router() {
+    ELAPSED=0
+
+    while [ "$ELAPSED" -lt "$NETWORK_WAIT_SECONDS" ]; do
+        if /usr/sbin/ip route get "$ROUTERCLOUD_HOST" >/dev/null 2>&1; then
+            if /usr/bin/timeout 3                 /usr/bin/bash -c                 "exec 3<>/dev/tcp/$ROUTERCLOUD_HOST/$ROUTERCLOUD_SSH_PORT"                 >/dev/null 2>&1
+            then
+                echo "RouterCloud backup: router reachable after ${ELAPSED}s"
+                return 0
+            fi
+        fi
+
+        echo "RouterCloud backup: waiting for router network path (${ELAPSED}s/${NETWORK_WAIT_SECONDS}s)"
+        sleep "$NETWORK_WAIT_INTERVAL"
+
+        ELAPSED=$(
+            (ELAPSED + NETWORK_WAIT_INTERVAL)
+        )
+    done
+
+    return 1
+}
+
+if ! wait_for_router; then
+    fail_run 75 "network-wait"
+fi
 
 if ! mountpoint -q "$BACKUP_MOUNT"; then
     fail_run 70 "backup-disk-not-mounted"

@@ -1,0 +1,116 @@
+#!/bin/sh
+
+PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+CONFIG="/opt/etc/dufs-personal-cloud.yaml"
+MAX_BYTES=2048
+
+case "${SSH_ORIGINAL_COMMAND:-}" in
+    "routercloud-status-publish")
+        ;;
+    *)
+        echo "RouterCloud status publisher: command denied" >&2
+        exit 126
+        ;;
+esac
+
+umask 077
+
+TMP="/tmp/routercloud-backup-status.$$"
+
+cleanup() {
+    rm -f "$TMP"
+}
+
+trap cleanup EXIT HUP INT TERM
+
+if ! cat > "$TMP"; then
+    echo "RouterCloud status publisher: input failed" >&2
+    exit 74
+fi
+
+BYTES="$(
+    wc -c < "$TMP" |
+    tr -d ' '
+)"
+
+case "$BYTES" in
+    ''|*[!0-9]*)
+        exit 65
+        ;;
+esac
+
+if [ "$BYTES" -lt 2 ] ||
+   [ "$BYTES" -gt "$MAX_BYTES" ]; then
+    echo "RouterCloud status publisher: invalid size" >&2
+    exit 65
+fi
+
+LINES="$(
+    wc -l < "$TMP" |
+    tr -d ' '
+)"
+
+if [ "$LINES" != "1" ]; then
+    echo "RouterCloud status publisher: expected one JSON line" >&2
+    exit 65
+fi
+
+for REQUIRED in \
+    '"schema":1' \
+    '"result":' \
+    '"rc":' \
+    '"stage":' \
+    '"start":' \
+    '"end":' \
+    '"duration_seconds":' \
+    '"next_run":' \
+    '"generated_at":'
+do
+    if ! grep -Fq "$REQUIRED" "$TMP"; then
+        echo "RouterCloud status publisher: schema rejected" >&2
+        exit 65
+    fi
+done
+
+ASSETS="$(
+    awk '
+        /^[[:space:]]*assets:/ {
+            sub(/^[[:space:]]*assets:[[:space:]]*/, "")
+            gsub(/^[\"\047]|[\"\047]$/, "")
+            print
+            exit
+        }
+    ' "$CONFIG"
+)"
+
+case "$ASSETS" in
+    /opt/share/routercloud-*)
+        ;;
+    *)
+        echo "RouterCloud status publisher: unsafe assets path" >&2
+        exit 78
+        ;;
+esac
+
+if [ ! -d "$ASSETS" ]; then
+    echo "RouterCloud status publisher: assets directory missing" >&2
+    exit 78
+fi
+
+TARGET="$ASSETS/routercloud-backup-status.json"
+STAGED="$ASSETS/.routercloud-backup-status.json.$$"
+
+if ! cp "$TMP" "$STAGED"; then
+    exit 74
+fi
+
+chmod 0644 "$STAGED"
+
+if ! mv "$STAGED" "$TARGET"; then
+    rm -f "$STAGED"
+    exit 74
+fi
+
+echo "ROUTERCLOUD_STATUS_PUBLISH=PASS"
+exit 0
