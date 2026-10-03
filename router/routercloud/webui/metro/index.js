@@ -1395,6 +1395,20 @@ function refreshDashboardPanel() {
   setupRecentFiles();
 }
 
+// ROUTERCLOUD_FAVORITES_UI_SYNC_V1
+function syncFavoritesPanelAfterMutation(action) {
+  if (action === "add") {
+    dashboardPanelMode = "favorites";
+  } else if (action === "remove") {
+    dashboardPanelMode =
+      routerCloudFavorites.size === 0
+        ? "recent"
+        : "favorites";
+  }
+
+  refreshDashboardPanel();
+}
+
 // ROUTERCLOUD_FAVORITES_PANEL_REMOVE_V1
 async function removeFavoriteFromPanel(path) {
   if (!routerCloudFavoritesAvailable) {
@@ -1408,12 +1422,9 @@ async function removeFavoriteFromPanel(path) {
       "Usunięto z ulubionych"
     );
 
-    dashboardPanelMode =
-      routerCloudFavorites.size === 0
-        ? "recent"
-        : "favorites";
-
-    refreshDashboardPanel();
+    syncFavoritesPanelAfterMutation(
+      "remove"
+    );
 
     return;
   }
@@ -1449,12 +1460,9 @@ async function removeFavoriteFromPanel(path) {
     // Pozostajemy w Ulubionych, dopóki są tam
     // inne elementy. Po usunięciu ostatniego
     // wracamy do widoku Ostatnie pliki.
-    dashboardPanelMode =
-      routerCloudFavorites.size === 0
-        ? "recent"
-        : "favorites";
-
-    refreshDashboardPanel();
+    syncFavoritesPanelAfterMutation(
+      "remove"
+    );
   } catch (err) {
     await metroNotice({
       title:
@@ -1495,10 +1503,10 @@ async function addFavorite(index) {
       "Ten element jest już w ulubionych"
     );
 
-    dashboardPanelMode =
-      "favorites";
+    syncFavoritesPanelAfterMutation(
+      "add"
+    );
 
-    refreshDashboardPanel();
     return;
   }
 
@@ -1511,14 +1519,14 @@ async function addFavorite(index) {
       )
     );
 
-    dashboardPanelMode =
-      "favorites";
-
     showRouterCloudToast(
       "Dodano do ulubionych"
     );
 
-    refreshDashboardPanel();
+    syncFavoritesPanelAfterMutation(
+      "add"
+    );
+
     return;
   }
 
@@ -1552,14 +1560,13 @@ async function addFavorite(index) {
       )
     );
 
-    dashboardPanelMode =
-      "favorites";
-
     showRouterCloudToast(
       "Dodano do ulubionych"
     );
 
-    refreshDashboardPanel();
+    syncFavoritesPanelAfterMutation(
+      "add"
+    );
   } catch (err) {
     await metroNotice({
       title:
@@ -1615,7 +1622,12 @@ async function toggleFavorite(index) {
         : "Dodano do ulubionych"
     );
 
-    refreshDashboardPanel();
+    syncFavoritesPanelAfterMutation(
+      alreadyFavorite
+        ? "remove"
+        : "add"
+    );
+
     return;
   }
 
@@ -1662,7 +1674,11 @@ async function toggleFavorite(index) {
         : "Dodano do ulubionych"
     );
 
-    refreshDashboardPanel();
+    syncFavoritesPanelAfterMutation(
+      alreadyFavorite
+        ? "remove"
+        : "add"
+    );
   } catch (err) {
     await metroNotice({
       title:
