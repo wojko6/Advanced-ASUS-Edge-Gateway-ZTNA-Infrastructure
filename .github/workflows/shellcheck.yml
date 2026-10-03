@@ -86,3 +86,23 @@ jobs:
         run: sh tests/test-install-preflight-static.sh
       - name: Run isolated install and rollback test
         run: sh tests/test-install-rollback.sh
+
+  validation-suite:
+    name: Validation suite
+    needs:
+      - static-and-recovery
+      - wan-and-rollback
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require all validation jobs to pass
+        env:
+          STATIC_AND_RECOVERY_RESULT: ${{ needs.static-and-recovery.result }}
+          WAN_AND_ROLLBACK_RESULT: ${{ needs.wan-and-rollback.result }}
+        run: |
+          printf 'static-and-recovery=%s\n' "$STATIC_AND_RECOVERY_RESULT"
+          printf 'wan-and-rollback=%s\n' "$WAN_AND_ROLLBACK_RESULT"
+
+          test "$STATIC_AND_RECOVERY_RESULT" = "success"
+          test "$WAN_AND_ROLLBACK_RESULT" = "success"

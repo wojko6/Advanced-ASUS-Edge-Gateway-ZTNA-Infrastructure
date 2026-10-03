@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Added the #130 main-branch protection runbook and an aggregate `Validation suite` CI job designed to serve as the single required status check for the GitHub ruleset.
 - Added the completed RouterCloud browser/application baseline: production-tested password recovery, persistent favorites, AJAX sorting, 250 ms live search, context-aware file views, selected server-side ZIP, WebDAV desktop integration, and the completed #138 versioned encrypted backup layer.
 - Added a 2026-10-03 RouterCloud production checkpoint plus bounded UI validation evidence, while retaining the 2026-10-02 Metro checkpoint as the historical first-phase baseline.
 - Added a project-native read-only Edge Gateway WebUI and a persistent Polish ASUS/GNUton localization overlay covering eight version-pinned firmware resources without committing complete vendor WebUI files.

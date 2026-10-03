@@ -26,6 +26,20 @@ Never commit:
 
 The provided backup excludes Tailscale state. Store backups off-device and encrypt them using a separate process appropriate to your environment.
 
+## Source-control supply-chain safety
+
+The repository `main` branch is intended to be protected by the #130 GitHub
+ruleset baseline: normal changes go through pull requests, the aggregate
+`Validation suite` check must pass, branch deletion and force-push are blocked,
+and no ruleset bypass actor is configured.
+
+The activation and validation procedure is documented in
+[GitHub main-branch protection and required validation](github-main-protection.md).
+
+This control protects repository history and merge flow. It does not replace
+secret exclusion, dependency review, signed releases, deployment hash
+verification, or live-router validation.
+
 ## Management safety
 
 - Keep WebUI WAN access disabled.
