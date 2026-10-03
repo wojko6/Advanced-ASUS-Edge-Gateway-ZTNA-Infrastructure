@@ -2203,39 +2203,40 @@ body.routercloud-drag-in::after {
   opacity: 0.48;
 }
 
-.dashboard-favorites {
+.dashboard-aside {
   position: relative;
 }
 
-.dashboard-favorites.routercloud-favorite-drop-active {
-  transform:
-    translateY(-3px)
-    scale(1.025);
-
-  filter:
-    brightness(1.2);
+.dashboard-aside.routercloud-favorite-drop-active {
+  border-color:
+    rgba(111, 207, 82, 0.9);
 
   box-shadow:
-    0 0 0 2px rgba(255,255,255,.82),
-    0 14px 32px rgba(0,0,0,.38);
+    inset 0 0 0 1px
+      rgba(111, 207, 82, 0.5),
+    0 0 0 2px
+      rgba(111, 207, 82, 0.18);
 }
 
-.dashboard-favorites.routercloud-favorite-drop-active::after {
-  content: "Upuść, aby dodać";
+.dashboard-aside.routercloud-favorite-drop-active::after {
+  content:
+    "Upuść, aby dodać do ulubionych";
 
   position: absolute;
   inset: 0;
+  z-index: 4;
 
   display: grid;
   place-items: center;
 
   background:
-    rgba(52,137,35,.94);
+    rgba(38, 112, 47, 0.94);
 
   color: white;
 
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
+  text-align: center;
 
   pointer-events: none;
 }
