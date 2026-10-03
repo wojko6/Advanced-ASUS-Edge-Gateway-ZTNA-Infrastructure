@@ -700,24 +700,6 @@ function updateArchiveSelectionUi() {
       checkbox => checkbox.checked
     );
 
-  $pathsTableHead
-    .querySelectorAll(
-      "a[data-routercloud-sort]"
-    )
-    .forEach(link => {
-      link.addEventListener(
-        "click",
-        event => {
-          event.preventDefault();
-
-          void applyPathSort(
-            link.dataset.routercloudSort,
-            link.dataset.routercloudOrder
-          );
-        }
-      );
-    });
-
   const $selectAll =
     document.getElementById(
       "select-all-paths"
@@ -2513,6 +2495,24 @@ function renderPathsTableHead() {
       </th>
     </tr>
   `);
+
+  $pathsTableHead
+    .querySelectorAll(
+      "a[data-routercloud-sort]"
+    )
+    .forEach(link => {
+      link.addEventListener(
+        "click",
+        event => {
+          event.preventDefault();
+
+          void applyPathSort(
+            link.dataset.routercloudSort,
+            link.dataset.routercloudOrder
+          );
+        }
+      );
+    });
 
   const $selectAll =
     document.getElementById(
