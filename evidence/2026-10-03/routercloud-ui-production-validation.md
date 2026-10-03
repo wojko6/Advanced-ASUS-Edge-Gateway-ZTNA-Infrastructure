@@ -21,7 +21,8 @@ repository validation workflow completed successfully:
 - PR #164 — align the panel bottom edge;
 - PR #165 — hide dashboard-only shortcuts in `Edit` / `View`;
 - PR #166 — use the right-hand favorites panel as the drag-and-drop target;
-- PR #167 — AJAX live search.
+- PR #167 — AJAX live search;
+- PR #172 — username-or-email login UI.
 
 The changes were intentionally separated into small pull requests so layout,
 navigation and AJAX behavior could be reviewed and rolled back independently.
@@ -127,14 +128,36 @@ FAVORITES_PANEL_DND=PASS
 This is a manual browser acceptance for the tested production UI. Revalidate
 after a material browser, drag-and-drop or favorites implementation change.
 
+## Email login alias
+
+The email-login deployment was manually exercised in the production browser on
+2026-10-03 after the backend and login UI were updated.
+
+Observed behavior:
+
+- the canonical `cloudadmin` username continued to authenticate with the current password;
+- the configured email alias authenticated with the same password;
+- both identifiers reached the same RouterCloud account and existing application state;
+- the login UI displayed `Nazwa użytkownika lub e-mail`;
+- no separate DUFS account or permission set was introduced for the email address.
+
+The email alias is configuration-only. The tested production value is not
+included in this public evidence artifact.
+
+Result:
+
+```text
+USERNAME_LOGIN=PASS
+EMAIL_LOGIN=PASS
+CANONICAL_ACCOUNT_MAPPING=PASS
+```
+
 ## Authentication regression boundary
 
-The UI deployments did not intentionally change the dedicated authentication
-contract.
-
 The protected RouterCloud root continued to use the expected unauthenticated
-authentication response, while the separate password-recovery artifact records
-the real login/reset/restart sequence.
+authentication response. Username login remained functional after introducing
+the email alias, and the separate password-recovery artifact records the real
+login/reset/restart sequence.
 
 ## Result summary
 
@@ -144,6 +167,9 @@ ROUTERCLOUD_RECENT_PANEL_ALIGNMENT=PASS
 ROUTERCLOUD_FILE_VIEW_CONTEXT=PASS
 ROUTERCLOUD_LIVE_SEARCH=PASS
 FAVORITES_PANEL_DND=PASS
+USERNAME_LOGIN=PASS
+EMAIL_LOGIN=PASS
+CANONICAL_ACCOUNT_MAPPING=PASS
 PASSWORD_RECOVERY_E2E=SEE_SEPARATE_EVIDENCE
 ```
 

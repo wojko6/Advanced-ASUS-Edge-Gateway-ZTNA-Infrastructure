@@ -22,6 +22,7 @@ Issues #136, #137 and #138 are complete:
 The current RouterCloud UI includes:
 
 - dedicated RouterCloud login/session authentication;
+- login with either the canonical username or the configured email alias;
 - Polish Metro-style interface and RouterCloud branding;
 - browser favicon and branded login page;
 - file/folder browsing;
@@ -121,6 +122,16 @@ Unauthenticated browser navigation uses the dedicated RouterCloud login flow.
 Raw unauthenticated access to the protected root retains ordinary authentication
 rejection semantics.
 
+The login form accepts either the canonical RouterCloud username or a configured
+email alias. The email address is not a second account: it resolves to the same
+canonical DUFS user, so password state, permissions, password overrides and
+session signing remain attached to that user. The production alias is configured
+separately from password-recovery settings even when both values currently refer
+to the same mailbox.
+
+Authentication failures use the same generic response for username and email
+attempts so the login flow does not expose which identifier exists.
+
 ## Password recovery
 
 The production password-recovery flow was deployed and exercised end to end on
@@ -211,11 +222,17 @@ The final 2026-10-03 browser state was built through small reviewable changes:
 - PR #164 — recent-panel bottom alignment;
 - PR #165 — hide dashboard shortcuts on file views;
 - PR #166 — move the favorites drag-and-drop target to the favorites panel;
-- PR #167 — AJAX live search.
+- PR #167 — AJAX live search;
+- PR #172 — username-or-email login UI.
 
 The password-recovery backend is maintained in the project Dufs fork and was
 merged separately there. The production password-recovery evidence records the
 tested binary hash and source revision used for that rollout.
+
+The email-login backend was merged separately in Dufs PR #2. It adds
+configuration-only `routercloud-login-user` and `routercloud-login-email`
+settings and resolves the configured email alias to the canonical account only
+at the RouterCloud browser login endpoint.
 
 ## Production validation summary
 
@@ -228,7 +245,9 @@ Observed production acceptance on 2026-10-03 includes:
 - file-view contextual shortcut cleanup accepted;
 - AJAX sorting accepted in the production UI;
 - live AJAX search accepted in the production UI;
-- normal protected-root authentication behavior retained.
+- normal protected-root authentication behavior retained;
+- canonical username login accepted after the email-login deployment;
+- configured email alias accepted with the same password and mapped to the same account.
 
 Repository CI also passed for each merged UI change before merge.
 
@@ -244,6 +263,8 @@ this gesture after a material browser/UI change.
 RouterCloud HTTPS                     LIVE
 LAN/Tailscale-only boundary           PRESERVED
 Dedicated login/session auth          LIVE
+Username login                         LIVE / MANUAL PASS
+Email alias login                      LIVE / MANUAL PASS
 Password recovery                     LIVE / E2E VALIDATED
 Metro Polish UI                       LIVE
 Upload file/folder                    LIVE
