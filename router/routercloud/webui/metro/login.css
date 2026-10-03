@@ -295,3 +295,20 @@ body {
     flex-basis: 58px;
   }
 }
+
+/* ==================================================
+   ROUTERCLOUD_LOGIN_NO_ACCIDENTAL_SELECTION_V1
+   Keep login UI consistent with the main RouterCloud UI.
+   ================================================== */
+
+.routercloud-login-body,
+.routercloud-login-body * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Login fields must remain editable/selectable. */
+.routercloud-login-field input {
+  user-select: text;
+  -webkit-user-select: text;
+}

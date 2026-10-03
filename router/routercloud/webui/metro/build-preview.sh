@@ -34,6 +34,13 @@ html = html.replace(
     'href="login.css"'
 )
 
+# Preview nie udostępnia produkcyjnej ścieżki DUFS.
+# Używamy lokalnego favicon.ico kopiowanego wyżej.
+html = html.replace(
+    '/__dufs_v0.46.0__/favicon.ico?v=routercloud-brand-v1',
+    'favicon.ico?v=preview'
+)
+
 html = html.replace(
     '<script src="/__routercloud/login.js" defer></script>',
     ''
