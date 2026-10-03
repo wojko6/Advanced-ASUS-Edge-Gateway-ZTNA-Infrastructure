@@ -146,39 +146,47 @@ A later phase will assess residual mobile telemetry without restoring applicatio
 
 Full telemetry/capture changes that require modifying router configuration may now proceed as controlled post-observation work.
 
-## Completed and validated — Personal Cloud automated file sync
+## Completed and adopted — Personal Cloud / RouterCloud stack
 
-**Status: issue #136 completed 2026-09-30.**
+**Status: #136 completed 2026-09-30; #137 completed 2026-10-01; #138 completed 2026-10-02; current RouterCloud browser baseline documented 2026-10-03.**
 
-The Fedora workstation now has an evidence-backed one-way sync path from
+The Fedora workstation has an evidence-backed one-way sync path from
 `~/RouterCloud/` to the dedicated `ROUTER_DATA/RouterCloud/` directory on the
 router SSD.
 
-The accepted v1 design uses `rsync -rtv` over the existing SSH service, a
+The accepted #136 design uses `rsync -rtv` over the existing SSH service, a
 dedicated client identity, a fail-closed router-side forced-command wrapper,
 `systemd.path` for low-latency top-level triggers, and a five-minute
-`systemd.timer` for reconciliation. Automatic deletion is intentionally absent.
+`systemd.timer` for reconciliation. Automatic deletion remains intentionally
+absent. The final client prevents fallback to ordinary workstation SSH
+identities.
 
-Acceptance covered controlled copy, local-delete safety, fail-closed behavior
-with the dedicated identity unavailable, recovery after identity restoration,
-administrator-access preservation, arbitrary-shell denial for the automation
-key, SSH-key regeneration, a full router reboot, successful post-reboot sync,
-and a final automatic path-trigger transfer.
+Issue #137 added browser-based access as a separate RouterCloud service while
+preserving the LAN/Tailscale-only trust boundary and dedicated data root.
+The current UI includes dedicated authentication, upload/download, bounded file
+operations, selected server-side ZIP, WebDAV integration, AJAX sorting, live
+AJAX search, recent files, persistent favorites and production-tested password
+recovery.
 
-The final client also prevents fallback to ordinary workstation SSH identities.
-A failed intermediate authorization design containing two forced commands was
-identified during persistence testing and corrected to one project-owned
-`personal-cloud-rsync` wrapper command.
+Issue #138 added independent versioned encrypted backups. A dedicated read-only
+backup identity pulls RouterCloud data to Fedora staging, and restic maintains
+history in a separate repository with documented retention, integrity checking
+and isolated restore procedures. The staging mirror is not itself treated as a
+backup.
+
+The Personal Cloud roadmap should now treat #136/#137/#138 as the completed
+baseline. Future work is incremental hardening, compatibility, observability or
+UX maintenance and must not reopen those completed milestones without a material
+architecture change.
 
 See:
 
 - [Personal Cloud design and operations](personal-cloud-sync.md)
 - [sanitized #136 live validation](../evidence/2026-09-30/issue-136-personal-cloud-sync-validation.md)
-
-**Next Personal Cloud work:** issue #137 adds browser-based file access while
-remaining LAN/Tailscale-only; issue #138 adds independent versioned snapshot and
-restore history. Those capabilities are not implied by the completed #136 sync
-baseline.
+- [RouterCloud versioned encrypted backups](routercloud-versioned-backup.md)
+- [RouterCloud 2026-10-03 production checkpoint](routercloud-production-checkpoint-2026-10-03.md)
+- [RouterCloud UI production validation](../evidence/2026-10-03/routercloud-ui-production-validation.md)
+- [RouterCloud password-recovery production validation](../evidence/2026-10-03/routercloud-password-recovery-production-validation.md)
 
 ## Stability follow-up
 
