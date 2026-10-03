@@ -1312,7 +1312,7 @@ function setupFavoritesPanel() {
       "recent-files-empty";
 
     empty.textContent =
-      "Brak ulubionych. Kliknij plik lub folder prawym przyciskiem myszy i wybierz „Dodaj do ulubionych”.";
+      "Brak ulubionych. Przeciągnij plik lub folder tutaj albo kliknij go prawym przyciskiem myszy i wybierz „Dodaj do ulubionych”.";
 
     $recentFiles.appendChild(empty);
 
@@ -2155,25 +2155,43 @@ function setupDashboardShortcuts() {
       ".dashboard-favorites"
     );
 
-  const scrollToPanel = () => {
-    const target =
-      document.querySelector(
-        ".dashboard-aside"
-      );
+  // ROUTERCLOUD_FAVORITES_PANEL_DND_V1
+  // The tile only switches the dashboard panel.
+  // Drag-and-drop is handled by the panel that
+  // actually displays the favorites.
+  const favoritesPanel =
+    document.querySelector(
+      ".dashboard-aside"
+    );
 
-    target?.scrollIntoView({
+  const scrollToPanel = () => {
+    favoritesPanel?.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
   };
 
+  const clearFavoriteDropState = () => {
+    favoritesPanel?.classList.remove(
+      "routercloud-favorite-drop-active"
+    );
+  };
+
+  const canDropFavorite = () =>
+    dashboardPanelMode === "favorites" &&
+    routerCloudFavoritesAvailable &&
+    routerCloudFavoriteDragIndex != null;
+
   const activateLatest = () => {
+    clearFavoriteDropState();
     dashboardPanelMode = "recent";
     refreshDashboardPanel();
     scrollToPanel();
   };
 
   const activateFavorites = () => {
+    clearFavoriteDropState();
+
     if (!routerCloudFavoritesAvailable) {
       void metroNotice({
         title: "Ulubione niedostępne",
@@ -2221,37 +2239,37 @@ function setupDashboardShortcuts() {
     activateFavorites
   );
 
-  // ROUTERCLOUD_FAVORITES_HANDLE_DND_V1
   favorites?.addEventListener(
+    "keydown",
+    event =>
+      keyboardActivate(
+        event,
+        activateFavorites
+      )
+  );
+
+  favoritesPanel?.addEventListener(
     "dragenter",
     event => {
-      if (
-        routerCloudFavoriteDragIndex ==
-        null
-      ) {
+      if (!canDropFavorite()) {
         return;
       }
 
       event.preventDefault();
 
-      favorites.classList.add(
+      favoritesPanel.classList.add(
         "routercloud-favorite-drop-active"
       );
     }
   );
 
-  favorites?.addEventListener(
+  favoritesPanel?.addEventListener(
     "dragover",
     event => {
-      if (
-        routerCloudFavoriteDragIndex ==
-        null
-      ) {
+      if (!canDropFavorite()) {
         return;
       }
 
-      // Bez preventDefault() przeglądarka
-      // nie wygeneruje poprawnego drop.
       event.preventDefault();
       event.stopPropagation();
 
@@ -2260,37 +2278,32 @@ function setupDashboardShortcuts() {
           "copy";
       }
 
-      favorites.classList.add(
+      favoritesPanel.classList.add(
         "routercloud-favorite-drop-active"
       );
     }
   );
 
-  favorites?.addEventListener(
+  favoritesPanel?.addEventListener(
     "dragleave",
     event => {
       if (
         event.relatedTarget &&
-        favorites.contains(
+        favoritesPanel.contains(
           event.relatedTarget
         )
       ) {
         return;
       }
 
-      favorites.classList.remove(
-        "routercloud-favorite-drop-active"
-      );
+      clearFavoriteDropState();
     }
   );
 
-  favorites?.addEventListener(
+  favoritesPanel?.addEventListener(
     "drop",
     async event => {
-      if (
-        routerCloudFavoriteDragIndex ==
-        null
-      ) {
+      if (!canDropFavorite()) {
         return;
       }
 
@@ -2303,9 +2316,7 @@ function setupDashboardShortcuts() {
       routerCloudFavoriteDragIndex =
         null;
 
-      favorites.classList.remove(
-        "routercloud-favorite-drop-active"
-      );
+      clearFavoriteDropState();
 
       if (
         !Number.isInteger(index) ||
@@ -2316,15 +2327,6 @@ function setupDashboardShortcuts() {
 
       await addFavorite(index);
     }
-  );
-
-  favorites?.addEventListener(
-    "keydown",
-    event =>
-      keyboardActivate(
-        event,
-        activateFavorites
-      )
   );
 }
 
@@ -2695,7 +2697,7 @@ function addPath(file, index) {
 
       document
         .querySelector(
-          ".dashboard-favorites"
+          ".dashboard-aside"
         )
         ?.classList.remove(
           "routercloud-favorite-drop-active"
