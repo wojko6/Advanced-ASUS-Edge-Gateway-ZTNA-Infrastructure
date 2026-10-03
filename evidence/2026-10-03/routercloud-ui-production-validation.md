@@ -102,22 +102,30 @@ Result:
 ROUTERCLOUD_LIVE_SEARCH=PASS
 ```
 
-## Favorites panel drag-and-drop boundary
+## Favorites panel drag-and-drop
 
 PR #166 changes the drag-and-drop target from the green `Ulubione` shortcut tile
 to the right-hand panel that actually displays favorites.
 
-The source change and repository CI are complete. A controlled deployment
-procedure was defined for the current external asset set.
+The source change and repository CI are complete. The feature was also manually
+verified in the production browser on 2026-10-03.
 
-This artifact does **not** claim a separate standalone manual production
-acceptance, or independently prove active-asset parity, for the drop gesture
-because no dedicated observed drag/drop-result record was captured in this
-validation note.
+Observed behavior:
 
-The implementation should therefore be described as current/deployed source
-behavior, with a quick manual revalidation recommended after future UI/browser
-changes.
+- a file/folder row could be dragged from the main table;
+- the right-hand `Ulubione` panel accepted the drop;
+- the item was added to favorites;
+- the green `Ulubione` shortcut tile remained only a navigation/panel switch
+  rather than a duplicate drop target.
+
+Result:
+
+```text
+FAVORITES_PANEL_DND=PASS
+```
+
+This is a manual browser acceptance for the tested production UI. Revalidate
+after a material browser, drag-and-drop or favorites implementation change.
 
 ## Authentication regression boundary
 
@@ -135,7 +143,7 @@ ROUTERCLOUD_AJAX_SORT=PASS
 ROUTERCLOUD_RECENT_PANEL_ALIGNMENT=PASS
 ROUTERCLOUD_FILE_VIEW_CONTEXT=PASS
 ROUTERCLOUD_LIVE_SEARCH=PASS
-FAVORITES_PANEL_DND=IMPLEMENTED_NO_SEPARATE_MANUAL_ARTIFACT
+FAVORITES_PANEL_DND=PASS
 PASSWORD_RECOVERY_E2E=SEE_SEPARATE_EVIDENCE
 ```
 
