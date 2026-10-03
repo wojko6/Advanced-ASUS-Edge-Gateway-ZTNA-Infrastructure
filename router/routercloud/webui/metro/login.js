@@ -2,6 +2,7 @@
 
 // ROUTERCLOUD_PASSWORD_RECOVERY_UI_V1
 // ROUTERCLOUD_PASSWORD_RESET_UI_V1
+// ROUTERCLOUD_EMAIL_LOGIN_UI_V1
 
 document.addEventListener("DOMContentLoaded", () => {
   const loginForm =
@@ -319,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
           password.value = "";
 
           showLoginError(
-            "Nieprawidłowa nazwa użytkownika lub hasło."
+            "Nieprawidłowy login lub hasło."
           );
 
           password.focus();
