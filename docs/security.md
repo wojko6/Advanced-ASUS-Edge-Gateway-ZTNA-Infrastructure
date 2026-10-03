@@ -76,6 +76,55 @@ Before treating such a tool as part of the validated design:
 
 Endpoint HTTPS interception is optional defense in depth, not a prerequisite for the router security edge. See `docs/endpoint-filtering-validation.md` for the controlled test methodology.
 
+## RouterCloud security boundary
+
+RouterCloud is a separate application surface from the ASUS management WebUI.
+It remains LAN/Tailscale-only, is rooted at the dedicated RouterCloud data
+directory, and must not be treated as a generic browser for the router
+filesystem.
+
+The reserved `/__routercloud/...` namespace is application control-plane space,
+not user storage. Current internal routes include login/logout, favorites and
+password-reset endpoints. The double underscore is intentional and reduces
+ambiguity with normal files and directories.
+
+The current design preserves these controls:
+
+- dedicated RouterCloud login/session authentication;
+- backend authorization remains authoritative even when the frontend hides or
+  exposes an action;
+- generic Dufs `allow-delete` remains disabled in production;
+- RouterCloud-specific delete and edit paths are separately gated;
+- safe rename remains same-parent/no-overwrite;
+- symlink following is disabled;
+- bounded text editing and server-side selected ZIP operate inside the dedicated
+  data root;
+- no RouterCloud change introduces direct WAN exposure.
+
+Password recovery adds a separate sensitive path. Production validation records
+the following boundaries:
+
+- reset-request responses do not intentionally disclose whether a submitted
+  syntactically valid address belongs to the account;
+- reset tokens are delivered in the URL fragment rather than the query string;
+- the browser removes the fragment and submits the token only in the reset POST
+  body;
+- the stored reset verifier is not the raw token;
+- reset lifetime and request frequency are bounded;
+- password overrides are stored outside the served data root;
+- SMTP credentials remain in private router-side configuration and must never be
+  committed.
+
+RouterCloud versioned backup uses a separate read-only SSH/rsync identity. That
+identity must not gain arbitrary shell access or write/delete capability on the
+live RouterCloud tree. The Fedora staging mirror is not itself considered a
+backup; restic history is the independent recoverable layer.
+
+See the
+[2026-10-03 RouterCloud production checkpoint](routercloud-production-checkpoint-2026-10-03.md),
+[password-recovery production validation](../evidence/2026-10-03/routercloud-password-recovery-production-validation.md)
+and [versioned backup design](routercloud-versioned-backup.md).
+
 ## Logging caveats
 
 The syslog-ng example includes remote TLS forwarding with required peer
