@@ -6,6 +6,7 @@ GitHub API readback after activation reported:
 
 - ruleset: `Protect main`;
 - enforcement: `active`;
+- target: `~DEFAULT_BRANCH` (`main`);
 - bypass actors: none;
 - current user bypass: never;
 - deletion protection: enabled;
@@ -21,7 +22,13 @@ direct-push rejection test against `main`.
 ## Status
 
 ```text
-RULESET_READBACK=PASS
+RULESET_ACTIVE=PASS
+MAIN_TARGET=PASS
+MAIN_DELETE_BLOCKED=CONFIGURED
+MAIN_FORCE_PUSH_BLOCKED=CONFIGURED
+PULL_REQUEST_REQUIRED=CONFIGURED
+VALIDATION_SUITE_REQUIRED=CONFIGURED
+STRICT_UP_TO_DATE=CONFIGURED
 NORMAL_PR_AFTER_RULESET=PENDING
 DIRECT_MAIN_PUSH_REJECTED=PENDING
 ```
