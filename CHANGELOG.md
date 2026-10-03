@@ -65,7 +65,7 @@
 
 ### Validated
 - Production-validated RouterCloud password recovery end to end on 2026-10-03: mail delivery, fragment-based reset flow, password change, login, service restart and post-restart login all passed.
-- Production-accepted RouterCloud AJAX sorting, desktop recent-panel alignment, contextual file-view cleanup and live AJAX search; repository CI passed before each merged UI change. The favorites-panel drop gesture is documented as implemented without inventing a separate standalone manual acceptance artifact.
+- Production-accepted RouterCloud AJAX sorting, desktop recent-panel alignment, contextual file-view cleanup and live AJAX search; repository CI passed before each merged UI change. The favorites-panel drag-and-drop flow was also manually verified in the production browser on 2026-10-03.
 - Live-validated syslog-ng collector-outage resilience on 2026-10-01: local archival continued with TCP/6514 intentionally unavailable, and the outage marker was delivered to Fedora after the collector path recovered.
 - Live-validated the final eight-resource Polish WebUI overlay through exact SHA-256 checks, one bind mount per resource, visual inspection, controlled reboot persistence and a final project health result of `0 failure(s), 0 warning(s)`.
 - Completed issue #128 with router/client IPv6-state evidence and trusted-WLAN WPA/PMF/WEP/TKIP/WPS checks; native IPv6 remains intentionally disabled and inactive guest WLANs are not promoted into a live isolation claim.
