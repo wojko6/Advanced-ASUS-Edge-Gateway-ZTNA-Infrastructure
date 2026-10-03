@@ -128,7 +128,43 @@
             d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z" />
         </svg>
       </div>
+
+      <div
+        class="control dashboard-latest"
+        title="Ostatnio dodane"
+        role="button"
+        tabindex="0">
+        <svg width="24" height="24" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 3.5a.5.5 0 0 1 .5.5v3.8l2.35 1.35a.5.5 0 0 1-.5.87l-2.6-1.5A.5.5 0 0 1 7.5 8V4a.5.5 0 0 1 .5-.5z"/>
+          <path d="M8 1a7 7 0 1 1-6.07 3.52.5.5 0 1 1 .87.5A6 6 0 1 0 4.1 3.4H6a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5V1a.5.5 0 0 1 1 0v1.68A6.97 6.97 0 0 1 8 1z"/>
+        </svg>
+      </div>
+
+      <!-- ROUTERCLOUD_FAVORITES_TILE_SWAP_V1 -->
+      <div
+        class="control dashboard-favorites"
+        title="Ulubione"
+        role="button"
+        tabindex="0">
+        <svg width="24" height="24" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M3.612 15.443c-.396.203-.824-.149-.746-.592l.83-4.73-3.523-3.356c-.329-.312-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.638.283.95l-3.522 3.356.83 4.73c.078.443-.35.795-.746.592L8 13.187l-4.389 2.256z"/>
+        </svg>
+      </div>
+
     </div>
+
+    <!-- ROUTERCLOUD_DASHBOARD_V2_STORAGE_BELOW_TILES -->
+    <section
+      class="dashboard-storage"
+      aria-label="Pamięć masowa RouterCloud">
+
+      <div class="dashboard-storage-label">
+        Pamięć masowa
+      </div>
+
+      <div class="storage-info hidden"></div>
+    </section>
+
     <form class="searchbar hidden">
       <div class="icon">
         <svg width="16" height="16" viewBox="0 0 16 16">
@@ -148,15 +184,68 @@
       <input type="submit" hidden />
     </form>
 
+    <!-- ROUTERCLOUD_DASHBOARD_V2_SKELETON -->
+    <aside
+      class="dashboard-aside"
+      aria-labelledby="recent-files-title">
+
+      <div class="dashboard-panel-header">
+        <div>
+          <span class="content-kicker">RouterCloud</span>
+          <h2 id="recent-files-title">Ostatnie pliki</h2>
+        </div>
+
+        <span
+          class="recent-files-count"
+          aria-live="polite"></span>
+      </div>
+
+      <div
+        class="recent-files"
+        aria-live="polite"></div>
+    </aside>
+
   </div>
   <div class="main">
     <div class="index-page hidden">
-      <section class="metro-overview">
-        <div class="overview-heading">
-          <span class="overview-kicker">Pamięć masowa</span>
-          <h1>Twoje pliki</h1>
+      <section
+        class="dashboard-feature-strip"
+        aria-label="Funkcje RouterCloud">
+
+        <div class="dashboard-feature-tile dashboard-feature-sync">
+          <span class="dashboard-feature-icon" aria-hidden="true">↻</span>
+          <div>
+            <strong>Synchronizacja</strong>
+            <span>Pliki między urządzeniami</span>
+          </div>
+          <small>Do podłączenia</small>
         </div>
-        <div class="storage-info hidden"></div>
+
+        <!-- ROUTERCLOUD_BACKUP_TILE_V1 -->
+        <div
+          class="dashboard-feature-tile dashboard-feature-backup"
+          aria-label="Status backupu RouterCloud">
+          <span class="dashboard-feature-icon" aria-hidden="true">▣</span>
+          <div>
+            <strong>Backup</strong>
+            <span class="backup-tile-description">
+              Oczekiwanie na status
+            </span>
+          </div>
+          <small class="backup-tile-state">
+            Brak danych
+          </small>
+        </div>
+
+        <div class="dashboard-feature-tile dashboard-feature-logs">
+          <span class="dashboard-feature-icon" aria-hidden="true">≡</span>
+          <div>
+            <strong>Logi</strong>
+            <span>Zdarzenia RouterCloud</span>
+          </div>
+          <small>Do podłączenia</small>
+        </div>
+
       </section>
 
       <div class="content-heading">

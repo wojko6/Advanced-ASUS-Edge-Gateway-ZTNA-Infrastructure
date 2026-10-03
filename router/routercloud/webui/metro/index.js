@@ -108,6 +108,9 @@ let $emptyFolder;
  * @type Element
  */
 let $storageInfo;
+let $recentFiles;
+let $recentFilesCount;
+// ROUTERCLOUD_DASHBOARD_V2_SKELETON
 /**
  * @type Element
  */
@@ -416,6 +419,8 @@ async function ready() {
   $uploadersTable = document.querySelector(".uploaders-table");
   $emptyFolder = document.querySelector(".empty-folder");
   $storageInfo = document.querySelector(".storage-info");
+  $recentFiles = document.querySelector(".recent-files");
+  $recentFilesCount = document.querySelector(".recent-files-count");
   $editor = document.querySelector(".editor");
   $loginBtn = document.querySelector(".login-btn");
   $logoutBtn = document.querySelector(".logout-btn");
@@ -924,6 +929,7 @@ async function refreshCurrentIndex() {
 
     renderPathsTableBody();
     setupStorageInfo();
+    setupRecentFiles();
 
     if (DATA.user) {
       setupDownloadWithToken();
@@ -949,6 +955,114 @@ async function refreshCurrentIndex() {
   }
 }
 
+function setupRecentFiles() {
+  if (!$recentFiles) {
+    return;
+  }
+
+  const paths =
+    Array.isArray(DATA.paths)
+      ? [...DATA.paths]
+      : [];
+
+  $recentFiles.replaceChildren();
+
+  if (paths.length === 0) {
+    const empty =
+      document.createElement("div");
+
+    empty.className =
+      "recent-files-empty";
+
+    empty.textContent =
+      "Brak plików do wyświetlenia.";
+
+    $recentFiles.appendChild(empty);
+
+    if ($recentFilesCount) {
+      $recentFilesCount.textContent = "0";
+    }
+
+    return;
+  }
+
+  // ROUTERCLOUD_RECENT_CONTEXT_MENU_V1
+  // Keep the original DATA.paths index so the recent
+  // list can reuse the same rename/delete actions as
+  // the main files table.
+  const recent =
+    paths
+      .map(
+        (file, index) => ({
+          file,
+          index,
+        })
+      )
+      .filter(
+        entry => Boolean(entry.file)
+      )
+      .sort(
+        (a, b) =>
+          (Number(b.file.mtime) || 0) -
+          (Number(a.file.mtime) || 0)
+      )
+      .slice(0, 5);
+
+  if ($recentFilesCount) {
+    $recentFilesCount.textContent =
+      `${recent.length} ostatnich`;
+  }
+
+  for (const { file, index } of recent) {
+    const isDir =
+      String(file.path_type || "")
+        .endsWith("Dir");
+
+    let url =
+      newUrl(file.name);
+
+    if (isDir) {
+      url += "/";
+    } else {
+      url += "?view";
+    }
+
+    const item =
+      document.createElement("a");
+
+    item.className =
+      "recent-file-card";
+
+    item.href = url;
+
+    item.innerHTML = `
+      <span class="recent-file-icon">
+        ${getPathSvg(file.path_type)}
+      </span>
+      <span class="recent-file-copy">
+        <strong>${encodedStr(file.name)}</strong>
+        <span>${formatMtime(file.mtime)}</span>
+      </span>
+      <span
+        class="recent-file-arrow"
+        aria-hidden="true">›</span>
+    `;
+
+    item.addEventListener(
+      "contextmenu",
+      event => {
+        openPathContextMenu(
+          event,
+          index,
+          isDir
+        );
+      }
+    );
+
+    $recentFiles.appendChild(item);
+  }
+}
+
 function setupStorageInfo() {
   const storage = DATA.storage;
 
@@ -956,19 +1070,393 @@ function setupStorageInfo() {
     return;
   }
 
-  const usedPercent = (storage.used / storage.total) * 100;
-  const percent = formatPercent(usedPercent).replace(".", ",");
+  const usedPercent =
+    (storage.used / storage.total) * 100;
 
-  $storageInfo.textContent =
-    `Dysk: ${formatStorageBytes(storage.used)} zajęte • ` +
-    `${formatStorageBytes(storage.available)} dostępne • ` +
-    `${formatStorageBytes(storage.total)} razem • ${percent}`;
+  const safePercent =
+    Math.max(
+      0,
+      Math.min(100, usedPercent)
+    );
+
+  const percent =
+    formatPercent(usedPercent)
+      .replace(".", ",");
+
+  $storageInfo.style.setProperty(
+    "--storage-used",
+    `${safePercent}%`
+  );
+
+  $storageInfo.innerHTML = `
+    <div class="storage-card-copy">
+      <strong>${formatStorageBytes(storage.available)}</strong>
+      <span>dostępne z ${formatStorageBytes(storage.total)}</span>
+    </div>
+
+    <div
+      class="storage-progress"
+      role="progressbar"
+      aria-label="Wykorzystanie pamięci RouterCloud"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="${Math.round(safePercent)}">
+      <span></span>
+    </div>
+
+    <div class="storage-card-meta">
+      <span>${formatStorageBytes(storage.used)} zajęte</span>
+      <span>${percent}</span>
+    </div>
+  `;
 
   $storageInfo.classList.remove("hidden");
 }
 
+// ROUTERCLOUD_BACKUP_TILE_V1
+
+function formatBackupTime(value) {
+  if (!value) {
+    return "brak danych";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(
+    "pl-PL",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  ).format(date);
+}
+
+function formatBackupDuration(seconds) {
+  const value = Number(seconds);
+
+  if (!Number.isFinite(value)) {
+    return "—";
+  }
+
+  if (value < 60) {
+    return `${value} s`;
+  }
+
+  const minutes =
+    Math.floor(value / 60);
+
+  const rest =
+    value % 60;
+
+  if (rest === 0) {
+    return `${minutes} min`;
+  }
+
+  return `${minutes} min ${rest} s`;
+}
+
+// ROUTERCLOUD_BACKUP_HTTP_STATUS_V1
+
+function routerCloudAssetUrl(name) {
+  const scripts =
+    Array.from(document.scripts);
+
+  const assetScript =
+    scripts.find(script => {
+      if (!script.src) {
+        return false;
+      }
+
+      try {
+        const url =
+          new URL(
+            script.src,
+            window.location.href
+          );
+
+        return (
+          /\/__dufs_v[^/]+__\/index\.js$/
+        ).test(url.pathname);
+      } catch {
+        return false;
+      }
+    });
+
+  if (!assetScript) {
+    return null;
+  }
+
+  return new URL(
+    name,
+    assetScript.src
+  ).toString();
+}
+
+async function loadBackupStatus() {
+  if (DATA.backup_status) {
+    return DATA.backup_status;
+  }
+
+  const url =
+    routerCloudAssetUrl(
+      "routercloud-backup-status.json"
+    );
+
+  if (!url) {
+    return null;
+  }
+
+  try {
+    const response =
+      await fetch(
+        url,
+        {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const status =
+      await response.json();
+
+    if (
+      !status ||
+      Number(status.schema) !== 1
+    ) {
+      return null;
+    }
+
+    return status;
+  } catch {
+    return null;
+  }
+}
+
+async function setupBackupTile() {
+  const tile =
+    document.querySelector(
+      ".dashboard-feature-backup"
+    );
+
+  if (!tile) {
+    return;
+  }
+
+  const description =
+    tile.querySelector(
+      ".backup-tile-description"
+    );
+
+  const state =
+    tile.querySelector(
+      ".backup-tile-state"
+    );
+
+  tile.classList.remove(
+    "is-ok",
+    "is-error",
+    "is-unavailable"
+  );
+
+  const status =
+    await loadBackupStatus();
+
+  if (!status) {
+    tile.classList.add(
+      "is-unavailable"
+    );
+
+    description.textContent =
+      "Status niedostępny";
+
+    state.textContent =
+      "Brak danych";
+
+    return;
+  }
+
+  const last =
+    formatBackupTime(
+      status.end
+    );
+
+  const duration =
+    formatBackupDuration(
+      status.duration_seconds
+    );
+
+  if (
+    status.result === "success" &&
+    Number(status.rc) === 0
+  ) {
+    tile.classList.add(
+      "is-ok"
+    );
+
+    description.textContent =
+      `Ostatnia kopia: ${last}`;
+
+    state.textContent =
+      `OK • ${duration}`;
+  } else {
+    tile.classList.add(
+      "is-error"
+    );
+
+    const stage =
+      status.stage ||
+      "nieznany etap";
+
+    description.textContent =
+      `Błąd: ${stage}`;
+
+    state.textContent =
+      `RC ${status.rc ?? "?"} • ${last}`;
+  }
+
+  tile.setAttribute(
+    "role",
+    "button"
+  );
+
+  tile.setAttribute(
+    "tabindex",
+    "0"
+  );
+
+  const openDetails = () => {
+    const next =
+      status.next_run
+        ? ` • Następna: ${status.next_run}`
+        : "";
+
+    const stage =
+      status.stage ||
+      "brak";
+
+    void metroNotice({
+      title: "Backup RouterCloud",
+      message:
+        `Stan: ${status.result} • ` +
+        `Etap: ${stage} • ` +
+        `Ostatnie wykonanie: ${last} • ` +
+        `Czas: ${duration}${next}`,
+    });
+  };
+
+  tile.addEventListener(
+    "click",
+    openDetails
+  );
+
+  tile.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key !== "Enter" &&
+        event.key !== " "
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      openDetails();
+    }
+  );
+}
+
+function setupDashboardShortcuts() {
+  const latest =
+    document.querySelector(
+      ".dashboard-latest"
+    );
+
+  const favorites =
+    document.querySelector(
+      ".dashboard-favorites"
+    );
+
+  const activateLatest = () => {
+    const target =
+      document.querySelector(
+        ".dashboard-aside"
+      );
+
+    target?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
+  const activateFavorites = () => {
+    void metroNotice({
+      title: "Ulubione",
+      message:
+        "Obsługa ulubionych zostanie podłączona w kolejnym etapie RouterCloud Web v2.",
+    });
+  };
+
+  const keyboardActivate =
+    (event, action) => {
+      if (
+        event.key !== "Enter" &&
+        event.key !== " "
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      action();
+    };
+
+  latest?.addEventListener(
+    "click",
+    activateLatest
+  );
+
+  latest?.addEventListener(
+    "keydown",
+    event =>
+      keyboardActivate(
+        event,
+        activateLatest
+      )
+  );
+
+  favorites?.addEventListener(
+    "click",
+    activateFavorites
+  );
+
+  favorites?.addEventListener(
+    "keydown",
+    event =>
+      keyboardActivate(
+        event,
+        activateFavorites
+      )
+  );
+}
+
 async function setupIndexPage() {
   setupStorageInfo();
+  setupRecentFiles();
+  setupDashboardShortcuts();
+  await setupBackupTile();
 
   if (DATA.allow_archive) {
     setupSelectedArchiveDownload();
@@ -1830,6 +2318,8 @@ async function deletePath(index) {
     document.getElementById(`addPath${index}`)?.remove();
     DATA.paths[index] = null;
 
+    setupRecentFiles();
+
     selectedArchivePaths.delete(
       file.name
     );
@@ -1910,6 +2400,8 @@ async function movePath(index) {
         link.textContent = newName;
         link.href = newFileUrl + (isDir ? "/" : "");
       }
+
+      setupRecentFiles();
 
       closePathContextMenu();
       return;

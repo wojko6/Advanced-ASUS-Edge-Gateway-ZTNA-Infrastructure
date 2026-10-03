@@ -47,6 +47,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 import base64
 import json
+import subprocess
 
 path = Path("/tmp/routercloud-metro-preview/index.html")
 
@@ -61,6 +62,73 @@ def ts(year, month, day, hour, minute):
 GiB = 1024 ** 3
 MiB = 1024 ** 2
 KiB = 1024
+
+# ROUTERCLOUD_BACKUP_TILE_V1
+backup_status = None
+
+status_path = (
+    Path.home()
+    / ".local"
+    / "state"
+    / "routercloud-backup"
+    / "status.env"
+)
+
+if status_path.is_file():
+    values = {}
+
+    for line in status_path.read_text(
+        encoding="utf-8",
+        errors="replace",
+    ).splitlines():
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        values[key] = value
+
+    next_run = ""
+
+    try:
+        raw_next = subprocess.check_output(
+            [
+                "systemctl",
+                "--user",
+                "show",
+                "routercloud-backup.timer",
+                "-p",
+                "NextElapseUSecRealtime",
+                "--value",
+            ],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+
+        if raw_next:
+            next_run = raw_next
+
+    except Exception:
+        pass
+
+    backup_status = {
+        "result":
+            values.get("LAST_RESULT", ""),
+        "rc":
+            values.get("LAST_RC", ""),
+        "stage":
+            values.get("LAST_STAGE", ""),
+        "start":
+            values.get("LAST_START", ""),
+        "end":
+            values.get("LAST_END", ""),
+        "duration_seconds":
+            values.get(
+                "LAST_DURATION_SECONDS",
+                "",
+            ),
+        "next_run":
+            next_run,
+    }
 
 data = {
     "href": "/",
@@ -130,6 +198,8 @@ data = {
     },
 
     "editable": False,
+
+    "backup_status": backup_status,
 }
 
 encoded = base64.b64encode(
