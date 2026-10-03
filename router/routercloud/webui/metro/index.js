@@ -130,6 +130,11 @@ let $userName;
 let $pathContextMenu;
 let contextPathIndex = null;
 
+// ROUTERCLOUD_FAVORITES_WEB_V1
+let routerCloudFavorites = new Map();
+let routerCloudFavoritesAvailable = false;
+let dashboardPanelMode = "recent";
+
 /**
  * RouterCloud Metro dialog system
  */
@@ -929,7 +934,7 @@ async function refreshCurrentIndex() {
 
     renderPathsTableBody();
     setupStorageInfo();
-    setupRecentFiles();
+    refreshDashboardPanel();
 
     if (DATA.user) {
       setupDownloadWithToken();
@@ -958,6 +963,16 @@ async function refreshCurrentIndex() {
 function setupRecentFiles() {
   if (!$recentFiles) {
     return;
+  }
+
+  const title =
+    document.getElementById(
+      "recent-files-title"
+    );
+
+  if (title) {
+    title.textContent =
+      "Ostatnie pliki";
   }
 
   const paths =
@@ -1063,6 +1078,496 @@ function setupRecentFiles() {
   }
 }
 
+
+// ROUTERCLOUD_FAVORITES_TOAST_V1
+let routerCloudToastTimer = null;
+
+function showRouterCloudToast(message) {
+  let toast =
+    document.getElementById(
+      "routercloud-toast"
+    );
+
+  if (!toast) {
+    toast =
+      document.createElement("div");
+
+    toast.id =
+      "routercloud-toast";
+
+    toast.className =
+      "routercloud-toast";
+
+    toast.setAttribute(
+      "role",
+      "status"
+    );
+
+    toast.setAttribute(
+      "aria-live",
+      "polite"
+    );
+
+    document.body.appendChild(
+      toast
+    );
+  }
+
+  if (routerCloudToastTimer) {
+    clearTimeout(
+      routerCloudToastTimer
+    );
+  }
+
+  toast.textContent = message;
+
+  toast.classList.add(
+    "is-visible"
+  );
+
+  routerCloudToastTimer =
+    window.setTimeout(
+      () => {
+        toast.classList.remove(
+          "is-visible"
+        );
+      },
+      1800
+    );
+}
+
+function favoriteRelativePath(fileName) {
+  const base =
+    String(DATA.href || "/")
+      .replace(/^\/+|\/+$/g, "");
+
+  const name =
+    String(fileName || "")
+      .replace(/^\/+/, "");
+
+  return [base, name]
+    .filter(Boolean)
+    .join("/");
+}
+
+function favoriteHref(path, isDir) {
+  let prefix =
+    String(DATA.uri_prefix || "/");
+
+  if (!prefix.endsWith("/")) {
+    prefix += "/";
+  }
+
+  let url =
+    prefix +
+    String(path)
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/");
+
+  if (isDir) {
+    url += "/";
+  } else {
+    url += "?view";
+  }
+
+  return url;
+}
+
+function favoriteFromPathItem(
+  file,
+  path
+) {
+  return {
+    path,
+    name: file.name,
+    path_type: file.path_type,
+    mtime: file.mtime,
+    size: file.size,
+  };
+}
+
+async function loadRouterCloudFavorites() {
+  if (isPreviewMode()) {
+    routerCloudFavoritesAvailable = true;
+    return true;
+  }
+
+  try {
+    const res =
+      await fetch(
+        "/__routercloud/favorites",
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        }
+      );
+
+    if (
+      res.status === 404 ||
+      res.status === 405
+    ) {
+      routerCloudFavoritesAvailable = false;
+      routerCloudFavorites.clear();
+
+      return false;
+    }
+
+    await assertResOK(res);
+
+    const data = await res.json();
+
+    if (!Array.isArray(data.favorites)) {
+      throw new Error(
+        "Nieprawidłowa odpowiedź API Ulubionych."
+      );
+    }
+
+    routerCloudFavorites =
+      new Map(
+        data.favorites
+          .filter(
+            item =>
+              item &&
+              typeof item.path === "string"
+          )
+          .map(
+            item => [
+              item.path,
+              item,
+            ]
+          )
+      );
+
+    routerCloudFavoritesAvailable = true;
+
+    return true;
+  } catch (err) {
+    console.warn(
+      "RouterCloud favorites unavailable:",
+      err
+    );
+
+    routerCloudFavoritesAvailable = false;
+    routerCloudFavorites.clear();
+
+    return false;
+  }
+}
+
+function setupFavoritesPanel() {
+  if (!$recentFiles) {
+    return;
+  }
+
+  const title =
+    document.getElementById(
+      "recent-files-title"
+    );
+
+  if (title) {
+    title.textContent = "Ulubione";
+  }
+
+  $recentFiles.replaceChildren();
+
+  const favorites =
+    [...routerCloudFavorites.values()]
+      .sort(
+        (a, b) =>
+          String(a.path).localeCompare(
+            String(b.path),
+            "pl"
+          )
+      );
+
+  if ($recentFilesCount) {
+    $recentFilesCount.textContent =
+      `${favorites.length} elementów`;
+  }
+
+  if (favorites.length === 0) {
+    const empty =
+      document.createElement("div");
+
+    empty.className =
+      "recent-files-empty";
+
+    empty.textContent =
+      "Brak ulubionych. Kliknij plik lub folder prawym przyciskiem myszy i wybierz „Dodaj do ulubionych”.";
+
+    $recentFiles.appendChild(empty);
+
+    return;
+  }
+
+  for (const favorite of favorites) {
+    const isDir =
+      String(
+        favorite.path_type || ""
+      ).endsWith("Dir");
+
+    const item =
+      document.createElement("div");
+
+    item.className =
+      "recent-file-card favorite-file-card";
+
+    const link =
+      document.createElement("a");
+
+    link.className =
+      "favorite-file-main";
+
+    link.href =
+      favoriteHref(
+        favorite.path,
+        isDir
+      );
+
+    link.title =
+      favorite.path;
+
+    link.innerHTML = `
+      <span class="recent-file-icon">
+        ${getPathSvg(favorite.path_type)}
+      </span>
+      <span class="recent-file-copy">
+        <strong>${encodedStr(favorite.name)}</strong>
+        <span>${encodedStr(favorite.path)}</span>
+      </span>
+      <span
+        class="recent-file-arrow"
+        aria-hidden="true">›</span>
+    `;
+
+    const removeButton =
+      document.createElement("button");
+
+    removeButton.type = "button";
+
+    removeButton.className =
+      "favorite-file-remove";
+
+    removeButton.title =
+      "Usuń z ulubionych";
+
+    removeButton.setAttribute(
+      "aria-label",
+      `Usuń „${favorite.name}” z ulubionych`
+    );
+
+    removeButton.textContent = "★";
+
+    removeButton.addEventListener(
+      "click",
+      async event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        await removeFavoriteFromPanel(
+          favorite.path
+        );
+      }
+    );
+
+    item.append(
+      link,
+      removeButton
+    );
+
+    $recentFiles.appendChild(item);
+  }
+}
+
+function refreshDashboardPanel() {
+  if (dashboardPanelMode === "favorites") {
+    setupFavoritesPanel();
+    return;
+  }
+
+  setupRecentFiles();
+}
+
+// ROUTERCLOUD_FAVORITES_PANEL_REMOVE_V1
+async function removeFavoriteFromPanel(path) {
+  if (!routerCloudFavoritesAvailable) {
+    return;
+  }
+
+  if (isPreviewMode()) {
+    routerCloudFavorites.delete(path);
+
+    showRouterCloudToast(
+      "Usunięto z ulubionych"
+    );
+
+    dashboardPanelMode =
+      routerCloudFavorites.size === 0
+        ? "recent"
+        : "favorites";
+
+    refreshDashboardPanel();
+
+    return;
+  }
+
+  try {
+    await checkAuth();
+
+    const res =
+      await fetch(
+        "/__routercloud/favorites",
+        {
+          method: "DELETE",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            path,
+          }),
+        }
+      );
+
+    await assertResOK(res);
+
+    routerCloudFavorites.delete(path);
+
+    showRouterCloudToast(
+      "Usunięto z ulubionych"
+    );
+
+    // Pozostajemy w Ulubionych, dopóki są tam
+    // inne elementy. Po usunięciu ostatniego
+    // wracamy do widoku Ostatnie pliki.
+    dashboardPanelMode =
+      routerCloudFavorites.size === 0
+        ? "recent"
+        : "favorites";
+
+    refreshDashboardPanel();
+  } catch (err) {
+    await metroNotice({
+      title:
+        "Nie udało się usunąć z ulubionych",
+
+      message:
+        err.message,
+    });
+  }
+}
+
+async function toggleFavorite(index) {
+  const file =
+    DATA.paths?.[index];
+
+  if (!file) {
+    return;
+  }
+
+  if (!routerCloudFavoritesAvailable) {
+    await metroNotice({
+      title: "Ulubione niedostępne",
+      message:
+        "Backend Ulubionych nie jest obecnie dostępny.",
+    });
+
+    return;
+  }
+
+  const path =
+    favoriteRelativePath(
+      file.name
+    );
+
+  const alreadyFavorite =
+    routerCloudFavorites.has(path);
+
+  if (isPreviewMode()) {
+    if (alreadyFavorite) {
+      routerCloudFavorites.delete(path);
+    } else {
+      routerCloudFavorites.set(
+        path,
+        favoriteFromPathItem(
+          file,
+          path
+        )
+      );
+    }
+
+    showRouterCloudToast(
+      alreadyFavorite
+        ? "Usunięto z ulubionych"
+        : "Dodano do ulubionych"
+    );
+
+    refreshDashboardPanel();
+    return;
+  }
+
+  try {
+    await checkAuth();
+
+    const res =
+      await fetch(
+        "/__routercloud/favorites",
+        {
+          method:
+            alreadyFavorite
+              ? "DELETE"
+              : "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            path,
+          }),
+        }
+      );
+
+    await assertResOK(res);
+
+    if (alreadyFavorite) {
+      routerCloudFavorites.delete(path);
+    } else {
+      routerCloudFavorites.set(
+        path,
+        favoriteFromPathItem(
+          file,
+          path
+        )
+      );
+    }
+
+    showRouterCloudToast(
+      alreadyFavorite
+        ? "Usunięto z ulubionych"
+        : "Dodano do ulubionych"
+    );
+
+    refreshDashboardPanel();
+  } catch (err) {
+    await metroNotice({
+      title:
+        alreadyFavorite
+          ? "Nie udało się usunąć z ulubionych"
+          : "Nie udało się dodać do ulubionych",
+
+      message: err.message,
+    });
+  }
+}
+
 function setupStorageInfo() {
   const storage = DATA.storage;
 
@@ -1159,6 +1664,105 @@ function formatBackupDuration(seconds) {
   }
 
   return `${minutes} min ${rest} s`;
+}
+
+// ROUTERCLOUD_BACKUP_POLISH_STATUS_V1
+
+function formatBackupResult(value) {
+  const labels = {
+    success: "zakończony pomyślnie",
+    failure: "niepowodzenie",
+  };
+
+  return (
+    labels[String(value || "")] ||
+    "stan nieznany"
+  );
+}
+
+function formatBackupStage(value) {
+  const labels = {
+    complete:
+      "zakończono",
+
+    "network-wait":
+      "oczekiwanie na połączenie z routerem",
+
+    "backup-disk-not-mounted":
+      "dysk kopii zapasowej nie jest zamontowany",
+
+    "password-file":
+      "sprawdzanie pliku hasła Restic",
+
+    "restic-repository":
+      "sprawdzanie repozytorium Restic",
+
+    "rsync-pull":
+      "pobieranie danych z RouterCloud",
+
+    "restic-backup":
+      "tworzenie kopii Restic",
+  };
+
+  const key =
+    String(value || "");
+
+  return (
+    labels[key] ||
+    (key
+      ? key.replaceAll("-", " ")
+      : "brak danych")
+  );
+}
+
+function formatBackupNextRun(value) {
+  if (!value) {
+    return "";
+  }
+
+  const raw =
+    String(value).trim();
+
+  // systemd:
+  // Sat 2026-10-03 12:00:00 CEST
+  const systemdMatch =
+    raw.match(
+      /^[A-Za-z]{3}\s+(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):\d{2}(?:\s+\S+)?$/
+    );
+
+  if (systemdMatch) {
+    const [
+      ,
+      year,
+      month,
+      day,
+      hour,
+      minute,
+    ] = systemdMatch;
+
+    return (
+      `${day}.${month}.${year}, ` +
+      `${hour}:${minute}`
+    );
+  }
+
+  const date =
+    new Date(raw);
+
+  if (!Number.isNaN(date.getTime())) {
+    return new Intl.DateTimeFormat(
+      "pl-PL",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    ).format(date);
+  }
+
+  return raw;
 }
 
 // ROUTERCLOUD_BACKUP_HTTP_STATUS_V1
@@ -1318,14 +1922,15 @@ async function setupBackupTile() {
     );
 
     const stage =
-      status.stage ||
-      "nieznany etap";
+      formatBackupStage(
+        status.stage
+      );
 
     description.textContent =
       `Błąd: ${stage}`;
 
     state.textContent =
-      `RC ${status.rc ?? "?"} • ${last}`;
+      `Kod ${status.rc ?? "?"} • ${last}`;
   }
 
   tile.setAttribute(
@@ -1339,22 +1944,47 @@ async function setupBackupTile() {
   );
 
   const openDetails = () => {
-    const next =
-      status.next_run
-        ? ` • Następna: ${status.next_run}`
-        : "";
+    const result =
+      formatBackupResult(
+        status.result
+      );
 
     const stage =
-      status.stage ||
-      "brak";
+      formatBackupStage(
+        status.stage
+      );
+
+    const nextRun =
+      formatBackupNextRun(
+        status.next_run
+      );
+
+    const next =
+      nextRun
+        ? ` • Następna kopia: ${nextRun}`
+        : "";
+
+    const failed =
+      status.result !== "success" ||
+      Number(status.rc) !== 0;
+
+    const rc =
+      failed
+        ? ` • Kod błędu: ${status.rc ?? "?"}`
+        : "";
+
+    const executionLabel =
+      failed
+        ? "Ostatnia próba"
+        : "Ostatnie wykonanie";
 
     void metroNotice({
       title: "Backup RouterCloud",
       message:
-        `Stan: ${status.result} • ` +
+        `Stan: ${result} • ` +
         `Etap: ${stage} • ` +
-        `Ostatnie wykonanie: ${last} • ` +
-        `Czas: ${duration}${next}`,
+        `${executionLabel}: ${last} • ` +
+        `Czas: ${duration}${rc}${next}`,
     });
   };
 
@@ -1390,7 +2020,7 @@ function setupDashboardShortcuts() {
       ".dashboard-favorites"
     );
 
-  const activateLatest = () => {
+  const scrollToPanel = () => {
     const target =
       document.querySelector(
         ".dashboard-aside"
@@ -1402,12 +2032,26 @@ function setupDashboardShortcuts() {
     });
   };
 
+  const activateLatest = () => {
+    dashboardPanelMode = "recent";
+    refreshDashboardPanel();
+    scrollToPanel();
+  };
+
   const activateFavorites = () => {
-    void metroNotice({
-      title: "Ulubione",
-      message:
-        "Obsługa ulubionych zostanie podłączona w kolejnym etapie RouterCloud Web v2.",
-    });
+    if (!routerCloudFavoritesAvailable) {
+      void metroNotice({
+        title: "Ulubione niedostępne",
+        message:
+          "Backend Ulubionych nie jest obecnie dostępny.",
+      });
+
+      return;
+    }
+
+    dashboardPanelMode = "favorites";
+    refreshDashboardPanel();
+    scrollToPanel();
   };
 
   const keyboardActivate =
@@ -1454,8 +2098,12 @@ function setupDashboardShortcuts() {
 
 async function setupIndexPage() {
   setupStorageInfo();
-  setupRecentFiles();
+
+  await loadRouterCloudFavorites();
+
+  refreshDashboardPanel();
   setupDashboardShortcuts();
+
   await setupBackupTile();
 
   if (DATA.allow_archive) {
@@ -1712,7 +2360,18 @@ function openPathContextMenu(event, index, isDir) {
     DATA.allow_delete ||
     DATA.routercloud_allow_delete;
 
-  if (!canRename && !canDelete) {
+  const file =
+    DATA.paths?.[index];
+
+  const canFavorite =
+    routerCloudFavoritesAvailable &&
+    Boolean(file);
+
+  if (
+    !canRename &&
+    !canDelete &&
+    !canFavorite
+  ) {
     return;
   }
 
@@ -1722,11 +2381,38 @@ function openPathContextMenu(event, index, isDir) {
   const renameButton =
     document.getElementById("context-rename");
 
+  const favoriteButton =
+    document.getElementById("context-favorite");
+
   const deleteButton =
     document.getElementById("context-delete");
 
-  renameButton.classList.toggle("hidden", !canRename);
-  deleteButton.classList.toggle("hidden", !canDelete);
+  renameButton.classList.toggle(
+    "hidden",
+    !canRename
+  );
+
+  deleteButton.classList.toggle(
+    "hidden",
+    !canDelete
+  );
+
+  favoriteButton.classList.toggle(
+    "hidden",
+    !canFavorite
+  );
+
+  if (canFavorite) {
+    const path =
+      favoriteRelativePath(
+        file.name
+      );
+
+    favoriteButton.textContent =
+      routerCloudFavorites.has(path)
+        ? "★ Usuń z ulubionych"
+        : "☆ Dodaj do ulubionych";
+  }
 
   contextPathIndex = index;
 
@@ -1778,6 +2464,9 @@ function setupPathContextMenu() {
   const renameButton =
     document.getElementById("context-rename");
 
+  const favoriteButton =
+    document.getElementById("context-favorite");
+
   const deleteButton =
     document.getElementById("context-delete");
 
@@ -1790,6 +2479,22 @@ function setupPathContextMenu() {
 
     await movePath(index);
   });
+
+  favoriteButton.addEventListener(
+    "click",
+    async () => {
+      const index =
+        contextPathIndex;
+
+      closePathContextMenu();
+
+      if (index == null) {
+        return;
+      }
+
+      await toggleFavorite(index);
+    }
+  );
 
   deleteButton.addEventListener("click", async () => {
     const index = contextPathIndex;
@@ -2318,7 +3023,7 @@ async function deletePath(index) {
     document.getElementById(`addPath${index}`)?.remove();
     DATA.paths[index] = null;
 
-    setupRecentFiles();
+    refreshDashboardPanel();
 
     selectedArchivePaths.delete(
       file.name
@@ -2401,7 +3106,7 @@ async function movePath(index) {
         link.href = newFileUrl + (isDir ? "/" : "");
       }
 
-      setupRecentFiles();
+      refreshDashboardPanel();
 
       closePathContextMenu();
       return;
