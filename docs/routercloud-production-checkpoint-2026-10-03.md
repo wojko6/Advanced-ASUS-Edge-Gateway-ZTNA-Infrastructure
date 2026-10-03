@@ -232,11 +232,11 @@ Observed production acceptance on 2026-10-03 includes:
 
 Repository CI also passed for each merged UI change before merge.
 
-The favorites-panel drag-and-drop implementation is present on current `main`
-and passed repository CI, but this checkpoint does not claim a separate
-standalone production acceptance or independently prove active-asset parity for
-that specific gesture. Verify it in the browser after deployment and revalidate
-it after a material browser/UI change.
+The favorites-panel drag-and-drop implementation is present on current `main`,
+passed repository CI and was manually verified in the production browser on
+2026-10-03. The observed flow successfully allowed a file/folder row to be
+dragged onto the right-hand `Ulubione` panel and added to favorites. Revalidate
+this gesture after a material browser/UI change.
 
 ## Current state
 
@@ -252,7 +252,7 @@ AJAX sorting                          LIVE
 AJAX live search                      LIVE
 Recent files                          LIVE
 Favorites                             LIVE
-Favorites panel DnD                   IMPLEMENTED
+Favorites panel DnD                   LIVE / MANUAL PASS
 Safe rename                           LIVE
 Custom delete                         LIVE
 Bounded text editing                  LIVE
