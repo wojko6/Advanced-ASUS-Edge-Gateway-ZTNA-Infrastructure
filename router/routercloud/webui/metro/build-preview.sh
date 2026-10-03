@@ -43,7 +43,8 @@ html = html.replace(
 
 html = html.replace(
     '<script src="/__routercloud/login.js" defer></script>',
-    ''
+    '<script>window.ROUTERCLOUD_LOGIN_PREVIEW = true;</script>\n'
+    '  <script src="login.js" defer></script>'
 )
 
 path.write_text(html, encoding="utf-8")

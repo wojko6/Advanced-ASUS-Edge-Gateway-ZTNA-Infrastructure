@@ -312,3 +312,92 @@ body {
   user-select: text;
   -webkit-user-select: text;
 }
+
+/* ==================================================
+   ROUTERCLOUD_PASSWORD_RECOVERY_UI_V1
+   Password recovery request UI.
+   ================================================== */
+
+.routercloud-login-link {
+  justify-self: center;
+
+  padding: 3px 6px;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+  color: #9bc4ff;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 14px;
+}
+
+.routercloud-login-link:hover,
+.routercloud-login-link:focus-visible {
+  color: #d6e8ff;
+  text-decoration: underline;
+}
+
+.routercloud-recovery-heading {
+  margin-bottom: 4px;
+}
+
+.routercloud-recovery-heading h2 {
+  margin: 0 0 8px;
+
+  color: var(--login-text);
+
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.routercloud-recovery-heading p {
+  margin: 0;
+
+  color: var(--login-muted);
+
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.routercloud-login-status {
+  padding: 12px 14px;
+
+  border-left: 3px solid #4c9cff;
+
+  background: rgba(47, 128, 255, 0.10);
+  color: #cfe3ff;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.routercloud-login-secondary {
+  height: 48px;
+
+  border: 1px solid var(--login-border-soft);
+  border-radius: 0;
+
+  background: transparent;
+  color: #b6c8e1;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 15px;
+
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.routercloud-login-secondary:hover,
+.routercloud-login-secondary:focus-visible {
+  border-color: var(--login-blue);
+  background: rgba(47, 128, 255, 0.08);
+  color: white;
+}

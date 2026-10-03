@@ -81,6 +81,68 @@
           type="submit">
           Zaloguj
         </button>
+
+        <button
+          id="routercloud-forgot-password"
+          class="routercloud-login-link"
+          type="button">
+          Nie pamiętasz hasła?
+        </button>
+      </form>
+
+      <!-- ROUTERCLOUD_PASSWORD_RECOVERY_UI_V1 -->
+      <form
+        id="routercloud-recovery-form"
+        class="routercloud-login-form routercloud-recovery-form hidden"
+        method="post"
+        action="/__routercloud/password-reset/request">
+
+        <div class="routercloud-recovery-heading">
+          <h2>Odzyskaj dostęp</h2>
+          <p>
+            Podaj adres e-mail powiązany z kontem RouterCloud.
+          </p>
+        </div>
+
+        <label class="routercloud-login-field">
+          <span
+            class="routercloud-login-icon"
+            aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          </span>
+
+          <input
+            id="routercloud-recovery-email"
+            name="email"
+            type="email"
+            placeholder="Adres e-mail"
+            autocomplete="email"
+            autocapitalize="none"
+            spellcheck="false"
+            required>
+        </label>
+
+        <div
+          id="routercloud-recovery-status"
+          class="routercloud-login-status hidden"
+          role="status">
+        </div>
+
+        <button
+          id="routercloud-recovery-submit"
+          class="routercloud-login-submit"
+          type="submit">
+          Wyślij link resetujący
+        </button>
+
+        <button
+          id="routercloud-recovery-back"
+          class="routercloud-login-secondary"
+          type="button">
+          Wróć do logowania
+        </button>
       </form>
 
     </section>
