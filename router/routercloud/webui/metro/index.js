@@ -135,6 +135,9 @@ let routerCloudFavorites = new Map();
 let routerCloudFavoritesAvailable = false;
 let dashboardPanelMode = "recent";
 
+// ROUTERCLOUD_FAVORITES_HANDLE_DND_V1
+let routerCloudFavoriteDragIndex = null;
+
 /**
  * RouterCloud Metro dialog system
  */
@@ -1463,6 +1466,110 @@ async function removeFavoriteFromPanel(path) {
   }
 }
 
+// ROUTERCLOUD_FAVORITES_HANDLE_DND_V1
+async function addFavorite(index) {
+  const file =
+    DATA.paths?.[index];
+
+  if (!file) {
+    return;
+  }
+
+  if (!routerCloudFavoritesAvailable) {
+    await metroNotice({
+      title: "Ulubione niedostępne",
+      message:
+        "Backend Ulubionych nie jest obecnie dostępny.",
+    });
+
+    return;
+  }
+
+  const path =
+    favoriteRelativePath(
+      file.name
+    );
+
+  if (routerCloudFavorites.has(path)) {
+    showRouterCloudToast(
+      "Ten element jest już w ulubionych"
+    );
+
+    dashboardPanelMode =
+      "favorites";
+
+    refreshDashboardPanel();
+    return;
+  }
+
+  if (isPreviewMode()) {
+    routerCloudFavorites.set(
+      path,
+      favoriteFromPathItem(
+        file,
+        path
+      )
+    );
+
+    dashboardPanelMode =
+      "favorites";
+
+    showRouterCloudToast(
+      "Dodano do ulubionych"
+    );
+
+    refreshDashboardPanel();
+    return;
+  }
+
+  try {
+    await checkAuth();
+
+    const res =
+      await fetch(
+        "/__routercloud/favorites",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            path,
+          }),
+        }
+      );
+
+    await assertResOK(res);
+
+    routerCloudFavorites.set(
+      path,
+      favoriteFromPathItem(
+        file,
+        path
+      )
+    );
+
+    dashboardPanelMode =
+      "favorites";
+
+    showRouterCloudToast(
+      "Dodano do ulubionych"
+    );
+
+    refreshDashboardPanel();
+  } catch (err) {
+    await metroNotice({
+      title:
+        "Nie udało się dodać do ulubionych",
+      message:
+        err.message,
+    });
+  }
+}
+
 async function toggleFavorite(index) {
   const file =
     DATA.paths?.[index];
@@ -2086,6 +2193,103 @@ function setupDashboardShortcuts() {
     activateFavorites
   );
 
+  // ROUTERCLOUD_FAVORITES_HANDLE_DND_V1
+  favorites?.addEventListener(
+    "dragenter",
+    event => {
+      if (
+        routerCloudFavoriteDragIndex ==
+        null
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+
+      favorites.classList.add(
+        "routercloud-favorite-drop-active"
+      );
+    }
+  );
+
+  favorites?.addEventListener(
+    "dragover",
+    event => {
+      if (
+        routerCloudFavoriteDragIndex ==
+        null
+      ) {
+        return;
+      }
+
+      // Bez preventDefault() przeglądarka
+      // nie wygeneruje poprawnego drop.
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect =
+          "copy";
+      }
+
+      favorites.classList.add(
+        "routercloud-favorite-drop-active"
+      );
+    }
+  );
+
+  favorites?.addEventListener(
+    "dragleave",
+    event => {
+      if (
+        event.relatedTarget &&
+        favorites.contains(
+          event.relatedTarget
+        )
+      ) {
+        return;
+      }
+
+      favorites.classList.remove(
+        "routercloud-favorite-drop-active"
+      );
+    }
+  );
+
+  favorites?.addEventListener(
+    "drop",
+    async event => {
+      if (
+        routerCloudFavoriteDragIndex ==
+        null
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const index =
+        routerCloudFavoriteDragIndex;
+
+      routerCloudFavoriteDragIndex =
+        null;
+
+      favorites.classList.remove(
+        "routercloud-favorite-drop-active"
+      );
+
+      if (
+        !Number.isInteger(index) ||
+        !DATA.paths?.[index]
+      ) {
+        return;
+      }
+
+      await addFavorite(index);
+    }
+  );
+
   favorites?.addEventListener(
     "keydown",
     event =>
@@ -2303,7 +2507,14 @@ function addPath(file, index) {
   $pathsTableBody.insertAdjacentHTML("beforeend", `
 <tr id="addPath${index}">
   <td class="path cell-icon">
-    ${getPathSvg(file.path_type)}
+    <span
+      class="favorite-drag-handle"
+      draggable="true"
+      data-path-index="${index}"
+      title="Przeciągnij do Ulubionych"
+      aria-label="Przeciągnij ${encodedName} do Ulubionych">
+      ${getPathSvg(file.path_type)}
+    </span>
   </td>
   <td class="path cell-name">
     <a href="${openUrl}">${encodedName}</a>
@@ -2314,6 +2525,58 @@ function addPath(file, index) {
 </tr>`);
 
   const row = document.getElementById(`addPath${index}`);
+
+  // ROUTERCLOUD_FAVORITES_HANDLE_DND_V1
+  const favoriteDragHandle =
+    row?.querySelector(
+      ".favorite-drag-handle"
+    );
+
+  favoriteDragHandle?.addEventListener(
+    "dragstart",
+    event => {
+      if (!event.dataTransfer) {
+        return;
+      }
+
+      routerCloudFavoriteDragIndex =
+        index;
+
+      event.dataTransfer.effectAllowed =
+        "copy";
+
+      // text/plain jest celowo użyte jako standardowy,
+      // szeroko obsługiwany typ HTML Drag and Drop.
+      event.dataTransfer.setData(
+        "text/plain",
+        `routercloud-favorite:${index}`
+      );
+
+      row.classList.add(
+        "routercloud-favorite-dragging"
+      );
+    }
+  );
+
+  favoriteDragHandle?.addEventListener(
+    "dragend",
+    () => {
+      routerCloudFavoriteDragIndex =
+        null;
+
+      row.classList.remove(
+        "routercloud-favorite-dragging"
+      );
+
+      document
+        .querySelector(
+          ".dashboard-favorites"
+        )
+        ?.classList.remove(
+          "routercloud-favorite-drop-active"
+        );
+    }
+  );
 
   const $select =
     row?.querySelector(".path-select");

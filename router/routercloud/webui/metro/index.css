@@ -2174,3 +2174,68 @@ body.routercloud-drag-in::after {
     max-width: none;
   }
 }
+
+/* ==================================================
+   ROUTERCLOUD_FAVORITES_HANDLE_DND_V1
+   Reliable HTML5 drag source inside table row.
+   ================================================== */
+
+.favorite-drag-handle {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  cursor: grab;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.favorite-drag-handle:active {
+  cursor: grabbing;
+}
+
+.favorite-drag-handle svg {
+  pointer-events: none;
+}
+
+.routercloud-favorite-dragging {
+  opacity: 0.48;
+}
+
+.dashboard-favorites {
+  position: relative;
+}
+
+.dashboard-favorites.routercloud-favorite-drop-active {
+  transform:
+    translateY(-3px)
+    scale(1.025);
+
+  filter:
+    brightness(1.2);
+
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.82),
+    0 14px 32px rgba(0,0,0,.38);
+}
+
+.dashboard-favorites.routercloud-favorite-drop-active::after {
+  content: "Upuść, aby dodać";
+
+  position: absolute;
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  background:
+    rgba(52,137,35,.94);
+
+  color: white;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  pointer-events: none;
+}
