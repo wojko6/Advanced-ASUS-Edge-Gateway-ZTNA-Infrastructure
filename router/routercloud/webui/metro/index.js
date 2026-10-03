@@ -3296,6 +3296,17 @@ function setupNewFile() {
 }
 
 async function setupEditorPage() {
+  // ROUTERCLOUD_FILE_VIEW_CONTEXTUAL_SHORTCUTS_V1
+  // Dashboard navigation shortcuts belong to directory views.
+  // Hide them when viewing or editing a specific file.
+  document
+    .querySelectorAll(
+      ".dashboard-latest, .dashboard-favorites"
+    )
+    .forEach(tile => {
+      tile.classList.add("hidden");
+    });
+
   const url = baseUrl();
 
   const $download =
