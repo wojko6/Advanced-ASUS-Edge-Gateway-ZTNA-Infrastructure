@@ -1,12 +1,14 @@
 # Project status
 
-**Status date:** 2026-09-30
+**Status date:** 2026-10-03
 
-**Latest live router checkpoint:** 2026-09-30
+**Latest live RouterCloud checkpoint:** 2026-10-03
+
+**Latest broad router checkpoint:** 2026-09-30
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud one-way synchronization (#136) is completed and reboot-validated. The next Personal Cloud milestone is #137 (browser-based LAN/Tailscale file access), followed by #138 (versioned snapshots); unrelated hardening/analytics follow-ups remain tracked separately.
+**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. The current browser baseline is the 2026-10-03 RouterCloud production checkpoint; unrelated hardening/analytics follow-ups remain tracked separately.
 
 ## Executive status
 
@@ -22,6 +24,8 @@ Issue #128 was also completed on 2026-09-29. Native WAN/LAN IPv6 is intentionall
 
 Issue #133 completed the persistent Polish ASUS/GNUton WebUI localization path on the same day. Eight version-pinned WebUI resources are reconstructed from reviewed patch deltas, verified by exact SHA-256 hashes, bind-mounted at runtime, and were confirmed to return automatically after a controlled reboot with one bind mount per resource and a clean project health check.
 
+On 2026-10-03 RouterCloud reached the current browser/application baseline. The dedicated LAN/Tailscale-only HTTPS service now combines the completed #136 sync path, completed #137 browser access and completed #138 versioned encrypted backup history. The current UI adds AJAX sorting and 250 ms live search, recent files, persistent favorites, context-aware file views, and the refined right-hand recent/favorites panel. Password recovery was deployed and exercised end to end through the production mail/reset/login flow, including a successful login after a RouterCloud service restart. The authoritative current-state document is the [2026-10-03 RouterCloud production checkpoint](docs/routercloud-production-checkpoint-2026-10-03.md); bounded UI observations and password recovery are recorded separately under [2026-10-03 UI validation](evidence/2026-10-03/routercloud-ui-production-validation.md) and [password-recovery production validation](evidence/2026-10-03/routercloud-password-recovery-production-validation.md).
+
 The project-native Edge Gateway WebUI has a stricter repository-vs-live boundary. Phase 1 and Phase 2 have dedicated live validation evidence. Phase 3 operational-dashboard code is present on `main` and covered by repository static/CI checks, but no dedicated Phase 3 live-validation artifact has been published yet; it must not be described as live-validated until that evidence exists.
 
 The reference deployment is operational. The unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22. The originally planned 14-day window through 2026-09-25 was ended early, so the project does not claim a completed 14-day endurance test.
@@ -32,25 +36,46 @@ The project currently has a validated SSD-backed Entware deployment, Tailscale-b
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
 
-## 2026-09-30 Personal Cloud one-way sync
+## 2026-10-03 Personal Cloud / RouterCloud stack
 
-Issue #136 is complete on the reference Fedora workstation and ASUS router.
-The validated path synchronizes `~/RouterCloud/` to the dedicated
-`ROUTER_DATA/RouterCloud/` SSD directory with `rsync -rtv` over SSH. The Fedora
-client uses a dedicated key and explicitly suppresses SSH config/default-key and
-agent fallback; the router key is restricted to the project-owned
-`personal-cloud-rsync` forced-command wrapper.
+Issues #136, #137 and #138 are complete.
 
-Acceptance included create/update transfer, local-delete preservation, bounded
-authentication failure and recovery, denial of arbitrary commands through the
-automation identity, SSH-service regeneration, full router reboot persistence,
-post-reboot synchronization, and final automatic `systemd.path` delivery. A
-five-minute user timer remains the full-tree reconciliation fallback.
+Issue #136 established the validated one-way synchronization path from
+`~/RouterCloud/` on Fedora to the dedicated `ROUTER_DATA/RouterCloud/` SSD
+directory with `rsync -rtv` over SSH. The client uses a dedicated key, suppresses
+ordinary SSH identity fallback, and the router key is restricted to the
+project-owned `personal-cloud-rsync` forced-command wrapper. Acceptance covered
+create/update transfer, local-delete preservation, bounded authentication failure
+and recovery, denial of arbitrary commands through the automation identity,
+SSH-service regeneration, full router reboot persistence, post-reboot sync and
+automatic `systemd.path` delivery. A five-minute user timer remains the full-tree
+reconciliation fallback.
 
-The browser-access layer and versioned snapshots are not part of this completed
-baseline and remain tracked as #137 and #138 respectively. See
-[the design guide](docs/personal-cloud-sync.md) and
-[sanitized live validation](evidence/2026-09-30/issue-136-personal-cloud-sync-validation.md).
+Issue #137 then added the separate RouterCloud browser service without broadening
+the router filesystem boundary or introducing WAN exposure. The current browser
+baseline includes dedicated login/session auth, Polish Metro UI, upload/download,
+create/rename/delete/edit operations with backend authorization, selected
+server-side ZIP, WebDAV desktop integration, AJAX sorting, live AJAX search,
+recent files and favorites.
+
+Issue #138 added an independent off-router versioned backup layer. A read-only
+RouterCloud backup identity pulls to Fedora staging, while restic maintains
+encrypted history in a separate repository with documented retention, integrity
+checking and isolated restore workflows. The staging mirror is not treated as
+the backup itself.
+
+On 2026-10-03 password recovery was also production-validated end to end,
+including mail delivery, fragment-based reset flow, password change and login
+after a RouterCloud service restart.
+
+See:
+
+- [Personal Cloud sync design and operations](docs/personal-cloud-sync.md)
+- [#136 sanitized live validation](evidence/2026-09-30/issue-136-personal-cloud-sync-validation.md)
+- [RouterCloud versioned backup](docs/routercloud-versioned-backup.md)
+- [RouterCloud 2026-10-03 production checkpoint](docs/routercloud-production-checkpoint-2026-10-03.md)
+- [RouterCloud UI production validation](evidence/2026-10-03/routercloud-ui-production-validation.md)
+- [RouterCloud password-recovery production validation](evidence/2026-10-03/routercloud-password-recovery-production-validation.md)
 
 ## 2026-09-29 LAN management and WAN exposure hardening
 
