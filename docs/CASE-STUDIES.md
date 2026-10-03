@@ -167,6 +167,33 @@ A centralized-logging failure and recovery case covering:
 The case distinguishes directly observed source-position and delivery evidence
 from the unmeasured internal queue depth at the moment of the original stall.
 
+## 10. RouterCloud secure browser file service
+
+**File:** [RouterCloud production checkpoint — 2026-10-03](routercloud-production-checkpoint-2026-10-03.md)
+
+A constrained browser/file-service case covering:
+
+- a dedicated LAN/Tailscale-only HTTPS service rooted at the Personal Cloud
+  data directory rather than the router filesystem;
+- custom login/session authentication and production-tested password recovery;
+- backend-authorized rename/delete/edit/archive operations while generic Dufs
+  delete remains disabled;
+- WebDAV desktop integration;
+- AJAX sorting and live search without full-page reloads;
+- persistent favorites and recent-files UI;
+- independent versioned encrypted backups through a read-only Fedora pull path;
+- versioned external frontend assets, rollback copies and controlled deployment;
+- explicit separation between repository CI, manual browser acceptance and
+  dedicated production evidence.
+
+The case is useful as an example of extending a lightweight upstream file server
+without silently broadening its filesystem, network or authorization boundary.
+
+See also the
+[2026-10-03 UI validation](../evidence/2026-10-03/routercloud-ui-production-validation.md)
+and
+[password-recovery production validation](../evidence/2026-10-03/routercloud-password-recovery-production-validation.md).
+
 ## How to read these cases
 
 Where applicable, case studies separate:
