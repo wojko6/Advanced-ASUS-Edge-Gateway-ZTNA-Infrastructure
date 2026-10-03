@@ -233,9 +233,10 @@ Observed production acceptance on 2026-10-03 includes:
 Repository CI also passed for each merged UI change before merge.
 
 The favorites-panel drag-and-drop implementation is present on current `main`
-and was deployed through the same controlled asset workflow, but this checkpoint
-does not invent a separate standalone production acceptance artifact for that
-specific gesture. Revalidate it after a material browser/UI change.
+and passed repository CI, but this checkpoint does not claim a separate
+standalone production acceptance or independently prove active-asset parity for
+that specific gesture. Verify it in the browser after deployment and revalidate
+it after a material browser/UI change.
 
 ## Current state
 
