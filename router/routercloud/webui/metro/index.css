@@ -2239,3 +2239,27 @@ body.routercloud-drag-in::after {
 
   pointer-events: none;
 }
+
+
+/* ==================================================
+   ROUTERCLOUD_NO_ACCIDENTAL_SELECTION_V1
+   Prevent accidental text selection in the UI.
+   Text editing fields remain selectable.
+   ================================================== */
+
+body,
+body * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Places where text selection/editing is intentional. */
+input,
+textarea,
+select,
+.editor,
+[contenteditable]:not([contenteditable="false"]) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
