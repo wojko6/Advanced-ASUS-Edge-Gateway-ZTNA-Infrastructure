@@ -109,23 +109,19 @@ PY
 
 chmod 0600 "$TMP"
 
-SSH_CMD=(
-    /usr/bin/ssh
-    -F /dev/null
-    -o IdentityFile=none
-    -i "$KEY"
-    -o IdentitiesOnly=yes
-    -o IdentityAgent=none
-    -o BatchMode=yes
-    -o PasswordAuthentication=no
-    -o KbdInteractiveAuthentication=no
-    -o PreferredAuthentications=publickey
-    -o StrictHostKeyChecking=yes
-    -o ConnectTimeout=10
-    -p "$ROUTERCLOUD_SSH_PORT"
-)
-
-"${SSH_CMD[@]}" \
+/usr/bin/ssh \
+    -F /dev/null \
+    -o IdentityFile=none \
+    -i "$KEY" \
+    -o IdentitiesOnly=yes \
+    -o IdentityAgent=none \
+    -o BatchMode=yes \
+    -o PasswordAuthentication=no \
+    -o KbdInteractiveAuthentication=no \
+    -o PreferredAuthentications=publickey \
+    -o StrictHostKeyChecking=yes \
+    -o ConnectTimeout=10 \
+    -p "$ROUTERCLOUD_SSH_PORT" \
     "${ROUTERCLOUD_USER}@${ROUTERCLOUD_HOST}" \
     "$REMOTE_COMMAND" \
     < "$TMP"
