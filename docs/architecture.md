@@ -14,7 +14,7 @@ The current architecture is documented as a **source-controlled canonical diagra
    Source-scoped management, default-deny behavior, selected LAN forwarding, EDGE_TS_FORWARD, WAN egress and platform-owned NAT.
 
 4. [Boot and Service Dependency Flow](architecture/boot-service-dependency-flow.md)  
-   Current reference post-mount/AMTM ordering, pre-Entware swap evidence, repository services-start recovery behavior, Unbound/dnsmasq interaction, firewall apply and WAN-DNS-driven Tailscale restart.
+   Current reference post-mount/AMTM ordering, pre-Entware swap evidence, repository services-start recovery behavior, DNS Guard v3.1 bootstrap/steady-state resolver policy, firewall apply and WAN-triggered Tailscale restart.
 
 The old [Architecture.png](images/Architecture.png) is retained only as a historical/illustrative artifact. It is not a source of truth for current ports, interfaces, chain ownership or validation status. See [docs/images/README.md](images/README.md).
 
@@ -35,10 +35,12 @@ The old [Architecture.png](images/Architecture.png) is retained only as a histor
 
 Tailscale is intentionally configured with **netfilter-mode=off**. The project owns the local EDGE_TS_* iptables policy instead of relying on Tailscale-managed ts-* chains.
 
-Tailscale Grants and local firewall rules are independent boundaries:
+Tailscale Grants and local firewall rules are independent boundaries, but their
+current strength differs by datapath:
 
 - Grants decide which identities/devices are entitled to reach a resource or use the exit node.
-- EDGE_TS_INPUT and EDGE_TS_FORWARD enforce local source, destination, port and WAN-interface policy.
+- EDGE_TS_INPUT and selected-LAN EDGE_TS_FORWARD rules enforce local source, destination and port policy.
+- The current exit-node EDGE_TS_FORWARD rule is WAN-egress scoped but not yet locally source-scoped; issue #176 tracks a second local source allowlist for tailnet -> WAN forwarding.
 - Router or service authentication still applies after network reachability is granted.
 
 ### Project forwarding versus platform NAT
@@ -51,7 +53,21 @@ The project owns exit-node forwarding policy in EDGE_TS_FORWARD. It does **not**
 
 The current reference router uses split port-53 ownership. Pi-hole FTL owns a dedicated main-LAN alias and is the only DNS server advertised to main-LAN DHCP clients. Firmware dnsmasq continues to own the router LAN and Tailscale port-53 sockets for DHCP/local-name duties and the existing project classic-DNS interception path. Pi-hole and dnsmasq both use Unbound on 127.0.0.1:53535 for ordinary external resolution.
 
-The 2026-09-28 cutover does not by itself move the existing LAN/Tailscale interception redirects behind Pi-hole. Hard-coded external classic DNS that is intercepted by the current firewall still terminates at firmware dnsmasq; this remains an explicit follow-up if universal Pi-hole filtering of intercepted classic DNS is desired.
+The 2026-09-28 cutover did not by itself move the existing LAN/Tailscale interception redirects behind Pi-hole. Later 2026-10-06 work added source-scoped Pi-hole handling for selected classic-DNS Tailscale clients and separately validated the router-system-resolver -> Pi-hole path used by the tested Android LTE exit-node DNS flow after DNS Guard v3.1. Non-selected generic Tailscale classic-DNS interception still retains the dnsmasq -> Unbound fallback, and encrypted DNS remains outside the universal enforcement claim.
+
+### System-resolver DNS Guard boundary
+
+The router's own system resolver follows a two-phase policy managed by DNS
+Guard v3.1:
+
+- cold boot / local DNS failure / sticky break-glass -> independent WAN
+  bootstrap DNS;
+- healthy steady state -> dedicated Pi-hole alias -> Unbound.
+
+This prevents the NTP -> DNS -> Pi-hole -> Unbound cold-boot dependency cycle
+observed on 2026-10-06. The fail-open behavior intentionally prioritizes router
+DNS availability over Pi-hole filtering while the local resolver stack is
+unhealthy.
 
 ### DNS analytics boundary
 
@@ -86,6 +102,8 @@ The 2026-09-27 #66 evidence also records a current reference-router post-mount c
 Reference router: **ASUS TUF-AX5400**  
 Reference firmware: **GNUton / Asuswrt-Merlin 3004.388.11_1-gnuton1_tuf**
 
+Planned migration target: **ASUS RT-BE88U / compatible Asuswrt-Merlin 3006.x**. The current TUF-AX5400 remains the reference platform until that migration is separately validated.
+
 Current architecture claims are anchored to dated evidence:
 
 - **2026-09-23:** management negative test confirmed that tailnet membership alone does not grant TCP/8443 router management.
@@ -95,6 +113,9 @@ Current architecture claims are anchored to dated evidence:
 - **2026-09-27:** #67 reconfirmed Android exit-node public-IP behavior after reboot with a clean router health check.
 - **2026-09-27:** #65 accepted Diversion Large as the then-current filtering baseline after multi-day use, refresh, DNS-path and resource checks; that historical baseline was replaced on the main-LAN DHCP path the next day by #80.
 - **2026-09-28:** #80 migrated the main-LAN DHCP filtering path to Pi-hole, retained Unbound and firmware local naming, removed duplicate filtering/statistics services, corrected a pre-Entware swap regression discovered during reboot, and passed the final swap/Tailscale/Pi-hole/Unbound reboot validation.
+- **2026-10-06:** the reference Tailscale runtime was upgraded from the historical 1.102.3 checkpoint to checksum-verified official ARM 1.103.375 unstable/dev; controlled daemon restart and later full cold boot passed.
+- **2026-10-06:** DNS Guard v3.1 was production-validated with fail-open bootstrap DNS, conditional Pi-hole promotion, sticky break-glass, watchdog recovery and full cold boot.
+- **2026-10-06:** Android LTE with the ASUS selected as exit node resolved a fresh unique hostname through the router system resolver to the local Pi-hole alias and Unbound.
 
 These dated results do not establish universal firmware compatibility or enforcement outside their stated protocol/interface scope. Time-sensitive project status remains governed by [PROJECT-STATUS.md](../PROJECT-STATUS.md) and the dated [evidence](../evidence/) tree.
 
