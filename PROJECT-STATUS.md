@@ -8,7 +8,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 is in progress: the Android source-scoped Pi-hole/Tailscale transport and remote-management path are live-validated in PR #182, while stronger per-device Pi-hole filtering and final application compatibility checks remain pending.
+**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 is in progress: the Android source-scoped Pi-hole/Tailscale transport and remote-management path are live-validated in PR #182, the stricter Pi-hole list has been promoted to the global Default policy, and longer application compatibility observation remains pending.
 
 ## Executive status
 
@@ -73,11 +73,23 @@ portal values were restored from rollback material without reverting the new
 Pi-hole, Tailscale or firewall policy. No deployment-specific service URLs were
 added to the public repository.
 
-Remaining #152 scope is explicit: create a dedicated Pi-hole client/group policy
-covering the Android LAN and Tailscale identities, apply a stronger curated
-block policy, validate required allowlists and repeat Wi-Fi/LTE plus
-banking/payment compatibility tests. Exit-node-enabled Android DNS is not
-claimed by the current #152 validation.
+The stronger Pi-hole policy was first staged through a temporary Android-only
+client/group assignment and then intentionally promoted to the global Pi-hole
+`Default` group after initial functional checks. The final live Pi-hole state
+uses OISD Big, AdGuard DNS Filter and HaGeZi Multi PRO++ Mini globally, with the
+temporary strict group and explicit Android Pi-hole client entries removed.
+
+Follow-up testing also exposed a Fedora DNS-routing gap: Tailscale's `~.` route
+caused ordinary public DNS to follow `tailscale0` and miss Pi-hole analytics
+through the generic fallback. The Fedora administration workstation was added
+to the selected source-scoped Pi-hole transport, after which a fresh unique
+query appeared in Pi-hole under the workstation's Tailscale identity and the
+project healthcheck again reported zero failures and warnings.
+
+Remaining #152 scope is now longer application compatibility observation,
+including representative banking/payment and Android-connectivity use. Exit-node-
+enabled Android DNS and encrypted-DNS interception are not claimed by the current
+#152 validation.
 
 See [the Android Pi-hole/Tailscale policy](docs/android-pihole-tailscale-policy.md),
 [the troubleshooting case study](docs/case-studies/android-tailscale-pihole-debugging.md)
