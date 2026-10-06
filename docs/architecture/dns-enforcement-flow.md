@@ -28,10 +28,12 @@ flowchart TD
         D -->|"no-resolv<br/>server=127.0.0.1#53535"| U
     end
 
-    subgraph TS["VALIDATED HISTORICAL PATH — Tailscale classic DNS"]
+    subgraph TS["VALIDATED — Tailscale classic DNS"]
         T["Tailscale client<br/>TCP/UDP 53"] --> TP["nat PREROUTING<br/>-i tailscale0"]
         TP --> TC["EDGE_TS_PREROUTING"]
-        TC -->|"TCP/UDP 53"| TX["REDIRECT to local :53"]
+        TC -->|"selected source"| TD["source-scoped DNAT<br/>Pi-hole alias :53"]
+        TD --> PIP
+        TC -->|"other TCP/UDP 53"| TX["REDIRECT to local :53"]
         TX --> TI["EDGE_TS_INPUT<br/>accept classic DNS from tailnet CIDR"]
         TI --> D
     end
@@ -143,3 +145,4 @@ evidence that the path now traverses Pi-hole.
 - [AUDIT-03 current-firmware DNS datapath revalidation — 2026-09-27](../../evidence/2026-09-27/audit-03-current-firmware-dns-datapath-revalidation.md)
 - [Pi-hole single-client pilot — 2026-09-28](../../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md)
 - [Pi-hole main-LAN cutover — 2026-09-28](../../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
+- [Android Pi-hole/Tailscale source-scoped validation — 2026-10-06](../../evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md)

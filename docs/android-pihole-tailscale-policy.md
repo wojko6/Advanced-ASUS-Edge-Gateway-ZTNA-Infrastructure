@@ -129,6 +129,32 @@ For each selected Android client validate:
 Exit-node use is a separate routing choice. Pi-hole filtering must work without
 requiring the Android client to select the ASUS as an exit node.
 
+
+## Current implementation status — 2026-10-06
+
+The source-scoped transport path is live-validated for the reference Android
+client with Wi-Fi disabled, LTE/5G active, Tailscale active and the ASUS exit
+node disabled.
+
+Observed acceptance points include:
+
+- a fresh unique DNS marker reaching Pi-hole under the selected Tailscale client
+  identity;
+- internal RouterCloud name resolution remaining functional;
+- a known advertising domain blocked by Pi-hole Gravity;
+- RouterCloud remaining reachable;
+- ASUS WebUI management reaching the real TCP/443 listener through external
+  TCP/8443;
+- a post-deployment project healthcheck with zero failures and warnings.
+
+This does **not** complete issue #152. The dedicated Pi-hole client/group policy,
+stronger curated per-device filtering, final allowlist review and banking/payment
+application compatibility checks remain pending. Exit-node-enabled Android DNS
+is also outside the current validated claim.
+
+See the [sanitized 2026-10-06 live validation](../evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
+
+
 ## Rollback
 
 Remove the client from `EDGE_TS_PIHOLE_SOURCES` and reapply the managed
