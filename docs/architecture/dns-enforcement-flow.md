@@ -4,9 +4,9 @@
 
 This is the canonical DNS-policy diagram for the current reference deployment.
 It separates the **Pi-hole-filtered main-LAN DHCP path** from the existing
-project classic-DNS interception paths that still terminate at firmware
-dnsmasq. It also keeps the direct LAN DoT control and out-of-scope encrypted-DNS
-transports explicit.
+project classic-DNS interception paths, plus the separately validated router
+system-resolver path used by Tailscale exit-node DNS. It also keeps the direct
+LAN DoT control and out-of-scope encrypted-DNS transports explicit.
 
 ```mermaid
 flowchart TD
@@ -39,6 +39,15 @@ flowchart TD
     end
 
     U --> R["Recursive / authoritative DNS path"]
+
+    subgraph SYS["VALIDATED — router system resolver / exit-node DNS"]
+        EX["Android LTE client<br/>ASUS selected as exit node"] --> PE["Tailscale exit-node DNS handling<br/>router-side PeerAPI/DoH"]
+        PE --> SR["ASUS system resolver"]
+        SR --> DG{"DNS Guard v3.1"}
+        DG -->|"healthy steady state"| SP["Pi-hole dedicated LAN alias :53"]
+        SP --> PH
+        DG -->|"bootstrap / unhealthy / break-glass"| WB["Independent WAN bootstrap DNS"]
+    end
 
     subgraph DOT["BLOCKED — direct IPv4 LAN DoT"]
         DL["LAN client on br0<br/>TCP 853"] --> DF["filter FORWARD<br/>-i br0"]
@@ -75,6 +84,14 @@ flowchart TD
   claimed only after client-specific live validation.
 - **Resolver chain:** both Pi-hole and firmware dnsmasq use Unbound on
   `127.0.0.1:53535` for ordinary external resolution.
+- **Router system resolver / exit-node DNS:** DNS Guard v3.1 keeps independent
+  WAN DNS for bootstrap/fail-open states and promotes the router runtime
+  resolver to the dedicated Pi-hole alias only after NTP, Unbound, Pi-hole
+  listener and functional-query checks pass. A 2026-10-06 Android LTE test with
+  the ASUS selected as exit node captured the unique query from the router
+  system resolver to Pi-hole on loopback and the successful Pi-hole answer.
+  This path is distinct from the generic `tailscale0` classic-DNS REDIRECT
+  path and does not preserve the original Android source identity at Pi-hole.
 - **Direct LAN DoT:** when `EDGE_BLOCK_LAN_DOT=1`,
   `EDGE_LAN_DOT_FORWARD` rejects direct IPv4 TCP/853 traffic arriving on
   `br0` with tcp-reset.
@@ -104,6 +121,36 @@ separately.
 Broad dnsmasq query logging is not enabled merely to duplicate Pi-hole history.
 
 See [Network DNS Visibility / Client Activity Analytics](../network-dns-visibility-client-activity-analytics.md).
+
+## 2026-10-06 DNS Guard and exit-node DNS validation
+
+The router's system resolver now follows a two-phase DNS Guard v3.1 policy:
+
+```text
+BOOTSTRAP / LOCAL DNS FAILURE / BREAK-GLASS
+router -> independent WAN DNS
+
+HEALTHY STEADY STATE
+router -> Pi-hole -> Unbound
+```
+
+This prevents the cold-boot dependency cycle discovered when the router was
+persistently pointed at Pi-hole before Unbound could start behind NTP readiness.
+
+After full reboot, Android LTE with the ASUS selected as Tailscale exit node
+resolved a fresh unique hostname successfully. Capture on `any` showed the
+router-local query on loopback:
+
+```text
+192.168.50.1 -> 192.168.50.253:53
+A? exitdns-final-<timestamp>.1-1-1-1.sslip.io
+
+192.168.50.253:53 -> 192.168.50.1
+A 1.1.1.1
+```
+
+See
+[DNS Guard v3.1 production validation](../../evidence/2026-10-06/dns-guard-v3.1-production-validation.md).
 
 ## 2026-09-28 Pi-hole cutover validation
 
@@ -146,3 +193,4 @@ evidence that the path now traverses Pi-hole.
 - [Pi-hole single-client pilot — 2026-09-28](../../evidence/2026-09-28/pi-hole-single-client-pilot-validation.md)
 - [Pi-hole main-LAN cutover — 2026-09-28](../../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
 - [Android Pi-hole/Tailscale source-scoped validation — 2026-10-06](../../evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md)
+- [DNS Guard v3.1 production validation — 2026-10-06](../../evidence/2026-10-06/dns-guard-v3.1-production-validation.md)
