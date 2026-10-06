@@ -319,6 +319,7 @@ exit 1
         self.command("netstat", r'''
 echo 'Active Internet connections (only servers)'
 echo 'Proto Recv-Q Send-Q Local Address           Foreign Address         State'
+echo 'tcp        0      0 192.168.50.1:443        0.0.0.0:*               LISTEN'
 [ "$SCENARIO" = port515_open ] && echo 'tcp        0      0 192.168.50.1:515        0.0.0.0:*               LISTEN'
 exit 0
 ''')
