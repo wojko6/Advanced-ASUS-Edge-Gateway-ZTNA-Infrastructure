@@ -1,0 +1,11 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: ASUS Edge Gateway Email
+    receivers:
+      - uid: asus_edge_email
+        type: email
+        disableResolveMessage: false
+        settings:
+          addresses: $GF_SMTP_USER
