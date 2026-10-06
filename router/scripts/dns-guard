@@ -81,7 +81,8 @@ pihole_query_ready() {
     probe="edge-health-$(date +%s).1-1-1-1.sslip.io"
     logfile="/tmp/asus-edge-dns-guard-query.log"
 
-    busybox nslookup "$probe" "$EDGE_TS_PIHOLE_DNS_IP"         >"$logfile" 2>&1 ||
+    "$BUSYBOX" nslookup "$probe" "$EDGE_TS_PIHOLE_DNS_IP" \
+        >"$logfile" 2>&1 ||
         return 1
 
     grep -q '1\\.1\\.1\\.1' "$logfile" || return 1
