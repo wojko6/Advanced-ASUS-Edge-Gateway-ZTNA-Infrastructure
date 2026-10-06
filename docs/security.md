@@ -28,7 +28,7 @@ The provided backup excludes Tailscale state. Store backups off-device and encry
 
 ## Source-control supply-chain safety
 
-The repository `main` branch is intended to be protected by the #130 GitHub
+The repository `main` branch is protected by the completed #130 GitHub
 ruleset baseline: normal changes go through pull requests, the aggregate
 `Validation suite` check must pass, branch deletion and force-push are blocked,
 and no ruleset bypass actor is configured.
