@@ -21,7 +21,7 @@ flowchart LR
     subgraph FWD["Forwarding plane"]
         T --> FF["filter FORWARD<br/>EDGE_TS_FORWARD"]
         FF -->|"allowlisted LAN host + port"| LAN["Selected LAN service<br/>via br0"]
-        FF -->|"exit node enabled<br/>output = detected WAN"| WAN["Reference WAN egress<br/>ppp0 in current evidence"]
+        FF -->|"CURRENT: exit node enabled<br/>output = detected WAN<br/>no local source scope yet"| WAN["Reference WAN egress<br/>ppp0 in current evidence"]
         FF -->|"unmatched"| FD["Default DROP"]
     end
 
@@ -38,9 +38,11 @@ flowchart LR
 - The HTTPS management DNAT rule in EDGE_TS_PREROUTING is created only for configured admin Tailscale sources and translates the external port to the configured target listener. EDGE_TS_INPUT independently requires the allowed source plus the post-DNAT destination/target port, then ends in DROP. The healthcheck also verifies that the target listener actually exists.
 - A 2026-09-23 negative test confirmed that a distinct tailnet client outside the admin source set retained peer reachability but could not establish TCP/8443 management access.
 - EDGE_TS_FORWARD permits only explicit selected-LAN rules plus the optional exit-node rule to the detected WAN interface; unmatched forwarded traffic reaches the default DROP.
+- The current exit-node rule is **not yet router-locally source-scoped**. Tailscale Grants remain the identity/entitlement boundary, while the local firewall currently accepts exit-node forwarding based on ingress `tailscale0`, exit-node enablement and detected WAN egress. Issue #176 tracks an independent `EDGE_EXIT_TS_SOURCES`-style allowlist so the local firewall can fail closed for unlisted tailnet sources.
 - Exit-node source NAT is **platform-owned**. Current-firmware live evidence correlated the Tailscale-side flow with ppp0 egress after platform source translation.
 - Return traffic relies on the platform established/related path and the EDGE_TS_FORWARD ESTABLISHED,RELATED rule.
 - DNS interception is documented separately in [DNS Enforcement Flow](dns-enforcement-flow.md).
+- The reference router's current live Tailscale runtime is 1.103.375 on the unstable/dev track. The forwarding model remains `netfilter-mode=off`; the runtime upgrade did not change firewall ownership.
 
 ## Traceability
 
