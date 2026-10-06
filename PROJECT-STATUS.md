@@ -1,18 +1,18 @@
 # Project status
 
-**Status date:** 2026-10-03
+**Status date:** 2026-10-06
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
-**Latest broad router checkpoint:** 2026-09-30
+**Latest broad router checkpoint:** 2026-10-06
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. The current browser baseline is the 2026-10-03 RouterCloud production checkpoint; unrelated hardening/analytics follow-ups remain tracked separately.
+**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 has met its current acceptance target: the Android source-scoped Pi-hole/Tailscale transport and remote-management path are live-validated in PR #182, the stricter Pi-hole list is promoted to the global Default policy, Fedora's Tailscale DNS visibility gap is remediated, and representative Android application compatibility passed without observed regression. PR #182 remains open pending merge.
 
 ## Executive status
 
-This status document was reconciled on 2026-09-29. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
+This status document is reconciled through 2026-10-06. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
 
 The centralized logging path is now also live-validated: router syslog-ng forwards the Asuswrt log over Tailscale and mutually authenticated TLS to the Fedora collector, with source-restricted firewall policy and successful short-outage recovery (3/3 test messages delivered after collector restoration). Grafana 13 uses its native Polish interface option; the project dashboard remains explicitly localized in JSON because application language settings do not translate project-owned panel content.
 
@@ -37,6 +37,64 @@ The project currently has a validated SSD-backed Entware deployment, Tailscale-b
 On 2026-10-03 issue #130 completed the repository supply-chain protection baseline. The active `Protect main` ruleset targets the default branch, has no bypass actors, blocks deletion and non-fast-forward/force-push updates by rule, requires pull requests, and requires the aggregate `Validation suite` with strict/up-to-date behavior. A post-activation normal PR passed and merged, while a controlled direct update of `main` was rejected by GitHub with HTTP 422. See [the protection runbook](docs/github-main-protection.md) and [sanitized post-activation validation](evidence/2026-10-03/issue-130-ruleset-post-activation-validation.md).
 
 The stability observation deliberately separated a successful point-in-time deployment from a broader stability claim. During the completed 2026-09-11 → 2026-09-22 window the router remained continuously powered and unchanged. Post-observation changes may now proceed as controlled maintenance with backup, rollback and explicit validation.
+
+
+## 2026-10-06 Android Pi-hole/Tailscale policy (#152)
+
+Issue #152 remains open, but its transport and source-scoped DNS-enforcement
+layer is now live-validated on the reference deployment and proposed in PR #182.
+
+Selected Tailscale IPv4 sources can be placed on an opt-in Pi-hole path before
+the generic Tailscale DNS REDIRECT fallback. Matching TCP/UDP 53 traffic is
+DNATed to the dedicated Pi-hole listener while non-matching tailnet clients
+continue to terminate at firmware dnsmasq before Unbound. Pi-hole retains the
+selected client's Tailscale source identity for analytics.
+
+The final target mobile check used LTE/5G with Wi-Fi disabled, Tailscale enabled
+and the ASUS exit node disabled. A fresh DNS marker appeared in Pi-hole, the
+internal RouterCloud hostname resolved, a known advertising domain was blocked
+by Gravity, RouterCloud remained reachable and ASUS WebUI administration
+succeeded through the supported hostname.
+
+The same investigation corrected two management-plane assumptions. RouterCloud
+uses a router-local alias and therefore needs an admin-scoped INPUT rule rather
+than a FORWARD rule. ASUS HTTPS management now separates the external Tailscale
+port from the local application listener: authorized TCP/8443 traffic is
+DNATed to the router LAN listener on TCP/443. The healthcheck verifies the real
+listener plus the source-scoped NAT and post-DNAT INPUT contracts.
+
+The first PR #182 CI run exposed only a stale recovery fixture that did not
+model the newly required TCP/443 listener. Commit `60439d7` updated that test
+fixture; the PR validation suite is green.
+
+A separate live configuration check found that private `EDGE_PORTAL_*` URL
+values had been omitted during local configuration normalization. Those private
+portal values were restored from rollback material without reverting the new
+Pi-hole, Tailscale or firewall policy. No deployment-specific service URLs were
+added to the public repository.
+
+The stronger Pi-hole policy was first staged through a temporary Android-only
+client/group assignment and then intentionally promoted to the global Pi-hole
+`Default` group after initial functional checks. The final live Pi-hole state
+uses OISD Big, AdGuard DNS Filter and HaGeZi Multi PRO++ Mini globally, with the
+temporary strict group and explicit Android Pi-hole client entries removed.
+
+Follow-up testing also exposed a Fedora DNS-routing gap: Tailscale's `~.` route
+caused ordinary public DNS to follow `tailscale0` and miss Pi-hole analytics
+through the generic fallback. The Fedora administration workstation was added
+to the selected source-scoped Pi-hole transport, after which a fresh unique
+query appeared in Pi-hole under the workstation's Tailscale identity and the
+project healthcheck again reported zero failures and warnings.
+
+Representative Android application compatibility, including banking/payment
+use and normal Android connectivity, passed without observed regression. The
+current #152 acceptance target is therefore complete and PR #182 is ready for
+merge. Exit-node-enabled Android DNS, encrypted-DNS interception and long-term
+endurance are not claimed by the current #152 validation.
+
+See [the Android Pi-hole/Tailscale policy](docs/android-pihole-tailscale-policy.md),
+[the troubleshooting case study](docs/case-studies/android-tailscale-pihole-debugging.md)
+and [the sanitized live-validation artifact](evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
 
 ## 2026-10-03 Personal Cloud / RouterCloud stack
 

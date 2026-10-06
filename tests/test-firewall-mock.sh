@@ -10,6 +10,11 @@ trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
 cp "$REPO_DIR/config/edge.conf.example" "$TMP_DIR/edge.conf"
 cat >>"$TMP_DIR/edge.conf" <<'EOF'
 EDGE_ADMIN_TS_SOURCES="100.64.0.10/32"
+EDGE_ALLOW_ROUTERCLOUD="1"
+EDGE_ROUTERCLOUD_IP="198.51.100.254"
+EDGE_ROUTERCLOUD_HTTPS_PORT="443"
+EDGE_TS_PIHOLE_SOURCES="100.64.0.20/32"
+EDGE_TS_PIHOLE_DNS_IP="198.51.100.53"
 EDGE_LAN_IF="br0"
 EDGE_ENFORCE_LAN_DNS="1"
 EDGE_BLOCK_LAN_DOT="1"
@@ -41,8 +46,9 @@ assert_rule() {
     }
 }
 
-assert_rule "-A EDGE_TS_INPUT -s 100.64.0.10/32 -p tcp --dport 8443"
-assert_rule "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.10/32 -p tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:8443"
+assert_rule "-A EDGE_TS_INPUT -s 100.64.0.10/32 -d 192.168.50.1 -p tcp --dport 443"
+assert_rule "-A EDGE_TS_INPUT -s 100.64.0.10/32 -d 198.51.100.254 -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT"
+assert_rule "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.10/32 -p tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:443"
 assert_rule "-t filter -D INPUT -i tailscale+ -j ACCEPT"
 assert_rule "-t filter -D FORWARD -i tailscale+ -j ACCEPT"
 assert_rule "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 53 -j DNAT --to-destination 192.168.50.1:53"
@@ -55,8 +61,19 @@ assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.
 assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p udp --dport 161 -j ACCEPT"
 assert_rule "-A EDGE_TS_FORWARD -o eth0 -j ACCEPT"
 assert_rule "-A EDGE_TS_FORWARD -j DROP"
+assert_rule "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.20/32 -p udp --dport 53 -j DNAT --to-destination 198.51.100.53:53"
+assert_rule "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.20/32 -p tcp --dport 53 -j DNAT --to-destination 198.51.100.53:53"
 assert_rule "-t nat -A EDGE_TS_PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53"
 assert_rule "-t nat -A EDGE_TS_PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53"
+
+pihole_udp_line="$(grep -nF -- "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.20/32 -p udp --dport 53 -j DNAT" "$MOCK_IPTABLES_LOG" | head -n 1 | cut -d: -f1)"
+fallback_udp_line="$(grep -nF -- "-t nat -A EDGE_TS_PREROUTING -p udp --dport 53 -j REDIRECT" "$MOCK_IPTABLES_LOG" | head -n 1 | cut -d: -f1)"
+
+if [ -z "$pihole_udp_line" ] || [ -z "$fallback_udp_line" ] ||
+   [ "$pihole_udp_line" -ge "$fallback_udp_line" ]; then
+    echo "FAIL: source-scoped Pi-hole DNAT is not before generic DNS REDIRECT" >&2
+    exit 1
+fi
 assert_rule "-t nat -A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p udp --dport 53 -j RETURN"
 assert_rule "-t nat -A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p tcp --dport 53 -j RETURN"
 assert_rule "-t nat -A EDGE_LAN_DNS_PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53"
@@ -87,5 +104,69 @@ if grep -E -- '-A EDGE_TS_(INPUT|FORWARD) -j ACCEPT$' "$MOCK_IPTABLES_LOG" >/dev
     echo "FAIL: unrestricted ACCEPT rule found" >&2
     exit 1
 fi
+
+
+assert_invalid_pihole_config_rejected() {
+    invalid_config="$1"
+    description="$2"
+
+    : >"$MOCK_IPTABLES_LOG"
+
+    if EDGE_CONFIG_FILE="$invalid_config" \
+       EDGE_IPTABLES="$TEST_DIR/mocks/iptables" \
+       EDGE_IP6TABLES="$TEST_DIR/mocks/ip6tables" \
+       EDGE_LOGGER="$TEST_DIR/mocks/logger" \
+       sh "$REPO_DIR/router/scripts/firewall-start" \
+       >/dev/null 2>&1
+    then
+        echo "FAIL: invalid Pi-hole policy accepted: $description" >&2
+        exit 1
+    fi
+
+    if [ -s "$MOCK_IPTABLES_LOG" ]; then
+        echo "FAIL: invalid Pi-hole policy mutated firewall: $description" >&2
+        exit 1
+    fi
+}
+
+INVALID_SOURCE_ONLY="$TMP_DIR/invalid-source-only.conf"
+cp "$REPO_DIR/config/edge.conf.example" "$INVALID_SOURCE_ONLY"
+cat >>"$INVALID_SOURCE_ONLY" <<'EOF'
+EDGE_TS_PIHOLE_SOURCES="100.64.0.20/32"
+EDGE_TS_PIHOLE_DNS_IP=""
+EOF
+assert_invalid_pihole_config_rejected \
+    "$INVALID_SOURCE_ONLY" \
+    "source configured without target"
+
+INVALID_TARGET_ONLY="$TMP_DIR/invalid-target-only.conf"
+cp "$REPO_DIR/config/edge.conf.example" "$INVALID_TARGET_ONLY"
+cat >>"$INVALID_TARGET_ONLY" <<'EOF'
+EDGE_TS_PIHOLE_SOURCES=""
+EDGE_TS_PIHOLE_DNS_IP="198.51.100.53"
+EOF
+assert_invalid_pihole_config_rejected \
+    "$INVALID_TARGET_ONLY" \
+    "target configured without source"
+
+INVALID_SOURCE="$TMP_DIR/invalid-source.conf"
+cp "$REPO_DIR/config/edge.conf.example" "$INVALID_SOURCE"
+cat >>"$INVALID_SOURCE" <<'EOF'
+EDGE_TS_PIHOLE_SOURCES="999.64.0.20/32"
+EDGE_TS_PIHOLE_DNS_IP="198.51.100.53"
+EOF
+assert_invalid_pihole_config_rejected \
+    "$INVALID_SOURCE" \
+    "malformed source"
+
+INVALID_TARGET="$TMP_DIR/invalid-target.conf"
+cp "$REPO_DIR/config/edge.conf.example" "$INVALID_TARGET"
+cat >>"$INVALID_TARGET" <<'EOF'
+EDGE_TS_PIHOLE_SOURCES="100.64.0.20/32"
+EDGE_TS_PIHOLE_DNS_IP="999.51.100.53"
+EOF
+assert_invalid_pihole_config_rejected \
+    "$INVALID_TARGET" \
+    "malformed target"
 
 echo "PASS: firewall mock policy"

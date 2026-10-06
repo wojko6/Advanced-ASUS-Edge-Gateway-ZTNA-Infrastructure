@@ -39,6 +39,8 @@ Ustaw przede wszystkim:
 - `EDGE_ADMIN_TS_SOURCES` — adresy Tailscale urządzeń administracyjnych, np. `100.70.10.20/32`;
 - `EDGE_ALLOWED_LAN_HOSTS` — adresy IPv4 lub CIDR hostów/sieci LAN dostępnych zdalnie; nazwy DNS nie są tu rozwiązywane;
 - `EDGE_ALLOWED_LAN_TCP_PORTS` i `EDGE_ALLOWED_LAN_UDP_PORTS` — wymagane porty;
+- `EDGE_TS_PIHOLE_SOURCES` — opcjonalna lista źródłowych adresów/CIDR Tailscale, które mają korzystać z Pi-hole zamiast standardowej ścieżki dnsmasq;
+- `EDGE_TS_PIHOLE_DNS_IP` — lokalny adres IPv4 dedykowanego listenera Pi-hole; ustawiaj wyłącznie razem z `EDGE_TS_PIHOLE_SOURCES`;
 - `EDGE_ENABLE_EXIT_NODE` — `1` tylko wtedy, gdy router ma być exit node;
 - `EDGE_WAN_IF` — pozostaw puste dla autodetekcji lub ustaw interfejs wskazany przez router;
 - `EDGE_TS_SOCKET` — ścieżkę socketu lokalnego procesu `tailscaled`;

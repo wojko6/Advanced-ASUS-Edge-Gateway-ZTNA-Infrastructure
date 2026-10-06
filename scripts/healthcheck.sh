@@ -49,6 +49,13 @@ fi
 : "${EDGE_TS_IF:=tailscale0}"
 : "${EDGE_LAN_IF:=br0}"
 : "${EDGE_ROUTER_LAN_IP:=192.168.50.1}"
+: "${EDGE_ADMIN_TS_SOURCES:=}"
+: "${EDGE_ALLOW_ROUTER_HTTPS:=1}"
+: "${EDGE_ROUTER_HTTPS_PORT:=8443}"
+: "${EDGE_ROUTER_HTTPS_TARGET_PORT:=443}"
+: "${EDGE_ALLOW_ROUTERCLOUD:=0}"
+: "${EDGE_ROUTERCLOUD_IP:=}"
+: "${EDGE_ROUTERCLOUD_HTTPS_PORT:=443}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_NETFILTER_MODE:=off}"
 : "${EDGE_TS_AUTO_UPDATE:=false}"
@@ -62,6 +69,8 @@ fi
 : "${EDGE_WAN_IF:=}"
 : "${EDGE_REQUIRE_SWAP:=auto}"
 : "${EDGE_INTERCEPT_DNS:=1}"
+: "${EDGE_TS_PIHOLE_SOURCES:=}"
+: "${EDGE_TS_PIHOLE_DNS_IP:=}"
 : "${EDGE_ENFORCE_LAN_DNS:=0}"
 : "${EDGE_BLOCK_LAN_DOT:=0}"
 : "${EDGE_DOT_PORT:=853}"
@@ -120,6 +129,8 @@ valid_host() {
 }
 
 valid_boolean "$EDGE_REQUIRE_USB_PRINTER_DISABLED" || fail "invalid EDGE_REQUIRE_USB_PRINTER_DISABLED value: $EDGE_REQUIRE_USB_PRINTER_DISABLED"
+valid_boolean "$EDGE_ALLOW_ROUTER_HTTPS" || fail "invalid EDGE_ALLOW_ROUTER_HTTPS value: $EDGE_ALLOW_ROUTER_HTTPS"
+valid_boolean "$EDGE_ALLOW_ROUTERCLOUD" || fail "invalid EDGE_ALLOW_ROUTERCLOUD value: $EDGE_ALLOW_ROUTERCLOUD"
 valid_boolean "$EDGE_ENABLE_EXIT_NODE" || fail "invalid EDGE_ENABLE_EXIT_NODE value: $EDGE_ENABLE_EXIT_NODE"
 valid_boolean "$EDGE_INTERCEPT_DNS" || fail "invalid EDGE_INTERCEPT_DNS value: $EDGE_INTERCEPT_DNS"
 valid_boolean "$EDGE_ENFORCE_LAN_DNS" || fail "invalid EDGE_ENFORCE_LAN_DNS value: $EDGE_ENFORCE_LAN_DNS"
@@ -130,9 +141,48 @@ valid_boolean "$EDGE_REQUIRE_ACCESS_RESTRICTION" || fail "invalid EDGE_REQUIRE_A
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
 valid_ipv4 "$EDGE_ROUTER_LAN_IP" || fail "invalid EDGE_ROUTER_LAN_IP value: $EDGE_ROUTER_LAN_IP"
+
+for admin_source in $EDGE_ADMIN_TS_SOURCES; do
+    valid_ipv4_or_cidr "$admin_source" ||
+        fail "invalid admin Tailscale source: $admin_source"
+done
+
+valid_port "$EDGE_ROUTER_HTTPS_PORT" ||
+    fail "invalid EDGE_ROUTER_HTTPS_PORT value: $EDGE_ROUTER_HTTPS_PORT"
+valid_port "$EDGE_ROUTER_HTTPS_TARGET_PORT" ||
+    fail "invalid EDGE_ROUTER_HTTPS_TARGET_PORT value: $EDGE_ROUTER_HTTPS_TARGET_PORT"
+valid_port "$EDGE_ROUTERCLOUD_HTTPS_PORT" ||
+    fail "invalid EDGE_ROUTERCLOUD_HTTPS_PORT value: $EDGE_ROUTERCLOUD_HTTPS_PORT"
+
+if [ "$EDGE_ALLOW_ROUTERCLOUD" = "1" ] && [ -z "$EDGE_ROUTERCLOUD_IP" ]; then
+    fail "RouterCloud enabled without EDGE_ROUTERCLOUD_IP"
+fi
+
+[ -z "$EDGE_ROUTERCLOUD_IP" ] ||
+    valid_ipv4 "$EDGE_ROUTERCLOUD_IP" ||
+    fail "invalid EDGE_ROUTERCLOUD_IP value: $EDGE_ROUTERCLOUD_IP"
+
 for dns_bypass_ip in $EDGE_LAN_DNS_BYPASS_IPS; do
     valid_ipv4 "$dns_bypass_ip" || fail "invalid EDGE_LAN_DNS_BYPASS_IPS IPv4: $dns_bypass_ip"
 done
+
+for source in $EDGE_TS_PIHOLE_SOURCES; do
+    valid_ipv4_or_cidr "$source" ||
+        fail "invalid Tailscale Pi-hole source: $source"
+done
+
+if [ -n "$EDGE_TS_PIHOLE_SOURCES" ] && [ -z "$EDGE_TS_PIHOLE_DNS_IP" ]; then
+    fail "Tailscale Pi-hole sources configured without EDGE_TS_PIHOLE_DNS_IP"
+fi
+
+if [ -z "$EDGE_TS_PIHOLE_SOURCES" ] && [ -n "$EDGE_TS_PIHOLE_DNS_IP" ]; then
+    fail "EDGE_TS_PIHOLE_DNS_IP configured without Tailscale Pi-hole sources"
+fi
+
+[ -z "$EDGE_TS_PIHOLE_DNS_IP" ] ||
+    valid_ipv4 "$EDGE_TS_PIHOLE_DNS_IP" ||
+    fail "invalid EDGE_TS_PIHOLE_DNS_IP value: $EDGE_TS_PIHOLE_DNS_IP"
+
 valid_port "$EDGE_DNS_PORT" || fail "invalid EDGE_DNS_PORT value: $EDGE_DNS_PORT"
 valid_port "$EDGE_DOT_PORT" || fail "invalid EDGE_DOT_PORT value: $EDGE_DOT_PORT"
 [ -z "$EDGE_WAN_IF" ] || valid_interface "$EDGE_WAN_IF" || fail "invalid EDGE_WAN_IF value: $EDGE_WAN_IF"
@@ -435,6 +485,321 @@ for chain in EDGE_TS_INPUT EDGE_TS_FORWARD; do
     if iptables -t filter -S "$chain" >/dev/null 2>&1; then ok "firewall chain $chain"; else fail "missing firewall chain $chain"; fi
 done
 if iptables -t nat -S EDGE_TS_PREROUTING >/dev/null 2>&1; then ok "NAT chain EDGE_TS_PREROUTING"; else fail "missing NAT chain"; fi
+
+ts_pihole_nat_rule_and_order_ok() {
+    policy_source="$1"
+    policy_protocol="$2"
+
+    policy_rules="$(iptables -t nat -S EDGE_TS_PREROUTING 2>/dev/null)" ||
+        return 1
+
+    dnat_line="$(
+        printf '%s\n' "$policy_rules" |
+            awk \
+                -v source="$policy_source" \
+                -v protocol="$policy_protocol" \
+                -v port="$EDGE_DNS_PORT" \
+                -v destination="$EDGE_TS_PIHOLE_DNS_IP" '
+                $1 == "-A" {
+                    src=""
+                    proto=""
+                    dport=""
+                    target=""
+                    to=""
+
+                    for (i = 1; i <= NF; i++) {
+                        if ($i == "-s") src=$(i+1)
+                        if ($i == "-p") proto=$(i+1)
+                        if ($i == "--dport") dport=$(i+1)
+                        if ($i == "-j") target=$(i+1)
+                        if ($i == "--to-destination") to=$(i+1)
+                    }
+
+                    src_host=src
+                    source_host=source
+                    sub(/\/32$/, "", src_host)
+                    sub(/\/32$/, "", source_host)
+
+                    if (target == "DNAT" && src_host == source_host && proto == protocol && dport == port && to == destination ":" port) {
+                        print NR
+                        exit
+                    }
+                }
+            '
+    )"
+
+    redirect_line="$(
+        printf '%s\n' "$policy_rules" |
+            awk \
+                -v protocol="$policy_protocol" \
+                -v port="$EDGE_DNS_PORT" '
+                $1 == "-A" {
+                    proto=""
+                    dport=""
+                    target=""
+
+                    for (i = 1; i <= NF; i++) {
+                        if ($i == "-p") proto=$(i+1)
+                        if ($i == "--dport") dport=$(i+1)
+                        if ($i == "-j") target=$(i+1)
+                    }
+
+                    if (target == "REDIRECT" && proto == protocol && dport == port) {
+                        print NR
+                        exit
+                    }
+                }
+            '
+    )"
+
+    [ -n "$dnat_line" ] &&
+        [ -n "$redirect_line" ] &&
+        [ "$dnat_line" -lt "$redirect_line" ]
+}
+
+if [ -n "$EDGE_TS_PIHOLE_SOURCES" ]; then
+    pihole_policy_failures=0
+
+    if ip -4 addr show 2>/dev/null |
+        grep -F " $EDGE_TS_PIHOLE_DNS_IP/" >/dev/null 2>&1
+    then
+        ok "Tailscale Pi-hole DNS target is a local IPv4 address"
+    else
+        fail "Tailscale Pi-hole DNS target is not local: $EDGE_TS_PIHOLE_DNS_IP"
+        pihole_policy_failures=$((pihole_policy_failures + 1))
+    fi
+
+    for protocol in tcp udp; do
+        if netstat -ln 2>/dev/null |
+            awk -v protocol="$protocol"                 -v endpoint="$EDGE_TS_PIHOLE_DNS_IP:$EDGE_DNS_PORT" '
+                $1 ~ "^" protocol && $4 == endpoint { found=1 }
+                END { exit !found }
+            '
+        then
+            ok "Pi-hole $protocol listener available on configured DNS target"
+        else
+            fail "missing Pi-hole $protocol listener on $EDGE_TS_PIHOLE_DNS_IP:$EDGE_DNS_PORT"
+            pihole_policy_failures=$((pihole_policy_failures + 1))
+        fi
+    done
+
+    for source in $EDGE_TS_PIHOLE_SOURCES; do
+        for protocol in udp tcp; do
+            if ts_pihole_nat_rule_and_order_ok "$source" "$protocol"; then
+                :
+            else
+                fail "missing or misordered Pi-hole $protocol DNS DNAT for $source"
+                pihole_policy_failures=$((pihole_policy_failures + 1))
+            fi
+        done
+    done
+
+    [ "$pihole_policy_failures" -eq 0 ] &&
+        ok "source-scoped Tailscale Pi-hole DNS policy"
+fi
+
+router_https_nat_rule_exists() {
+    router_https_source="$1"
+
+    iptables -t nat -S EDGE_TS_PREROUTING 2>/dev/null |
+        awk \
+            -v source="$router_https_source" \
+            -v incoming_port="$EDGE_ROUTER_HTTPS_PORT" \
+            -v destination="$EDGE_ROUTER_LAN_IP:$EDGE_ROUTER_HTTPS_TARGET_PORT" '
+            function host(value) {
+                sub(/\/32$/, "", value)
+                return value
+            }
+
+            $1 == "-A" {
+                src=""
+                proto=""
+                dport=""
+                target=""
+                to_destination=""
+
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "-s") src=$(i+1)
+                    if ($i == "-p") proto=$(i+1)
+                    if ($i == "--dport") dport=$(i+1)
+                    if ($i == "-j") target=$(i+1)
+                    if ($i == "--to-destination") to_destination=$(i+1)
+                }
+
+                if (host(src) == host(source) &&
+                    proto == "tcp" &&
+                    dport == incoming_port &&
+                    target == "DNAT" &&
+                    to_destination == destination) {
+                    found=1
+                }
+            }
+
+            END { exit !found }
+        '
+}
+
+router_https_input_rule_exists() {
+    router_https_source="$1"
+
+    iptables -t filter -S EDGE_TS_INPUT 2>/dev/null |
+        awk \
+            -v source="$router_https_source" \
+            -v destination="$EDGE_ROUTER_LAN_IP" \
+            -v port="$EDGE_ROUTER_HTTPS_TARGET_PORT" '
+            function host(value) {
+                sub(/\/32$/, "", value)
+                return value
+            }
+
+            $1 == "-A" {
+                src=""
+                dst=""
+                proto=""
+                dport=""
+                target=""
+
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "-s") src=$(i+1)
+                    if ($i == "-d") dst=$(i+1)
+                    if ($i == "-p") proto=$(i+1)
+                    if ($i == "--dport") dport=$(i+1)
+                    if ($i == "-j") target=$(i+1)
+                }
+
+                if (host(src) == host(source) &&
+                    host(dst) == host(destination) &&
+                    proto == "tcp" &&
+                    dport == port &&
+                    target == "ACCEPT") {
+                    found=1
+                }
+            }
+
+            END { exit !found }
+        '
+}
+
+router_https_listener_exists() {
+    netstat -lnt 2>/dev/null |
+        awk -v endpoint="$EDGE_ROUTER_LAN_IP:$EDGE_ROUTER_HTTPS_TARGET_PORT" '
+            $1 ~ "^tcp" && $4 == endpoint { found=1 }
+            END { exit !found }
+        '
+}
+
+if [ "$EDGE_ALLOW_ROUTER_HTTPS" = "1" ]; then
+    router_https_policy_failures=0
+
+    if router_https_listener_exists; then
+        ok "router HTTPS listener available on configured target endpoint"
+    else
+        fail "missing router HTTPS listener on $EDGE_ROUTER_LAN_IP:$EDGE_ROUTER_HTTPS_TARGET_PORT"
+        router_https_policy_failures=$((router_https_policy_failures + 1))
+    fi
+
+    for admin_source in $EDGE_ADMIN_TS_SOURCES; do
+        if router_https_nat_rule_exists "$admin_source"; then
+            :
+        else
+            fail "missing router HTTPS DNAT for admin source $admin_source"
+            router_https_policy_failures=$((router_https_policy_failures + 1))
+        fi
+
+        if router_https_input_rule_exists "$admin_source"; then
+            :
+        else
+            fail "missing router HTTPS INPUT rule for admin source $admin_source"
+            router_https_policy_failures=$((router_https_policy_failures + 1))
+        fi
+    done
+
+    [ "$router_https_policy_failures" -eq 0 ] &&
+        ok "admin-scoped router HTTPS policy"
+fi
+
+routercloud_input_rule_exists() {
+    routercloud_source="$1"
+
+    iptables -t filter -S EDGE_TS_INPUT 2>/dev/null |
+        awk \
+            -v source="$routercloud_source" \
+            -v destination="$EDGE_ROUTERCLOUD_IP" \
+            -v port="$EDGE_ROUTERCLOUD_HTTPS_PORT" '
+            function host(value) {
+                sub(/\/32$/, "", value)
+                return value
+            }
+
+            $1 == "-A" {
+                src=""
+                dst=""
+                proto=""
+                dport=""
+                target=""
+
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "-s") src=$(i+1)
+                    if ($i == "-d") dst=$(i+1)
+                    if ($i == "-p") proto=$(i+1)
+                    if ($i == "--dport") dport=$(i+1)
+                    if ($i == "-j") target=$(i+1)
+                }
+
+                if (host(src) == host(source) &&
+                    host(dst) == host(destination) &&
+                    proto == "tcp" &&
+                    dport == port &&
+                    target == "ACCEPT") {
+                    found=1
+                }
+            }
+
+            END { exit !found }
+        '
+}
+
+if [ "$EDGE_ALLOW_ROUTERCLOUD" = "1" ]; then
+    routercloud_policy_failures=0
+
+    if [ -z "$EDGE_ADMIN_TS_SOURCES" ]; then
+        fail "RouterCloud enabled without admin Tailscale sources"
+        routercloud_policy_failures=$((routercloud_policy_failures + 1))
+    fi
+
+    if ip -4 addr show 2>/dev/null |
+        grep -F " $EDGE_ROUTERCLOUD_IP/" >/dev/null 2>&1
+    then
+        ok "RouterCloud target is a local IPv4 address"
+    else
+        fail "RouterCloud target is not local: $EDGE_ROUTERCLOUD_IP"
+        routercloud_policy_failures=$((routercloud_policy_failures + 1))
+    fi
+
+    if netstat -lnt 2>/dev/null |
+        awk -v endpoint="$EDGE_ROUTERCLOUD_IP:$EDGE_ROUTERCLOUD_HTTPS_PORT" '
+            $1 ~ "^tcp" && $4 == endpoint { found=1 }
+            END { exit !found }
+        '
+    then
+        ok "RouterCloud HTTPS listener available on configured endpoint"
+    else
+        fail "missing RouterCloud listener on $EDGE_ROUTERCLOUD_IP:$EDGE_ROUTERCLOUD_HTTPS_PORT"
+        routercloud_policy_failures=$((routercloud_policy_failures + 1))
+    fi
+
+    for admin_source in $EDGE_ADMIN_TS_SOURCES; do
+        if routercloud_input_rule_exists "$admin_source"; then
+            :
+        else
+            fail "missing RouterCloud HTTPS rule for admin source $admin_source"
+            routercloud_policy_failures=$((routercloud_policy_failures + 1))
+        fi
+    done
+
+    [ "$routercloud_policy_failures" -eq 0 ] &&
+        ok "admin-scoped RouterCloud HTTPS policy"
+fi
 
 check_filter_enforcement() {
     filter_tool="$1"; filter_parent="$2"; filter_chain="$3"

@@ -141,9 +141,9 @@ The installer backs up existing Merlin hooks but does not execute unreviewed leg
 
 ## DNS integration
 
-The current reference deployment uses split local DNS ownership. Pi-hole FTL owns TCP/UDP 53 on a dedicated LAN alias advertised to main-LAN DHCP clients. Firmware dnsmasq continues to own the router LAN/Tailscale port-53 sockets for DHCP/local-name duties and the existing project classic-DNS interception path. Both Pi-hole and dnsmasq forward ordinary external resolution to Unbound on `127.0.0.1:53535`. When Tailscale DNS interception is enabled, the active dnsmasq configuration must still include `interface=tailscale0`.
+The current reference deployment uses split local DNS ownership. Pi-hole FTL owns TCP/UDP 53 on a dedicated LAN alias advertised to main-LAN DHCP clients. Firmware dnsmasq continues to own the router LAN/Tailscale port-53 sockets for DHCP/local-name duties and the generic project classic-DNS interception fallback. Both Pi-hole and dnsmasq forward ordinary external resolution to Unbound on `127.0.0.1:53535`. When Tailscale DNS interception is enabled, the active dnsmasq configuration must still include `interface=tailscale0`.
 
-This distinction matters: the 2026-09-28 migration validates Pi-hole for the DHCP-managed main-LAN path, but it does not yet claim that arbitrary hard-coded external classic-DNS or the existing Tailscale redirect is filtered by Pi-hole. Those intercepted paths still terminate at firmware dnsmasq before Unbound and require separate revalidation if moved behind Pi-hole.
+Issue #152 adds an opt-in exception for selected Tailscale IPv4 sources: their TCP/UDP 53 traffic can be DNATed to the dedicated Pi-hole listener before the generic Tailscale REDIRECT. The 2026-10-06 reference-client validation confirmed that selected path over LTE/5G with Tailscale enabled and the exit node disabled. Non-matching Tailscale clients continue through `dnsmasq -> Unbound`. The 2026-09-28 main-LAN DHCP Pi-hole result remains valid, while arbitrary hard-coded external classic-DNS on LAN still follows its separately documented interception path.
 
 For a standard Entware deployment:
 
@@ -200,13 +200,17 @@ live-validated through the Pi-hole-visible main-LAN path:
 - automatic recovery after a controlled Fedora reboot;
 - two controlled main-LAN clients distinguished in the collected dataset.
 
-A controlled Windows test also confirmed the documented coverage boundary:
+A controlled Windows test confirmed the generic Tailscale fallback boundary:
 classic DNS carried over Tailscale was visible on `tailscale0` but absent from
-Pi-hole history, matching the existing `Tailscale -> dnsmasq -> Unbound` path.
-The remaining #108 work is bounded retention/storage observation,
-rollback/uninstall validation and correlation of the hard-coded external
-classic-DNS LAN interception path. Encrypted-DNS coverage remains a separate
-measurement track under issue #68. Raw household query history remains private.
+Pi-hole history when it followed `Tailscale -> dnsmasq -> Unbound`. Issue #152
+now adds a separately validated selected-client path: source-scoped Tailscale
+DNS DNAT reaches Pi-hole and preserves the client source identity for analytics.
+Coverage therefore depends on the active policy path; the generic fallback is
+not automatically Pi-hole-visible. The remaining #108 work is bounded
+retention/storage observation, rollback/uninstall validation and correlation of
+the hard-coded external classic-DNS LAN interception path. Encrypted-DNS
+coverage remains a separate measurement track under issue #68. Raw household
+query history remains private.
 
 See [Network DNS Visibility / Client Activity Analytics](docs/network-dns-visibility-client-activity-analytics.md),
 the [sanitized collector validation](evidence/2026-09-28/pi-hole-dns-collector-live-validation.md)
@@ -228,6 +232,36 @@ Directly supported by `evidence/2026-09-11/entware-ssd-migration-validation.txt`
 The artifact does **not** by itself prove syslog-ng recovery, end-to-end mTLS delivery, firewall/printer results, every exit-node traffic path, or long-term stability. See the sanitized [validated router-state snapshot](evidence/ROUTER-STATE-2026-09-11.md) for the exact claim boundary.
 
 Other dated repository evidence documents additional validation performed in the reference environment, including remote-client DNS behavior and earlier router/firewall checks. Keep those observations attached to their original dates and artifacts rather than folding them into the 2026-09-11 SSD evidence.
+
+
+On **2026-10-06**, issue #152's selected Android classic-DNS path was
+live-validated with Wi-Fi disabled, LTE/5G active, Tailscale active and the ASUS
+exit node disabled. A fresh query appeared in Pi-hole under the selected client
+identity, internal RouterCloud naming resolved, a known advertising domain was
+blocked by Pi-hole Gravity, RouterCloud remained reachable, and authorized ASUS
+management reached the actual TCP/443 httpds listener through external
+TCP/8443. The production healthcheck completed with zero failures and warnings.
+
+The stricter Pi-hole filter was subsequently promoted from a temporary
+Android-only group to the global `Default` policy alongside OISD Big and
+AdGuard DNS Filter. The temporary strict group and explicit Android Pi-hole
+client entries were removed. A global smoke test confirmed normal public DNS,
+internal `home.arpa`, Gravity blocking and normal HTTPS connectivity.
+
+Follow-up Fedora testing also found that Tailscale's `~.` DNS route caused
+ordinary public DNS to follow `tailscale0` and miss Pi-hole analytics through
+the generic fallback. Adding the administration workstation to the selected
+source-scoped Pi-hole transport restored Pi-hole visibility while preserving
+Tailscale DNS/MagicDNS; a fresh marker appeared under the workstation's
+Tailscale identity and the healthcheck remained clean.
+
+A representative Android compatibility check subsequently passed without
+observed regression across banking/payment use, Google Play, routine
+applications, notifications and internal-service access. The result still does
+not claim exit-node-enabled Android DNS, encrypted-DNS interception or
+long-term endurance. See the
+[issue #152 policy](docs/android-pihole-tailscale-policy.md) and
+[sanitized live validation](evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
 
 On **2026-09-25**, a fresh read-only router checkpoint reconfirmed the reference deployment on GNUton `3004.388.11_1-gnuton1_tuf`: both SSD filesystems and swap were active, core services were running, direct Unbound resolution returned the DNSSEC `AD` flag, and the project health check completed with `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`. Controlled Fedora tests also produced exact production counter deltas for LAN UDP/TCP 53 interception, direct TCP/853 rejection and Tailscale UDP/53 interception. A same-day Exit Node retest was deliberately not promoted into new datapath evidence because the first flow ran without an exit node selected and a later router capture attempt did not start; the 2026-09-23 fixed-flow capture remains authoritative for the current-firmware Exit Node claim. See the [sanitized checkpoint](evidence/2026-09-25/router-live-checkpoint.md) and [dated worklog](docs/worklog/2026-09-25.md).
 

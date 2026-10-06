@@ -23,6 +23,10 @@ expect_rejected() {
 }
 
 expect_rejected EDGE_REQUIRE_USB_PRINTER_DISABLED 2 'invalid EDGE_REQUIRE_USB_PRINTER_DISABLED value: 2'
+expect_rejected EDGE_ALLOW_ROUTERCLOUD 2 'invalid EDGE_ALLOW_ROUTERCLOUD value: 2'
+expect_rejected EDGE_ROUTERCLOUD_IP '192.168.50.999' 'invalid EDGE_ROUTERCLOUD_IP value: 192.168.50.999'
+expect_rejected EDGE_ROUTERCLOUD_HTTPS_PORT 70000 'invalid EDGE_ROUTERCLOUD_HTTPS_PORT value: 70000'
+expect_rejected EDGE_ADMIN_TS_SOURCES '100.64.0.1/99' 'invalid admin Tailscale source: 100.64.0.1/99'
 expect_rejected EDGE_ENABLE_EXIT_NODE yes 'invalid EDGE_ENABLE_EXIT_NODE value: yes'
 expect_rejected EDGE_INTERCEPT_DNS maybe 'invalid EDGE_INTERCEPT_DNS value: maybe'
 expect_rejected EDGE_ENFORCE_LAN_DNS maybe 'invalid EDGE_ENFORCE_LAN_DNS value: maybe'

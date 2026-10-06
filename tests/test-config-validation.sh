@@ -43,6 +43,7 @@ expect_rejected() {
 }
 
 expect_rejected EDGE_ROUTER_HTTPS_PORT 70000 'invalid port: 70000'
+expect_rejected EDGE_ROUTER_HTTPS_TARGET_PORT 70000 'invalid port: 70000'
 
 cp "$REPO_DIR/config/edge.conf.example" "$TMP_DIR/printer-edge.conf"
 echo 'EDGE_PRINTER_TS_SOURCES="192.0.2.95/32"' >>"$TMP_DIR/printer-edge.conf"

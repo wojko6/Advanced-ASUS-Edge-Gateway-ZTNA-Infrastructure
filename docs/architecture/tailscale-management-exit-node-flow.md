@@ -12,9 +12,9 @@ flowchart LR
 
     subgraph MGMT["Router management plane"]
         T --> NP["nat PREROUTING<br/>EDGE_TS_PREROUTING"]
-        NP -->|"configured admin source + HTTPS enabled"| DN["source-scoped DNAT<br/>to router LAN IP :8443"]
+        NP -->|"configured admin source + HTTPS enabled"| DN["source-scoped DNAT<br/>external :8443 -> router LAN IP :443"]
         DN --> IN["filter INPUT<br/>EDGE_TS_INPUT"]
-        IN -->|"EDGE_ADMIN_TS_SOURCES + configured port"| MS["Router management service"]
+        IN -->|"EDGE_ADMIN_TS_SOURCES + target :443"| MS["Router management service"]
         IN -->|"unauthorized / unmatched"| MD["Default DROP"]
     end
 
@@ -34,8 +34,8 @@ flowchart LR
 ## Validated scope and limitations
 
 - Tailscale is configured with **netfilter-mode=off**; project-owned EDGE_TS_* chains provide local firewall enforcement.
-- Router-management access is source-scoped. In the reference policy, HTTPS management is enabled on port 8443 while router SSH is disabled.
-- The HTTPS management DNAT rule in EDGE_TS_PREROUTING is created only for configured admin Tailscale sources. EDGE_TS_INPUT independently requires an allowed source and service port, then ends in DROP.
+- Router-management access is source-scoped. In the reference policy, authorized Tailscale clients use external TCP/8443 while the ASUS httpds target listener is TCP/443; router SSH is disabled.
+- The HTTPS management DNAT rule in EDGE_TS_PREROUTING is created only for configured admin Tailscale sources and translates the external port to the configured target listener. EDGE_TS_INPUT independently requires the allowed source plus the post-DNAT destination/target port, then ends in DROP. The healthcheck also verifies that the target listener actually exists.
 - A 2026-09-23 negative test confirmed that a distinct tailnet client outside the admin source set retained peer reachability but could not establish TCP/8443 management access.
 - EDGE_TS_FORWARD permits only explicit selected-LAN rules plus the optional exit-node rule to the detected WAN interface; unmatched forwarded traffic reaches the default DROP.
 - Exit-node source NAT is **platform-owned**. Current-firmware live evidence correlated the Tailscale-side flow with ppp0 egress after platform source translation.
@@ -49,3 +49,4 @@ flowchart LR
 - [Unauthorized tailnet management denial — 2026-09-23](../../evidence/2026-09-23/unauthorized-tailnet-management-denial.md)
 - [Post-firmware exit-node revalidation — 2026-09-23](../../evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md)
 - [Android exit-node public-IP validation — 2026-09-27](../../evidence/2026-09-27/issue-67-android-exit-node-public-ip-validation.md)
+- [Android Pi-hole/Tailscale source-scoped validation — 2026-10-06](../../evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md)
