@@ -1,4 +1,5 @@
 #!/bin/sh
+# ASUS_EDGE_MANAGED_RECOVERY
 
 PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
