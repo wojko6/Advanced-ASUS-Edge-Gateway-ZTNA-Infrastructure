@@ -698,7 +698,7 @@ do
     }
 done
 
-if grep -F 'printf '\''nameserver 127.0.0.1\\n'\''' "$REPO_DIR/router/scripts/wan-event-handler" >/dev/null; then
+if grep -F 'nameserver 127.0.0.1' "$REPO_DIR/router/scripts/wan-event-handler" >/dev/null; then
     echo "FAIL: WAN handler still hard-codes the local resolver instead of DNS Guard" >&2
     exit 1
 fi
