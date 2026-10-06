@@ -1,7 +1,8 @@
 # Issue #152 — Android Pi-hole/Tailscale source-scoped validation
 
-**Status:** PARTIAL PASS — transport/DNS/management path validated; stronger
-per-device Pi-hole filtering remains open
+**Status:** PARTIAL PASS — transport/DNS/management path, global stricter
+Pi-hole policy and Fedora source-scoped DNS validated; longer application
+compatibility remains open
 
 **Date:** 2026-10-06  
 **Evidence class:** Live functional validation / sanitized  
@@ -110,6 +111,50 @@ Personal Cloud was then configured as a local portal target.
 
 No deployment-specific service URL or private address is published here.
 
+## Global stricter filtering rollout
+
+A temporary dedicated Pi-hole client/group policy was used to validate a stricter
+filter on the Android device. After the initial checks showed no immediate
+regression, the deployment decision changed: the stricter list was attached to
+the global Pi-hole `Default` group instead of remaining device-specific.
+
+The final live Pi-hole group state was simplified to:
+
+```text
+Default
+  -> OISD Big
+  -> AdGuard DNS Filter
+  -> HaGeZi Multi PRO++ Mini
+```
+
+The temporary Android-specific Pi-hole client entries and temporary strict group
+were removed. No deployment-private client identifiers are published here.
+
+A basic global smoke test confirmed normal public DNS resolution, internal
+`home.arpa` resolution, a known advertising domain returning the configured
+Pi-hole blocking result, and normal HTTPS connectivity.
+
+This is a same-day functional smoke test, not a long-term claim that every
+application is free of false positives.
+
+## Fedora Tailscale DNS bypass discovery
+
+Testing from the Fedora administration workstation exposed an additional policy
+boundary. The operating system correctly listed the Pi-hole LAN resolver, but
+Tailscale installed a default DNS route (`~.`) on `tailscale0`. Ordinary public
+DNS therefore followed the Tailscale resolver path and was not visible in
+Pi-hole analytics through the generic fallback.
+
+The workstation was added to the same selected source-scoped Pi-hole transport
+used for the Android client. After the managed firewall policy was reapplied,
+both selected clients had TCP/UDP 53 DNAT rules before the generic redirect, the
+project healthcheck returned zero failures and zero warnings, and a fresh unique
+Fedora query appeared in Pi-hole under the workstation's Tailscale client
+identity.
+
+This preserved Tailscale/MagicDNS behavior while closing the observed classic-DNS
+Pi-hole visibility gap for the selected administration workstation.
+
 ## Result
 
 The first issue #152 implementation phase is accepted for the tested target
@@ -126,11 +171,10 @@ conditions:
 
 ## Remaining scope
 
-Issue #152 is intentionally still open. Remaining work includes the dedicated
-Pi-hole client/group assignment for both Android LAN and Tailscale identities,
-stronger curated per-device filtering, final allowlist review,
-banking/payment and Android-connectivity compatibility checks, and any separate
-exit-node/encrypted-DNS work.
+Issue #152 is intentionally still open. The per-device strict-policy experiment
+was superseded by the global `Default` rollout described above. Remaining work
+is longer compatibility observation, including representative banking/payment
+and Android-connectivity checks, plus any separate exit-node/encrypted-DNS work.
 
 See [Android global DNS filtering through Pi-hole and Tailscale](../../docs/android-pihole-tailscale-policy.md)
 and the [troubleshooting case study](../../docs/case-studies/android-tailscale-pihole-debugging.md).
