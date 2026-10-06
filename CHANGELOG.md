@@ -31,6 +31,8 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Promoted HaGeZi Multi PRO++ Mini from a temporary Android-only Pi-hole group to the global Pi-hole Default policy alongside OISD Big and AdGuard DNS Filter; removed the temporary strict group and explicit Android Pi-hole client assignments after initial validation.
+- Extended the selected source-scoped Tailscale Pi-hole transport to the Fedora administration workstation after Tailscale's default DNS route was observed bypassing Pi-hole analytics through the generic fallback.
 - Extended the router healthcheck so remote HTTPS management validates the actual target listener, source-scoped DNAT and post-DNAT INPUT rule instead of assuming the external and local application ports are identical.
 - Reconciled DNS and management documentation with the validated issue #152 target path: LTE/5G + Tailscale with exit node disabled, source-scoped Pi-hole before the generic Tailscale DNS fallback, and explicit non-claims for encrypted DNS and exit-node-enabled Android DNS.
 - Reconciled README, project status, roadmap and security documentation with the completed Personal Cloud milestones #136/#137/#138 and the current 2026-10-03 RouterCloud production state.
@@ -72,6 +74,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Live-validated the issue #152 global Pi-hole rollout with normal public DNS, internal `home.arpa`, a Gravity-blocked advertising domain and normal HTTPS connectivity; a follow-up Fedora test also confirmed that a fresh classic-DNS marker reached Pi-hole under the workstation's Tailscale identity after adding it to the selected source-scoped transport.
 - Live-validated the issue #152 Android target path with Wi-Fi off, LTE/5G on, Tailscale on and exit node off: a fresh query reached Pi-hole under the selected client identity, internal RouterCloud naming worked, a known advertising domain was blocked by Gravity, RouterCloud remained reachable, ASUS management reached the real TCP/443 listener through external TCP/8443, and the production healthcheck returned zero failures and warnings.
 - Production-validated RouterCloud login through both the canonical username and the configured email alias on 2026-10-03; both identifiers used the same password and resolved to the same account.
 - Completed issue #130 repository supply-chain validation: the active `Protect main` ruleset targets the default branch with no bypass, requires pull requests and the aggregate `Validation suite`, blocks deletion and non-fast-forward/force-push updates by rule, allowed a normal post-activation PR after green CI, and rejected a controlled direct `main` ref update with HTTP 422.
