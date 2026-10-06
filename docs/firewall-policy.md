@@ -55,6 +55,22 @@ During re-application, temporary interface-scoped IPv4 and IPv6 drop rules keep 
 6. Rate-limit security logging.
 7. Drop all remaining forwarding from `tailscale0`.
 
+### Exit-node local authorization gap
+
+The current forwarding rule is interface/egress scoped, not source scoped:
+
+```text
+-i tailscale0 -o <WAN> -j ACCEPT
+```
+
+Tailscale Grants remain the primary exit-node entitlement control. This is
+weaker than the router-management model, where Tailscale policy and a local
+source allowlist both enforce access independently.
+
+Issue #176 tracks a router-local exit-node source policy. Until that work is
+completed, do not describe the exit-node datapath as having the same two-layer
+source authorization as router management.
+
 ### Exit-node NAT dependency
 
 `EDGE_ENABLE_EXIT_NODE=1` creates the project-owned **filter** permission from
@@ -156,7 +172,7 @@ See [Android global DNS filtering through Pi-hole and Tailscale](android-pihole-
 - The granular service policy is IPv4. Where `ip6tables` is available, the installed IPv6 guard intentionally drops new Tailscale IPv6 input/forward traffic. If `ip6tables` is unavailable, the scripts warn and IPv6 must be independently verified disabled; fail-closed IPv6 enforcement is not claimed in that state. Do not relax the guard until an equivalent granular IPv6 policy is tested.
 - `EDGE_ALLOWED_LAN_HOSTS` accepts IPv4 addresses/CIDRs, not hostnames, and combined with each listed port is a Cartesian product. Create separate chains if hosts need different service sets.
 - Printer HTTP, SNMPv1/v2, IPP, and raw TCP are not encrypted on the LAN segment. Tailscale protects the remote path only as far as the subnet router; keep the printer policy source-restricted and never expose these ports to the WAN.
-- Exit-node mode permits all protocols to the WAN interface; Tailscale Grants must restrict who may use `autogroup:internet`.
+- Exit-node mode currently permits all protocols from `tailscale0` to the selected WAN interface once the exit-node path is enabled; Tailscale Grants must restrict who may use `autogroup:internet`. The local firewall does **not yet** apply a separate exit-node source allowlist; issue #176 tracks that second boundary.
 - REDIRECT of classic DNS port 53 requires dnsmasq to include `tailscale0`; it does not block encrypted DNS protocols.
 - Optional `EDGE_ENFORCE_LAN_DNS=1` adds a separate managed `nat/EDGE_LAN_DNS_PREROUTING` chain on `EDGE_LAN_IF`. Traffic already addressed to the router's own DNS endpoint is returned unchanged; other TCP/UDP port-53 traffic is redirected to the router resolver.
 - LAN DNS enforcement is intentionally limited to classic TCP/UDP 53. It does not claim control over DoH/HTTPS, DoT/853, DoQ/QUIC, VPN-carried DNS, or application-specific encrypted resolver transports.
