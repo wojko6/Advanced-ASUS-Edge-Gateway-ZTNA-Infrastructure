@@ -1,0 +1,13 @@
+--- a/Main_TrafficMonitor_daily.asp
++++ b/Main_TrafficMonitor_daily.asp
+@@ -267,8 +267,8 @@
+ <option value="1"><#2898#></option>
+ <option value="2"><#2899#></option>
+ <option value="3" selected><#2900#></option>
+-<option value="4">Monthly</option>
+-<option value="5">Settings</option>
++<option value="4">miesięcznie</option>
++<option value="5">ustawienia</option>
+ </select>
+ </div>
+ </td>

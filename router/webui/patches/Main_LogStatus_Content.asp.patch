@@ -1,0 +1,29 @@
+--- a/Main_LogStatus_Content.asp
++++ b/Main_LogStatus_Content.asp
+@@ -218,7 +218,7 @@
+ </td>
+ </tr>
+ <tr>
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,11);">Default message log level</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,11);">Domyślny poziom logowania komunikatów</a></th>
+ <td>
+ <select name="message_loglevel" class="input_option">
+ <option value="0" <% nvram_match("message_loglevel", "0", "selected"); %>>emergency</option>
+@@ -233,7 +233,7 @@
+ </td>
+ </tr>
+ <tr>
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,12);">Log only messages more urgent than</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,12);">Loguj tylko komunikaty o priorytecie wyższym niż</a></th>
+ <td>
+ <select name="log_level" class="input_option">
+ <option value="1" <% nvram_match("log_level", "1", "selected"); %>>alert</option>
+@@ -250,7 +250,7 @@
+ </table>
+ </form>
+ <div style="margin-top: 5px; text-align: center;"><input class="button_gen" onclick="applySettings();" type="button" value="<#287#>" /></div>
+-<div style="color:#FFCC00;"><input type="checkbox" checked id="auto_refresh">Auto refresh</div>
++<div style="color:#FFCC00;"><input type="checkbox" checked id="auto_refresh">Automatyczne odświeżanie</div>
+ <div style="margin-top:8px">
+ <textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" class="textarea_ssh_table" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;"></textarea>
+ </div>

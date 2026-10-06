@@ -1,0 +1,83 @@
+--- a/Main_TrafficMonitor_settings.asp
++++ b/Main_TrafficMonitor_settings.asp
+@@ -8,7 +8,7 @@
+ <meta HTTP-EQUIV="Expires" CONTENT="-1">
+ <link rel="shortcut icon" href="images/favicon.png">
+ <link rel="icon" href="images/favicon.png">
+-<title><#976#> - Traffic Monitor Settings</title>
++<title><#976#> - Ustawienia monitora ruchu</title>
+ <link rel="stylesheet" type="text/css" href="index_style.css">
+ <link rel="stylesheet" type="text/css" href="form_style.css">
+ <script language="JavaSCript" type="text/javascript" src="/js/jquery.js"></script>
+@@ -509,7 +509,7 @@
+ <table width="100%">
+ <tr>
+ <td class="formfonttitle" align="left">
+-<div id="content_title" style="margin-top:5px;"><#487#> - Settings</div>
++<div id="content_title" style="margin-top:5px;"><#487#> - Ustawienia</div>
+ </td>
+ <td>
+ <div align="right">
+@@ -517,8 +517,8 @@
+ <option value="1"><#2898#></option>
+ <option value="2"><#2899#></option>
+ <option value="3"><#2900#></option>
+-<option value="4">Monthly</option>
+-<option value="5" selected>Settings</option>
++<option value="4">miesięcznie</option>
++<option value="5" selected>ustawienia</option>
+ </select>
+ </div>
+ </td></tr></table>
+@@ -526,38 +526,38 @@
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ <thead>
+ <tr>
+-<td colspan="2">Traffic Monitor</td>
++<td colspan="2">Monitor ruchu</td>
+ </tr>
+ </thead>
+ <tr>
+-<th>Traffic history location</th>
++<th>Lokalizacja historii ruchu</th>
+ <td>
+ <select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
+-<option value="0">RAM (Default)</option>
+-<option value="1">USB disk</option>
++<option value="0">RAM (domyślnie)</option>
++<option value="1">Dysk USB</option>
+ <option value="2">JFFS</option>
+ </select>
+ </td>
+ </tr>
+ <tr id="rstats_stime_tr">
+-<th>Save frequency</th>
++<th>Częstotliwość zapisu</th>
+ <td>
+ <select name="rstats_stime" class="input_option" >
+-<option value="1" <% nvram_match("rstats_stime", "1","selected"); %>>Every 1 hour</option>
+-<option value="6" <% nvram_match("rstats_stime", "6","selected"); %>>Every 6 hours</option>
+-<option value="12" <% nvram_match("rstats_stime", "12","selected"); %>>Every 12 hours</option>
+-<option value="24" <% nvram_match("rstats_stime", "24","selected"); %>>Every 1 day</option>
+-<option value="72" <% nvram_match("rstats_stime", "72","selected"); %>>Every 3 days</option>
++<option value="1" <% nvram_match("rstats_stime", "1","selected"); %>>Co godzinę</option>
++<option value="6" <% nvram_match("rstats_stime", "6","selected"); %>>Co 6 godzin</option>
++<option value="12" <% nvram_match("rstats_stime", "12","selected"); %>>Co 12 godzin</option>
++<option value="24" <% nvram_match("rstats_stime", "24","selected"); %>>Codziennie</option>
++<option value="72" <% nvram_match("rstats_stime", "72","selected"); %>>Co 3 dni</option>
+ </select>
+ </td>
+ </tr>
+ <tr id="rstats_path_tr">
+-<th>Save history location<br><i>Directory must end with a '/'.</i></th>
++<th>Lokalizacja zapisu historii<br><i>Katalog musi kończyć się znakiem '/'.</i></th>
+ <td><input type="text" id="rstats_path" size=32 maxlength=90 name="rstats_path" class="input_32_table" value="<% nvram_get("rstats_path"); %>">
+-<button id="pathPicker" onclick="get_disk_tree(); return false;">Select...</button></td>
++<button id="pathPicker" onclick="get_disk_tree(); return false;">Wybierz...</button></td>
+ </tr>
+ <tr id="rstats_new_tr">
+-<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
++<th>Utwórz lub zresetuj pliki danych:<br><i>Włącz, jeśli używasz nowej lokalizacji</i></th>
+ <td>
+ <input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#278#>
+ <input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#277#>

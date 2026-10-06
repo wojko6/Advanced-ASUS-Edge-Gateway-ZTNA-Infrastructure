@@ -1,5 +1,14 @@
---- device-map/router.asp
-+++ device-map/router.asp
+--- a/router.asp
++++ b/router.asp
+@@ -412,7 +412,7 @@
+ }
+ code = '';
+ if(system.INTELplatform || system.modelName == 'RT-AC87U'){
+-code += '<div id="wl_ready" class="wl-ready" style="display:none;">Wireless is setting...</div>';
++code += '<div id="wl_ready" class="wl-ready" style="display:none;">Trwa konfigurowanie sieci bezprzewodowej...</div>';
+ }
+ for(var i=0; i<wlInterface.length; i++){
+ var unit = wlInterface[i][2];
 @@ -504,10 +504,10 @@
  code += '</div>';
  }

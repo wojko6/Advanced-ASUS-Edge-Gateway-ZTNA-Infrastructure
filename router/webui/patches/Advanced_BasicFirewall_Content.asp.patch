@@ -1,0 +1,11 @@
+--- a/Advanced_BasicFirewall_Content.asp
++++ b/Advanced_BasicFirewall_Content.asp
+@@ -636,7 +636,7 @@
+ <div class="formfontdesc" style="font-size:14px;font-weight:bold;margin-top:10px;"><#518#></div>
+ <div>
+ <div class="formfontdesc"><#2284#></div>
+-<div class="formfontdesc">"You can leave the IP fields empty to allow traffic from/to any remote host. A subnet can also be specified. (2001::1111:2222:3333/64 for example)"</div>
++<div class="formfontdesc">"Możesz pozostawić pola adresów IP puste, aby zezwolić na ruch z/do dowolnego hosta zdalnego. Można również podać podsieć, np. 2001::1111:2222:3333/64."</div>
+ </div>
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
+ <thead>

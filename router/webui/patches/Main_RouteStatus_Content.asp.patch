@@ -1,0 +1,68 @@
+--- a/Main_RouteStatus_Content.asp
++++ b/Main_RouteStatus_Content.asp
+@@ -25,15 +25,15 @@
+ function show_routev4() {
+ var code, i, line;
+ code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
+-code += '<thead><tr><td colspan="8">IPv4 Routing table</td></tr></thead>';
+-code += '<tr><th width="19%">Destination</th>';
+-code += '<th width="19%">Gateway</th>';
+-code += '<th width="16%">Genmask</th>';
+-code += '<th width="11%">Flags</th>';
+-code += '<th width="10%">Metric</th>';
+-code += '<th width="8%">Ref</th>';
+-code += '<th width="8%">Use</th>';
+-code += '<th width="9%">Iface</th>';
++code += '<thead><tr><td colspan="8">Tablica routingu IPv4</td></tr></thead>';
++code += '<tr><th width="19%">Cel</th>';
++code += '<th width="19%">Brama</th>';
++code += '<th width="16%">Maska sieci</th>';
++code += '<th width="11%">Flagi</th>';
++code += '<th width="10%">Metryka</th>';
++code += '<th width="8%">Odwołania</th>';
++code += '<th width="8%">Użycie</th>';
++code += '<th width="9%">Interfejs</th>';
+ code += '</tr>';
+ if (routearray.length > 1) {
+ for (i = 0; i < routearray.length-1; ++i) {
+@@ -50,7 +50,7 @@
+ code += '</tr>';
+ }
+ } else {
+-code += '<tr><td colspan="8"><span>No IPv4 routes.</span></td></tr>';
++code += '<tr><td colspan="8"><span>Brak tras IPv4.</span></td></tr>';
+ }
+ code += '</tr></table>';
+ document.getElementById("routev4block").innerHTML = code;
+@@ -58,14 +58,14 @@
+ function show_routev6() {
+ var code, i, line;
+ code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table">';
+-code += '<thead><tr><td colspan="7">IPv6 Routing table</td></tr></thead>';
+-code += '<tr><th width="40%">Destination<br><span style="color:#FFCC00;">Next Hop</span></th>';
+-code += '<th width="10%">Flags</th>';
+-code += '<th width="10%">Metric</th>';
+-code += '<th width="10%">Ref</th>';
+-code += '<th width="10%">Use</th>';
+-code += '<th width="10%">Dev</th>';
+-code += '<th width="10%">Iface</th>';
++code += '<thead><tr><td colspan="7">Tablica routingu IPv6</td></tr></thead>';
++code += '<tr><th width="40%">Cel<br><span style="color:#FFCC00;">Następny skok</span></th>';
++code += '<th width="10%">Flagi</th>';
++code += '<th width="10%">Metryka</th>';
++code += '<th width="10%">Odwołania</th>';
++code += '<th width="10%">Użycie</th>';
++code += '<th width="10%">Urządzenie</th>';
++code += '<th width="10%">Interfejs</th>';
+ code += '</tr>';
+ if (routev6array.length > 1) {
+ for (i = 0; i < routev6array.length-1; ++i) {
+@@ -81,7 +81,7 @@
+ code += '</tr>';
+ }
+ } else {
+-code += '<tr><td colspan="7"><span>No IPv6 routes.</span></td></tr>';
++code += '<tr><td colspan="7"><span>Brak tras IPv6.</span></td></tr>';
+ }
+ code += '</tr></table>';
+ document.getElementById("routev6block").innerHTML = code;

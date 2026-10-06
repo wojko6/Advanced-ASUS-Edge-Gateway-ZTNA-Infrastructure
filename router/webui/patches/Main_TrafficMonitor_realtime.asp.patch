@@ -1,0 +1,74 @@
+--- a/Main_TrafficMonitor_realtime.asp
++++ b/Main_TrafficMonitor_realtime.asp
+@@ -71,10 +71,10 @@
+ function toggle_refresh(){
+ if (refresh_toggle == 1) {
+ refresh_toggle = 0;
+-document.getElementById('refresh_button').value = "Resume";
++document.getElementById('refresh_button').value = "Wznów";
+ } else {
+ refresh_toggle = 1;
+-document.getElementById('refresh_button').value = "Pause";
++document.getElementById('refresh_button').value = "Wstrzymaj";
+ }
+ }
+ function init_data_object(){
+@@ -87,6 +87,9 @@
+ speed_data[ifname].max_rx = 0;
+ speed_data[ifname].max_tx = 0;
+ speed_data[ifname].friendly = get_friendly_ifname(ifname);
++speed_data[ifname].friendly = speed_data[ifname].friendly
++.replace("Wireless 2.4 GHz", "Sieć bezprzewodowa 2,4 GHz")
++.replace("Wireless 5 GHz", "Sieć bezprzewodowa 5 GHz");
+ last_speed_data[ifname] = {};
+ last_speed_data[ifname].rx = 0;
+ last_speed_data[ifname].tx = 0;
+@@ -97,8 +100,8 @@
+ htmldata += '<tr>';
+ htmldata += `<td style="padding:14px;" width="100%"><div style="height: 250px;"><canvas class="chartCanvas" style="background-color:${chartBackgroundColor};" id="${ifname}_Chart"></canvas></div>`;
+ htmldata += '<div style="padding-top: 14px; display: flex; justify-content: space-between;">';
+-htmldata += `<div style="color: ${tableLabelColor};">Current In: <span style="color: ${tableValueColor};" id="${ifname}_RX_current"></span></div><div style="color: ${tableLabelColor};">Max In: <span style="color: ${tableValueColor};" id="${ifname}_RX_max"></span></div>`;
+-htmldata += `<div style="color: ${tableLabelColor};">Current Out: <span style="color: ${tableValueColor};" id="${ifname}_TX_current"></span></div><div style="color: ${tableLabelColor};">Max Out: <span style="color: ${tableValueColor};"id="${ifname}_TX_max"></span></div>`;
++htmldata += `<div style="color: ${tableLabelColor};">Bieżący ruch przychodzący: <span style="color: ${tableValueColor};" id="${ifname}_RX_current"></span></div><div style="color: ${tableLabelColor};">Maks. ruch przychodzący: <span style="color: ${tableValueColor};" id="${ifname}_RX_max"></span></div>`;
++htmldata += `<div style="color: ${tableLabelColor};">Bieżący ruch wychodzący: <span style="color: ${tableValueColor};" id="${ifname}_TX_current"></span></div><div style="color: ${tableLabelColor};">Maks. ruch wychodzący: <span style="color: ${tableValueColor};"id="${ifname}_TX_max"></span></div>`;
+ htmldata += '</div></td>'
+ htmldata += '</tr></table>';
+ if (ifname == "INTERNET") // Always insert at the top
+@@ -184,7 +187,7 @@
+ labels: Array.from({length: maxSamples}, (v, i) => i),
+ datasets: [
+ {
+-label: speed_data[ifname].friendly + " In",
++label: speed_data[ifname].friendly + " — przychodzący",
+ data: displayed_data_rx,
+ backgroundColor: rxBackgroundColor,
+ borderColor: rxBorderColor,
+@@ -193,7 +196,7 @@
+ fill: { target: "origin"}
+ },
+ {
+-label: speed_data[ifname].friendly + " Out",
++label: speed_data[ifname].friendly + " — wychodzący",
+ data: displayed_data_tx,
+ backgroundColor: txBackgroundColor,
+ borderColor: txBorderColor,
+@@ -306,8 +309,8 @@
+ <option value="1" selected><#2898#></option>
+ <option value="2"><#2899#></option>
+ <option value="3"><#2900#></option>
+-<option value="4">Monthly</option>
+-<option value="5">Settings</option>
++<option value="4">miesięcznie</option>
++<option value="5">ustawienia</option>
+ </select>
+ </div>
+ </td></tr></table>
+@@ -317,7 +320,7 @@
+ <td height="5"><div class="splitLine"></div></td>
+ </tr>
+ <tr>
+-<td><div class="apply_gen"><input id="refresh_button" type="button" onClick="toggle_refresh();" value="Pause" class="button_gen"></div></td>
++<td><div class="apply_gen"><input id="refresh_button" type="button" onClick="toggle_refresh();" value="Wstrzymaj" class="button_gen"></div></td>
+ </tr>
+ <tr>
+ <td id="graph_content"></td>

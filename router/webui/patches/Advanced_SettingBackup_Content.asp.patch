@@ -1,0 +1,35 @@
+--- a/Advanced_SettingBackup_Content.asp
++++ b/Advanced_SettingBackup_Content.asp
+@@ -221,7 +221,7 @@
+ <table width="100%" border="1" align="center" cellpadding="6" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ <thead>
+ <tr>
+-<td colspan=2>Router settings</td>
++<td colspan=2>Ustawienia routera</td>
+ </tr>
+ </thead>
+ <tr>
+@@ -294,12 +294,12 @@
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="margin-top:8px;">
+ <thead>
+ <tr>
+-<td colspan="2">JFFS Partition</td>
++<td colspan="2">Partycja JFFS</td>
+ </tr>
+ </thead>
+ <tr id="jffsbackup">
+ <th align="right"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,13);">
+-Backup JFFS partition
++Utwórz kopię zapasową partycji JFFS
+ </th>
+ <td>
+ <input class="button_gen" onclick="saveJFFS();" type="button" value="<#1826#>" name="action10" />
+@@ -307,7 +307,7 @@
+ </tr>
+ <tr id="jffsrestore">
+ <th align="right">
+-Restore JFFS partition
++Przywróć partycję JFFS
+ </th>
+ <td>
+ <div style="margin-left:-10px;">

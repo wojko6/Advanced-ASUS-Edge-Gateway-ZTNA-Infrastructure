@@ -1,0 +1,91 @@
+--- a/Advanced_System_Content.asp
++++ b/Advanced_System_Content.asp
+@@ -1612,7 +1612,7 @@
+ return str;
+ }
+ else if (service != "http" && _val == document.form.http_lanport.value) {
+-str = str + "HTTP LAN port.";
++str = str + "Port HTTP sieci LAN.";
+ return str;
+ }
+ else if (service != "https" && _val == document.form.https_lanport.value) {
+@@ -2210,14 +2210,14 @@
+ </tr>
+ </thead>
+ <tr>
+-<th>Enable JFFS custom scripts and configs</th>
++<th>Włącz niestandardowe skrypty i konfiguracje JFFS</th>
+ <td>
+ <input type="radio" name="jffs2_scripts" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#278#>
+ <input type="radio" name="jffs2_scripts" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#277#>
+ </td>
+ </tr>
+ <tr id="ntpd_server_tr">
+-<th>Enable local NTP server</th>
++<th>Włącz lokalny serwer NTP</th>
+ <td>
+ <input type="radio" name="ntpd_enable" value="1" onclick="showhide('ntpd_redir_tr', 1);" <% nvram_match_x("","ntpd_enable","1", "checked"); %> ><#278#>
+ <input type="radio" name="ntpd_enable" value="0" onclick="showhide('ntpd_redir_tr', 0);" <% nvram_match_x("","ntpd_enable","0", "checked"); %> ><#277#>
+@@ -2307,7 +2307,7 @@
+ </td>
+ </tr>
+ <tr>
+-<th>Secondary NTP Server</th>
++<th>Dodatkowy serwer NTP</th>
+ <td>
+ <input type="text" maxlength="255" class="input_32_table" name="ntp_server1" value="<% nvram_get("ntp_server1"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off">
+ </td>
+@@ -2467,7 +2467,7 @@
+ </td>
+ </tr>
+ <tr id="remote_forwarding_tr">
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,10);">Allow SSH Port Forwarding</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,10);">Zezwól na przekierowanie portów SSH</a></th>
+ <td>
+ <input type="radio" name="sshd_forwarding" value="1" <% nvram_match("sshd_forwarding", "1", "checked"); %>><#278#>
+ <input type="radio" name="sshd_forwarding" value="0" <% nvram_match("sshd_forwarding", "0", "checked"); %>><#277#>
+@@ -2478,7 +2478,7 @@
+ <td>
+ <input type="text" class="input_6_table" maxlength="5" id="sshd_port" name="sshd_port" onKeyPress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off" value='<% nvram_get("sshd_port"); %>' onkeydown="reset_portconflict_hint();">
+ <span id="port_conflict_sshdport" style="color: #e68282; display: none;">Port Conflict</span>
+-<div style="color: #FFCC00;display:none;" id="SSH_Port_Suggestion1">* Using a different port than the default port 22 is recommended to avoid port scan attacks.</div>
++<div style="color: #FFCC00;display:none;" id="SSH_Port_Suggestion1">* Zaleca się użycie portu innego niż domyślny port 22, aby ograniczyć automatyczne skanowanie portów.</div>
+ </td>
+ </tr>
+ <tr id="sshd_password_tr">
+@@ -2533,7 +2533,7 @@
+ }
+ </script>
+ <tr id="http_lanport">
+-<th>HTTP LAN port</th>
++<th>Port HTTP sieci LAN</th>
+ <td>
+ <input type="text" maxlength="5" class="input_6_table" name="http_lanport" value="<% nvram_get("http_lanport"); %>" onKeyPress="return validator.isNumber(this,event);" onBlur="change_url(this.value, 'http_lan');" autocorrect="off" autocapitalize="off">
+ <span id="http_access_page"></span>
+@@ -2549,21 +2549,21 @@
+ </td>
+ </tr>
+ <tr id="cert_details" style="display:none;">
+-<th>Installed Server Certificate</th>
++<th>Zainstalowany certyfikat serwera</th>
+ <td>
+ <div style="display:table-row;">
+-<div style="display:table-cell;white-space: nowrap;">Issued to :</div>
++<div style="display:table-cell;white-space: nowrap;">Wydany dla:</div>
+ <div id="issueTo" style="display:table-cell; padding-left:10px;"></div>
+ </div>
+ <div style="display:table-row;">
+-<div style="display:table-cell;white-space: nowrap">Issued by :</div>
++<div style="display:table-cell;white-space: nowrap">Wydany przez:</div>
+ <div id="issueBy" style="display:table-cell; padding-left:10px;"></div>
+ </div>
+ <div style="display:table-row;">
+-<div style="display:table-cell;white-space: nowrap">Expires on :</div>
++<div style="display:table-cell;white-space: nowrap">Wygasa:</div>
+ <div id="expireOn" style="display:table-cell; padding-left:10px;"></div>
+ </div>
+-<div id="cert_manage_link" style="padding-top:10px;"><span>Click <a style="color:#FC0;text-decoration: underline;" href="Advanced_ASUSDDNS_Content.asp">here</a> to manage.</span></div>
++<div id="cert_manage_link" style="padding-top:10px;"><span>Kliknij <a style="color:#FC0;text-decoration: underline;" href="Advanced_ASUSDDNS_Content.asp">tutaj</a>, aby zarządzać.</span></div>
+ </td>
+ </tr>
+ <tr id="https_download_cert" style="display: none;">

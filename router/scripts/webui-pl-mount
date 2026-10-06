@@ -17,6 +17,27 @@ WADV_SOURCE="$PL_DIR/Advanced_WAdvanced_Content.asp"
 STATE_SOURCE="$PL_DIR/state.js"
 ROUTER_STATUS_SOURCE="$PL_DIR/router_status.asp"
 ROUTER_SOURCE="$PL_DIR/router.asp"
+ADV_WAN_SOURCE="$PL_DIR/Advanced_WAN_Content.asp"
+ADV_BASICFW_SOURCE="$PL_DIR/Advanced_BasicFirewall_Content.asp"
+ADV_FIREWALL_SOURCE="$PL_DIR/Advanced_Firewall_Content.asp"
+ADV_FWUP_SOURCE="$PL_DIR/Advanced_FirmwareUpgrade_Content.asp"
+ADV_SYSTEM_SOURCE="$PL_DIR/Advanced_System_Content.asp"
+ADV_BACKUP_SOURCE="$PL_DIR/Advanced_SettingBackup_Content.asp"
+ADV_SNMP_SOURCE="$PL_DIR/Advanced_SNMP_Content.asp"
+MAIN_LOG_SOURCE="$PL_DIR/Main_LogStatus_Content.asp"
+MAIN_WSTATUS_SOURCE="$PL_DIR/Main_WStatus_Content.asp"
+MAIN_DHCP_SOURCE="$PL_DIR/Main_DHCPStatus_Content.asp"
+MAIN_IPV6_SOURCE="$PL_DIR/Main_IPV6Status_Content.asp"
+MAIN_ROUTE_SOURCE="$PL_DIR/Main_RouteStatus_Content.asp"
+MAIN_IPT_SOURCE="$PL_DIR/Main_IPTStatus_Content.asp"
+MAIN_CONN_SOURCE="$PL_DIR/Main_ConnStatus_Content.asp"
+INTERNET_SOURCE="$PL_DIR/internet.asp"
+TRAFFIC_RT_SOURCE="$PL_DIR/Main_TrafficMonitor_realtime.asp"
+TRAFFIC_LAST24_SOURCE="$PL_DIR/Main_TrafficMonitor_last24.asp"
+TRAFFIC_DAILY_SOURCE="$PL_DIR/Main_TrafficMonitor_daily.asp"
+TRAFFIC_MONTHLY_SOURCE="$PL_DIR/Main_TrafficMonitor_monthly.asp"
+TRAFFIC_SETTINGS_SOURCE="$PL_DIR/Main_TrafficMonitor_settings.asp"
+DNSDIRECTOR_SOURCE="$PL_DIR/DNSDirector.asp"
 
 PL_TARGET="/www/PL.dict"
 HELP_TARGET="/www/help.js"
@@ -26,9 +47,30 @@ WADV_TARGET="/www/Advanced_WAdvanced_Content.asp"
 STATE_TARGET="/www/state.js"
 ROUTER_STATUS_TARGET="/www/device-map/router_status.asp"
 ROUTER_TARGET="/www/device-map/router.asp"
+ADV_WAN_TARGET="/www/Advanced_WAN_Content.asp"
+ADV_BASICFW_TARGET="/www/Advanced_BasicFirewall_Content.asp"
+ADV_FIREWALL_TARGET="/www/Advanced_Firewall_Content.asp"
+ADV_FWUP_TARGET="/www/Advanced_FirmwareUpgrade_Content.asp"
+ADV_SYSTEM_TARGET="/www/Advanced_System_Content.asp"
+ADV_BACKUP_TARGET="/www/Advanced_SettingBackup_Content.asp"
+ADV_SNMP_TARGET="/www/Advanced_SNMP_Content.asp"
+MAIN_LOG_TARGET="/www/Main_LogStatus_Content.asp"
+MAIN_WSTATUS_TARGET="/www/Main_WStatus_Content.asp"
+MAIN_DHCP_TARGET="/www/Main_DHCPStatus_Content.asp"
+MAIN_IPV6_TARGET="/www/Main_IPV6Status_Content.asp"
+MAIN_ROUTE_TARGET="/www/Main_RouteStatus_Content.asp"
+MAIN_IPT_TARGET="/www/Main_IPTStatus_Content.asp"
+MAIN_CONN_TARGET="/www/Main_ConnStatus_Content.asp"
+INTERNET_TARGET="/www/device-map/internet.asp"
 
 MENU_BASE="/tmp/menuTree.js"
 MENU_TARGET="/www/require/modules/menuTree.js"
+TRAFFIC_RT_TARGET="/www/Main_TrafficMonitor_realtime.asp"
+TRAFFIC_LAST24_TARGET="/www/Main_TrafficMonitor_last24.asp"
+TRAFFIC_DAILY_TARGET="/www/Main_TrafficMonitor_daily.asp"
+TRAFFIC_MONTHLY_TARGET="/www/Main_TrafficMonitor_monthly.asp"
+TRAFFIC_SETTINGS_TARGET="/www/Main_TrafficMonitor_settings.asp"
+DNSDIRECTOR_TARGET="/www/DNSDirector.asp"
 
 # Stock GNUton 3004.388.11_1 baseline.
 PL_BASE_SHA="cad0a4766bfd2bb7e0faa0fc63638b84ab65ee30bc56b0b5755b7e32f7506719"
@@ -37,18 +79,60 @@ SYSINFO_BASE_SHA="6d5a23ab9ee39d6d63b19c33fca10fe74a2b2fc38bd1fe95d95aeba85e7e43
 TWEAKS_BASE_SHA="65024c7403fdb0c684b1f574aa82bc38923b69f04c5119ac02ac172f43769b79"
 
 # Validated Polish candidates.
-PL_PATCHED_SHA="1bc59ad0727ee6198dd75a35a15be3313fed67ac816c85bd741463415773e8ac"
-HELP_PATCHED_SHA="7da975a69b1237499ee238e93ede215c3e235c5b34a5d87ab507d45a4e063778"
-SYSINFO_PATCHED_SHA="3dbef5d95c02561baf920a6b2014ed34d021eb5ce6723c076ddecf9072d839df"
+PL_PATCHED_SHA="9c73ff7b4fa8389f665cab4a52419fbfc26dd50c3d5b3b3b3be82032399cc599"
+HELP_PATCHED_SHA="7f4e8eae9bd63f9fdde6f645bbc4924e55cfb6ca4a6b9324c1665acd55c1888c"
+SYSINFO_PATCHED_SHA="b118f00222616517bf34e0a82aa97fcdf199feb751dacdde13a87cc32b4f9a57"
 TWEAKS_PATCHED_SHA="6cee7405bcc556ac3af1baee418a2ffa85cad39b37c3f76e340ef2a8297595c6"
 WADV_BASE_SHA="21c08426a49a95cefad0097077d509d4a6b759a634b379f58e3ad00fa3ef5fa3"
-WADV_PATCHED_SHA="62b5c08839fb238c17bdace3e968c799233926873c50cb400e6de2d2356e10fc"
+WADV_PATCHED_SHA="87f6f901505c590e3914cf9559963bf76a4b9365b393d7331747dda87def04de"
 STATE_BASE_SHA="bf0992a67f18807e18fc8b9baf75852cef825e80ff8b5885bc0452745ce77ee5"
 STATE_PATCHED_SHA="21c1653b9d76c1fe174044467a3ba4648908a4e525df7735fd23d3c737ae2dfb"
 ROUTER_STATUS_BASE_SHA="dc99b353220c1b3b13fceacf44a4ca1fa137831cc103cdfaee8ada97ef26ed09"
 ROUTER_STATUS_PATCHED_SHA="1435585d9f1f8a77e1f03d765f7114c9f2a33da26425bc38512922d5e0f56b95"
 ROUTER_BASE_SHA="b2ef787f4a53740eac12f9304533937c347de9f8afd0541f06f62d600c6aaf20"
-ROUTER_PATCHED_SHA="5c809d2105bfdb87f1e6493ddc8cf05f78dbd3f50be402d3846f3b987d3f7cd6"
+ROUTER_PATCHED_SHA="336899658512834c6eb2e0c8e0a254e364c70c4b9db834d154e483dbba5ac59c"
+ADV_WAN_BASE_SHA="dd628743ceec7bdae1a0122e2703894c239c67fc7eeaa195037c562251b7fd4d"
+ADV_WAN_PATCHED_SHA="d51c13762cc9919dabcbacca03043772dc0c4c4f091c8954539a153789054b13"
+ADV_BASICFW_BASE_SHA="093464438e0309dcf780434fa3cb35efdc6c94b134a9b8655f4a45404a606254"
+ADV_BASICFW_PATCHED_SHA="ee8afdf7041325911c2f4534de17b7ef44a7210569e1be6478c214a85965e3d2"
+ADV_FIREWALL_BASE_SHA="ed4a86472a9d84e9dae4e2429433ba010f90d719737cb631a9f18b1765c4cfec"
+ADV_FIREWALL_PATCHED_SHA="2596b37c35b916d827bd055789e6f862f446f34146efd62d19c11f4f485d6edb"
+ADV_FWUP_BASE_SHA="c7a623ffa0fb40e79267bc3c447d7daa4189ad51007c65cdcedec6a99495bce6"
+ADV_FWUP_PATCHED_SHA="5844886056e8aa110c91d0c2c71e1a8eea33017c24db0f302a8bc8f3a9268107"
+ADV_SYSTEM_BASE_SHA="9758be166fe3d6fa76624f6d4683ffb000447b703053a43f1b384aa28391b14f"
+ADV_SYSTEM_PATCHED_SHA="c11924fa9371ba77306546ef982da3398f69ce9f0d7ce7a2a6b59699d4406a6a"
+ADV_BACKUP_BASE_SHA="57c02b5c6313f747f8cdd1d04c34db2c463df025267c198f3b9d2a1196188f54"
+ADV_BACKUP_PATCHED_SHA="55cb9fe89e1a96e26b1810c2519ea038c39e873c1461215b1b45abee9ae7d313"
+ADV_SNMP_BASE_SHA="6c20bf09871244af9f1fed9cd89988fa4b0d786d4177c1de8b836152ce0e2266"
+ADV_SNMP_PATCHED_SHA="0cd561e60b50c5a28aab3b788b2fc6295567abc45b0376f3ffb2a01ab0900ee5"
+MAIN_LOG_BASE_SHA="313abb3aba5829dce486e196945b7ac2fff80a050fa9b79bc76c1186162d1cf3"
+MAIN_LOG_PATCHED_SHA="758e2b1ad476f91652e467ded018e98810e65eb9f43ec10e3d5ebc4d5f45a5dd"
+MAIN_WSTATUS_BASE_SHA="bacbf72969e1767d3822c617df613ea8333e4e5f98e11d8f47421f834df4bab6"
+MAIN_WSTATUS_PATCHED_SHA="83b7621c38b2c811002144657e786cc3c4751290090ec326b94b51c9376aa83a"
+MAIN_DHCP_BASE_SHA="11696f28db10267445365058c986c118f5bbc866172723135d916804da8e0efa"
+MAIN_DHCP_PATCHED_SHA="307aba28ba89d350350bb185561b8cfa4d92919690e026f605ef7409a5245a3f"
+MAIN_IPV6_BASE_SHA="dab116af0f5516a24431fdcac1e72191fdba90e9f37f9f142209c7a9e9582261"
+MAIN_IPV6_PATCHED_SHA="100eaa2fb1fa519c3f4ee13c0dd7b7970a223b9440a8931027e76a177fb92bcd"
+MAIN_ROUTE_BASE_SHA="d0ef38dde72eb79993c09324446c7c31f8038393d743d287b7745361a91d6a8b"
+MAIN_ROUTE_PATCHED_SHA="68862363f84efcef1be241bbbf894eeab05c3774816c4cb41c36609278a64ee0"
+MAIN_IPT_BASE_SHA="9f07e8f3b8164cf9277518147e0576643a2ebcbe452321391f564612919f3cc7"
+MAIN_IPT_PATCHED_SHA="b15d19e1060bc7c2f46d4961b974d5db95d829ef12f85a9b9c80cf9e05d9bf90"
+MAIN_CONN_BASE_SHA="ee154b38a053b718cc76668959c1ee392b7f5a52b7d00aedf8a4866f0e0fe087"
+MAIN_CONN_PATCHED_SHA="f9834d717a981d3746b948d5eb5e573e5bcc70f5ff15d9072e3efb0299ccb1db"
+INTERNET_BASE_SHA="5b648bbe412588e58311ebce321e2593ea0108a305190a05d13f4ec3655aa550"
+INTERNET_PATCHED_SHA="323016b010d900f7ac6cc12f798a782a9891c6eae4c3388fbc5e7410b5fe4fdd"
+TRAFFIC_RT_BASE_SHA="9358c8f05a6dbb5a5951845e15570cdac0c01440447e6756f55ee0104784dd12"
+TRAFFIC_RT_PATCHED_SHA="073478fd5c248e23fb3c5b9ed076aa66495cf72c2ca3f6db15eec9428a8bdf8c"
+TRAFFIC_LAST24_BASE_SHA="013a43f0196f907503976923034ecf4ddd6da336fbb96ebc29931ea9ec594132"
+TRAFFIC_LAST24_PATCHED_SHA="1d6cd13ba666e2fff74dd7fed309788d057aca657e4569c59fbb1bb7ba40a346"
+TRAFFIC_DAILY_BASE_SHA="36c91660d8233cd2c9f462cf8ccb4a8ac9e8053153f3913d5c54ff25d1d12923"
+TRAFFIC_DAILY_PATCHED_SHA="cd18b7dc944a19f3bccae5f8b3a221ca8dc062863cacfc0155a7d38558f36df5"
+TRAFFIC_MONTHLY_BASE_SHA="b653081eaa515c87a4837c0d238298e0ca4ad6456871e82db194a76d3b580c71"
+TRAFFIC_MONTHLY_PATCHED_SHA="c773215493e5595e7ed3d383eaae24b4e1e7a53044abbe793b2304f2e20dd9ce"
+TRAFFIC_SETTINGS_BASE_SHA="bb229d4b89d7900f435994298f7adf45c41743ca3cea64194938c3e13a96b920"
+TRAFFIC_SETTINGS_PATCHED_SHA="e64194f41d97279fbe86e66bb0da4e2adf769d896e9a830b1dcda2d2c3af6574"
+DNSDIRECTOR_BASE_SHA="0c05fa87d9ab8acca2ec6aee855ab1950d1e364cf261615c679a7b736e824465"
+DNSDIRECTOR_PATCHED_SHA="a1f3fd03aa68a261f4c3dc1ee3d022efbbe43ba56cef5e5ea53197948265dd5b"
 
 find_hash_backend() {
     # Firmware OpenSSL is available before Entware /opt is mounted.
@@ -243,6 +327,69 @@ mount_overlay() {
     mount_one "$ROUTER_SOURCE" "$ROUTER_TARGET" \
         "$ROUTER_BASE_SHA" "$ROUTER_PATCHED_SHA" "router.asp" || return 1
 
+    mount_one "$INTERNET_SOURCE" "$INTERNET_TARGET" \
+        "$INTERNET_BASE_SHA" "$INTERNET_PATCHED_SHA" "internet.asp" || return 1
+
+    mount_one "$ADV_WAN_SOURCE" "$ADV_WAN_TARGET" \
+        "$ADV_WAN_BASE_SHA" "$ADV_WAN_PATCHED_SHA" "Advanced_WAN_Content.asp" || return 1
+
+    mount_one "$ADV_BASICFW_SOURCE" "$ADV_BASICFW_TARGET" \
+        "$ADV_BASICFW_BASE_SHA" "$ADV_BASICFW_PATCHED_SHA" "Advanced_BasicFirewall_Content.asp" || return 1
+
+    mount_one "$ADV_FIREWALL_SOURCE" "$ADV_FIREWALL_TARGET" \
+        "$ADV_FIREWALL_BASE_SHA" "$ADV_FIREWALL_PATCHED_SHA" "Advanced_Firewall_Content.asp" || return 1
+
+    mount_one "$ADV_FWUP_SOURCE" "$ADV_FWUP_TARGET" \
+        "$ADV_FWUP_BASE_SHA" "$ADV_FWUP_PATCHED_SHA" "Advanced_FirmwareUpgrade_Content.asp" || return 1
+
+    mount_one "$ADV_SYSTEM_SOURCE" "$ADV_SYSTEM_TARGET" \
+        "$ADV_SYSTEM_BASE_SHA" "$ADV_SYSTEM_PATCHED_SHA" "Advanced_System_Content.asp" || return 1
+
+    mount_one "$ADV_BACKUP_SOURCE" "$ADV_BACKUP_TARGET" \
+        "$ADV_BACKUP_BASE_SHA" "$ADV_BACKUP_PATCHED_SHA" "Advanced_SettingBackup_Content.asp" || return 1
+
+    mount_one "$ADV_SNMP_SOURCE" "$ADV_SNMP_TARGET" \
+        "$ADV_SNMP_BASE_SHA" "$ADV_SNMP_PATCHED_SHA" "Advanced_SNMP_Content.asp" || return 1
+
+    mount_one "$MAIN_LOG_SOURCE" "$MAIN_LOG_TARGET" \
+        "$MAIN_LOG_BASE_SHA" "$MAIN_LOG_PATCHED_SHA" "Main_LogStatus_Content.asp" || return 1
+
+    mount_one "$MAIN_WSTATUS_SOURCE" "$MAIN_WSTATUS_TARGET" \
+        "$MAIN_WSTATUS_BASE_SHA" "$MAIN_WSTATUS_PATCHED_SHA" "Main_WStatus_Content.asp" || return 1
+
+    mount_one "$MAIN_DHCP_SOURCE" "$MAIN_DHCP_TARGET" \
+        "$MAIN_DHCP_BASE_SHA" "$MAIN_DHCP_PATCHED_SHA" "Main_DHCPStatus_Content.asp" || return 1
+
+    mount_one "$MAIN_IPV6_SOURCE" "$MAIN_IPV6_TARGET" \
+        "$MAIN_IPV6_BASE_SHA" "$MAIN_IPV6_PATCHED_SHA" "Main_IPV6Status_Content.asp" || return 1
+
+    mount_one "$MAIN_ROUTE_SOURCE" "$MAIN_ROUTE_TARGET" \
+        "$MAIN_ROUTE_BASE_SHA" "$MAIN_ROUTE_PATCHED_SHA" "Main_RouteStatus_Content.asp" || return 1
+
+    mount_one "$MAIN_IPT_SOURCE" "$MAIN_IPT_TARGET" \
+        "$MAIN_IPT_BASE_SHA" "$MAIN_IPT_PATCHED_SHA" "Main_IPTStatus_Content.asp" || return 1
+
+    mount_one "$MAIN_CONN_SOURCE" "$MAIN_CONN_TARGET" \
+        "$MAIN_CONN_BASE_SHA" "$MAIN_CONN_PATCHED_SHA" "Main_ConnStatus_Content.asp" || return 1
+
+    mount_one "$TRAFFIC_RT_SOURCE" "$TRAFFIC_RT_TARGET" \
+        "$TRAFFIC_RT_BASE_SHA" "$TRAFFIC_RT_PATCHED_SHA" "Main_TrafficMonitor_realtime.asp" || return 1
+
+    mount_one "$TRAFFIC_LAST24_SOURCE" "$TRAFFIC_LAST24_TARGET" \
+        "$TRAFFIC_LAST24_BASE_SHA" "$TRAFFIC_LAST24_PATCHED_SHA" "Main_TrafficMonitor_last24.asp" || return 1
+
+    mount_one "$TRAFFIC_DAILY_SOURCE" "$TRAFFIC_DAILY_TARGET" \
+        "$TRAFFIC_DAILY_BASE_SHA" "$TRAFFIC_DAILY_PATCHED_SHA" "Main_TrafficMonitor_daily.asp" || return 1
+
+    mount_one "$TRAFFIC_MONTHLY_SOURCE" "$TRAFFIC_MONTHLY_TARGET" \
+        "$TRAFFIC_MONTHLY_BASE_SHA" "$TRAFFIC_MONTHLY_PATCHED_SHA" "Main_TrafficMonitor_monthly.asp" || return 1
+
+    mount_one "$TRAFFIC_SETTINGS_SOURCE" "$TRAFFIC_SETTINGS_TARGET" \
+        "$TRAFFIC_SETTINGS_BASE_SHA" "$TRAFFIC_SETTINGS_PATCHED_SHA" "Main_TrafficMonitor_settings.asp" || return 1
+
+    mount_one "$DNSDIRECTOR_SOURCE" "$DNSDIRECTOR_TARGET" \
+        "$DNSDIRECTOR_BASE_SHA" "$DNSDIRECTOR_PATCHED_SHA" "DNSDirector.asp" || return 1
+
     localize_menu || return 1
 
     echo "WEBUI_PL_OVERLAY=PASS"
@@ -361,6 +508,69 @@ unmount_overlay() {
     unmount_one "$ROUTER_TARGET" \
         "$ROUTER_BASE_SHA" "$ROUTER_PATCHED_SHA" "router.asp" || return 1
 
+    unmount_one "$INTERNET_TARGET" \
+        "$INTERNET_BASE_SHA" "$INTERNET_PATCHED_SHA" "internet.asp" || return 1
+
+    unmount_one "$ADV_WAN_TARGET" \
+        "$ADV_WAN_BASE_SHA" "$ADV_WAN_PATCHED_SHA" "Advanced_WAN_Content.asp" || return 1
+
+    unmount_one "$ADV_BASICFW_TARGET" \
+        "$ADV_BASICFW_BASE_SHA" "$ADV_BASICFW_PATCHED_SHA" "Advanced_BasicFirewall_Content.asp" || return 1
+
+    unmount_one "$ADV_FIREWALL_TARGET" \
+        "$ADV_FIREWALL_BASE_SHA" "$ADV_FIREWALL_PATCHED_SHA" "Advanced_Firewall_Content.asp" || return 1
+
+    unmount_one "$ADV_FWUP_TARGET" \
+        "$ADV_FWUP_BASE_SHA" "$ADV_FWUP_PATCHED_SHA" "Advanced_FirmwareUpgrade_Content.asp" || return 1
+
+    unmount_one "$ADV_SYSTEM_TARGET" \
+        "$ADV_SYSTEM_BASE_SHA" "$ADV_SYSTEM_PATCHED_SHA" "Advanced_System_Content.asp" || return 1
+
+    unmount_one "$ADV_BACKUP_TARGET" \
+        "$ADV_BACKUP_BASE_SHA" "$ADV_BACKUP_PATCHED_SHA" "Advanced_SettingBackup_Content.asp" || return 1
+
+    unmount_one "$ADV_SNMP_TARGET" \
+        "$ADV_SNMP_BASE_SHA" "$ADV_SNMP_PATCHED_SHA" "Advanced_SNMP_Content.asp" || return 1
+
+    unmount_one "$MAIN_LOG_TARGET" \
+        "$MAIN_LOG_BASE_SHA" "$MAIN_LOG_PATCHED_SHA" "Main_LogStatus_Content.asp" || return 1
+
+    unmount_one "$MAIN_WSTATUS_TARGET" \
+        "$MAIN_WSTATUS_BASE_SHA" "$MAIN_WSTATUS_PATCHED_SHA" "Main_WStatus_Content.asp" || return 1
+
+    unmount_one "$MAIN_DHCP_TARGET" \
+        "$MAIN_DHCP_BASE_SHA" "$MAIN_DHCP_PATCHED_SHA" "Main_DHCPStatus_Content.asp" || return 1
+
+    unmount_one "$MAIN_IPV6_TARGET" \
+        "$MAIN_IPV6_BASE_SHA" "$MAIN_IPV6_PATCHED_SHA" "Main_IPV6Status_Content.asp" || return 1
+
+    unmount_one "$MAIN_ROUTE_TARGET" \
+        "$MAIN_ROUTE_BASE_SHA" "$MAIN_ROUTE_PATCHED_SHA" "Main_RouteStatus_Content.asp" || return 1
+
+    unmount_one "$MAIN_IPT_TARGET" \
+        "$MAIN_IPT_BASE_SHA" "$MAIN_IPT_PATCHED_SHA" "Main_IPTStatus_Content.asp" || return 1
+
+    unmount_one "$MAIN_CONN_TARGET" \
+        "$MAIN_CONN_BASE_SHA" "$MAIN_CONN_PATCHED_SHA" "Main_ConnStatus_Content.asp" || return 1
+
+    unmount_one "$TRAFFIC_RT_TARGET" \
+        "$TRAFFIC_RT_BASE_SHA" "$TRAFFIC_RT_PATCHED_SHA" "Main_TrafficMonitor_realtime.asp" || return 1
+
+    unmount_one "$TRAFFIC_SETTINGS_TARGET" \
+        "$TRAFFIC_SETTINGS_BASE_SHA" "$TRAFFIC_SETTINGS_PATCHED_SHA" "Main_TrafficMonitor_settings.asp" || return 1
+
+    unmount_one "$DNSDIRECTOR_TARGET" \
+        "$DNSDIRECTOR_BASE_SHA" "$DNSDIRECTOR_PATCHED_SHA" "DNSDirector.asp" || return 1
+
+    unmount_one "$TRAFFIC_MONTHLY_TARGET" \
+        "$TRAFFIC_MONTHLY_BASE_SHA" "$TRAFFIC_MONTHLY_PATCHED_SHA" "Main_TrafficMonitor_monthly.asp" || return 1
+
+    unmount_one "$TRAFFIC_DAILY_TARGET" \
+        "$TRAFFIC_DAILY_BASE_SHA" "$TRAFFIC_DAILY_PATCHED_SHA" "Main_TrafficMonitor_daily.asp" || return 1
+
+    unmount_one "$TRAFFIC_LAST24_TARGET" \
+        "$TRAFFIC_LAST24_BASE_SHA" "$TRAFFIC_LAST24_PATCHED_SHA" "Main_TrafficMonitor_last24.asp" || return 1
+
     restore_menu_labels || return 1
 
     echo "WEBUI_PL_OVERLAY_UNMOUNT=PASS"
@@ -375,6 +585,28 @@ status_overlay() {
     echo "state.js=$(file_hash "$STATE_TARGET")"
     echo "router_status.asp=$(file_hash "$ROUTER_STATUS_TARGET")"
     echo "router.asp=$(file_hash "$ROUTER_TARGET")"
+    echo "Advanced_WAN_Content.asp=$(file_hash "$ADV_WAN_TARGET")"
+    echo "Advanced_BasicFirewall_Content.asp=$(file_hash "$ADV_BASICFW_TARGET")"
+    echo "Advanced_Firewall_Content.asp=$(file_hash "$ADV_FIREWALL_TARGET")"
+    echo "Advanced_FirmwareUpgrade_Content.asp=$(file_hash "$ADV_FWUP_TARGET")"
+    echo "Advanced_System_Content.asp=$(file_hash "$ADV_SYSTEM_TARGET")"
+    echo "Advanced_SettingBackup_Content.asp=$(file_hash "$ADV_BACKUP_TARGET")"
+    echo "Advanced_SNMP_Content.asp=$(file_hash "$ADV_SNMP_TARGET")"
+    echo "Main_LogStatus_Content.asp=$(file_hash "$MAIN_LOG_TARGET")"
+    echo "Main_WStatus_Content.asp=$(file_hash "$MAIN_WSTATUS_TARGET")"
+    echo "Main_DHCPStatus_Content.asp=$(file_hash "$MAIN_DHCP_TARGET")"
+    echo "Main_IPV6Status_Content.asp=$(file_hash "$MAIN_IPV6_TARGET")"
+    echo "Main_RouteStatus_Content.asp=$(file_hash "$MAIN_ROUTE_TARGET")"
+    echo "Main_IPTStatus_Content.asp=$(file_hash "$MAIN_IPT_TARGET")"
+    echo "Main_ConnStatus_Content.asp=$(file_hash "$MAIN_CONN_TARGET")"
+    echo "internet.asp=$(file_hash "$INTERNET_TARGET")"
+
+    echo "Main_TrafficMonitor_realtime.asp=$(file_hash "$TRAFFIC_RT_TARGET")"
+    echo "Main_TrafficMonitor_last24.asp=$(file_hash "$TRAFFIC_LAST24_TARGET")"
+    echo "Main_TrafficMonitor_daily.asp=$(file_hash "$TRAFFIC_DAILY_TARGET")"
+    echo "Main_TrafficMonitor_monthly.asp=$(file_hash "$TRAFFIC_MONTHLY_TARGET")"
+    echo "Main_TrafficMonitor_settings.asp=$(file_hash "$TRAFFIC_SETTINGS_TARGET")"
+    echo "DNSDirector.asp=$(file_hash "$DNSDIRECTOR_TARGET")"
 
     if grep -F 'menuName: "Informacje o systemie",' "$MENU_TARGET" >/dev/null 2>&1 &&
        grep -F 'tabName: "Dostrajanie"' "$MENU_TARGET" >/dev/null 2>&1; then

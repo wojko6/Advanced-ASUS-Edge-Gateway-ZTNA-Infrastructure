@@ -1,0 +1,20 @@
+--- a/Advanced_FirmwareUpgrade_Content.asp
++++ b/Advanced_FirmwareUpgrade_Content.asp
+@@ -1730,7 +1730,7 @@
+ <li><#2326#></li>
+ <li><#373#></li>
+ <li id="fw_note2"><#2327#>&nbsp;<#2328#></li>
+-<li id="fw_note3">Get the latest firmware version from the download site at <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="https://www.asuswrt-merlin.net/download/" target="_blank">https://www.asuswrt-merlin.net/download/</a></li>
++<li id="fw_note3">Pobierz najnowszą wersję oprogramowania układowego ze strony pobierania: <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="https://www.asuswrt-merlin.net/download/" target="_blank">https://www.asuswrt-merlin.net/download/</a></li>
+ <li style="display:none;"id="fw_note5"><#2330#></li>
+ </ol>
+ </div>
+@@ -1881,7 +1881,7 @@
+ </td>
+ </tr>
+ <tr id="fwcheck_tr">
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,15);">Scheduled check for new firmware availability</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,15);">Zaplanowane sprawdzanie dostępności nowego oprogramowania układowego</a></th>
+ <td>
+ <input type="radio" onclick="toggle_fw_check(1);" name="firmware_check_enable" class="input" value="1" <% nvram_match("firmware_check_enable", "1", "checked"); %>><#278#>
+ <input type="radio" onclick="toggle_fw_check(0);" name="firmware_check_enable" class="input" value="0" <% nvram_match("firmware_check_enable", "0", "checked"); %>><#277#>

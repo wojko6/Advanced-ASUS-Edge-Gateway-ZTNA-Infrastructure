@@ -1,5 +1,44 @@
 --- a/help.js
 +++ b/help.js
+@@ -1,6 +1,6 @@
+ ﻿var Untranslated = {
+ fw_size_higher_mem : 'Memory space is NOT enough to upgrade on internet. Please wait for rebooting.',
+-ASUSGATE_note9 : 'Your DSL line appears to be unstable. DLA (Dynamic Line Adjustment) which enabled by default already adopted necessary changes and ensure stability. However, if interruption continues please submit a Feedback form with "Enable DSL Line Diagnostic" option set as "Yes" and "Diagnostic debug log capture duration" set as 24 hours for our analysis(no need to enable System diagnostic).',
++ASUSGATE_note9 : 'Linia DSL wydaje się niestabilna. Funkcja DLA (Dynamic Line Adjustment), domyślnie włączona, wprowadziła już niezbędne zmiany w celu zapewnienia stabilności. Jeśli przerwy będą się powtarzać, wyślij formularz opinii z włączoną diagnostyką linii DSL i czasem przechwytywania dziennika diagnostycznego ustawionym na 24 godziny (nie trzeba włączać diagnostyki systemu).',
+ ASUSGATE_note6 : "Your DSL (Digital Suscriber Line) seems unstable. We strongly recommend that you submit feedback to our support team.",
+ ASUSGATE_note7 : "If you are experiencing any DSL related issues or you have any comments, please feel free to inform our support team.",
+ ASUSGATE_act_feedback : "Feedback now",
+@@ -220,10 +220,10 @@
+ statusmenu ="<span><#1040#><br><#1018#></span>";
+ }
+ else if(itemNum == 89){
+-statusmenu ="<span>Enable this function allow block advertisement in the streaming video.</span>";
++statusmenu ="<span>Włączenie tej funkcji umożliwia blokowanie reklam w strumieniowanym wideo.</span>";
+ }
+ else if(itemNum == 90){
+-statusmenu ="<span>Enable this function allow you to block websites used to display banner or popup advertisement.</span>";
++statusmenu ="<span>Włączenie tej funkcji umożliwia blokowanie witryn używanych do wyświetlania banerów lub reklam wyskakujących.</span>";
+ }
+ else if(itemNum == 91){
+ statusmenu ="<span><#1015#></span>";
+@@ -289,7 +289,7 @@
+ statusmenu += "<div><#2921#></div>";
+ }
+ if(itemNum == 24)
+-statusmenu += "<span>The USB 3.0 cable without well-shielded would affect the 2.4Ghz wireless range.Enabling this feature to ensure the best wireless performance If your USB 3.0 device is not USB-IF certified.</span>";
++statusmenu += "<span>Niewystarczająco ekranowany kabel USB 3.0 może zmniejszać zasięg sieci bezprzewodowej 2,4 GHz. Włącz tę funkcję, aby zapewnić najlepszą wydajność sieci bezprzewodowej, jeśli urządzenie USB 3.0 nie ma certyfikatu USB-IF.</span>";
+ if(itemNum == 25)
+ statusmenu += "<span><#1420#></span>";
+ else if(itemNum == 23)
+@@ -347,7 +347,7 @@
+ if(itemNum == 27){ //Feedback Diagnostic
+ if(diag_dblog_enable == "1") {
+ var lineDesc = "";
+-statusmenu = "<div class='StatusHint'>System Diagnostic :</div>"; /* untranslated */
++statusmenu = "<div class='StatusHint'>Diagnostyka systemu:</div>"; /* untranslated */
+ lineDesc = "<#2117#><br>";
+ statusmenu += "<span>" + lineDesc + "</span>";
+ statusmenu += "<div class='StatusHint'><#1670#> :</div>";
 @@ -427,9 +427,9 @@
  wifiDesc = "<b>&nbsp;2.4G:</b> ";
  if ( radio_state[0] == 1) {
@@ -48,6 +87,49 @@
  } else {
  wifiDesc += "<#1669#>";
  }
+@@ -506,7 +506,7 @@
+ for(var i=0; i<gn_array_2g.length; i++){
+ if(gn_array_2g[i][0] == 1){
+ if(title2 == 0){
+-statusmenu += "<div class='StatusHint'>2.4GHz Network:</div>";
++statusmenu += "<div class='StatusHint'>Sieć 2,4 GHz:</div>";
+ title2 = 1;
+ }
+ var show_str = gn_array_2g[i][1];
+@@ -539,9 +539,9 @@
+ if(gn_array_5g[i][0] == 1){
+ if(title5 == 0){
+ if(wl_info.band5g_2_support)
+-statusmenu += "<div class='StatusHint' style='margin-top:15px;'>5GHz-1 Network:</div>";
++statusmenu += "<div class='StatusHint' style='margin-top:15px;'>Sieć 5 GHz-1:</div>";
+ else
+-statusmenu += "<div class='StatusHint' style='margin-top:15px;'>5GHz Network:</div>";
++statusmenu += "<div class='StatusHint' style='margin-top:15px;'>Sieć 5 GHz:</div>";
+ title5 = 1;
+ }
+ var show_str = gn_array_5g[i][1];
+@@ -575,10 +575,10 @@
+ if(gn_array_5g_2[i][0] == 1){
+ if(title5_2 == 0){
+ if(band6g_support){
+-statusmenu += "<div class='StatusHint' style='margin-top:15px;'>6 GHz Network:</div>";
++statusmenu += "<div class='StatusHint' style='margin-top:15px;'>Sieć 6 GHz:</div>";
+ }
+ else{
+-statusmenu += "<div class='StatusHint' style='margin-top:15px;'>5 GHz-2 Network:</div>";
++statusmenu += "<div class='StatusHint' style='margin-top:15px;'>Sieć 5 GHz-2:</div>";
+ }
+ title5_2 = 1;
+ }
+@@ -691,7 +691,7 @@
+ else if(_link_sbstatus == "5")
+ this.hint = "<#948#>";
+ else if(_link_sbstatus == "6")
+-this.hint = "System error. <#3272#>";
++this.hint = "Błąd systemu. <#3272#>";
+ }
+ }
+ }
 @@ -778,7 +778,10 @@
  for(var i=0; i<usbDevicesList.length; i++){
  if(usbDevicesList[i].deviceType == "printer") continue;
@@ -60,3 +142,47 @@
  if(usbDevicesList[i].deviceType == "storage" && usbDevicesList[i].mountNumber == 0)
  statusmenu += "<div><#1903#></div>";
  else if(usbDevicesList[i].hasErrPart)
+@@ -822,7 +825,7 @@
+ var _caption = "";
+ if(hint_show_id == 10){ // Feedback System Diagnostic Capture
+ statusmenu = "<span class='StatusClickHint' onclick='cancel_dblog();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#2116#></span>";
+-_caption = "System Diagnostic capture";
++_caption = "Przechwytywanie diagnostyki systemu";
+ }
+ else if(hint_show_id == 9){ //2015.07 Viz add for bwdpi : Adaptive QoS mode
+ statusmenu = "<span class='StatusClickHint' onclick='priority_change();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#1022#></span><br>";
+@@ -857,7 +860,7 @@
+ }
+ }
+ else if(hint_show_id == 6){ // Viz add 2013.04 for dsl sync status
+-statusmenu = "<span class='StatusClickHint' onclick='gotoDSL_log();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Go to DSL Log</span>";
++statusmenu = "<span class='StatusClickHint' onclick='gotoDSL_log();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Przejdź do dziennika DSL</span>";
+ _caption = "DSL Log";
+ }
+ else if(hint_show_id == 5){
+@@ -955,7 +958,7 @@
+ else if(sw_mode == 4){
+ statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"/QIS_wizard.htm?flag=sitesurvey_mb\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#114#></span>";
+ }
+-_caption = "Internet Status";
++_caption = "Stan Internetu";
+ }
+ else if(hint_show_id == 2){
+ statusmenu = "";
+@@ -970,14 +973,14 @@
+ if(statusmenu == "")
+ statusmenu = "<span class='StatusHint'><#1903#></span>";
+ else if(statusmenu.howMany("remove_disk") > 1)
+-statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_all_disk();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Eject all USB disks</div>";
++statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_all_disk();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Wysuń wszystkie dyski USB</div>";
+ _caption = "USB storage";
+ return overlib(statusmenu, OFFSETX, -160, LEFT, STICKY, CAPTION, " ", CLOSETITLE, '');
+ });
+ }
+ else if(hint_show_id == 1){
+ if(hadPlugged("printer"))
+-statusmenu = "<span class='StatusClickHint' onclick='enableMonomode();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Enable Monopoly mode</span>";
++statusmenu = "<span class='StatusClickHint' onclick='enableMonomode();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Włącz tryb Monopoly</span>";
+ else
+ statusmenu = "<span class='StatusHint'><#3079#></span>";
+ _caption = "Printer";

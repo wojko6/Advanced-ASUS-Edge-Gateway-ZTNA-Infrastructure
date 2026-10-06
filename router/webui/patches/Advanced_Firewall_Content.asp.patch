@@ -1,0 +1,11 @@
+--- a/Advanced_Firewall_Content.asp
++++ b/Advanced_Firewall_Content.asp
+@@ -441,7 +441,7 @@
+ <div class="formfonttitle"><#513#> - <#516#></div>
+ <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+ <div class="formfontdesc"><#2222#></div>
+-<div class="formfontdesc">The IP address can be a simple IP (1.2.3.4), or use the CIDR format (1.2.3.4/24) to handle a whole subnet.</div>
++<div class="formfontdesc">Adres IP może być pojedynczym adresem (1.2.3.4) lub mieć format CIDR (1.2.3.4/24), aby określić całą podsieć.</div>
+ <div class="formfontdesc"><#2224#></div>
+ <div class="formfontdesc" style="color:#FFCC00;"><#2225#></div>
+ <div id="svc_hint_div" style="display:none;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"><#377#></span></div>
