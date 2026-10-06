@@ -8,7 +8,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 has met its current acceptance target: the Android source-scoped Pi-hole/Tailscale transport and remote-management path are live-validated in PR #182, the stricter Pi-hole list is promoted to the global Default policy, Fedora's Tailscale DNS visibility gap is remediated, and representative Android application compatibility passed without observed regression. PR #182 remains open pending merge.
+**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 is completed: the Android source-scoped Pi-hole/Tailscale transport and remote-management path were live-validated and merged through PR #182, the stricter Pi-hole list is promoted to the global Default policy, Fedora's Tailscale DNS visibility gap is remediated, and representative Android application compatibility passed without observed regression.
 
 ## Executive status
 
@@ -41,8 +41,8 @@ The stability observation deliberately separated a successful point-in-time depl
 
 ## 2026-10-06 Android Pi-hole/Tailscale policy (#152)
 
-Issue #152 remains open, but its transport and source-scoped DNS-enforcement
-layer is now live-validated on the reference deployment and proposed in PR #182.
+Issue #152 is complete. Its transport and source-scoped DNS-enforcement layer
+is live-validated on the reference deployment and merged through PR #182.
 
 Selected Tailscale IPv4 sources can be placed on an opt-in Pi-hole path before
 the generic Tailscale DNS REDIRECT fallback. Matching TCP/UDP 53 traffic is
@@ -88,9 +88,9 @@ project healthcheck again reported zero failures and warnings.
 
 Representative Android application compatibility, including banking/payment
 use and normal Android connectivity, passed without observed regression. The
-current #152 acceptance target is therefore complete and PR #182 is ready for
-merge. Exit-node-enabled Android DNS, encrypted-DNS interception and long-term
-endurance are not claimed by the current #152 validation.
+current #152 acceptance target is complete and the implementation was merged
+through PR #182. Exit-node-enabled Android DNS, encrypted-DNS interception and
+long-term endurance are not claimed by the current #152 validation.
 
 See [the Android Pi-hole/Tailscale policy](docs/android-pihole-tailscale-policy.md),
 [the troubleshooting case study](docs/case-studies/android-tailscale-pihole-debugging.md)
