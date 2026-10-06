@@ -680,6 +680,33 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
 }
 
 
+for dns_guard_guard in \
+    'router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755' \
+    'router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700' \
+    'EDGE_DNS_GUARD_WATCHDOG="1"' \
+    'configure_dns_guard_watchdog()' \
+    'cru a AsusEdgeDNSGuard' \
+    'DNS_GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"'
+do
+    grep -F "$dns_guard_guard" \
+        "$REPO_DIR/scripts/install.sh" \
+        "$REPO_DIR/config/edge.conf.example" \
+        "$REPO_DIR/router/scripts/services-start" \
+        "$REPO_DIR/router/scripts/wan-event-handler" >/dev/null || {
+        echo "FAIL: DNS Guard integration missing: $dns_guard_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F 'printf '\''nameserver 127.0.0.1\\n'\''' "$REPO_DIR/router/scripts/wan-event-handler" >/dev/null; then
+    echo "FAIL: WAN handler still hard-codes the local resolver instead of DNS Guard" >&2
+    exit 1
+fi
+
+sh "$REPO_DIR/tests/test-dns-guard.sh"
+sh "$REPO_DIR/tests/test-wan-event-handler.sh"
+
+
 grep -F 'EDGE_LAN_DNS_BYPASS_IPS=""' "$REPO_DIR/config/edge.conf.example" >/dev/null || {
     echo "FAIL: LAN DNS bypass configuration guard missing" >&2
     exit 1
