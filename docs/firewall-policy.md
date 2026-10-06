@@ -94,8 +94,11 @@ observed in both views.
 
 The validated ownership boundary is therefore:
 
-- project-owned: Tailscale ingress/forward filtering and authorization;
+- project-owned: Tailscale ingress/forward filtering and WAN-egress permission;
+- Tailscale Grants: exit-node identity/entitlement authorization;
 - platform-owned: WAN source NAT and the parent established/related return path.
+
+The router-local exit-node source authorization layer remains pending under #176.
 
 The project must not duplicate the firmware NAT merely to claim ownership.
 Instead, when exit-node mode is enabled, health checking should treat the
