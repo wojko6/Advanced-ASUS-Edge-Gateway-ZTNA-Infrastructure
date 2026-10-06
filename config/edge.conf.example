@@ -9,6 +9,11 @@ EDGE_TS_STATE="/opt/var/lib/tailscale/tailscaled.state"
 # ASUS Edge owns the iptables/ip6tables policy. Disable Tailscale's native
 # netfilter management to avoid competing ts-* chains on Asuswrt-Merlin.
 EDGE_TS_NETFILTER_MODE="off"
+
+# Tailscale package changes are explicit maintenance actions. Keep automatic
+# application disabled so updates cannot bypass project preflight/rollback.
+EDGE_TS_AUTO_UPDATE="false"
+
 EDGE_ROUTER_LAN_IP="192.168.50.1"
 EDGE_TAILNET_V4_CIDR="100.64.0.0/10"
 

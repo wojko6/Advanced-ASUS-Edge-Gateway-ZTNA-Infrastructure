@@ -21,7 +21,7 @@ require_text '[ -x "$HEALTHCHECK" ] || {' 'healthcheck is not required before up
 require_text 'opkg update || exit 1' 'opkg metadata refresh failure is not fatal'
 require_text 'UPGRADABLE="$(opkg list-upgradable)" || {' 'package query failure is not distinguished'
 require_text 'opkg upgrade tailscale || exit 1' 'Tailscale package upgrade failure is not fatal'
-require_text '"$SERVICES_START" || {' 'post-update service recovery failure is not fatal'
+require_text 'EDGE_FORCE_TAILSCALE_RESTART=1 "$SERVICES_START" || {' 'post-update service recovery does not force a fresh daemon'
 require_text '"$HEALTHCHECK" || {' 'post-update healthcheck failure is not fatal'
 
 services_line="$(grep -n -F '[ -x "$SERVICES_START" ] || {' "$SCRIPT" | head -n 1 | cut -d: -f1)"

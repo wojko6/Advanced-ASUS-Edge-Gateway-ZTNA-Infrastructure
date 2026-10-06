@@ -51,6 +51,7 @@ fi
 : "${EDGE_ROUTER_LAN_IP:=192.168.50.1}"
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_NETFILTER_MODE:=off}"
+: "${EDGE_TS_AUTO_UPDATE:=false}"
 : "${EDGE_PRINTER_TS_SOURCES:=}"
 : "${EDGE_PRINTER_LAN_IP:=}"
 : "${EDGE_PRINTER_TCP_PORTS:=80 631 9100}"
@@ -218,6 +219,29 @@ if [ "$swap_required" = "1" ]; then
     fi
 fi
 
+tailscale_auto_update_apply() {
+    tailscale --socket="$EDGE_TS_SOCKET" debug prefs 2>/dev/null |
+        awk '
+            /"AutoUpdate"[[:space:]]*:/ {
+                in_auto_update=1
+                next
+            }
+
+            in_auto_update && /"Apply"[[:space:]]*:/ {
+                value=$2
+                gsub(/[[:space:],]/, "", value)
+                print value
+                found=1
+                exit
+            }
+
+            END {
+                if (!found)
+                    exit 1
+            }
+        '
+}
+
 if pidof tailscaled >/dev/null 2>&1; then
     ok "tailscaled running"
 else
@@ -228,6 +252,24 @@ if tailscale --socket="$EDGE_TS_SOCKET" status >/dev/null 2>&1; then
     ok "Tailscale connected"
 else
     fail "Tailscale not connected"
+fi
+
+if [ "$EDGE_TS_AUTO_UPDATE" != "false" ]; then
+    fail "Tailscale automatic update policy must remain disabled in project configuration"
+else
+    tailscale_auto_apply="$(tailscale_auto_update_apply 2>/dev/null)" || tailscale_auto_apply=""
+
+    case "$tailscale_auto_apply" in
+        false)
+            ok "Tailscale automatic update application disabled"
+            ;;
+        true)
+            fail "Tailscale automatic update application enabled"
+            ;;
+        *)
+            fail "cannot verify Tailscale automatic update application state"
+            ;;
+    esac
 fi
 
 if ip link show "$EDGE_TS_IF" >/dev/null 2>&1; then
