@@ -6,6 +6,10 @@ A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. The current r
 
 This is an **enterprise-style lab**, not an enterprise-grade appliance. It has no high availability, redundant WAN, native VLAN microsegmentation, or vendor support.
 
+**Current reference Tailscale runtime:** `1.103.375` on the unstable/dev track. Earlier dated evidence that records `1.102.3` is a historical pre-upgrade checkpoint, not the current live router state.
+
+**Planned router migration target:** ASUS RT-BE88U on a compatible Asuswrt-Merlin 3006.x branch. OPNsense/x86 is not the current target architecture; it is retained only as a future contingency if requirements eventually exceed the ASUS platform.
+
 ## Portfolio highlights
 
 - Built a consumer-router security edge with Tailscale identity, project-owned default-deny firewall chains, and explicit router/LAN allowlists.
@@ -31,10 +35,11 @@ The current reference architecture is documented as four focused, source-control
 
 The previous `docs/images/Architecture.png` is retained only as a historical/illustrative artifact and is no longer the source of truth.
 
-Remote access is enforced at two layers:
+Remote access is enforced through Tailscale policy plus project-owned local firewall controls:
 
 1. Tailscale Grants authorize identities and groups.
-2. Managed iptables chains restrict router services, LAN destinations, ports and optional exit-node forwarding.
+2. Managed iptables chains restrict router services and selected LAN destinations/ports.
+3. Exit-node forwarding is currently constrained by the managed Tailscale ingress chain and detected WAN egress, but the router-local exit-node rule is not yet source-scoped; issue #176 tracks the additional local source allowlist.
 
 Current-firmware validation is tied to dated evidence rather than inferred from the diagrams. AUDIT-02 exit-node forwarding/NAT ownership was revalidated on GNUton 388.11 on 2026-09-23, and AUDIT-03 classic IPv4 UDP/TCP port-53 packet correlation was revalidated on the same reference firmware on 2026-09-27. DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted DNS and IPv6 resolver paths remain outside any universal DNS-enforcement claim.
 
@@ -91,7 +96,8 @@ Never commit auth keys, node state, private keys, collector credentials, router 
 
 ### Reference compatibility
 
-The original 2026-09-11 SSD/reboot baseline used an ASUS TUF-AX5400 running ASUSWRT-Merlin 3004.388.9_2-gnuton1. The reference router was upgraded on 2026-09-23 to GNUton 3004.388.11_1-gnuton1_tuf; the [same-day worklog](docs/worklog/2026-09-23.md) records a subsequent reboot, clean project health and USB exposure audits, persisted admin firewall rules, Fedora DNS/verified HTTPS smoke tests, a role-specific negative management test from a distinct unauthorized tailnet client, and a post-firmware fixed-flow Exit Node packet correlation. The [management evidence](evidence/2026-09-23/unauthorized-tailnet-management-denial.md) confirms that tailnet membership alone did not grant TCP/8443 router-management access, while the [Exit Node revalidation](evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md) reconfirmed project-owned forwarding plus platform-owned WAN NAT on the current firmware. These results do not establish universal firmware compatibility or long-term stability. Component compatibility is defined by tested behaviour: Tailscale must preserve the configured socket/routing and intentional `netfilter-mode=off` ownership model; Unbound must validate the deployed configuration and expose the configured loopback listener; syslog-ng remains optional unless remote logging is configured. Record actual material package versions in dated evidence after upgrades. See [compatibility and revalidation](docs/compatibility.md).
+The original 2026-09-11 SSD/reboot baseline used an ASUS TUF-AX5400 running ASUSWRT-Merlin 3004.388.9_2-gnuton1. The reference router was upgraded on 2026-09-23 to GNUton 3004.388.11_1-gnuton1_tuf; the current reference Tailscale runtime was later upgraded on 2026-10-06 from 1.102.3 to the checksum-verified official ARM unstable build 1.103.375, with daemon restart and later cold-boot return validated; the [same-day worklog](docs/worklog/2026-09-23.md) records a subsequent reboot, clean project health and USB exposure audits, persisted admin firewall rules, Fedora DNS/verified HTTPS smoke tests, a role-specific negative management test from a distinct unauthorized tailnet client, and a post-firmware fixed-flow Exit Node packet correlation. The [management evidence](evidence/2026-09-23/unauthorized-tailnet-management-denial.md) confirms that tailnet membership alone did not grant TCP/8443 router-management access, while the [Exit Node revalidation](evidence/2026-09-23/audit-02-post-firmware-exit-node-revalidation.md) reconfirmed project-owned forwarding plus platform-owned WAN NAT on the current firmware. These results do not establish universal firmware compatibility or long-term stability. Component compatibility is defined by tested behaviour: Tailscale must preserve the configured socket/routing and intentional `netfilter-mode=off` ownership model; Unbound must validate the deployed configuration and expose the configured loopback listener; syslog-ng remains optional unless remote logging is configured. Record actual material package versions in dated evidence after upgrades. See [compatibility and revalidation](docs/compatibility.md). See also the [Tailscale 1.103.375 router runtime upgrade](evidence/2026-10-06/tailscale-1.103.375-router-upgrade-validation.md) for the current live-version checkpoint.
+
 
 ## Quick start
 

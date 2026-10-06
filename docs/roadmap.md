@@ -1,5 +1,34 @@
 # Roadmap
 
+### Current reference router checkpoint — 2026-10-06
+
+- Current router: ASUS TUF-AX5400 / GNUton 3004.388.11_1.
+- Current live Tailscale: **1.103.375 unstable/dev**; earlier 1.102.3 evidence
+  is historical pre-upgrade state.
+- DNS Guard v3.1 cold-boot/fail-open policy is production-validated.
+- Planned next router: **ASUS RT-BE88U / compatible Asuswrt-Merlin 3006.x**.
+- OPNsense/x86 is not the current migration target; keep it only as a future
+  contingency if requirements exceed the ASUS platform.
+
+### Current CORE closeout priorities
+
+Completed on 2026-10-06:
+
+- #130 — protected `main` / required Validation suite;
+- #177 — Tailscale package/live-version drift and downgrade hardening;
+- DNS Guard v3.1 — cold-boot/fail-open resolver control.
+
+Still open:
+
+- #176 — router-local source scoping for exit-node forwarding;
+- #129 — Pi-hole-aware disaster-recovery refresh;
+- #178 — Grafana notification delivery / bounded critical escalation;
+- #108 — remaining DNS-visibility retention/rollback/interception work;
+- #68 — DoH/DoQ/encrypted-DNS assessment;
+- #143 — Trusted/IoT/Guest segmentation design before RT-BE88U migration.
+
+
+
 ## Completed and validated — observability baseline
 
 **Status: completed 2026-09-27.**
@@ -40,12 +69,13 @@ messages after collector restoration.
 the end of 2026-09-28: merged-PR visibility, recent repository activity/commits,
 dashboard layout cleanup and a separate Polystat infrastructure-health view.
 
-The #127 LAN-management/WAN-exposure hardening and #128 IPv6/Wi-Fi security
-parity evidence were completed on 2026-09-29. The remaining short hardening
-item is #130 (GitHub main ruleset / required validation). After that, finish the
-bounded #108 retention, rollback and LAN-interception correlation gaps,
-followed by #68 encrypted-DNS assessment and #129 Pi-hole-aware
-disaster-recovery refresh.
+The #127 LAN-management/WAN-exposure hardening, #128 IPv6/Wi-Fi security
+parity evidence and #130 GitHub main-ruleset/required-validation work are
+completed. Issue #177 Tailscale package/live-version drift hardening is also
+completed. The current bounded hardening/recovery sequence is #176 local
+source-scoping for exit-node forwarding, #129 Pi-hole-aware disaster recovery,
+the remaining #108 DNS-visibility gaps, #68 encrypted-DNS assessment and the
+later #143 trust-zone segmentation design.
 
 ## In progress — Network DNS Visibility / Client Activity Analytics
 
@@ -357,25 +387,45 @@ Remaining recovery-maturity work:
 
 Target end state: a versioned, integrity-verified, encrypted off-router recovery path that complements the repository and existing `backup.sh`/`restore.sh` workflow.
 
-## Phase 2 — dedicated x86 edge
+## Phase 2 — RT-BE88U platform migration
 
-- OPNsense on supported x86 hardware.
-- VLAN 10 (trusted LAN), VLAN 20 (IoT), VLAN 30 (lab), and a management VLAN.
-- Explicit inter-VLAN default deny and documented service exceptions.
-- Configuration backup/restore drill and UPS-aware shutdown.
+The planned next router platform is **ASUS RT-BE88U** on a compatible
+Asuswrt-Merlin 3006.x branch. The migration should preserve the existing
+project model rather than redesigning the lab around another firewall platform.
+
+Target migration work:
+
+- reproduce the current Tailscale, DNS, firewall, logging and recovery baseline
+  on the RT-BE88U before adding new features;
+- revalidate all platform-sensitive assumptions, including interface names,
+  WAN detection, NAT ownership, hooks, Entware startup, swap/storage handling,
+  DNS listeners and WebUI integration;
+- use the newer platform's VLAN/network capabilities to implement the planned
+  Trusted / IoT / Guest / management segmentation from issue #143;
+- retain explicit inter-zone default deny with documented service exceptions;
+- keep heavy observability, databases and application workloads off-router;
+- perform configuration backup/restore and cold-boot validation on the new
+  platform before retiring the TUF-AX5400 reference role.
+
+OPNsense/x86 is **not** the current target architecture. It remains only a
+future contingency if requirements later exceed the RT-BE88U/Asuswrt-Merlin
+platform.
 
 ## Phase 3 — detection and response
 
-- Suricata IDS first, IPS only after false-positive baselining.
-- Wazuh agents/collector, indexer, dashboards, alert routing, and retention policy.
-- TLS log transport with a managed CA and monitored delivery queue.
-- Attack simulations mapped to MITRE ATT&CK and retained evidence.
+- Continue improving off-router alerting and response around the ASUS edge.
+- Evaluate IDS/IPS only if a supported placement provides measurable value
+  without destabilizing the router dataplane.
+- Keep Wazuh/collector/indexer/dashboard workloads off-router.
+- Maintain TLS log transport with monitored delivery and retained evidence.
+- Map controlled attack simulations to MITRE ATT&CK where useful.
 
 ## Phase 4 — engineering maturity
 
 - Metrics for DNS latency/cache, VPN throughput, drops, CPU, RAM, temperature, and storage wear.
 - Golden configuration, reproducible restore, and quarterly recovery exercises.
-- Policy-as-code validation for Tailscale and OPNsense changes.
+- Policy-as-code validation for Tailscale and ASUS Edge policy changes.
 - Hardware/ISP failure tests, measured RTO/RPO, and a documented incident runbook.
 
-The ASUS router can remain an access point or isolated secondary lab node after enforcement moves to OPNsense.
+The TUF-AX5400 can remain an isolated secondary lab/reference node after the
+validated gateway role moves to the RT-BE88U.

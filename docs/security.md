@@ -28,7 +28,7 @@ The provided backup excludes Tailscale state. Store backups off-device and encry
 
 ## Source-control supply-chain safety
 
-The repository `main` branch is intended to be protected by the #130 GitHub
+The repository `main` branch is protected by the completed #130 GitHub
 ruleset baseline: normal changes go through pull requests, the aggregate
 `Validation suite` check must pass, branch deletion and force-push are blocked,
 and no ruleset bypass actor is configured.
@@ -139,6 +139,25 @@ See the
 [password-recovery production validation](../evidence/2026-10-03/routercloud-password-recovery-production-validation.md)
 and [versioned backup design](routercloud-versioned-backup.md).
 
+### Open RouterCloud hardening observations
+
+The current RouterCloud deployment remains intentionally LAN/Tailscale-only,
+but application exposure on the edge router still deserves separate hardening.
+
+Source review identified two items that must not be hidden by the network
+boundary:
+
+- user-controlled files are served from the same application origin as the
+  RouterCloud UI/API, and some file types can be rendered inline. Active
+  HTML/SVG/XML-style content should therefore be treated as a potential
+  same-origin application risk until active content is forced to download or
+  moved to a separate origin;
+- the production RouterCloud process privilege/UID boundary must be verified
+  explicitly. If the service runs as root, an application-level code execution
+  defect would have an unacceptably large router-wide blast radius.
+
+These are hardening findings, not a claim that an exploit has been demonstrated.
+
 ## Logging caveats
 
 The syslog-ng example includes remote TLS forwarding with required peer
@@ -149,4 +168,4 @@ access control, and incident workflows are deployed.
 
 ## Platform limitations
 
-Consumer router firmware and Entware are useful for a lab but do not provide high availability, measured failover, secure boot attestation, enterprise support, or strong workload isolation. The roadmap moves routing and enforcement to OPNsense/x86 and keeps the ASUS device as an access point or secondary lab node.
+Consumer router firmware and Entware are useful for a lab but do not provide high availability, measured failover, secure boot attestation, enterprise support, or strong workload isolation. The planned next gateway platform is ASUS RT-BE88U on a compatible Asuswrt-Merlin 3006.x branch, with the current architecture revalidated rather than replaced. OPNsense/x86 is retained only as a future contingency if documented requirements later exceed the ASUS platform.

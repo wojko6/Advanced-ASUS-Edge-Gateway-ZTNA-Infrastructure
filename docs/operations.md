@@ -208,6 +208,34 @@ for this feature.
 
 ## Updates
 
+### Current reference Tailscale runtime
+
+As of the end of 2026-10-06, the reference router runs:
+
+```text
+1.103.375
+track unstable (dev)
+```
+
+This runtime was installed from the official ARM tarball after checksum
+verification and rollback preparation. It is newer than the Entware package
+metadata/candidate observed on the reference router.
+
+Earlier 1.102.3 evidence remains a historical pre-upgrade checkpoint.
+
+Until the Entware feed catches up or the repository gains a separately
+validated official-tarball transaction mode:
+
+- keep `AutoUpdate.Apply=false`;
+- do not use an Entware package transaction that would implicitly replace the
+  newer live runtime with an older candidate;
+- retain known-good binaries before any future manual runtime replacement;
+- verify archive/binary integrity, daemon restart, route/exit-node advertisement,
+  project health and reboot persistence after a material Tailscale change.
+
+See
+[Tailscale 1.103.375 router runtime upgrade](../evidence/2026-10-06/tailscale-1.103.375-router-upgrade-validation.md).
+
 Never place `opkg update` or package upgrades in a boot hook. Use a planned maintenance window:
 
 ```sh
@@ -217,9 +245,40 @@ Never place `opkg update` or package upgrades in a boot hook. Use a planned main
 
 `update-tailscale.sh` is deliberately coupled to the managed recovery path. Before it touches Entware package metadata, it requires both `/jffs/addons/asus-edge/bin/services-start` and `/jffs/addons/asus-edge/bin/healthcheck.sh` to exist and be executable. A failed `opkg update`, failed upgradable-package query, failed Tailscale package upgrade, failed post-update service recovery, or failed final health check returns non-zero. If no Tailscale update is advertised, the script exits without changing the package. Treat any non-zero result after `opkg upgrade tailscale` as a maintenance incident: keep local/LAN recovery access, inspect the managed service logs and health output, and do not assume that the package transaction itself was rolled back.
 
+On the current reference router, this helper is also a **downgrade guard**:
+Entware package metadata can lag behind the live manually deployed runtime.
+The helper must therefore refuse an older package candidate rather than treating
+the package database as authoritative for the active binary version.
+
 Entware may not retain a previous package version. Download/retain the known-good package before an upgrade if a package-level rollback is required. The maintenance helper does not implement package rollback; its recovery contract is to restore the managed runtime path where possible and fail visibly when that cannot be verified.
 
 ## Resolver ownership
+
+### Router system resolver policy
+
+DNS Guard v3.1 controls the router's own runtime resolver separately from the
+client-facing DNS listeners.
+
+The reference policy is:
+
+```text
+cold boot / unhealthy local DNS / sticky break-glass
+    -> current WAN bootstrap DNS
+
+healthy steady state
+    -> Pi-hole dedicated LAN alias
+    -> Unbound 127.0.0.1:53535
+```
+
+Do not restore the historical hard-coded `nameserver 127.0.0.1` WAN-event
+behavior. That design contributed to the validated NTP/DNS/Unbound cold-boot
+dependency cycle. Resolver state changes should go through
+`/jffs/addons/asus-edge/bin/dns-guard`.
+
+The watchdog is recreated by `services-start` and runs `dns-guard auto`
+once per minute. Sticky break-glass must be cleared explicitly before automatic
+Pi-hole promotion can resume.
+
 
 The current reference design has **two local resolver front ends with one
 validating upstream**:
