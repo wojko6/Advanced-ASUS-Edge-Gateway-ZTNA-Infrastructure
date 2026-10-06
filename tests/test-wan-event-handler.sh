@@ -4,313 +4,193 @@ set -eu
 ROOT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 HANDLER="$ROOT_DIR/router/scripts/wan-event-handler"
 
-TMPDIR_TEST="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR_TEST"' EXIT HUP INT TERM
+TMP_ROOT="$(mktemp -d)"
+trap 'rm -rf "$TMP_ROOT"' EXIT HUP INT TERM
 
-MOCK_BIN="$TMPDIR_TEST/bin"
-mkdir -p "$MOCK_BIN"
+make_common() {
+    case_dir="$1"
+    mkdir -p "$case_dir/bin"
 
-CONFIG="$TMPDIR_TEST/asus-edge.conf"
-RESOLV="$TMPDIR_TEST/resolv.conf"
-TAILSCALED_INIT="$TMPDIR_TEST/S06tailscaled"
-LOGFILE="$TMPDIR_TEST/logger.log"
-INIT_LOG="$TMPDIR_TEST/tailscaled-init.log"
+    cat >"$case_dir/asus-edge.conf" <<EOF
+EDGE_UNBOUND_PORT=53535
+EDGE_TS_SOCKET="$case_dir/tailscaled.sock"
+EDGE_WAN_DNS_WAIT_SECONDS=1
+EDGE_TAILSCALE_WAIT_SECONDS=1
+EOF
 
-printf '%s\n' \
-    'EDGE_UNBOUND_PORT=53535' \
-    "EDGE_TS_SOCKET=\"$TMPDIR_TEST/tailscaled.sock\"" \
-    'EDGE_WAN_DNS_WAIT_SECONDS=1' \
-    'EDGE_TAILSCALE_WAIT_SECONDS=1' \
-    > "$CONFIG"
+    cat >"$case_dir/bin/logger" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$case_dir/logger.log"
+EOF
 
-printf '%s\n' 'nameserver 8.8.8.8' > "$RESOLV"
+    cat >"$case_dir/bin/sleep" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    'case "$1" in' \
-    '  dnsmasq|unbound|tailscaled) echo 1234; exit 0 ;;' \
-    'esac' \
-    'exit 1' \
-    > "$MOCK_BIN/pidof"
+    cat >"$case_dir/bin/tailscale" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    'echo "tcp 0 0 127.0.0.1:53535 0.0.0.0:* LISTEN"' \
-    > "$MOCK_BIN/netstat"
+    chmod +x "$case_dir/bin/logger" "$case_dir/bin/sleep" "$case_dir/bin/tailscale"
+}
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN/tailscale"
+run_handler() {
+    case_dir="$1"
+    EDGE_CONFIG_FILE="$case_dir/asus-edge.conf"     EDGE_DNS_GUARD="$case_dir/dns-guard"     EDGE_TAILSCALED_INIT="$case_dir/S06tailscaled"     EDGE_TEST_PATH_PREFIX="$case_dir/bin"         "$HANDLER" 0 connected
+}
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    "printf '%s\n' \"\$*\" >> \"$LOGFILE\"" \
-    > "$MOCK_BIN/logger"
+echo "=== TEST: healthy local DNS path ==="
+CASE="$TMP_ROOT/healthy"
+make_common "$CASE"
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN/sleep"
+cat >"$CASE/bin/pidof" <<'EOF'
+#!/bin/sh
+case "$1" in
+    dnsmasq|unbound|tailscaled) echo 1234; exit 0 ;;
+esac
+exit 1
+EOF
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    "printf '%s\n' \"\$*\" >> \"$INIT_LOG\"" \
-    'exit 0' \
-    > "$TAILSCALED_INIT"
+cat >"$CASE/bin/netstat" <<'EOF'
+#!/bin/sh
+echo "tcp 0 0 127.0.0.1:53535 0.0.0.0:* LISTEN"
+EOF
 
-chmod +x \
-    "$MOCK_BIN/pidof" \
-    "$MOCK_BIN/netstat" \
-    "$MOCK_BIN/tailscale" \
-    "$MOCK_BIN/logger" \
-    "$MOCK_BIN/sleep" \
-    "$TAILSCALED_INIT"
+cat >"$CASE/dns-guard" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$CASE/guard.log"
+exit 0
+EOF
 
-EDGE_CONFIG_FILE="$CONFIG" \
-EDGE_RESOLV_CONF="$RESOLV" \
-EDGE_TAILSCALED_INIT="$TAILSCALED_INIT" \
-EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
-"$HANDLER"
+cat >"$CASE/S06tailscaled" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$CASE/init.log"
+exit 0
+EOF
 
-grep -qx 'nameserver 127.0.0.1' "$RESOLV"
-grep -qx 'restart' "$INIT_LOG"
+chmod +x "$CASE/bin/pidof" "$CASE/bin/netstat" "$CASE/dns-guard" "$CASE/S06tailscaled"
 
-echo "PASS: wan-event-handler mock test"
+run_handler "$CASE"
 
-echo "=== TEST: DNS path unavailable ==="
+[ "$(grep -c '^auto$' "$CASE/guard.log")" -eq 2 ]
+grep -qx 'restart' "$CASE/init.log"
+grep -F 'DNS Guard policy applied during WAN initial phase' "$CASE/logger.log" >/dev/null
+grep -F 'DNS Guard policy applied during WAN settled phase' "$CASE/logger.log" >/dev/null
+echo "PASS: healthy path applies initial+settled DNS policy"
 
-TMPDIR_FAIL="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR_TEST" "$TMPDIR_FAIL"' EXIT HUP INT TERM
+echo "=== TEST: local DNS path unavailable remains fail-open ==="
+CASE="$TMP_ROOT/unhealthy"
+make_common "$CASE"
 
-MOCK_BIN_FAIL="$TMPDIR_FAIL/bin"
-mkdir -p "$MOCK_BIN_FAIL"
+cat >"$CASE/bin/pidof" <<'EOF'
+#!/bin/sh
+[ "$1" = "tailscaled" ] && { echo 1234; exit 0; }
+exit 1
+EOF
 
-CONFIG_FAIL="$TMPDIR_FAIL/asus-edge.conf"
-RESOLV_FAIL="$TMPDIR_FAIL/resolv.conf"
-TAILSCALED_INIT_FAIL="$TMPDIR_FAIL/S06tailscaled"
-LOGFILE_FAIL="$TMPDIR_FAIL/logger.log"
-INIT_LOG_FAIL="$TMPDIR_FAIL/tailscaled-init.log"
+cat >"$CASE/bin/netstat" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
 
-printf '%s\n' \
-    'EDGE_UNBOUND_PORT=53535' \
-    'EDGE_WAN_DNS_WAIT_SECONDS=1' \
-    'EDGE_TAILSCALE_WAIT_SECONDS=1' \
-    > "$CONFIG_FAIL"
+cat >"$CASE/dns-guard" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$CASE/guard.log"
+exit 0
+EOF
 
-printf '%s\n' 'nameserver 8.8.8.8' > "$RESOLV_FAIL"
+cat >"$CASE/S06tailscaled" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$CASE/init.log"
+exit 0
+EOF
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 1' \
-    > "$MOCK_BIN_FAIL/pidof"
+chmod +x "$CASE/bin/pidof" "$CASE/bin/netstat" "$CASE/dns-guard" "$CASE/S06tailscaled"
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN_FAIL/netstat"
+run_handler "$CASE"
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN_FAIL/tailscale"
+[ "$(grep -c '^auto$' "$CASE/guard.log")" -eq 1 ]
+grep -qx 'restart' "$CASE/init.log"
+grep -F 'keeping bootstrap DNS' "$CASE/logger.log" >/dev/null
+echo "PASS: unavailable local DNS keeps bootstrap path and still recovers Tailscale"
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    "printf '%s\n' \"\$*\" >> \"$LOGFILE_FAIL\"" \
-    > "$MOCK_BIN_FAIL/logger"
+echo "=== TEST: DNS Guard initial failure stops handler ==="
+CASE="$TMP_ROOT/guard-fail"
+make_common "$CASE"
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN_FAIL/sleep"
+cat >"$CASE/bin/pidof" <<'EOF'
+#!/bin/sh
+case "$1" in
+    dnsmasq|unbound|tailscaled) echo 1234; exit 0 ;;
+esac
+exit 1
+EOF
 
-printf '%s\n' \
-    '#!/bin/sh' \
-    "printf '%s\n' \"\$*\" >> \"$INIT_LOG_FAIL\"" \
-    'exit 0' \
-    > "$TAILSCALED_INIT_FAIL"
+cat >"$CASE/bin/netstat" <<'EOF'
+#!/bin/sh
+echo "tcp 0 0 127.0.0.1:53535 0.0.0.0:* LISTEN"
+EOF
 
-chmod +x \
-    "$MOCK_BIN_FAIL/pidof" \
-    "$MOCK_BIN_FAIL/netstat" \
-    "$MOCK_BIN_FAIL/tailscale" \
-    "$MOCK_BIN_FAIL/logger" \
-    "$MOCK_BIN_FAIL/sleep" \
-    "$TAILSCALED_INIT_FAIL"
+cat >"$CASE/dns-guard" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
 
-if EDGE_CONFIG_FILE="$CONFIG_FAIL" \
-   EDGE_RESOLV_CONF="$RESOLV_FAIL" \
-   EDGE_TAILSCALED_INIT="$TAILSCALED_INIT_FAIL" \
-   EDGE_TEST_PATH_PREFIX="$MOCK_BIN_FAIL" \
-   "$HANDLER"
-then
-    echo "FAIL: handler succeeded although DNS path was unavailable"
+cat >"$CASE/S06tailscaled" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$CASE/init.log"
+exit 0
+EOF
+
+chmod +x "$CASE/bin/pidof" "$CASE/bin/netstat" "$CASE/dns-guard" "$CASE/S06tailscaled"
+
+if run_handler "$CASE"; then
+    echo "FAIL: handler succeeded although initial DNS Guard policy failed" >&2
     exit 1
 fi
 
-grep -q 'local DNS path not ready' "$LOGFILE_FAIL"
+grep -F 'DNS Guard policy failed during WAN initial phase' "$CASE/logger.log" >/dev/null
+[ ! -s "$CASE/init.log" ] 2>/dev/null || {
+    echo "FAIL: tailscaled restart attempted after DNS Guard failure" >&2
+    exit 1
+}
+echo "PASS: DNS Guard failure is propagated"
 
-if [ -s "$INIT_LOG_FAIL" ]; then
-    echo "FAIL: tailscaled restart was attempted"
+echo "=== TEST: tailscaled restart failure ==="
+CASE="$TMP_ROOT/tailscale-fail"
+make_common "$CASE"
+
+cat >"$CASE/bin/pidof" <<'EOF'
+#!/bin/sh
+case "$1" in
+    dnsmasq|unbound|tailscaled) echo 1234; exit 0 ;;
+esac
+exit 1
+EOF
+
+cat >"$CASE/bin/netstat" <<'EOF'
+#!/bin/sh
+echo "tcp 0 0 127.0.0.1:53535 0.0.0.0:* LISTEN"
+EOF
+
+cat >"$CASE/dns-guard" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+
+cat >"$CASE/S06tailscaled" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+
+chmod +x "$CASE/bin/pidof" "$CASE/bin/netstat" "$CASE/dns-guard" "$CASE/S06tailscaled"
+
+if run_handler "$CASE"; then
+    echo "FAIL: handler succeeded although tailscaled restart failed" >&2
     exit 1
 fi
 
-echo "PASS: DNS unavailable is handled correctly"
-
-echo "=== TEST: resolv.conf missing ==="
-
-TMPDIR_RESOLV="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR_TEST" "$TMPDIR_FAIL" "$TMPDIR_RESOLV"' EXIT HUP INT TERM
-
-MOCK_BIN_RESOLV="$TMPDIR_RESOLV/bin"
-mkdir -p "$MOCK_BIN_RESOLV"
-
-CONFIG_RESOLV="$TMPDIR_RESOLV/asus-edge.conf"
-RESOLV_MISSING="$TMPDIR_RESOLV/resolv.conf"
-TAILSCALED_INIT_RESOLV="$TMPDIR_RESOLV/S06tailscaled"
-LOGFILE_RESOLV="$TMPDIR_RESOLV/logger.log"
-INIT_LOG_RESOLV="$TMPDIR_RESOLV/tailscaled-init.log"
-
-printf '%s\n' \
-    'EDGE_UNBOUND_PORT=53535' \
-    'EDGE_WAN_DNS_WAIT_SECONDS=1' \
-    'EDGE_TAILSCALE_WAIT_SECONDS=1' \
-    > "$CONFIG_RESOLV"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'case "$1" in' \
-    '  dnsmasq|unbound|tailscaled) echo 1234; exit 0 ;;' \
-    'esac' \
-    'exit 1' \
-    > "$MOCK_BIN_RESOLV/pidof"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'echo "tcp 0 0 127.0.0.1:53535 0.0.0.0:* LISTEN"' \
-    > "$MOCK_BIN_RESOLV/netstat"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN_RESOLV/tailscale"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    "printf '%s\n' \"\$*\" >> \"$LOGFILE_RESOLV\"" \
-    > "$MOCK_BIN_RESOLV/logger"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN_RESOLV/sleep"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    "printf '%s\n' \"\$*\" >> \"$INIT_LOG_RESOLV\"" \
-    'exit 0' \
-    > "$TAILSCALED_INIT_RESOLV"
-
-chmod +x \
-    "$MOCK_BIN_RESOLV/pidof" \
-    "$MOCK_BIN_RESOLV/netstat" \
-    "$MOCK_BIN_RESOLV/tailscale" \
-    "$MOCK_BIN_RESOLV/logger" \
-    "$MOCK_BIN_RESOLV/sleep" \
-    "$TAILSCALED_INIT_RESOLV"
-
-if EDGE_CONFIG_FILE="$CONFIG_RESOLV" \
-   EDGE_RESOLV_CONF="$RESOLV_MISSING" \
-   EDGE_TAILSCALED_INIT="$TAILSCALED_INIT_RESOLV" \
-   EDGE_TEST_PATH_PREFIX="$MOCK_BIN_RESOLV" \
-   "$HANDLER"
-then
-    echo "FAIL: handler succeeded although resolv.conf was missing"
-    exit 1
-fi
-
-grep -q 'missing .*resolv.conf' "$LOGFILE_RESOLV"
-
-if [ -s "$INIT_LOG_RESOLV" ]; then
-    echo "FAIL: tailscaled restart was attempted"
-    exit 1
-fi
-
-echo "PASS: missing resolv.conf is handled correctly"
-
-echo "=== TEST: tailscaled restart fails ==="
-
-TMPDIR_TSRESTART="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR_TEST" "$TMPDIR_FAIL" "$TMPDIR_RESOLV" "$TMPDIR_TSRESTART"' EXIT HUP INT TERM
-
-MOCK_BIN_TSRESTART="$TMPDIR_TSRESTART/bin"
-mkdir -p "$MOCK_BIN_TSRESTART"
-
-CONFIG_TSRESTART="$TMPDIR_TSRESTART/asus-edge.conf"
-RESOLV_TSRESTART="$TMPDIR_TSRESTART/resolv.conf"
-TAILSCALED_INIT_TSRESTART="$TMPDIR_TSRESTART/S06tailscaled"
-LOGFILE_TSRESTART="$TMPDIR_TSRESTART/logger.log"
-
-printf '%s\n' \
-    'EDGE_UNBOUND_PORT=53535' \
-    'EDGE_WAN_DNS_WAIT_SECONDS=1' \
-    'EDGE_TAILSCALE_WAIT_SECONDS=1' \
-    > "$CONFIG_TSRESTART"
-
-printf '%s\n' 'nameserver 8.8.8.8' > "$RESOLV_TSRESTART"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'case "$1" in' \
-    '  dnsmasq|unbound|tailscaled) echo 1234; exit 0 ;;' \
-    'esac' \
-    'exit 1' \
-    > "$MOCK_BIN_TSRESTART/pidof"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'echo "tcp 0 0 127.0.0.1:53535 0.0.0.0:* LISTEN"' \
-    > "$MOCK_BIN_TSRESTART/netstat"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN_TSRESTART/tailscale"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    "printf '%s\n' \"\$*\" >> \"$LOGFILE_TSRESTART\"" \
-    > "$MOCK_BIN_TSRESTART/logger"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 0' \
-    > "$MOCK_BIN_TSRESTART/sleep"
-
-printf '%s\n' \
-    '#!/bin/sh' \
-    'exit 1' \
-    > "$TAILSCALED_INIT_TSRESTART"
-
-chmod +x \
-    "$MOCK_BIN_TSRESTART/pidof" \
-    "$MOCK_BIN_TSRESTART/netstat" \
-    "$MOCK_BIN_TSRESTART/tailscale" \
-    "$MOCK_BIN_TSRESTART/logger" \
-    "$MOCK_BIN_TSRESTART/sleep" \
-    "$TAILSCALED_INIT_TSRESTART"
-
-if EDGE_CONFIG_FILE="$CONFIG_TSRESTART" \
-   EDGE_RESOLV_CONF="$RESOLV_TSRESTART" \
-   EDGE_TAILSCALED_INIT="$TAILSCALED_INIT_TSRESTART" \
-   EDGE_TEST_PATH_PREFIX="$MOCK_BIN_TSRESTART" \
-   "$HANDLER"
-then
-    echo "FAIL: handler succeeded although tailscaled restart failed"
-    exit 1
-fi
-
-grep -q 'failed to restart tailscaled after WAN DNS update' "$LOGFILE_TSRESTART"
-
-echo "PASS: tailscaled restart failure is handled correctly"
+grep -F 'failed to restart tailscaled after WAN DNS update' "$CASE/logger.log" >/dev/null
+echo "PASS: tailscaled restart failure is propagated"

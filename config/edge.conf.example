@@ -76,6 +76,7 @@ EDGE_UNBOUND_PORT="53535"
 # The handler exits as soon as the local DNS path is ready; this is only the
 # maximum startup wait, not an unconditional 90-second delay.
 EDGE_WAN_DNS_WAIT_SECONDS="90"
+EDGE_DNS_GUARD_WATCHDOG="1"
 # Leave empty to auto-detect amtm Unbound Manager first, then standard Entware.
 # Set an explicit path if more than one Unbound configuration is present.
 EDGE_UNBOUND_CONFIG=""

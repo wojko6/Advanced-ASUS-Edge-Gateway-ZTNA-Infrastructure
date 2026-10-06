@@ -59,6 +59,7 @@ for backup_path in \
     '/jffs/scripts/dnsmasq.postconf "$WORK_DIR/jffs/scripts/"' \
     '/jffs/scripts/post-mount "$WORK_DIR/recovery-reference/jffs/scripts/"' \
     '/jffs/scripts/wan-event "$WORK_DIR/jffs/scripts/"' \
+    '/jffs/scripts/edge-dns-breakglass.sh "$WORK_DIR/jffs/scripts/"' \
     '/jffs/configs/dnsmasq.conf.add "$WORK_DIR/jffs/configs/"'
 do
     grep -F "$backup_path" "$REPO_DIR/scripts/backup.sh" >/dev/null || {
@@ -678,6 +679,33 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
     echo "FAIL: legacy hooks are not disabled by default" >&2
     exit 1
 }
+
+
+for dns_guard_guard in \
+    'router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755' \
+    'router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700' \
+    'EDGE_DNS_GUARD_WATCHDOG="1"' \
+    'configure_dns_guard_watchdog()' \
+    'cru a AsusEdgeDNSGuard' \
+    'DNS_GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"'
+do
+    grep -F "$dns_guard_guard" \
+        "$REPO_DIR/scripts/install.sh" \
+        "$REPO_DIR/config/edge.conf.example" \
+        "$REPO_DIR/router/scripts/services-start" \
+        "$REPO_DIR/router/scripts/wan-event-handler" >/dev/null || {
+        echo "FAIL: DNS Guard integration missing: $dns_guard_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F 'nameserver 127.0.0.1' "$REPO_DIR/router/scripts/wan-event-handler" >/dev/null; then
+    echo "FAIL: WAN handler still hard-codes the local resolver instead of DNS Guard" >&2
+    exit 1
+fi
+
+sh "$REPO_DIR/tests/test-dns-guard.sh"
+sh "$REPO_DIR/tests/test-wan-event-handler.sh"
 
 
 grep -F 'EDGE_LAN_DNS_BYPASS_IPS=""' "$REPO_DIR/config/edge.conf.example" >/dev/null || {

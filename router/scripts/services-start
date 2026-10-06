@@ -283,6 +283,38 @@ configure_webui_status() {
     fi
 }
 
+configure_dns_guard_watchdog() {
+    dns_guard="/jffs/addons/asus-edge/bin/dns-guard"
+
+    case "${EDGE_DNS_GUARD_WATCHDOG:-1}" in
+        1)
+            ;;
+        0)
+            if executable_exists cru >/dev/null 2>&1; then
+                cru d AsusEdgeDNSGuard >/dev/null 2>&1 || true
+            fi
+            log "DNS Guard watchdog disabled"
+            return 0
+            ;;
+        *)
+            log "WARNING: EDGE_DNS_GUARD_WATCHDOG must be 0 or 1"
+            return 0
+            ;;
+    esac
+
+    [ -x "$dns_guard" ] || {
+        log "WARNING: DNS Guard unavailable; watchdog not scheduled"
+        return 0
+    }
+
+    if executable_exists cru >/dev/null 2>&1; then
+        cru a AsusEdgeDNSGuard             "* * * * * $dns_guard auto >/dev/null 2>&1"
+        log "DNS Guard watchdog scheduled"
+    else
+        log "WARNING: cru unavailable; DNS Guard watchdog not scheduled"
+    fi
+}
+
 # The WebUI is optional and must never block recovery of required network
 # services. Merlin's services-start event is the persistent mount trigger.
 mount_project_webui
@@ -407,6 +439,7 @@ start_entware_service_if_stopped() {
 
 start_unbound_direct_if_stopped || startup_failed=1
 configure_webui_status
+configure_dns_guard_watchdog
 start_entware_service_if_stopped syslog-ng /tmp/asus-edge-syslog-ng-start.log "" /opt/etc/init.d/S*syslog-ng || log "WARNING: optional syslog-ng service unavailable"
 if [ -x /jffs/scripts/firewall-start ]; then
     /jffs/scripts/firewall-start || { log "ERROR: firewall policy failed"; startup_failed=1; }

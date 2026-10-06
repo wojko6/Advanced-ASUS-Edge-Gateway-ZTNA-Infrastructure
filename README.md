@@ -257,11 +257,18 @@ Tailscale identity and the healthcheck remained clean.
 
 A representative Android compatibility check subsequently passed without
 observed regression across banking/payment use, Google Play, routine
-applications, notifications and internal-service access. The result still does
-not claim exit-node-enabled Android DNS, encrypted-DNS interception or
-long-term endurance. See the
-[issue #152 policy](docs/android-pihole-tailscale-policy.md) and
-[sanitized live validation](evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
+applications, notifications and internal-service access. A later 2026-10-06
+cold-boot resilience test added DNS Guard v3.1 and live-validated Android LTE
+with the ASUS selected as a Tailscale exit node: the router-side DNS query was
+captured on loopback from the ASUS system resolver to the local Pi-hole alias,
+and the answer returned successfully through the tested exit-node path.
+Encrypted-DNS interception and long-term endurance remain outside this claim.
+See the
+[issue #152 policy](docs/android-pihole-tailscale-policy.md),
+[sanitized issue #152 validation](evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md),
+[DNS Guard validation](evidence/2026-10-06/dns-guard-v3.1-production-validation.md),
+and the
+[DNS bootstrap resilience case study](docs/dns-guard-cold-boot-case-study.md).
 
 On **2026-09-25**, a fresh read-only router checkpoint reconfirmed the reference deployment on GNUton `3004.388.11_1-gnuton1_tuf`: both SSD filesystems and swap were active, core services were running, direct Unbound resolution returned the DNSSEC `AD` flag, and the project health check completed with `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`. Controlled Fedora tests also produced exact production counter deltas for LAN UDP/TCP 53 interception, direct TCP/853 rejection and Tailscale UDP/53 interception. A same-day Exit Node retest was deliberately not promoted into new datapath evidence because the first flow ran without an exit node selected and a later router capture attempt did not start; the 2026-09-23 fixed-flow capture remains authoritative for the current-firmware Exit Node claim. See the [sanitized checkpoint](evidence/2026-09-25/router-live-checkpoint.md) and [dated worklog](docs/worklog/2026-09-25.md).
 
@@ -367,6 +374,7 @@ See [Tailscale maintenance and rollback](docs/tailscale-maintenance.md).
 - [Printer setup from LAN](docs/printer-setup-lan-pl.md)
 - [Printer setup through Tailscale](docs/printer-setup-tailscale-pl.md)
 - [Operations and recovery](docs/operations.md)
+- [DNS bootstrap resilience](docs/dns-guard-cold-boot-case-study.md)
 - [Roadmap](docs/roadmap.md)
 - [Engineering worklog](docs/worklog/README.md)
 - [Documentation model and source-of-truth rules](docs/documentation-model.md)

@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Added DNS Guard v3.1 with independent WAN bootstrap DNS, conditional Pi-hole promotion, automatic fail-open fallback, sticky break-glass recovery, a persistent one-minute watchdog, and managed installer/backup integration.
 - Added optional source-scoped Pi-hole DNS enforcement for selected Tailscale IPv4 clients, with client identity preserved for Pi-hole analytics and the generic dnsmasq redirect retained as fallback for non-matching sources.
 - Added admin-scoped RouterCloud INPUT handling, separate external/target ASUS HTTPS port configuration, dedicated Pi-hole/RouterCloud/router-HTTPS healthcheck contract tests, and an Android/Tailscale/Pi-hole troubleshooting case study for issue #152.
 - Added RouterCloud login by configured email alias while preserving the canonical DUFS account, password, permissions and session state.
@@ -58,6 +59,8 @@
 - Closed the unchanged-state observation on 2026-09-22 after continuous operation from 2026-09-11 through 2026-09-22; current documentation now treats later router changes as controlled maintenance rather than an active Stability Gate.
 
 ### Fixed
+- Fixed a cold-boot DNS dependency cycle where the router system resolver could depend on Pi-hole before Unbound was allowed to start behind hostname-based NTP bootstrap; WAN-event resolver selection now delegates to DNS Guard instead of hard-coding the local resolver.
+- Fixed DNS Guard fallback idempotency so an already-correct bootstrap resolver is treated as a successful no-op rather than an error.
 - Corrected Tailscale router HTTPS management from an invalid `8443 -> 8443` assumption to external TCP/8443 -> router LAN TCP/443, matching the live ASUS httpds listener.
 - Corrected RouterCloud Tailscale handling to use router-local INPUT policy instead of treating the service alias as a forwarded LAN host; updated the recovery CI fixture to model the new TCP/443 listener contract.
 - Decoupled the router's local syslog-ng archive from remote-collector backpressure by removing hard flow-control from the shared local/remote fan-out path; added a static regression guard against reintroducing the blocking policy.
@@ -74,6 +77,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Production-validated DNS Guard v3.1 with isolated healthy/unhealthy/break-glass tests, real watchdog failover and recovery, full cold reboot persistence, and Android LTE Tailscale exit-node DNS captured from the router system resolver to the local Pi-hole alias.
 - Completed the current issue #152 acceptance check with representative Android banking/payment use, Google Play, routine applications, notifications and internal-service access showing no observed regression under the global Pi-hole policy.
 - Live-validated the issue #152 global Pi-hole rollout with normal public DNS, internal `home.arpa`, a Gravity-blocked advertising domain and normal HTTPS connectivity; a follow-up Fedora test also confirmed that a fresh classic-DNS marker reached Pi-hole under the workstation's Tailscale identity after adding it to the selected source-scoped transport.
 - Live-validated the issue #152 Android target path with Wi-Fi off, LTE/5G on, Tailscale on and exit node off: a fresh query reached Pi-hole under the selected client identity, internal RouterCloud naming worked, a known advertising domain was blocked by Gravity, RouterCloud remained reachable, ASUS management reached the real TCP/443 listener through external TCP/8443, and the production healthcheck returned zero failures and warnings.

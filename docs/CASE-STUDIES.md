@@ -220,6 +220,31 @@ The documented result is intentionally limited to the validated transport, DNS a
 remote-management path. Stronger per-device Pi-hole policy and application
 compatibility testing remain separate follow-up work.
 
+
+## 12. DNS bootstrap deadlock and fail-open resolver recovery
+
+**File:** [DNS bootstrap deadlock and fail-open resolver recovery](dns-guard-cold-boot-case-study.md)
+
+A resolver-startup resilience case covering:
+
+- a cold-boot dependency cycle between hostname-based NTP bootstrap, Pi-hole,
+  and an Unbound instance that intentionally waits for NTP readiness;
+- separation of independent WAN/bootstrap DNS from the steady-state local
+  Pi-hole -> Unbound path;
+- DNS Guard v3.1 health gating, atomic runtime promotion and fail-open fallback;
+- sticky break-glass state that blocks automatic promotion during emergency
+  recovery;
+- an idempotency defect found by shell tracing and fixed before reboot
+  validation;
+- persistent one-minute watchdog recreation from `services-start`;
+- real watchdog fallback/recovery and full cold-boot validation;
+- Android LTE Tailscale exit-node DNS observed reaching the local Pi-hole alias
+  over loopback after reboot.
+
+The case makes the availability trade-off explicit: during local DNS failure,
+the router deliberately uses independent bootstrap DNS rather than preserving
+filtering at the cost of losing name resolution.
+
 ## How to read these cases
 
 Where applicable, case studies separate:
