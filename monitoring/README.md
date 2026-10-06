@@ -87,13 +87,14 @@ directory.
 
 ## Grafana alerting
 
-Four live-validated Grafana alert rules are provisioned from
+Five live-validated Grafana alert rules are provisioned from
 [`grafana/provisioning/alerting/asus-tuf-alerts.yml`](grafana/provisioning/alerting/asus-tuf-alerts.yml):
 
 - SSH collector unavailable;
 - router-reported WAN down;
 - failed HTTPS / ICMP / router-DNS blackbox probe;
-- stale router telemetry.
+- stale router telemetry;
+- negotiated WAN link speed below 900 Mb/s for at least three minutes.
 
 A controlled collector outage drove the collector and telemetry rules through
 `Pending -> Firing`, while the independent blackbox rule remained healthy.
@@ -104,9 +105,15 @@ data must not masquerade as a WAN failure. The WAN rule therefore uses
 `noDataState: OK`; collector and telemetry loss are handled by their dedicated
 rules.
 
-No external notification contact point is part of this baseline yet.
+An email contact point is provisioned from
+[`grafana/provisioning/alerting/asus-email-contact.yml`](grafana/provisioning/alerting/asus-email-contact.yml).
+SMTP credentials remain local to the Fedora host and are not stored in Git.
+The WAN-speed rule sends both firing and resolved notifications through this
+contact point.
 
-See [the alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md).
+See [the original alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md)
+and the
+[WAN-speed email validation](../evidence/2026-10-06/grafana-wan-speed-email-alert-validation.md).
 
 ## Pi-hole DNS activity collector
 
