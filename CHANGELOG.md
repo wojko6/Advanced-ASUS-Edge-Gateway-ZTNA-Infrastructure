@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Added
+- Added optional source-scoped Pi-hole DNS enforcement for selected Tailscale IPv4 clients, with client identity preserved for Pi-hole analytics and the generic dnsmasq redirect retained as fallback for non-matching sources.
+- Added admin-scoped RouterCloud INPUT handling, separate external/target ASUS HTTPS port configuration, dedicated Pi-hole/RouterCloud/router-HTTPS healthcheck contract tests, and an Android/Tailscale/Pi-hole troubleshooting case study for issue #152.
 - Added RouterCloud login by configured email alias while preserving the canonical DUFS account, password, permissions and session state.
 - Added the #130 main-branch protection runbook and an aggregate `Validation suite` CI job designed to serve as the single required status check for the GitHub ruleset.
 - Added the completed RouterCloud browser/application baseline: production-tested password recovery, persistent favorites, AJAX sorting, 250 ms live search, context-aware file views, selected server-side ZIP, WebDAV desktop integration, and the completed #138 versioned encrypted backup layer.
@@ -29,6 +31,8 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Extended the router healthcheck so remote HTTPS management validates the actual target listener, source-scoped DNAT and post-DNAT INPUT rule instead of assuming the external and local application ports are identical.
+- Reconciled DNS and management documentation with the validated issue #152 target path: LTE/5G + Tailscale with exit node disabled, source-scoped Pi-hole before the generic Tailscale DNS fallback, and explicit non-claims for encrypted DNS and exit-node-enabled Android DNS.
 - Reconciled README, project status, roadmap and security documentation with the completed Personal Cloud milestones #136/#137/#138 and the current 2026-10-03 RouterCloud production state.
 - Refined RouterCloud desktop UX so the right-hand recent/favorites panel aligns with file actions, dashboard-only shortcuts are hidden in file-specific views, and the favorites panel—not the navigation tile—is the drag-and-drop target.
 - Reconciled the disaster-recovery documentation with the post-Pi-hole reference state and made the new Pi-hole rebuild/alias/filtering recovery gap explicit instead of inheriting the 2026-09-27 clean-room result.
@@ -52,6 +56,8 @@
 - Closed the unchanged-state observation on 2026-09-22 after continuous operation from 2026-09-11 through 2026-09-22; current documentation now treats later router changes as controlled maintenance rather than an active Stability Gate.
 
 ### Fixed
+- Corrected Tailscale router HTTPS management from an invalid `8443 -> 8443` assumption to external TCP/8443 -> router LAN TCP/443, matching the live ASUS httpds listener.
+- Corrected RouterCloud Tailscale handling to use router-local INPUT policy instead of treating the service alias as a forwarded LAN host; updated the recovery CI fixture to model the new TCP/443 listener contract.
 - Decoupled the router's local syslog-ng archive from remote-collector backpressure by removing hard flow-control from the shared local/remote fan-out path; added a static regression guard against reintroducing the blocking policy.
 - Corrected installer/recovery CI fixtures after the Polish WebUI builder introduced an installation-time GNU `patch` dependency, and added a static regression guard for the builder's `patch -p1` header contract.
 - Corrected the case-study index to reflect the recovered GeForce NOW Wi-Fi packet capture instead of the earlier unavailable-capture state.
@@ -66,6 +72,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Live-validated the issue #152 Android target path with Wi-Fi off, LTE/5G on, Tailscale on and exit node off: a fresh query reached Pi-hole under the selected client identity, internal RouterCloud naming worked, a known advertising domain was blocked by Gravity, RouterCloud remained reachable, ASUS management reached the real TCP/443 listener through external TCP/8443, and the production healthcheck returned zero failures and warnings.
 - Production-validated RouterCloud login through both the canonical username and the configured email alias on 2026-10-03; both identifiers used the same password and resolved to the same account.
 - Completed issue #130 repository supply-chain validation: the active `Protect main` ruleset targets the default branch with no bypass, requires pull requests and the aggregate `Validation suite`, blocks deletion and non-fast-forward/force-push updates by rule, allowed a normal post-activation PR after green CI, and rejected a controlled direct `main` ref update with HTTP 422.
 - Production-validated RouterCloud password recovery end to end on 2026-10-03: mail delivery, fragment-based reset flow, password change, login, service restart and post-restart login all passed.
