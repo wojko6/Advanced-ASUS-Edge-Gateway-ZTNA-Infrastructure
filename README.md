@@ -241,9 +241,24 @@ identity, internal RouterCloud naming resolved, a known advertising domain was
 blocked by Pi-hole Gravity, RouterCloud remained reachable, and authorized ASUS
 management reached the actual TCP/443 httpds listener through external
 TCP/8443. The production healthcheck completed with zero failures and warnings.
-The result does not claim exit-node-enabled Android DNS or encrypted-DNS
-interception. See the [issue #152 policy](docs/android-pihole-tailscale-policy.md)
-and [sanitized live validation](evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
+
+The stricter Pi-hole filter was subsequently promoted from a temporary
+Android-only group to the global `Default` policy alongside OISD Big and
+AdGuard DNS Filter. The temporary strict group and explicit Android Pi-hole
+client entries were removed. A global smoke test confirmed normal public DNS,
+internal `home.arpa`, Gravity blocking and normal HTTPS connectivity.
+
+Follow-up Fedora testing also found that Tailscale's `~.` DNS route caused
+ordinary public DNS to follow `tailscale0` and miss Pi-hole analytics through
+the generic fallback. Adding the administration workstation to the selected
+source-scoped Pi-hole transport restored Pi-hole visibility while preserving
+Tailscale DNS/MagicDNS; a fresh marker appeared under the workstation's
+Tailscale identity and the healthcheck remained clean.
+
+The result does not claim exit-node-enabled Android DNS, encrypted-DNS
+interception or long-term application compatibility. See the
+[issue #152 policy](docs/android-pihole-tailscale-policy.md) and
+[sanitized live validation](evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
 
 On **2026-09-25**, a fresh read-only router checkpoint reconfirmed the reference deployment on GNUton `3004.388.11_1-gnuton1_tuf`: both SSD filesystems and swap were active, core services were running, direct Unbound resolution returned the DNSSEC `AD` flag, and the project health check completed with `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`. Controlled Fedora tests also produced exact production counter deltas for LAN UDP/TCP 53 interception, direct TCP/853 rejection and Tailscale UDP/53 interception. A same-day Exit Node retest was deliberately not promoted into new datapath evidence because the first flow ran without an exit node selected and a later router capture attempt did not start; the 2026-09-23 fixed-flow capture remains authoritative for the current-firmware Exit Node claim. See the [sanitized checkpoint](evidence/2026-09-25/router-live-checkpoint.md) and [dated worklog](docs/worklog/2026-09-25.md).
 
