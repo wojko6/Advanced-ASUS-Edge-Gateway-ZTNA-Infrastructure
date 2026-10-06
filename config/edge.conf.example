@@ -23,13 +23,28 @@ EDGE_ADMIN_TS_SOURCES=""
 
 # Router-local services available to EDGE_ADMIN_TS_SOURCES.
 EDGE_ALLOW_ROUTER_HTTPS="1"
+# External/admin port exposed through Tailscale.
 EDGE_ROUTER_HTTPS_PORT="8443"
+# Actual HTTPS listener used by ASUS httpds on the LAN address.
+EDGE_ROUTER_HTTPS_TARGET_PORT="443"
 EDGE_ALLOW_ROUTER_SSH="0"
 EDGE_ROUTER_SSH_PORT="22"
+
+# Optional RouterCloud service bound to a router-local IPv4 alias.
+# When enabled, every EDGE_ADMIN_TS_SOURCES entry may access this HTTPS endpoint.
+EDGE_ALLOW_ROUTERCLOUD="0"
+EDGE_ROUTERCLOUD_IP=""
+EDGE_ROUTERCLOUD_HTTPS_PORT="443"
 
 # Force classic DNS from Tailscale clients through the router's resolver.
 # This does not intercept DoH, DoT, or DoQ; control those with endpoint policy.
 EDGE_INTERCEPT_DNS="1"
+
+# Optional source-scoped Pi-hole path for selected Tailscale clients.
+# Matching sources are DNATed to the dedicated Pi-hole DNS address before the
+# normal Tailscale DNS REDIRECT fallback. Keep empty by default.
+EDGE_TS_PIHOLE_SOURCES=""
+EDGE_TS_PIHOLE_DNS_IP=""
 
 # Optional LAN classic-DNS enforcement. When enabled, TCP/UDP port 53 arriving
 # from EDGE_LAN_IF is redirected to the router resolver even if a client targets

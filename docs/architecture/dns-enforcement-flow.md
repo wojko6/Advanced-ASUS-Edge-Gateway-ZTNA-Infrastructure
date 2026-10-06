@@ -65,10 +65,12 @@ flowchart TD
   intentionally addressed to the configured Pi-hole alias is allowed to reach
   Pi-hole. Other external TCP/UDP 53 destinations are redirected to the router
   local port 53 and therefore terminate at firmware dnsmasq before Unbound.
-- **Tailscale/tailscale0 classic DNS:** the previously validated
-  `EDGE_TS_PREROUTING` redirect still terminates at firmware dnsmasq. The
-  Pi-hole migration does **not** silently promote this historical path into a
-  Pi-hole-filtered claim.
+- **Tailscale/tailscale0 classic DNS:** the generic
+  `EDGE_TS_PREROUTING` fallback still terminates at firmware dnsmasq. An
+  optional source-scoped policy can place selected Tailscale IPv4 clients
+  through the dedicated Pi-hole listener first, using DNAT rules ordered
+  before the generic REDIRECT. Pi-hole filtering for that optional path is
+  claimed only after client-specific live validation.
 - **Resolver chain:** both Pi-hole and firmware dnsmasq use Unbound on
   `127.0.0.1:53535` for ordinary external resolution.
 - **Direct LAN DoT:** when `EDGE_BLOCK_LAN_DOT=1`,

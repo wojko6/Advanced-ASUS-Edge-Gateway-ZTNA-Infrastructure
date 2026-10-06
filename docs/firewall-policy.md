@@ -132,6 +132,24 @@ Treat cellular-only printing as client-dependent and unsupported unless it is
 validated with the exact Android build and print service. Do not broaden the
 firewall when packet capture shows no attempted print connection.
 
+## Source-scoped Pi-hole DNS for Tailscale clients
+
+`EDGE_TS_PIHOLE_SOURCES` and `EDGE_TS_PIHOLE_DNS_IP` provide an optional,
+least-impact migration path for selected Tailscale clients. Matching classic
+IPv4 TCP/UDP port-53 traffic is DNATed to the dedicated local Pi-hole listener
+before the generic Tailscale DNS REDIRECT rule. Non-matching clients continue
+to terminate at firmware dnsmasq.
+
+The two settings are fail-closed as a pair: configuring only sources or only a
+target, or supplying malformed IPv4 values, causes firewall-start validation
+to fail before managed firewall chains are rebuilt.
+
+The configured target is expected to be a local router IPv4 address hosting
+Pi-hole. Runtime health checks verify the local address, TCP/UDP listeners and
+DNAT-before-REDIRECT ordering.
+
+See [Android global DNS filtering through Pi-hole and Tailscale](android-pihole-tailscale-policy.md).
+
 ## Policy limitations
 
 - iptables sees source IPs, not Tailscale user identities. Enforce identities with Grants.

@@ -194,6 +194,32 @@ See also the
 and
 [password-recovery production validation](../evidence/2026-10-03/routercloud-password-recovery-production-validation.md).
 
+## 11. Android Pi-hole enforcement and remote management over Tailscale
+
+**File:** [Android DNS Enforcement and Remote Management over Tailscale](case-studies/android-tailscale-pihole-debugging.md)
+
+A multi-layer Android/Tailscale troubleshooting and hardening case covering:
+
+- source-scoped Pi-hole DNS enforcement for a remote Android client;
+- LTE/5G operation without consuming a second Android VPN slot;
+- preservation of internal `home.arpa` resolution and normal cellular Internet access;
+- diagnosis of exit-node-specific DNS behaviour using packet capture and NAT counters;
+- RouterCloud reachability through a router-local IPv4 alias and INPUT rather than FORWARD;
+- stale administrative Tailscale source cleanup;
+- separation of the external router-management port from the actual ASUS WebUI listener;
+- correction of the management path from `8443 -> 8443` to `8443 -> 443`;
+- runtime health checks for the target listener, DNAT and post-DNAT INPUT policy;
+- dedicated negative contract tests for wrong source, port, destination and missing listener;
+- end-to-end validation using ADB, iptables counters, Pi-hole analytics, `tcpdump`, `netstat`, and staged SHA-256 deployment verification.
+
+The case demonstrates how DNS, routing, NAT, firewall and application-listener
+failures can produce similar client-side symptoms, and why each layer should be
+validated independently before changing the architecture.
+
+The documented result is intentionally limited to the validated transport, DNS and
+remote-management path. Stronger per-device Pi-hole policy and application
+compatibility testing remain separate follow-up work.
+
 ## How to read these cases
 
 Where applicable, case studies separate:
