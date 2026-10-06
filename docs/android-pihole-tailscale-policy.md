@@ -147,10 +147,26 @@ Observed acceptance points include:
   TCP/8443;
 - a post-deployment project healthcheck with zero failures and warnings.
 
-This does **not** complete issue #152. The dedicated Pi-hole client/group policy,
-stronger curated per-device filtering, final allowlist review and banking/payment
-application compatibility checks remain pending. Exit-node-enabled Android DNS
-is also outside the current validated claim.
+The Pi-hole policy was then tested as a dedicated per-device group, but the
+deployment decision changed after initial validation: the stronger curated
+filter was promoted to the global Pi-hole `Default` group instead of remaining
+Android-only. The live Pi-hole state was simplified back to one `Default`
+group with no explicit client assignments. The global default now uses OISD
+Big, AdGuard DNS Filter and HaGeZi Multi PRO++ Mini.
+
+The same source-scoped Tailscale transport was also extended to the Fedora
+administration workstation after testing showed that Tailscale's `~.` DNS
+route caused ordinary Fedora DNS to follow `tailscale0` and miss Pi-hole
+analytics. After adding the workstation to the selected Pi-hole source set, a
+fresh unique query appeared in Pi-hole under the workstation's Tailscale client
+identity. The project healthcheck still completed with zero failures and
+warnings.
+
+Basic global smoke testing confirmed public DNS resolution, internal
+`home.arpa` resolution, a Gravity-blocked advertising domain and normal HTTPS
+connectivity. Longer application-compatibility observation, including
+representative banking/payment use, remains open. Exit-node-enabled Android DNS
+and encrypted-DNS interception are still outside the current validated claim.
 
 See the [sanitized 2026-10-06 live validation](../evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
 
