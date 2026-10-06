@@ -1,0 +1,147 @@
+--- a/Main_ConnStatus_Content.asp
++++ b/Main_ConnStatus_Content.asp
+@@ -80,24 +80,24 @@
+ document.getElementById('tracked_filters').style.display = "";
+ document.getElementById('connblock_header').style.display = "";
+ document.getElementById('connblock_nat').innerHTML = "";
+-code = '<table width="100%" cellpadding="4" class="FormTable_table"><thead><tr><td colspan="6">NAT Connections</td></tr></thead>' +
+-'<tr><th width="8%" id="track_header_0" style="cursor: pointer; text-align:left;" onclick="setsort(0,\'nat\'); draw_table(\'nat\')">Proto</th>' +
++code = '<table width="100%" cellpadding="4" class="FormTable_table"><thead><tr><td colspan="6">Połączenia NAT</td></tr></thead>' +
++'<tr><th width="8%" id="track_header_0" style="cursor: pointer; text-align:left;" onclick="setsort(0,\'nat\'); draw_table(\'nat\')">Protokół</th>' +
+ '<th width="28%" id="track_header_1" style="cursor: pointer;" onclick="setsort(1, \'nat\'); draw_table(\'nat\')">NAT IP</th>' +
+-'<th width="9%" id="track_header_2" style="cursor: pointer;" onclick="setsort(2, \'nat\'); draw_table(\'nat\')">NAT Port</th>' +
+-'<th width="28%" id="track_header_3" style="cursor: pointer;" onclick="setsort(3, \'nat\'); draw_table(\'nat\')">Destination IP</th>' +
++'<th width="9%" id="track_header_2" style="cursor: pointer;" onclick="setsort(2, \'nat\'); draw_table(\'nat\')">Port NAT</th>' +
++'<th width="28%" id="track_header_3" style="cursor: pointer;" onclick="setsort(3, \'nat\'); draw_table(\'nat\')">Docelowy adres IP</th>' +
+ '<th width="9%" id="track_header_4" style="cursor: pointer;" onclick="setsort(4, \'nat\'); draw_table(\'nat\')">Port</th>' +
+-'<th width="18%" id="track_header_5" style="cursor: pointer;" onclick="setsort(5, \'nat\'); draw_table(\'nat\')">State</th></tr>';
++'<th width="18%" id="track_header_5" style="cursor: pointer;" onclick="setsort(5, \'nat\'); draw_table(\'nat\')">Stan</th></tr>';
+ } else if (type == "route") {
+ document.getElementById('tracked_filters_route').style.display = "";
+ document.getElementById('connblock_route_header').style.display = "";
+ document.getElementById('connblock_route').innerHTML = "";
+ code = '<table width="100%" cellpadding="4" class="FormTable_table"><thead><tr><td colspan="6">Connections</td></tr></thead>' +
+-'<tr><th width="8%" id="track_header_route_0" style="cursor: pointer;" onclick="setsort(0, \'route\'); draw_table(\'route\')">Proto</th>' +
+-'<th width="28%" id="track_header_route_1" style="cursor: pointer;" onclick="setsort(1, \'route\'); draw_table(\'route\')">Local IP</th>' +
++'<tr><th width="8%" id="track_header_route_0" style="cursor: pointer;" onclick="setsort(0, \'route\'); draw_table(\'route\')">Protokół</th>' +
++'<th width="28%" id="track_header_route_1" style="cursor: pointer;" onclick="setsort(1, \'route\'); draw_table(\'route\')">Lokalny adres IP</th>' +
+ '<th width="9%" id="track_header_route_2" style="cursor: pointer;" onclick="setsort(2, \'route\'); draw_table(\'route\')">Port</th>' +
+-'<th width="28%" id="track_header_route_3" style="cursor: pointer;" onclick="setsort(3, \'route\'); draw_table(\'route\')">Destination IP</th>' +
++'<th width="28%" id="track_header_route_3" style="cursor: pointer;" onclick="setsort(3, \'route\'); draw_table(\'route\')">Docelowy adres IP</th>' +
+ '<th width="9%" id="track_header_route_4" style="cursor: pointer;" onclick="setsort(4, \'route\'); draw_table(\'route\')">Port</th>' +
+-'<th width="18%" id="track_header_route_5" style="cursor: pointer; onclick="setsort(5, \'route\'); draw_table(\'route\')">State</th></tr>';
++'<th width="18%" id="track_header_route_5" style="cursor: pointer; onclick="setsort(5, \'route\'); draw_table(\'route\')">Stan</th></tr>';
+ }
+ dataarray.sort(table_sort);
+ for (i = 0; (i < tracklen); i++) {
+@@ -344,14 +344,14 @@
+ <div class="formfonttitle"><#873#> - <#870#></div>
+ <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+ <div class="formfontdesc"><#874#></div>
+-<div class="formfontdesc">Click on a column header to sort by that field.</div>
+-<div class="formfontdesc">Public IP addresses can be clicked on to launch a lookup on <a href="https://whatismyipaddress.com/" target="_blank" style="cursor:pointer; text-decoration:underline;">https://whatismyipaddress.com/</a>.</div>
+-<table cellpadding="4" width="100%" class="FormTable_table"><thead><tr><td colspan="2">Display options</td></tr></thead>
++<div class="formfontdesc">Kliknij nagłówek kolumny, aby posortować według tego pola.</div>
++<div class="formfontdesc">Publiczne adresy IP można kliknąć, aby sprawdzić je w serwisie <a href="https://whatismyipaddress.com/" target="_blank" style="cursor:pointer; text-decoration:underline;">https://whatismyipaddress.com/</a>.</div>
++<table cellpadding="4" width="100%" class="FormTable_table"><thead><tr><td colspan="2">Opcje wyświetlania</td></tr></thead>
+ <tr>
+-<th>Refresh frequency</th>
++<th>Częstotliwość odświeżania</th>
+ <td>
+ <select name="refreshrate" class="input_option" onchange="setRefresh(this);" id="refreshrate">
+-<option value="0" selected>No refresh</option>
++<option value="0" selected>Bez odświeżania</option>
+ <option value="1">1 second</option>
+ <option value="3">3 seconds</option>
+ <option value="5">5 seconds</option>
+@@ -360,7 +360,7 @@
+ </td>
+ </tr>
+ <tr>
+-<th>Display client names</th>
++<th>Pokaż nazwy klientów</th>
+ <td>
+ <input type="radio" name="show_names" class="input" value="1" checked onchange="setShowNames(this)"><#278#>
+ <input type="radio" name="show_names" class="input" value="0" onchange="setShowNames(this)"><#277#>
+@@ -369,19 +369,19 @@
+ <div class="apply_gen">
+ <input type="button" onClick="get_connection_list();" value="<#1828#>" class="button_gen">
+ </div>
+-<div id="connblock_header" style="display:none;"><span style="color:#FFCC00; font-size:larger;">NAT connections</span></div>
+-<table cellpadding="4" width="100%" class="FormTable_table" id="tracked_filters" style="display:none;"><thead><tr><td colspan="6">Filter NAT connections</td></tr></thead>
++<div id="connblock_header" style="display:none;"><span style="color:#FFCC00; font-size:larger;">Połączenia NAT</span></div>
++<table cellpadding="4" width="100%" class="FormTable_table" id="tracked_filters" style="display:none;"><thead><tr><td colspan="6">Filtruj połączenia NAT</td></tr></thead>
+ <tr>
+-<th width="8%">Proto</th>
++<th width="8%">Protokół</th>
+ <th width="28%">NAT IP</th>
+-<th width="9%">NAT Port</th>
+-<th width="28%">Destination IP</th>
++<th width="9%">Port NAT</th>
++<th width="28%">Docelowy adres IP</th>
+ <th width="9%">Port</th>
+-<th width="18%">State</th>
++<th width="18%">Stan</th>
+ </tr>
+ <tr>
+ <td><select class="input_option" onchange="set_filter(0, this, 'nat');">
+-<option value="">any</option>
++<option value="">dowolny</option>
+ <option value="tcp">tcp</option>
+ <option value="udp">udp</option>
+ </select></td>
+@@ -390,11 +390,11 @@
+ <td><input type="text" class="input_15_table" maxlength="39" oninput="set_filter(3, this, 'nat');"></input></td>
+ <td><input type="text" class="input_6_table" maxlength="5" oninput="set_filter(4, this, 'nat');"></input></td>
+ <td><select class="input_option" onchange="set_filter(5, this, 'nat');">
+-<option value="">any</option>
++<option value="">dowolny</option>
+ <option value="ASSURED">Assured</option>
+ <option value="ESTABLISHED">Established</option>
+ <option value="CLOSE">Close</option>
+-<option value="TIME_WAIT">Time Wait</option>
++<option value="TIME_WAIT">Oczekiwanie</option>
+ <option value="FIN_WAIT">FIN Wait</option>
+ <option value="SYN_">SYN Recv/Sent</option>
+ <option value="UNREPLIED">Unreplied</option
+@@ -402,19 +402,19 @@
+ </tr>
+ </table>
+ <div id="connblock_nat"></div>
+-<div id="connblock_route_header" style="display:none; margin-top:50px;"><span style="color:#FFCC00; font-size:larger;">Routed IPv6 connections</span></div>
+-<table cellpadding="4" width="100%" class="FormTable_table" id="tracked_filters_route" style="display:none;"><thead><tr><td colspan="6">Filter routed connections</td></tr></thead>
++<div id="connblock_route_header" style="display:none; margin-top:50px;"><span style="color:#FFCC00; font-size:larger;">Routowane połączenia IPv6</span></div>
++<table cellpadding="4" width="100%" class="FormTable_table" id="tracked_filters_route" style="display:none;"><thead><tr><td colspan="6">Filtruj routowane połączenia</td></tr></thead>
+ <tr>
+-<th width="8%">Proto</th>
+-<th width="28%">Local IP</th>
++<th width="8%">Protokół</th>
++<th width="28%">Lokalny adres IP</th>
+ <th width="9%">Port</th>
+-<th width="28%">Destination IP</th>
++<th width="28%">Docelowy adres IP</th>
+ <th width="9%">Port</th>
+-<th width="18%">State</th>
++<th width="18%">Stan</th>
+ </tr>
+ <tr>
+ <td><select class="input_option" onchange="set_filter(0, this, 'route');">
+-<option value="">any</option>
++<option value="">dowolny</option>
+ <option value="tcp">tcp</option>
+ <option value="udp">udp</option>
+ </select></td>
+@@ -423,11 +423,11 @@
+ <td><input type="text" class="input_15_table" maxlength="39" oninput="set_filter(3, this, 'route');"></input></td>
+ <td><input type="text" class="input_6_table" maxlength="5" oninput="set_filter(4, this, 'route');"></input></td>
+ <td><select class="input_option" onchange="set_filter(5, this, 'route');">
+-<option value="">any</option>
++<option value="">dowolny</option>
+ <option value="ASSURED">Assured</option>
+ <option value="ESTABLISHED">Established</option>
+ <option value="CLOSE">Close</option>
+-<option value="TIME_WAIT">Time Wait</option>
++<option value="TIME_WAIT">Oczekiwanie</option>
+ <option value="FIN_WAIT">FIN Wait</option>
+ <option value="SYN_">SYN Recv/Sent</option>
+ <option value="UNREPLIED">Unreplied</option

@@ -1,0 +1,52 @@
+--- a/Main_DHCPStatus_Content.asp
++++ b/Main_DHCPStatus_Content.asp
+@@ -61,26 +61,26 @@
+ tableStruct = {
+ data: leasearray,
+ container: "leaseblock",
+-title: "DHCP Leases",
++title: "Dzierżawy DHCP",
+ header: [
+ {
+-"title" : "Time Left",
++"title" : "Pozostały czas",
+ "width" : "20%",
+ "sort" : "str"
+ },
+ {
+-"title" : "MAC Address",
++"title" : "Adres MAC",
+ "width" : "20%",
+ "sort" : "str"
+ },
+ {
+-"title" : "IP Address",
++"title" : "Adres IP",
+ "width" : "20%",
+ "sort" : "ip",
+ "defaultSort" : "increase"
+ },
+ {
+-"title" : "Hostname",
++"title" : "Nazwa hosta",
+ "width" : "40%",
+ "sort" : "str"
+ }
+@@ -88,7 +88,7 @@
+ }
+ tableApi.genTableAPI(tableStruct);
+ } else {
+-document.getElementById("leaseblock").innerHTML = '<span class="hint-color" style="padding-left:10px;">No active leases.</span>';
++document.getElementById("leaseblock").innerHTML = '<span class="hint-color" style="padding-left:10px;">Brak aktywnych dzierżaw.</span>';
+ }
+ }
+ </script>
+@@ -128,7 +128,7 @@
+ <div class="formfonttitle"><#873#> - <#526#></div>
+ <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+ <div class="formfontdesc"><#1895#></div>
+-<div class="formfontdesc">Click on a column header to sort by that field.</div>
++<div class="formfontdesc">Kliknij nagłówek kolumny, aby posortować według tego pola.</div>
+ <div style="margin-top:8px">
+ <div id="leaseblock"></div>
+ </div>

@@ -115,6 +115,27 @@ for webui_pl_build_guard in \
     'STATE_PATCHED_SHA=' \
     'ROUTER_STATUS_PATCHED_SHA=' \
     'ROUTER_PATCHED_SHA=' \
+    'INTERNET_PATCHED_SHA=' \
+    'ADV_WAN_PATCHED_SHA=' \
+    'ADV_BASICFW_PATCHED_SHA=' \
+    'ADV_FIREWALL_PATCHED_SHA=' \
+    'ADV_FWUP_PATCHED_SHA=' \
+    'ADV_SYSTEM_PATCHED_SHA=' \
+    'ADV_BACKUP_PATCHED_SHA=' \
+    'ADV_SNMP_PATCHED_SHA=' \
+    'MAIN_LOG_PATCHED_SHA=' \
+    'MAIN_WSTATUS_PATCHED_SHA=' \
+    'MAIN_DHCP_PATCHED_SHA=' \
+    'MAIN_IPV6_PATCHED_SHA=' \
+    'MAIN_ROUTE_PATCHED_SHA=' \
+    'MAIN_IPT_PATCHED_SHA=' \
+    'MAIN_CONN_PATCHED_SHA=' \
+    'TRAFFIC_RT_PATCHED_SHA=' \
+    'TRAFFIC_LAST24_PATCHED_SHA=' \
+    'TRAFFIC_DAILY_PATCHED_SHA=' \
+    'TRAFFIC_MONTHLY_PATCHED_SHA=' \
+    'TRAFFIC_SETTINGS_PATCHED_SHA=' \
+    'DNSDIRECTOR_PATCHED_SHA=' \
     'WEBUI_PL_BUILD=PASS'
 do
     grep -F "$webui_pl_build_guard" \
@@ -133,7 +154,28 @@ for webui_patch in \
     Advanced_WAdvanced_Content.asp.patch \
     state.js.patch \
     router_status.asp.patch \
-    router.asp.patch
+    router.asp.patch \
+    internet.asp.patch \
+    Advanced_WAN_Content.asp.patch \
+    Advanced_BasicFirewall_Content.asp.patch \
+    Advanced_Firewall_Content.asp.patch \
+    Advanced_FirmwareUpgrade_Content.asp.patch \
+    Advanced_System_Content.asp.patch \
+    Advanced_SettingBackup_Content.asp.patch \
+    Advanced_SNMP_Content.asp.patch \
+    Main_LogStatus_Content.asp.patch \
+    Main_WStatus_Content.asp.patch \
+    Main_DHCPStatus_Content.asp.patch \
+    Main_IPV6Status_Content.asp.patch \
+    Main_RouteStatus_Content.asp.patch \
+    Main_IPTStatus_Content.asp.patch \
+    Main_ConnStatus_Content.asp.patch \
+    Main_TrafficMonitor_realtime.asp.patch \
+    Main_TrafficMonitor_last24.asp.patch \
+    Main_TrafficMonitor_daily.asp.patch \
+    Main_TrafficMonitor_monthly.asp.patch \
+    Main_TrafficMonitor_settings.asp.patch \
+    DNSDirector.asp.patch
 do
     patch_path="$REPO_DIR/router/webui/patches/$webui_patch"
     [ -s "$patch_path" ] || {
@@ -179,7 +221,28 @@ for webui_pl_guard in \
     'Advanced_WAdvanced_Content.asp' \
     'STATE_TARGET="/www/state.js"' \
     'ROUTER_STATUS_TARGET="/www/device-map/router_status.asp"' \
-    'ROUTER_TARGET="/www/device-map/router.asp"'
+    'ROUTER_TARGET="/www/device-map/router.asp"' \
+    'ADV_WAN_TARGET="/www/Advanced_WAN_Content.asp"' \
+    'ADV_BASICFW_TARGET="/www/Advanced_BasicFirewall_Content.asp"' \
+    'ADV_FIREWALL_TARGET="/www/Advanced_Firewall_Content.asp"' \
+    'ADV_FWUP_TARGET="/www/Advanced_FirmwareUpgrade_Content.asp"' \
+    'ADV_SYSTEM_TARGET="/www/Advanced_System_Content.asp"' \
+    'ADV_BACKUP_TARGET="/www/Advanced_SettingBackup_Content.asp"' \
+    'ADV_SNMP_TARGET="/www/Advanced_SNMP_Content.asp"' \
+    'MAIN_LOG_TARGET="/www/Main_LogStatus_Content.asp"' \
+    'MAIN_WSTATUS_TARGET="/www/Main_WStatus_Content.asp"' \
+    'MAIN_DHCP_TARGET="/www/Main_DHCPStatus_Content.asp"' \
+    'MAIN_IPV6_TARGET="/www/Main_IPV6Status_Content.asp"' \
+    'MAIN_ROUTE_TARGET="/www/Main_RouteStatus_Content.asp"' \
+    'MAIN_IPT_TARGET="/www/Main_IPTStatus_Content.asp"' \
+    'MAIN_CONN_TARGET="/www/Main_ConnStatus_Content.asp"' \
+    'INTERNET_TARGET="/www/device-map/internet.asp"' \
+    'TRAFFIC_RT_TARGET="/www/Main_TrafficMonitor_realtime.asp"' \
+    'TRAFFIC_LAST24_TARGET="/www/Main_TrafficMonitor_last24.asp"' \
+    'TRAFFIC_DAILY_TARGET="/www/Main_TrafficMonitor_daily.asp"' \
+    'TRAFFIC_MONTHLY_TARGET="/www/Main_TrafficMonitor_monthly.asp"' \
+    'TRAFFIC_SETTINGS_TARGET="/www/Main_TrafficMonitor_settings.asp"' \
+    'DNSDIRECTOR_TARGET="/www/DNSDirector.asp"'
 do
     grep -F "$webui_pl_guard" \
         "$REPO_DIR/router/scripts/webui-mount" \

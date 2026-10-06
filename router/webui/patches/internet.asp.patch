@@ -1,0 +1,74 @@
+--- a/internet.asp
++++ b/internet.asp
+@@ -211,11 +211,11 @@
+ }
+ if(dnspriv_support){
+ if(dnspriv_enable != 0 )
+-showtext(document.getElementById("dnspriv_notice"), "(overridden by DNS Privacy)");
++showtext(document.getElementById("dnspriv_notice"), "(zastąpione przez DNS Privacy)");
+ if (dnspriv_enable == 1)
+ var dnspriv_mode = "DNS-over-TLS";
+ else
+-var dnspriv_mode = "Disabled";
++var dnspriv_mode = "Wyłączony";
+ showtext(document.getElementById("dnspriv_mode"), dnspriv_mode);
+ }
+ if(parent.wans_flag){
+@@ -427,7 +427,7 @@
+ }
+ if(wan_ipv6_network_json.status != "0" && wan_ipv6_network_json.Link_Local_Address != ""){
+ $("#ipv6_WANIP_LL").show();
+-$("#ipv6_WANIP_LL").prop('title', 'WAN IPv6 Link-Local Address');
++$("#ipv6_WANIP_LL").prop('title', 'Lokalny adres łącza IPv6 WAN');
+ showtext($("#ipv6_WANIP_LL")[0], wan_ipv6_network_json.Link_Local_Address);
+ }
+ showtext($("#netmask")[0], wannetmask);
+@@ -437,15 +437,15 @@
+ $("#ipv6_gateway").prop('title', `<#2686#>`);
+ showtext($("#ipv6_gateway")[0], wan_ipv6_network_json.IPv6_Gateway);
+ }
+-showtext2($("#lease")[0], format_time(lease, "Renewing..."), have_lease);
+-showtext2($("#expires")[0], format_time(expires, "Expired"), have_lease);
++showtext2($("#lease")[0], format_time(lease, "Odnawianie..."), have_lease);
++showtext2($("#expires")[0], format_time(expires, "Wygasła"), have_lease);
+ }
+ else{
+ showtext($("#secondary_WANIP")[0], wanip);
+ showtext($("#secondary_netmask")[0], wannetmask);
+ showtext($("#secondary_gateway")[0], wangateway);
+-showtext2($("#secondary_lease")[0], format_time(lease, "Renewing..."), have_lease);
+-showtext2($("#secondary_expires")[0], format_time(expires, "Expired"), have_lease);
++showtext2($("#secondary_lease")[0], format_time(lease, "Odnawianie..."), have_lease);
++showtext2($("#secondary_expires")[0], format_time(expires, "Wygasła"), have_lease);
+ }
+ }
+ function update_all_xip(wanxip, wanxnetmask, wanxgateway, unit){
+@@ -478,15 +478,15 @@
+ showtext2($("#xWANIP")[0], wanxip, have_ip);
+ showtext2($("#xnetmask")[0], wanxnetmask, have_ip);
+ showtext2($("#xgateway")[0], wanxgateway, have_gateway);
+-showtext2($("#xlease")[0], format_time(lease, "Renewing..."), have_lease);
+-showtext2($("#xexpires")[0], format_time(expires, "Expired"), have_lease);
++showtext2($("#xlease")[0], format_time(lease, "Odnawianie..."), have_lease);
++showtext2($("#xexpires")[0], format_time(expires, "Wygasła"), have_lease);
+ }
+ else{
+ showtext2($("#secondary_xWANIP")[0], wanxip, have_ip);
+ showtext2($("#secondary_xnetmask")[0], wanxnetmask, have_ip);
+ showtext2($("#secondary_xgateway")[0], wanxgateway, have_gateway);
+-showtext2($("#secondary_xlease")[0], format_time(lease, "Renewing..."), have_lease);
+-showtext2($("#secondary_xexpires")[0], format_time(expires, "Expired"), have_lease);
++showtext2($("#secondary_xlease")[0], format_time(lease, "Odnawianie..."), have_lease);
++showtext2($("#secondary_xexpires")[0], format_time(expires, "Wygasła"), have_lease);
+ }
+ }
+ function update_all_dns(wandns, wanxdns, unit){
+@@ -900,7 +900,7 @@
+ </tr>
+ <tr id="dnspriv_enabled">
+ <td style="padding:5px 10px 5px 15px;">
+-<p class="formfonttitle_nwm">DNS Privacy mode</p>
++<p class="formfonttitle_nwm">Tryb DNS Privacy</p>
+ <p class="tab_info_bg" style="padding-left:10px; margin-top:3px;line-height:20px;" id="dnspriv_mode"></p>
+ <div style="margin-top:5px;" class="line_horizontal"></div>
+ </td>

@@ -1,0 +1,90 @@
+--- a/Advanced_WAN_Content.asp
++++ b/Advanced_WAN_Content.asp
+@@ -1745,7 +1745,7 @@
+ function Update_DNS_status(){
+ $("#DNS_status").empty();
+ if(document.form.wan_dnsenable_x.value == 1){
+-DSN_status_info=`<b>Default status :</b> <#393#>`;
++DSN_status_info=`<b>Stan domyślny:</b> <#393#>`;
+ }
+ else{
+ DNS_list_index=DNSList_match(document.form.wan_dns1_x.value, document.form.wan_dns2_x.value);
+@@ -2029,28 +2029,28 @@
+ </td>
+ </tr>
+ <tr>
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);">Enable UPnP IGD &amp; PCP/NAT-PMP</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">FAQ</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);">Włącz UPnP IGD i PCP/NAT-PMP</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">FAQ</a></th>
+ <td>
+ <input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="display_upnp_options();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#278#>
+ <input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="display_upnp_options();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#277#>
+ </td>
+ </tr>
+ <tr id="upnp_pinhole">
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,5);">Enable UPnP IGDv2 (IPv6 support)</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,5);">Włącz UPnP IGDv2 (obsługa IPv6)</a></th>
+ <td>
+ <input type="radio" name="upnp_pinhole_enable" class="input" value="1" onclick="display_upnp_options();" <% nvram_match("upnp_pinhole_enable", "1", "checked"); %>><#278#>
+ <input type="radio" name="upnp_pinhole_enable" class="input" value="0" onclick="display_upnp_options();" <% nvram_match("upnp_pinhole_enable", "0", "checked"); %>><#277#>
+ </td>
+ </tr>
+ <tr id="upnp_secure_tr">
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,3);">Enable secure UPnP IGD mode</a></th>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,3);">Włącz bezpieczny tryb UPnP IGD</a></th>
+ <td>
+ <input type="radio" name="upnp_secure" class="input" value="1" <% nvram_match_x("", "upnp_secure", "1", "checked"); %>><#278#>
+ <input type="radio" name="upnp_secure" class="input" value="0" <% nvram_match_x("", "upnp_secure", "0", "checked"); %>><#277#>
+ </td>
+ </tr>
+ <tr id="upnp_range_int">
+-<th>UPnP: Allowed internal port range</th>
++<th>UPnP: Dozwolony zakres portów wewnętrznych</th>
+ <td>
+ <input type="text" maxlength="5" name="upnp_min_port_int" class="input_6_table" value="<% nvram_get("upnp_min_port_int"); %>" onkeypress="return validator.isNumber(this,event);">
+ to
+@@ -2058,7 +2058,7 @@
+ </td>
+ </tr>
+ <tr id="upnp_range_ext">
+-<th>UPnP: Allowed external port range</th>
++<th>UPnP: Dozwolony zakres portów zewnętrznych</th>
+ <td>
+ <input type="text" maxlength="5" name="upnp_min_port_ext" class="input_6_table" value="<% nvram_get("upnp_min_port_ext"); %>" onkeypress="return validator.isNumber(this,event);">
+ to
+@@ -2259,31 +2259,31 @@
+ </td>
+ </tr>
+ <tr>
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,42);">Forward local domain queries to upstream DNS</a></th><td>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,42);">Przekazuj zapytania domen lokalnych do nadrzędnego serwera DNS</a></th><td>
+ <input type="radio" value="1" name="dns_fwd_local" <% nvram_match("dns_fwd_local", "1", "checked"); %> /><#278#>
+ <input type="radio" value="0" name="dns_fwd_local" <% nvram_match("dns_fwd_local", "0", "checked"); %> /><#277#>
+ </td>
+ </tr>
+ <tr>
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,43);">Enable DNS Rebind protection</a></th><td>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,43);">Włącz ochronę przed DNS Rebinding</a></th><td>
+ <input type="radio" value="1" name="dns_norebind" <% nvram_match("dns_norebind", "1", "checked"); %> /><#278#>
+ <input type="radio" value="0" name="dns_norebind" <% nvram_match("dns_norebind", "0", "checked"); %> /><#277#>
+ </td>
+ </tr>
+ <tr id="dnssec_tr" style="display:none;">
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,44);">Enable DNSSEC support</a></th><td>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,44);">Włącz obsługę DNSSEC</a></th><td>
+ <input type="radio" value="1" name="dnssec_enable" onclick="showhide('dnssec_strict_tr',1);" <% nvram_match("dnssec_enable", "1", "checked"); %> /><#278#>
+ <input type="radio" value="0" name="dnssec_enable" onclick="showhide('dnssec_strict_tr',0);" <% nvram_match("dnssec_enable", "0", "checked"); %> /><#277#>
+ </td>
+ </tr>
+ <tr id="dnssec_strict_tr" style="display:none;">
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,45);">Validate unsigned DNSSEC replies</a></th><td>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,45);">Weryfikuj niepodpisane odpowiedzi DNSSEC</a></th><td>
+ <input type="radio" value="1" name="dnssec_check_unsigned_x" <% nvram_match("dnssec_check_unsigned_x", "1", "checked"); %> /><#278#>
+ <input type="radio" value="0" name="dnssec_check_unsigned_x" <% nvram_match("dnssec_check_unsigned_x", "0", "checked"); %> /><#277#>
+ </td>
+ </tr>
+ <tr id="dns_priv_override_tr">
+-<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,46);">Prevent client auto DoH</a></th><td>
++<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,46);">Blokuj automatyczne DoH klientów</a></th><td>
+ <select id="dns_priv_override" class="input_option" name="dns_priv_override">
+ <option value="0" <% nvram_match("dns_priv_override", "0", "selected"); %>><#244#></option>
+ <option value="1" <% nvram_match("dns_priv_override", "1", "selected"); %>><#278#></option>

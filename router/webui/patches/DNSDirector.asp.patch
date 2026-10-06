@@ -1,0 +1,116 @@
+--- a/DNSDirector.asp	2026-10-02 11:53:43.474167610 +0200
++++ b/DNSDirector.asp	2026-10-02 11:53:43.475406253 +0200
+@@ -33,22 +33,22 @@
+ '<% nvram_get("dnsfilter_rulelist5"); %>'.replace(/&#60/g, "<");
+ }
+ var dnsfilter_rule_list_row = dnsfilter_rule_list.split('<');
+-var modes_array = [[ "", "System" ],
+-[ "0", "No Redirection" ],
++var modes_array = [[ "", "Systemowe" ],
++[ "0", "Bez przekierowania" ],
+ [ "11", "Router" ],
+-[ "8", "User Defined 1" ],
+-[ "9", "User Defined 2" ],
+-[ "10", "User Defined 3" ],
+-[ "", "Unfiltered" ],
++[ "8", "Zdefiniowany przez użytkownika 1" ],
++[ "9", "Zdefiniowany przez użytkownika 2" ],
++[ "10", "Zdefiniowany przez użytkownika 3" ],
++[ "", "Bez filtrowania" ],
+ [ "17", "Cloudflare Safe" ],
+-[ "", "Security filters" ],
++[ "", "Filtry bezpieczeństwa" ],
+ [ "19", "AdGuard Ad block" ],
+ [ "14", "CleanBrowsing Security" ],
+ [ "12", "Comodo Secure DNS" ],
+ [ "1", "OpenDNS Home" ],
+ [ "13", "Quad9" ],
+ [ "5", "Yandex Safe" ],
+-[ "", "Family-friendly filters" ],
++[ "", "Filtry rodzinne" ],
+ [ "20", "AdGuard Family" ],
+ [ "15", "CleanBrowsing Adult" ],
+ [ "16", "CleanBrowsing Family" ],
+@@ -357,21 +357,21 @@
+ <div class="formfonttitle">DNS Director</div>
+ <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+ <div class="formfontdesc">
+-<p>DNS Director allows you to force LAN devices to use a
+-specific DNS server, which can be useful if you want
+-to force them to use a filtering service that would
+-block malicious or adult sites. You can set a global
+-network-wide server, or client-specific servers.
+-Beside the available presets you can also define up to three
+-different custom servers to use.</p>
++<p>DNS Director umożliwia wymuszenie na urządzeniach w sieci LAN
++korzystania z określonego serwera DNS. Może to być przydatne,
++jeśli chcesz skierować je do usługi filtrującej, która blokuje
++złośliwe lub nieodpowiednie witryny. Możesz ustawić jeden serwer
++dla całej sieci albo osobne serwery dla poszczególnych klientów.
++Oprócz dostępnych ustawień wstępnych można również zdefiniować
++do trzech własnych serwerów DNS.</p>
+ <br>
+-<p>A few special System options are available in the presets. "No Redirection" will bypass a global redirection,
+-and "Router" will force clients to use the DNS provided by the router's DHCP server (or, the router itself if it's not defined).
++<p>W ustawieniach wstępnych dostępnych jest kilka specjalnych opcji systemowych. „Bez przekierowania” pomija przekierowanie globalne,
++natomiast „Router” wymusza na klientach korzystanie z DNS przekazanego przez serwer DHCP routera (lub z samego routera, jeśli serwer DNS nie został określony).
+ </div>
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+-<thead><tr><td colspan="3">Settings</td></tr></thead>
++<thead><tr><td colspan="3">Ustawienia</td></tr></thead>
+ <tr>
+-<th>Enable DNS Director</th>
++<th>Włącz DNS Director</th>
+ <td>
+ <div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_dnsfilter_enable"></div>
+ <div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
+@@ -393,28 +393,28 @@
+ </td>
+ </tr>
+ <tr id="dnsfilter_mode_tr">
+-<th>Global Redirection</th>
++<th>Globalne przekierowanie</th>
+ <td>
+ <select name="dnsfilter_mode" id="dnsfilter_mode" class="input_option">
+ </select>
+ </td>
+ </tr>
+ <tr id="dnsfilter_custom1">
+-<th width="200">User defined DNS 1</th>
++<th width="200">DNS zdefiniowany przez użytkownika 1</th>
+ <td>
+ <span>IPv4: <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom1" value="<% nvram_get("dnsfilter_custom1"); %>" onKeyPress="return validator.isIPAddr(this,event)"></span>
+ <span id="dnsfilter_custom61" style="padding-left:10px;display:none;">IPv6: <input type="text" maxlength="39" class="input_25_table" name="dnsfilter_custom61" value="<% nvram_get("dnsfilter_custom61"); %>"></span>
+ </td>
+ </tr>
+ <tr id="dnsfilter_custom2">
+-<th width="200">User defined DNS 2</th>
++<th width="200">DNS zdefiniowany przez użytkownika 2</th>
+ <td>
+ <span>IPv4: <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom2" value="<% nvram_get("dnsfilter_custom2"); %>" onKeyPress="return validator.isIPAddr(this,event)"></span>
+ <span id="dnsfilter_custom62" style="padding-left:10px;display:none;">IPv6: <input type="text" maxlength="39" class="input_25_table" name="dnsfilter_custom62" value="<% nvram_get("dnsfilter_custom62"); %>"></span>
+ </td>
+ </tr>
+ <tr id="dnsfilter_custom3">
+-<th width="200">User defined DNS 3</th>
++<th width="200">DNS zdefiniowany przez użytkownika 3</th>
+ <td>
+ <span>IPv4: <input type="text" maxlength="15" class="input_15_table" name="dnsfilter_custom3" value="<% nvram_get("dnsfilter_custom3"); %>" onKeyPress="return validator.isIPAddr(this,event)"></span>
+ <span id="dnsfilter_custom63" style="padding-left:10px;display:none;">IPv6: <input type="text" maxlength="39" class="input_25_table" name="dnsfilter_custom63" value="<% nvram_get("dnsfilter_custom63"); %>"></span>
+@@ -424,13 +424,13 @@
+ <table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" style="margin-top:8px;" id="mainTable_Table">
+ <thead><tr><td colspan="3"><#1780#>&nbsp;(<#2857#>&nbsp;64)</td></tr></thead>
+ <tr>
+-<th>Client MAC address</th>
+-<th>Redirection</th>
++<th>Adres MAC klienta</th>
++<th>Przekierowanie</th>
+ <th><#2856#></th>
+ </tr>
+ <tr>
+ <td width="50%">
+-<input type="text" maxlength="17" style="margin-left:10px;width:255px;" autocorrect="off" autocapitalize="off" class="input_macaddr_table" name="rule_mac" onClick="hideClients_Block();" onKeyPress="return validator.isHWAddr(this,event)" placeholder="ex: <% nvram_get("lan_hwaddr"); %>">
++<input type="text" maxlength="17" style="margin-left:10px;width:255px;" autocorrect="off" autocapitalize="off" class="input_macaddr_table" name="rule_mac" onClick="hideClients_Block();" onKeyPress="return validator.isHWAddr(this,event)" placeholder="np.: <% nvram_get("lan_hwaddr"); %>">
+ <img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="<#3374#>">
+ <div id="ClientList_Block_PC" style="margin:0 0 0 52px" class="clientlist_dropdown"></div>
+ </td>

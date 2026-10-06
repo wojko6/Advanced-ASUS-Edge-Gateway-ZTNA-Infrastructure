@@ -1,0 +1,22 @@
+--- a/Main_TrafficMonitor_monthly.asp
++++ b/Main_TrafficMonitor_monthly.asp
+@@ -5,7 +5,7 @@
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+ <meta HTTP-EQUIV="Expires" CONTENT="-1">
+-<title><#976#> - Monthly</title>
++<title><#976#> - Miesięcznie</title>
+ <link rel="stylesheet" type="text/css" href="index_style.css">
+ <link rel="stylesheet" type="text/css" href="form_style.css">
+ <link rel="shortcut icon" href="images/favicon.png">
+@@ -252,8 +252,8 @@
+ <option value="1"><#2898#></option>
+ <option value="2"><#2899#></option>
+ <option value="3"><#2900#></option>
+-<option value="4" selected>Monthly</option>
+-<option value="5">Settings</option>
++<option value="4" selected>miesięcznie</option>
++<option value="5">ustawienia</option>
+ </select>
+ </div>
+ </td>

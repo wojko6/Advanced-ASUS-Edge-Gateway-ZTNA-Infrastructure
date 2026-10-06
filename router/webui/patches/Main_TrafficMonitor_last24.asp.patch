@@ -1,0 +1,72 @@
+--- a/Main_TrafficMonitor_last24.asp
++++ b/Main_TrafficMonitor_last24.asp
+@@ -110,20 +110,23 @@
+ for (var ifname in speed_history) {
+ if (ifname == "_next") continue;
+ speed_history[ifname].friendly = get_friendly_ifname(ifname);
++speed_history[ifname].friendly = speed_history[ifname].friendly
++.replace("Wireless 2.4 GHz", "Sieć bezprzewodowa 2,4 GHz")
++.replace("Wireless 5 GHz", "Sieć bezprzewodowa 5 GHz");
+ /* Canvas */
+ var htmldata = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+ htmldata += `<thead><tr><td>${speed_history[ifname].friendly}</td></tr></thead>` +
+ '<tr>' +
+ `<td style="padding:14px;" width="100%"><canvas class="chartCanvas" style="background-color:${chartBackgroundColor};" id="${ifname}_Chart"></canvas>` +
+ '<div class="rategrid">' +
+-`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Current In: </span><span style="color: ${tableValueColor};" id="${ifname}_RX_current"></span></div>` +
+-`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Avg In: </span><span style="color: ${tableValueColor};" id="${ifname}_RX_avg"></span></div>` +
+-`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Max In: </span><span style="color: ${tableValueColor};" id="${ifname}_RX_max"></span></div>` +
+-`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Total In: </span><span style="color: ${tableValueColor};" id="${ifname}_RX_total"></span></div>` +
+-`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Current Out: </span><span style="color: ${tableValueColor};" id="${ifname}_TX_current"></span></div>` +
+-`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Avg Out: </span><span style="color: ${tableValueColor};" id="${ifname}_TX_avg"></span></div>` +
+-`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Max Out: </span><span style="color: ${tableValueColor};" id="${ifname}_TX_max"></span></div>` +
+-`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Total Out: </span><span style="color: ${tableValueColor};" id="${ifname}_TX_total"></span></div>` +
++`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Bieżący ruch przychodzący: </span><span style="color: ${tableValueColor};" id="${ifname}_RX_current"></span></div>` +
++`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Śr. ruch przychodzący: </span><span style="color: ${tableValueColor};" id="${ifname}_RX_avg"></span></div>` +
++`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Maks. ruch przychodzący: </span><span style="color: ${tableValueColor};" id="${ifname}_RX_max"></span></div>` +
++`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Łączny ruch przychodzący: </span><span style="color: ${tableValueColor};" id="${ifname}_RX_total"></span></div>` +
++`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Bieżący ruch wychodzący: </span><span style="color: ${tableValueColor};" id="${ifname}_TX_current"></span></div>` +
++`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Śr. ruch wychodzący: </span><span style="color: ${tableValueColor};" id="${ifname}_TX_avg"></span></div>` +
++`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Maks. ruch wychodzący: </span><span style="color: ${tableValueColor};" id="${ifname}_TX_max"></span></div>` +
++`<div class="ratepair"><span class="ratelabel" style="color: ${tableLabelColor};">Łączny ruch wychodzący: </span><span style="color: ${tableValueColor};" id="${ifname}_TX_total"></span></div>` +
+ '</div>' +
+ '</td></tr></table>';
+ if (ifname == "INTERNET") // Always insert at the top
+@@ -201,7 +204,7 @@
+ labels: Array.from({ length: samplesMax }, (v, i) => i),
+ datasets: [
+ {
+-label: speed_history[ifname].friendly + " In",
++label: speed_history[ifname].friendly + " — przychodzący",
+ data: speed_history[ifname].rx,
+ backgroundColor: rxBackgroundColor,
+ borderColor: rxBorderColor,
+@@ -210,7 +213,7 @@
+ fill: { target: "origin"}
+ },
+ {
+-label: speed_history[ifname].friendly + " Out",
++label: speed_history[ifname].friendly + " — wychodzący",
+ data: speed_history[ifname].tx,
+ backgroundColor: txBackgroundColor,
+ borderColor: txBorderColor,
+@@ -355,8 +358,8 @@
+ <option value="1"><#2898#></option>
+ <option value="2" selected><#2899#></option>
+ <option value="3"><#2900#></option>
+-<option value="4">Monthly</option>
+-<option value="5">Settings</option>
++<option value="4">miesięcznie</option>
++<option value="5">ustawienia</option>
+ </select>
+ </div>
+ </td></tr></table>
+@@ -364,7 +367,7 @@
+ </tr>
+ <tr>
+ <td><div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+-<div class="formfontdesc">The charts can be zoomed in and panned for closer inspection of a specific period of time.</div>
++<div class="formfontdesc">Wykresy można powiększać i przesuwać, aby dokładniej sprawdzić wybrany przedział czasu.</div>
+ </td>
+ </tr>
+ <tr>

@@ -9,25 +9,46 @@
  <link rel="stylesheet" type="text/css" href="index_style.css">
  <link rel="stylesheet" type="text/css" href="form_style.css">
  <style>
-@@ -138,7 +138,7 @@
+@@ -138,9 +138,9 @@
  memchartPie = new Chart(memchart, {
  type: 'doughnut',
  data: {
 -labels: ["Used", "Reclaimable", "Free"],
 +labels: ["Używana", "Możliwa do odzyskania", "Wolna"],
  datasets: [{
- label: "Memory",
+-label: "Memory",
++label: "Pamięć",
  data: memdata,
+ backgroundColor: pieColor,
+ hoverBackgroundColor: pieColor,
+@@ -185,9 +185,9 @@
+ swapchartPie = new Chart(swapchart, {
+ type: 'doughnut',
+ data: {
+-labels: ["Used", "Free"],
++labels: ["Użyta", "Wolna"],
+ datasets: [{
+-label: "Swap",
++label: "Pamięć wymiany",
+ data: swapdata,
+ backgroundColor: pieColor,
+ hoverBackgroundColor: pieColor,
 @@ -221,7 +221,7 @@
  nvram_total = <% sysinfo("nvram.total"); %>;
  used_percentage = Math.round((mem_stats_arr[6]/nvram_total)*100);
  $("#nvram_bar").css("width", used_percentage +"%");
 -$("#nvram_label").html("<span>NVRAM Usage :</span> " + mem_stats_arr[6] + " / " + nvram_total + " bytes");
-+$("#nvram_label").html("<span>Użycie NVRAM :</span> " + mem_stats_arr[6] + " / " + nvram_total + " bytes");
++$("#nvram_label").html("<span>Użycie NVRAM :</span> " + mem_stats_arr[6] + " / " + nvram_total + " bajtów");
  if (used_percentage > 90)
  $("#nvram_bar").css("background-color", "orange");
  else
-@@ -236,7 +236,7 @@
+@@ -231,12 +231,12 @@
+ jffs_free = parseFloat(mem_stats_arr[7]);
+ if (jffs_total < 0) {
+ $("#jffs_div").hide();
+-$("#jffs_label").html("<span>JFFS partition not mounted</span>");
++$("#jffs_label").html("<span>Partycja JFFS nie jest zamontowana</span>");
+ } else {
  jffs_used = jffs_total - jffs_free;
  used_percentage = Math.round((jffs_used) / jffs_total * 100);
  $("#jffs_bar").css("width", used_percentage +"%");
@@ -53,6 +74,15 @@
  document.getElementById("wifi62_clients_tr").style.display = "";
  }
  if (band5g_support) {
+@@ -402,7 +402,7 @@
+ showbootTime();
+ if ((odmpid != "") && (odmpid.toUpperCase() != based_modelid.toUpperCase())) {
+ document.getElementById("model_id").innerHTML = "<span>" + odmpid + "</span>";
+-document.getElementById("model_id").innerHTML += " (base model: <span>" + based_modelid + "</span>)";
++document.getElementById("model_id").innerHTML += " (model bazowy: <span>" + based_modelid + "</span>)";
+ }
+ else
+ document.getElementById("model_id").innerHTML = productid;
 @@ -493,9 +493,17 @@
  else
  code = "<span>Runner:</span> ";
@@ -267,8 +297,12 @@
  </td>
  </tr>
  </table>
-@@ -810,7 +818,7 @@
- <th>Hardware</th>
+@@ -807,10 +815,10 @@
+ <td id="ai_board_model_td"></td>
+ </tr>
+ <tr>
+-<th>Hardware</th>
++<th>Sprzęt</th>
  <td id="ai_board_hw_td"></td>
  <tr>
 -<th>Firmware Version</th>

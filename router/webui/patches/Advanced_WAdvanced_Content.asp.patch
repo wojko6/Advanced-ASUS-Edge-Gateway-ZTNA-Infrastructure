@@ -43,6 +43,24 @@
  var _ori_value = "<% nvram_get("wl_ofdma"); %>";
  add_options_x2(document.form.wl_ofdma, desc, value, _ori_value);
  }
+@@ -1046,7 +1046,7 @@
+ weekScheduleApi.init_layout("weekScheduleBg_WL");
+ weekScheduleApi.callback_btn_cancel = cancel_wifi_schedule;
+ weekScheduleApi.callback_btn_apply = save_wifi_schedule;
+-$(".formfonttitle").html("Wireless Schedule - "+ wl_nband_title[wl_unit_value] +"");/* untranslated */
++$(".formfonttitle").html("Harmonogram sieci bezprzewodowej - "+ wl_nband_title[wl_unit_value] +"");/* untranslated */
+ tutorial_guide.obj_id = "WS_tutorial_guide";
+ }
+ function control_TimeField(){
+@@ -1232,7 +1232,7 @@
+ <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+ <div id="title_bg">
+ <div id="titl_desc" class="formfontdesc"><#4175#></div>
+-<div id="lantiq_ready" style="display:none;color:#FC0;margin-left:5px;font-size:13px;">Wireless is setting...</div>
++<div id="lantiq_ready" style="display:none;color:#FC0;margin-left:5px;font-size:13px;">Trwa konfigurowanie sieci bezprzewodowej...</div>
+ <div id="svc_hint_div" style="display:none;margin-left:5px;"><span onClick="location.href='Advanced_System_Content.asp?af=ntp_server0'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"><#377#></span></div>
+ <div id="timezone_hint_div" style="margin-left:5px;display:none;"><span id="timezone_hint" onclick="location.href='Advanced_System_Content.asp?af=time_zone_select'" style="color:#FFCC00;text-decoration:underline;cursor:pointer;"></span></div>
+ </div>
 @@ -1496,11 +1496,11 @@
  <div style="display:table-cell;vertical-align:middle">
  <select name="wl_ofdma" class="input_option">

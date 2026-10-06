@@ -1,6 +1,6 @@
 # Polish ASUS WebUI localization overlay
 
-**Status:** CURRENT — implementation completed and live-validated 2026-09-29
+**Status:** CURRENT — final localization sweep isolated-validated 2026-10-02; production validation pending
 
 ## Scope
 
@@ -85,13 +85,17 @@ This Fedora workflow remains the authoring and review path for dictionary
 changes. The production installation path uses the reviewed unified patches and
 the fail-closed router-side builder described below.
 
-## Initial reviewed batch
+## Reviewed localization manifest
 
-`config/asus-webui-pl-overrides.json` contains the first reviewed correction
-batch. It includes high-visibility untranslated UI strings and repairs known
-mixed/structurally broken Polish entries, including the duplicated
-English+Polish Trend Micro notice and the missing opening `<p>` in the DDNS
-description.
+`config/asus-webui-pl-overrides.json` contains 332 reviewed Polish dictionary
+overrides for the pinned firmware baseline. The current reviewed batch is
+`reviewed-pl-012`.
+
+The manifest covers high-visibility untranslated UI strings, mixed-language
+entries, regional-service messages, placeholder-safe HTML strings and known
+structural repairs. Product names, protocol names, standards and other
+intentional technical terminology are left unchanged where translation would
+reduce clarity or alter established naming.
 
 The manifest contains only project-authored Polish replacement text plus line
 numbers and baseline metadata. It does not contain a copy of either firmware
@@ -132,18 +136,22 @@ installation or update. The builder is fail-closed:
 - `patch` is required during installation/update only and is not a boot-time
   dependency.
 
-The validated Polish artifact hashes are:
+The current 2026-10-02 candidate artifact hashes are:
 
 ```text
-PL.dict                  1bc59ad0727ee6198dd75a35a15be3313fed67ac816c85bd741463415773e8ac
-help.js                  7da975a69b1237499ee238e93ede215c3e235c5b34a5d87ab507d45a4e063778
-Tools_Sysinfo.asp        3dbef5d95c02561baf920a6b2014ed34d021eb5ce6723c076ddecf9072d839df
+PL.dict                  9c73ff7b4fa8389f665cab4a52419fbfc26dd50c3d5b3b3b3be82032399cc599
+help.js                  7f4e8eae9bd63f9fdde6f645bbc4924e55cfb6ca4a6b9324c1665acd55c1888c
+Tools_Sysinfo.asp        e851ba282eab30dddc7ed0c2ff25c1bdffd250ccee389413ebd9eaa2484f1400
 Tools_OtherSettings.asp  6cee7405bcc556ac3af1baee418a2ffa85cad39b37c3f76e340ef2a8297595c6
-Advanced_WAdvanced_Content.asp  62b5c08839fb238c17bdace3e968c799233926873c50cb400e6de2d2356e10fc
+Advanced_WAdvanced_Content.asp  87f6f901505c590e3914cf9559963bf76a4b9365b393d7331747dda87def04de
 state.js                       21c1653b9d76c1fe174044467a3ba4648908a4e525df7735fd23d3c737ae2dfb
 router_status.asp              1435585d9f1f8a77e1f03d765f7114c9f2a33da26425bc38512922d5e0f56b95
-router.asp                     5c809d2105bfdb87f1e6493ddc8cf05f78dbd3f50be402d3846f3b987d3f7cd6
+router.asp                     336899658512834c6eb2e0c8e0a254e364c70c4b9db834d154e483dbba5ac59c
 ```
+
+These hashes have passed isolated full-overlay reproduction from the pinned
+firmware baselines. Production runtime and reboot validation of this candidate
+remain pending.
 
 ## Runtime persistence
 
@@ -167,7 +175,7 @@ The project `webui-mount` lifecycle integrates the localization helper:
 
 ## Validation
 
-The reference TUF-AX5400 passed the following controlled checks on
+The reference TUF-AX5400 passed the original production validation on
 2026-09-29:
 
 - exact patch reproduction for all eight managed resources;
@@ -179,8 +187,21 @@ The reference TUF-AX5400 passed the following controlled checks on
 - final project health check with `0 failure(s), 0 warning(s)`;
 - repository static test suite with exit status `0`.
 
-The production build therefore reproduces the same byte-identical resources
-that were validated during the live runtime and reboot tests.
+That 2026-09-29 production overlay was reproduced byte-for-byte during its live
+runtime and reboot validation.
 
-Sanitized validation evidence: [Issue #133 — Polish WebUI localization
+The 2026-10-02 final localization sweep additionally passed, before deployment:
+
+- reconstruction and SHA-256 validation of all eight pinned firmware baselines;
+- byte-for-byte reproduction of all newly generated patch candidates;
+- full eight-resource build using the real `webui-pl-build` path;
+- validation of all 332 manifest overrides;
+- repository static tests;
+- `git diff --check`.
+
+The 2026-10-02 candidate has **not yet** been marked production-validated.
+That status requires controlled deployment to the router, representative visual
+WebUI checks, project healthcheck validation and reboot-persistence testing.
+
+Historical sanitized validation evidence: [Issue #133 — Polish WebUI localization
 validation](../evidence/2026-09-29/issue-133-polish-webui-localization-validation.md).

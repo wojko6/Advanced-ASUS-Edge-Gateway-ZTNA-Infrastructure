@@ -78,7 +78,28 @@ for webui_patch in \
     Advanced_WAdvanced_Content.asp.patch \
     state.js.patch \
     router_status.asp.patch \
-    router.asp.patch
+    router.asp.patch \
+    internet.asp.patch \
+    Advanced_WAN_Content.asp.patch \
+    Advanced_BasicFirewall_Content.asp.patch \
+    Advanced_Firewall_Content.asp.patch \
+    Advanced_FirmwareUpgrade_Content.asp.patch \
+    Advanced_System_Content.asp.patch \
+    Advanced_SettingBackup_Content.asp.patch \
+    Advanced_SNMP_Content.asp.patch \
+    Main_LogStatus_Content.asp.patch \
+    Main_WStatus_Content.asp.patch \
+    Main_DHCPStatus_Content.asp.patch \
+    Main_IPV6Status_Content.asp.patch \
+    Main_RouteStatus_Content.asp.patch \
+    Main_IPTStatus_Content.asp.patch \
+    Main_ConnStatus_Content.asp.patch \
+    Main_TrafficMonitor_realtime.asp.patch \
+    Main_TrafficMonitor_last24.asp.patch \
+    Main_TrafficMonitor_daily.asp.patch \
+    Main_TrafficMonitor_monthly.asp.patch \
+    Main_TrafficMonitor_settings.asp.patch \
+    DNSDirector.asp.patch
 do
     [ -r "$REPO_DIR/router/webui/patches/$webui_patch" ] || {
         echo "ERROR: missing Polish WebUI patch: $webui_patch" >&2
@@ -290,7 +311,28 @@ for webui_patch in \
     Advanced_WAdvanced_Content.asp.patch \
     state.js.patch \
     router_status.asp.patch \
-    router.asp.patch
+    router.asp.patch \
+    internet.asp.patch \
+    Advanced_WAN_Content.asp.patch \
+    Advanced_BasicFirewall_Content.asp.patch \
+    Advanced_Firewall_Content.asp.patch \
+    Advanced_FirmwareUpgrade_Content.asp.patch \
+    Advanced_System_Content.asp.patch \
+    Advanced_SettingBackup_Content.asp.patch \
+    Advanced_SNMP_Content.asp.patch \
+    Main_LogStatus_Content.asp.patch \
+    Main_WStatus_Content.asp.patch \
+    Main_DHCPStatus_Content.asp.patch \
+    Main_IPV6Status_Content.asp.patch \
+    Main_RouteStatus_Content.asp.patch \
+    Main_IPTStatus_Content.asp.patch \
+    Main_ConnStatus_Content.asp.patch \
+    Main_TrafficMonitor_realtime.asp.patch \
+    Main_TrafficMonitor_last24.asp.patch \
+    Main_TrafficMonitor_daily.asp.patch \
+    Main_TrafficMonitor_monthly.asp.patch \
+    Main_TrafficMonitor_settings.asp.patch \
+    DNSDirector.asp.patch
 do
     install_file \
         "$REPO_DIR/router/webui/patches/$webui_patch" \

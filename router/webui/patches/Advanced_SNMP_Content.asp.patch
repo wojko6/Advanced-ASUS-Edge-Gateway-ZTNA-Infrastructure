@@ -1,0 +1,11 @@
+--- a/Advanced_SNMP_Content.asp
++++ b/Advanced_SNMP_Content.asp
+@@ -141,7 +141,7 @@
+ <div class="formfontdesc"></div>
+ <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+ <tr>
+-<th>Enable SNMP</th>
++<th>Włącz SNMP</th>
+ <td>
+ <input type="radio" name="snmpd_enable" class="input" value="1" onclick="change_snmpd_enable(1);" <% nvram_match_x("", "snmpd_enable", "1", "checked"); %>><#278#>
+ <input type="radio" name="snmpd_enable" class="input" value="0" onclick="change_snmpd_enable(0);" <% nvram_match_x("", "snmpd_enable", "0", "checked"); %>><#277#>

@@ -1,0 +1,86 @@
+--- a/Main_IPV6Status_Content.asp
++++ b/Main_IPV6Status_Content.asp
+@@ -57,7 +57,7 @@
+ function show_ipv6config() {
+ var code, i, line
+ code = '<table width="100%" id="ipv6config" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+-code += '<thead><tr><td colspan="2">IPv6 Configuration</td></tr></thead>';
++code += '<thead><tr><td colspan="2">Konfiguracja IPv6</td></tr></thead>';
+ if (ipv6cfgarray.length > 1) {
+ for (i = 0; i < ipv6cfgarray.length-1; ++i) {
+ line = ipv6cfgarray[i];
+@@ -66,7 +66,7 @@
+ code += '</tr>';
+ }
+ } else {
+-code += '<tr><td colspan="2"><span>IPv6 Not enabled.</span></td></tr>';
++code += '<tr><td colspan="2"><span>IPv6 nie jest włączony.</span></td></tr>';
+ }
+ code += '</tr></table>';
+ document.getElementById("ipv6configblock").innerHTML = code;
+@@ -83,21 +83,21 @@
+ tableStruct = {
+ data: ipv6clientarray,
+ container: "ipv6clientsblock",
+-title: "IPv6 Clients",
++title: "Klienci IPv6",
+ header: [
+ {
+-"title" : "Hostname",
++"title" : "Nazwa hosta",
+ "width" : "30%",
+ "sort" : "str",
+ "defaultSort" : "increase"
+ },
+ {
+-"title" : "MAC Address",
++"title" : "Adres MAC",
+ "width" : "20%",
+ "sort" : "str"
+ },
+ {
+-"title" : "IP Address",
++"title" : "Adres IP",
+ "width" : "50%",
+ "sort" : "str"
+ }
+@@ -105,22 +105,22 @@
+ }
+ tableApi.genTableAPI(tableStruct);
+ } else {
+-document.getElementById("ipv6clientsblock").innerHTML = '<span style="color:#FFCC00;padding-left:12;">No IPv6 clients.</span>';
++document.getElementById("ipv6clientsblock").innerHTML = '<span style="color:#FFCC00;padding-left:12;">Brak klientów IPv6.</span>';
+ }
+ }
+ function show_pinholes() {
+ var code, i, line;
+ code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"class="FormTable_table">';
+-code += '<thead><tr><td colspan="6">UPnP IGDv2 &amp; PCP IPv6 port mappings</td></tr></thead>';
+-code += '<tr><th width="6%">Proto</th>';
++code += '<thead><tr><td colspan="6">Mapowania portów IPv6 UPnP IGDv2 i PCP</td></tr></thead>';
++code += '<tr><th width="6%">Protokół</th>';
+ code += '<th width="32%">Remote IP</th>';
+-code += '<th width="9%">Rem Port</th>';
+-code += '<th width="32%">Local IP</th>';
+-code += '<th width="9%">Local Port</th>';
+-code += '<th width="12%">Time left</th>';
++code += '<th width="9%">Port zdalny</th>';
++code += '<th width="32%">Lokalny adres IP</th>';
++code += '<th width="9%">Port lokalny</th>';
++code += '<th width="12%">Pozostały czas</th>';
+ code += '</tr>';
+ if ("<% nvram_get("wan_upnp_enable"); %>" == "0" || "<% nvram_get("upnp_pinhole_enable"); %>" == "0") {
+-code += '<tr><td colspan="6"><span>Service is currently disabled. Can be enabled <a href="Advanced_WAN_Content.asp" style="text-decoration: underline;">here</a>.</span></td></tr>';
++code += '<tr><td colspan="6"><span>Usługa jest obecnie wyłączona. Można ją włączyć <a href="Advanced_WAN_Content.asp" style="text-decoration: underline;">tutaj</a>.</span></td></tr>';
+ } else {
+ if (pinholesarray.length > 1) {
+ for (i = 0; i < pinholesarray.length-1; ++i) {
+@@ -140,7 +140,7 @@
+ code += '</tr>';
+ }
+ } else {
+-code += '<tr><td colspan="6"><span>No active port mappings.</span></td></tr>';
++code += '<tr><td colspan="6"><span>Brak aktywnych mapowań portów.</span></td></tr>';
+ }
+ }
+ code += '</tr></table>';
