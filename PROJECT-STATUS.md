@@ -10,6 +10,52 @@
 
 **Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 is completed: the Android source-scoped Pi-hole/Tailscale transport and remote-management path were live-validated and merged through PR #182, the stricter Pi-hole list is promoted to the global Default policy, Fedora's Tailscale DNS visibility gap is remediated, and representative Android application compatibility passed without observed regression.
 
+## 2026-10-06 final router runtime and architecture checkpoint
+
+The final same-day reference-router state extends the earlier issue #152
+checkpoint.
+
+Current live Tailscale runtime:
+
+```text
+1.103.375
+track unstable (dev)
+```
+
+The upgrade from the earlier live 1.102.3 checkpoint used the official ARM
+unstable archive with checksum verification and preserved rollback material.
+A controlled daemon restart retained router identity, subnet-route and exit-node
+advertisement, and later full-router cold-boot validation returned Tailscale
+automatically.
+
+DNS Guard v3.1 is now part of the merged production baseline. The router keeps
+independent WAN DNS for cold-boot/fail-open bootstrap and promotes only the
+runtime resolver to Pi-hole after NTP, Unbound, the Pi-hole listener and a fresh
+functional query pass. Watchdog failover/recovery and a full cold reboot were
+validated.
+
+A later Android LTE test with the ASUS selected as Tailscale exit node also
+validated the router-side DNS path to the local Pi-hole alias. Therefore the
+earlier issue #152 statement that exit-node-enabled Android DNS was outside that
+specific acceptance remains historically true for #152, but it is no longer a
+current project-wide validation gap.
+
+Current material follow-up:
+
+- #176 — add a router-local source allowlist for exit-node forwarding;
+- #129 — refresh clean-room/disaster recovery for the current Pi-hole-aware
+  production state;
+- #68 — assess DoH/DoQ and other encrypted-DNS bypass paths;
+- #143 — design Trusted/IoT/Guest segmentation.
+
+The planned router migration target is ASUS RT-BE88U on a compatible
+Asuswrt-Merlin 3006.x branch. OPNsense/x86 is not the current migration target
+and is retained only as a possible future contingency.
+
+Evidence:
+[Tailscale 1.103.375 runtime](evidence/2026-10-06/tailscale-1.103.375-router-upgrade-validation.md),
+[DNS Guard v3.1 validation](evidence/2026-10-06/dns-guard-v3.1-production-validation.md).
+
 ## Executive status
 
 This status document is reconciled through 2026-10-06. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
