@@ -59,6 +59,7 @@ for backup_path in \
     '/jffs/scripts/dnsmasq.postconf "$WORK_DIR/jffs/scripts/"' \
     '/jffs/scripts/post-mount "$WORK_DIR/recovery-reference/jffs/scripts/"' \
     '/jffs/scripts/wan-event "$WORK_DIR/jffs/scripts/"' \
+    '/jffs/scripts/edge-dns-breakglass.sh "$WORK_DIR/jffs/scripts/"' \
     '/jffs/configs/dnsmasq.conf.add "$WORK_DIR/jffs/configs/"'
 do
     grep -F "$backup_path" "$REPO_DIR/scripts/backup.sh" >/dev/null || {
