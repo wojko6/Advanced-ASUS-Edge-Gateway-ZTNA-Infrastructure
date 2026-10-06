@@ -2,7 +2,16 @@
 # ASUS Edge DNS Guard v3.1
 # Fail-open runtime resolver controller.
 
-PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+BASE_PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [ -n "${EDGE_TEST_PATH_PREFIX:-}" ]; then
+    PATH="${EDGE_TEST_PATH_PREFIX}:${BASE_PATH}"
+else
+    PATH="$BASE_PATH"
+fi
+export PATH
+
+BUSYBOX="${EDGE_BUSYBOX_BIN:-/bin/busybox}"
 
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
@@ -121,7 +130,7 @@ write_resolver() {
     }
 
     if [ -f "$RESOLV_CONF" ] &&
-       /bin/busybox cmp -s "$tmp" "$RESOLV_CONF" 2>/dev/null; then
+       "$BUSYBOX" cmp -s "$tmp" "$RESOLV_CONF" 2>/dev/null; then
         rm -f "$tmp"
         return 2
     fi
