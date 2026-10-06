@@ -57,12 +57,18 @@ jobs:
         run: sh tests/test-healthcheck-exit-node-contract.sh
       - name: Run healthcheck runtime-drift guard test
         run: sh tests/test-healthcheck-drift-guards.sh
+      - name: Run Tailscale automatic-update healthcheck guard
+        run: sh tests/test-healthcheck-tailscale-auto-update-static.sh
       - name: Run LAN DNS enforcement healthcheck contract test
         run: sh tests/test-healthcheck-lan-dns-contract.sh
       - name: Run LAN DoT blocking healthcheck contract test
         run: sh tests/test-healthcheck-lan-dot-contract.sh
       - name: Run Tailscale update recovery-guard checks
         run: sh tests/test-update-tailscale-static.sh
+      - name: Run Tailscale version comparator tests
+        run: sh tests/test-update-tailscale-version-compare.sh
+      - name: Run Tailscale update transaction mocks
+        run: sh tests/test-update-tailscale-transaction.sh
       - name: Run restore archive validation
         run: sh tests/test-restore-validation.sh
       - name: Run clean-room alternate-root restore

@@ -296,11 +296,18 @@ Backup and rollback commands for planned maintenance or recovery:
 ./scripts/uninstall.sh
 ```
 
-Tailscale updates are a separate planned-maintenance action:
+Tailscale updates are a separate planned-maintenance action. The updater
+compares Entware package metadata with the actual live CLI/daemon version,
+refuses implicit downgrades, preserves verified rollback binaries before a
+package mutation, and runs managed service recovery plus the project health
+check afterward. Tailscale automatic update application is deliberately
+disabled so package changes cannot bypass this path:
 
 ```sh
 ./scripts/update-tailscale.sh
 ```
+
+See [Tailscale maintenance and rollback](docs/tailscale-maintenance.md).
 
 ## Case studies
 

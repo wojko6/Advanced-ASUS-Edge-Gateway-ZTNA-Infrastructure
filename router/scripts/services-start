@@ -39,6 +39,7 @@ log() { logger -t asus-edge "$*"; }
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_STATE:=/opt/var/lib/tailscale/tailscaled.state}"
 : "${EDGE_TS_NETFILTER_MODE:=off}"
+: "${EDGE_TS_AUTO_UPDATE:=false}"
 : "${EDGE_ADVERTISE_ROUTES:=}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
 : "${EDGE_ACCEPT_DNS:=false}"
@@ -47,6 +48,7 @@ log() { logger -t asus-edge "$*"; }
 : "${EDGE_SWAP_WAIT_SECONDS:=60}"
 : "${EDGE_TS_READY_WAIT_SECONDS:=20}"
 : "${EDGE_TAILSCALED_LOG:=/opt/var/log/tailscaled.log}"
+: "${EDGE_FORCE_TAILSCALE_RESTART:=0}"
 
 valid_positive_integer() {
     case "$1" in ''|*[!0-9]*) return 1 ;; esac
@@ -70,7 +72,9 @@ case "$EDGE_RUN_RC_UNSLUNG" in 0|1) ;; *) log "ERROR: EDGE_RUN_RC_UNSLUNG must b
 case "$EDGE_ENABLE_EXIT_NODE" in 0|1) ;; *) log "ERROR: EDGE_ENABLE_EXIT_NODE must be 0 or 1"; exit 1 ;; esac
 case "$EDGE_ACCEPT_DNS" in true|false) ;; *) log "ERROR: EDGE_ACCEPT_DNS must be true or false"; exit 1 ;; esac
 case "$EDGE_REQUIRE_SWAP" in 0|1|auto) ;; *) log "ERROR: EDGE_REQUIRE_SWAP must be 0, 1, or auto"; exit 1 ;; esac
+case "$EDGE_FORCE_TAILSCALE_RESTART" in 0|1) ;; *) log "ERROR: EDGE_FORCE_TAILSCALE_RESTART must be 0 or 1"; exit 1 ;; esac
 [ "$EDGE_TS_NETFILTER_MODE" = "off" ] || { log "ERROR: EDGE_TS_NETFILTER_MODE must be off because ASUS Edge owns the firewall policy"; exit 1; }
+[ "$EDGE_TS_AUTO_UPDATE" = "false" ] || { log "ERROR: EDGE_TS_AUTO_UPDATE must remain false; Tailscale updates are explicit maintenance actions"; exit 1; }
 
 opt_is_ready() { [ -d /opt ] || return 1; [ -x /opt/bin/opkg ] || [ -x /opt/sbin/opkg ]; }
 process_stays_running() {
@@ -102,6 +106,34 @@ rotate_tailscaled_log() {
     cp -f "$EDGE_TAILSCALED_LOG" "$EDGE_TAILSCALED_LOG.previous" 2>/dev/null || return 1
     chmod 0600 "$EDGE_TAILSCALED_LOG.previous" 2>/dev/null || true
 }
+stop_tailscaled_for_maintenance_restart() {
+    tailscaled_pid="$(pidof tailscaled 2>/dev/null | awk '{ print $1 }')"
+
+    [ -n "$tailscaled_pid" ] || return 0
+
+    log "stopping tailscaled for explicit maintenance restart"
+
+    kill "$tailscaled_pid" 2>/dev/null || {
+        log "ERROR: failed to signal tailscaled for maintenance restart"
+        return 1
+    }
+
+    elapsed=0
+    while pidof tailscaled >/dev/null 2>&1; do
+        if [ "$elapsed" -ge "$EDGE_TS_READY_WAIT_SECONDS" ]; then
+            log "ERROR: tailscaled did not stop for maintenance restart"
+            return 1
+        fi
+
+        elapsed=$((elapsed + 1))
+        sleep 1
+    done
+
+    rm -f "$EDGE_TS_SOCKET"
+    log "tailscaled stopped for maintenance restart"
+    return 0
+}
+
 start_tailscaled_with_retry() {
     if pidof tailscaled >/dev/null 2>&1; then
         process_stays_running tailscaled && return 0
@@ -286,12 +318,23 @@ mkdir -p /opt/var/lib/unbound
 
 startup_failed=0
 if executable_exists tailscaled >/dev/null 2>&1; then
-    if start_tailscaled_with_retry && wait_for_tailscale_api; then
+    if [ "$EDGE_FORCE_TAILSCALE_RESTART" = "1" ]; then
+        stop_tailscaled_for_maintenance_restart || startup_failed=1
+    fi
+
+    if [ "$startup_failed" -eq 0 ] && start_tailscaled_with_retry && wait_for_tailscale_api; then
         set -- tailscale --socket="$EDGE_TS_SOCKET" up --netfilter-mode="$EDGE_TS_NETFILTER_MODE" --accept-dns="$EDGE_ACCEPT_DNS" --hostname="$EDGE_HOSTNAME"
         [ -n "$EDGE_ADVERTISE_ROUTES" ] && set -- "$@" --advertise-routes="$EDGE_ADVERTISE_ROUTES"
         [ "$EDGE_ENABLE_EXIT_NODE" = "1" ] && set -- "$@" --advertise-exit-node
         if "$@" >/tmp/asus-edge-tailscale-up.log 2>&1; then
             log "Tailscale policy applied"
+
+            if tailscale --socket="$EDGE_TS_SOCKET" set --auto-update="$EDGE_TS_AUTO_UPDATE" >/tmp/asus-edge-tailscale-auto-update.log 2>&1; then
+                log "Tailscale automatic update policy applied"
+            else
+                log "ERROR: tailscale auto-update policy failed; inspect /tmp/asus-edge-tailscale-auto-update.log"
+                startup_failed=1
+            fi
         else
             log "ERROR: tailscale up failed; inspect /tmp/asus-edge-tailscale-up.log"
             startup_failed=1

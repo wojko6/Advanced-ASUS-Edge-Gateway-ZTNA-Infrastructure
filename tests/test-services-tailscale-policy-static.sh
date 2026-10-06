@@ -40,4 +40,41 @@ if grep -F 'tailscale up failed' "$SCRIPT" | grep -F 'WARNING:' >/dev/null; then
     exit 1
 fi
 
+
+grep -F ': "${EDGE_TS_AUTO_UPDATE:=false}"' "$SCRIPT" >/dev/null || {
+    echo "FAIL: Tailscale auto-update default is not disabled" >&2
+    exit 1
+}
+
+grep -F '[ "$EDGE_TS_AUTO_UPDATE" = "false" ] || {' "$SCRIPT" >/dev/null || {
+    echo "FAIL: Tailscale auto-update configuration is not fail-closed" >&2
+    exit 1
+}
+
+grep -F 'tailscale --socket="$EDGE_TS_SOCKET" set --auto-update="$EDGE_TS_AUTO_UPDATE"' "$SCRIPT" >/dev/null || {
+    echo "FAIL: services-start does not enforce Tailscale auto-update policy" >&2
+    exit 1
+}
+
+grep -F 'ERROR: tailscale auto-update policy failed' "$SCRIPT" >/dev/null || {
+    echo "FAIL: auto-update policy failure is not treated as an error" >&2
+    exit 1
+}
+
+
+grep -F ': "${EDGE_FORCE_TAILSCALE_RESTART:=0}"' "$SCRIPT" >/dev/null || {
+    echo "FAIL: maintenance restart is not disabled by default" >&2
+    exit 1
+}
+
+grep -F 'stop_tailscaled_for_maintenance_restart()' "$SCRIPT" >/dev/null || {
+    echo "FAIL: controlled Tailscale maintenance restart helper missing" >&2
+    exit 1
+}
+
+grep -F '[ "$EDGE_FORCE_TAILSCALE_RESTART" = "1" ]' "$SCRIPT" >/dev/null || {
+    echo "FAIL: services-start does not gate forced Tailscale restart" >&2
+    exit 1
+}
+
 echo "PASS: services-start propagates Tailscale policy application failures"

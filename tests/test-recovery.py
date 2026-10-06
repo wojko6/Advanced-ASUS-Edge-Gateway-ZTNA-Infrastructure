@@ -330,6 +330,14 @@ case " $* " in
         else
             echo '"NetfilterMode": 0,'
         fi
+
+        echo '"AutoUpdate": {'
+        if [ "$SCENARIO" = "auto_update_on" ]; then
+            echo '"Apply": true'
+        else
+            echo '"Apply": false'
+        fi
+        echo '}'
         ;;
 esac
 exit 0
@@ -378,6 +386,7 @@ esac
         for scenario, expected in (
                 ("valid", "Summary: 0 failure(s)"),
                 ("netfilter_on", "Tailscale netfilter mode is not off"),
+                ("auto_update_on", "Tailscale automatic update application enabled"),
                 ("native_chain", "competing Tailscale netfilter chains present: 3"),
                 ("bypass", "is not the first parent rule"),
                 ("missing_drop", "missing terminal DROP"),
