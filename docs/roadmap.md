@@ -10,6 +10,24 @@
 - OPNsense/x86 is not the current migration target; keep it only as a future
   contingency if requirements exceed the ASUS platform.
 
+### Current CORE closeout priorities
+
+Completed on 2026-10-06:
+
+- #130 — protected `main` / required Validation suite;
+- #177 — Tailscale package/live-version drift and downgrade hardening;
+- DNS Guard v3.1 — cold-boot/fail-open resolver control.
+
+Still open:
+
+- #176 — router-local source scoping for exit-node forwarding;
+- #129 — Pi-hole-aware disaster-recovery refresh;
+- #178 — Grafana notification delivery / bounded critical escalation;
+- #108 — remaining DNS-visibility retention/rollback/interception work;
+- #68 — DoH/DoQ/encrypted-DNS assessment;
+- #143 — Trusted/IoT/Guest segmentation design before RT-BE88U migration.
+
+
 
 ## Completed and validated — observability baseline
 
