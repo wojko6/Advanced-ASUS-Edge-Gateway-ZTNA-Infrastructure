@@ -1,5 +1,6 @@
 #!/bin/sh
 # shellcheck shell=dash
+# ASUS Edge WAN-connected DNS policy handler.
 
 BASE_PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -11,8 +12,8 @@ fi
 export PATH
 
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
-RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
 TAILSCALED_INIT="${EDGE_TAILSCALED_INIT:-/opt/etc/init.d/S06tailscaled}"
+DNS_GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"
 
 log() {
     logger -t asus-edge "$*"
@@ -48,8 +49,9 @@ validate_positive_integer() {
     }
 }
 
-validate_positive_integer EDGE_WAN_DNS_WAIT_SECONDS "$EDGE_WAN_DNS_WAIT_SECONDS" || exit 1
-validate_positive_integer EDGE_TAILSCALE_WAIT_SECONDS "$EDGE_TAILSCALE_WAIT_SECONDS" || exit 1
+validate_positive_integer     EDGE_WAN_DNS_WAIT_SECONDS     "$EDGE_WAN_DNS_WAIT_SECONDS" || exit 1
+
+validate_positive_integer     EDGE_TAILSCALE_WAIT_SECONDS     "$EDGE_TAILSCALE_WAIT_SECONDS" || exit 1
 
 case "$EDGE_UNBOUND_PORT" in
     ''|*[!0-9]*)
@@ -57,7 +59,9 @@ case "$EDGE_UNBOUND_PORT" in
         exit 1
         ;;
 esac
-if [ "$EDGE_UNBOUND_PORT" -lt 1 ] || [ "$EDGE_UNBOUND_PORT" -gt 65535 ]; then
+
+if [ "$EDGE_UNBOUND_PORT" -lt 1 ] ||
+   [ "$EDGE_UNBOUND_PORT" -gt 65535 ]; then
     log "ERROR: EDGE_UNBOUND_PORT must be between 1 and 65535"
     exit 1
 fi
@@ -67,7 +71,7 @@ dns_path_ready() {
     pidof unbound >/dev/null 2>&1 || return 1
 
     netstat -ln 2>/dev/null |
-        grep -q "127\.0\.0\.1:${EDGE_UNBOUND_PORT}[[:space:]]" ||
+        grep -q "127\\.0\\.0\\.1:${EDGE_UNBOUND_PORT}[[:space:]]" ||
         return 1
 
     return 0
@@ -86,24 +90,21 @@ wait_for_dns_path() {
     return 1
 }
 
-enforce_system_resolver() {
-    [ -f "$RESOLV_CONF" ] || {
-        log "ERROR: missing $RESOLV_CONF"
+apply_dns_policy() {
+    phase="$1"
+
+    [ -x "$DNS_GUARD" ] || {
+        log "ERROR: DNS Guard not found or not executable: $DNS_GUARD"
         return 1
     }
 
-    if [ "$(cat "$RESOLV_CONF" 2>/dev/null)" = "nameserver 127.0.0.1" ]; then
-        log "system resolver already points to 127.0.0.1"
+    if "$DNS_GUARD" auto         >"/tmp/asus-edge-dns-guard-${phase}.log" 2>&1; then
+        log "DNS Guard policy applied during WAN ${phase} phase"
         return 0
     fi
 
-    printf 'nameserver 127.0.0.1\n' >"$RESOLV_CONF" || {
-        log "ERROR: failed to update $RESOLV_CONF"
-        return 1
-    }
-
-    log "system resolver enforced: 127.0.0.1"
-    return 0
+    log "ERROR: DNS Guard policy failed during WAN ${phase} phase"
+    return 1
 }
 
 restart_tailscaled() {
@@ -121,7 +122,7 @@ restart_tailscaled() {
 
     while [ "$elapsed" -lt "$EDGE_TAILSCALE_WAIT_SECONDS" ]; do
         if pidof tailscaled >/dev/null 2>&1 &&
-            tailscale --socket="$EDGE_TS_SOCKET" status >/dev/null 2>&1; then
+           tailscale --socket="$EDGE_TS_SOCKET" status >/dev/null 2>&1; then
             log "tailscaled restarted after WAN DNS update"
             return 0
         fi
@@ -134,13 +135,20 @@ restart_tailscaled() {
     return 1
 }
 
-if ! wait_for_dns_path; then
-    log "ERROR: local DNS path not ready after WAN connected event"
+# Fail open immediately. If the local stack is not healthy yet,
+# DNS Guard keeps or restores independent WAN DNS.
+if ! apply_dns_policy initial; then
     exit 1
 fi
 
-if ! enforce_system_resolver; then
-    exit 1
+# Give Entware/Unbound a bounded opportunity to become healthy.
+# Failure here is not fatal because DNS Guard has already selected
+# the safe bootstrap path.
+if wait_for_dns_path; then
+    apply_dns_policy settled ||
+        log "WARNING: settled DNS Guard policy failed; bootstrap state preserved"
+else
+    log "WARNING: local DNS path not ready after ${EDGE_WAN_DNS_WAIT_SECONDS}s; keeping bootstrap DNS"
 fi
 
 if ! restart_tailscaled; then
