@@ -533,14 +533,50 @@ reliability.
 
 ---
 
-## 15. Remaining scope
+## 15. Global strict policy and Fedora DNS-route finding
+
+The stricter Pi-hole policy was first staged as an Android-only group. After
+initial validation, the deployment decision changed: HaGeZi Multi PRO++ Mini was
+moved to the global Pi-hole `Default` group alongside the existing OISD Big and
+AdGuard DNS Filter sources. The temporary Android-specific group and explicit
+Pi-hole client assignments were then removed.
+
+A separate Fedora test revealed another important DNS-routing detail. Even though
+the workstation's LAN resolver was Pi-hole, Tailscale had installed `~.` as a
+DNS route on `tailscale0`. A normal public lookup therefore followed the
+Tailscale DNS path and did not appear in Pi-hole analytics through the generic
+fallback.
+
+The fix reused the issue #152 transport design instead of disabling Tailscale
+DNS: the Fedora administration workstation was added to the selected
+source-scoped Pi-hole set. A fresh unique query was then observed in Pi-hole
+under the workstation's Tailscale identity, while the project healthcheck stayed
+at zero failures and zero warnings.
+
+This produced two distinct policy layers:
+
+~~~text
+Pi-hole content policy:
+  global Default -> OISD + AdGuard + HaGeZi PRO++ Mini
+
+Tailscale transport policy:
+  selected clients -> source-scoped DNAT -> Pi-hole
+  other clients    -> existing generic DNS fallback
+~~~
+
+A same-day smoke test confirmed normal public DNS, internal `home.arpa`, a
+Gravity-blocked advertising domain and normal HTTPS connectivity. This does not
+replace longer application-compatibility observation.
+
+---
+
+## 16. Remaining scope
 
 This case study covers the validated transport, DNS, and remote-management path.
 
 The following work remains separate:
 
-- stronger per-device Pi-hole filtering policy,
-- final application compatibility testing,
+- longer application compatibility testing,
 - banking and payment application validation,
 - encrypted DNS bypass work such as DoH/DoQ,
 - wider DNS analytics and disaster-recovery work.
@@ -549,7 +585,7 @@ These items are intentionally not presented as completed.
 
 ---
 
-## 16. Result
+## 17. Result
 
 The final architecture provides Android DNS filtering outside the home network without
 requiring a second VPN or forcing all Internet traffic through an exit node.
