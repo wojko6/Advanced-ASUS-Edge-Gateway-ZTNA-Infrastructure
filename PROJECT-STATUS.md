@@ -8,7 +8,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 is completed: the Android source-scoped Pi-hole/Tailscale transport and remote-management path were live-validated and merged through PR #182, the stricter Pi-hole list is promoted to the global Default policy, Fedora's Tailscale DNS visibility gap is remediated, and representative Android application compatibility passed without observed regression.
+**Current phase:** Core hardening/recovery closeout. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177 and Android Pi-hole/Tailscale policy #152 are completed. The reference router now runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.1 is production-validated. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment and #143 trust-zone segmentation before the planned RT-BE88U migration.
 
 ## 2026-10-06 final router runtime and architecture checkpoint
 
