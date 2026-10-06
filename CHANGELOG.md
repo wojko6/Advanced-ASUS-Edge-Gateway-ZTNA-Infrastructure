@@ -32,6 +32,9 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Recorded the current reference-router Tailscale runtime as `1.103.375` on the unstable/dev track, with the earlier `1.102.3` evidence retained as a historical pre-upgrade checkpoint.
+- Reconciled README, project status, architecture, operations and roadmap documentation with DNS Guard v3.1, the validated Android LTE + ASUS exit-node DNS path, and the ASUS RT-BE88U / Asuswrt-Merlin 3006.x migration target.
+- Replaced the previous OPNsense/x86 target architecture with RT-BE88U as the planned next router platform; OPNsense remains only a future contingency.
 - Promoted HaGeZi Multi PRO++ Mini from a temporary Android-only Pi-hole group to the global Pi-hole Default policy alongside OISD Big and AdGuard DNS Filter; removed the temporary strict group and explicit Android Pi-hole client assignments after initial validation.
 - Extended the selected source-scoped Tailscale Pi-hole transport to the Fedora administration workstation after Tailscale's default DNS route was observed bypassing Pi-hole analytics through the generic fallback.
 - Extended the router healthcheck so remote HTTPS management validates the actual target listener, source-scoped DNAT and post-DNAT INPUT rule instead of assuming the external and local application ports are identical.
@@ -77,6 +80,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Live-validated the reference router on Tailscale `1.103.375` unstable/dev after checksum-verified deployment, controlled daemon restart and later full cold boot; subnet/exit-node advertisement and direct peer connectivity remained functional.
 - Production-validated DNS Guard v3.1 with isolated healthy/unhealthy/break-glass tests, real watchdog failover and recovery, full cold reboot persistence, and Android LTE Tailscale exit-node DNS captured from the router system resolver to the local Pi-hole alias.
 - Completed the current issue #152 acceptance check with representative Android banking/payment use, Google Play, routine applications, notifications and internal-service access showing no observed regression under the global Pi-hole policy.
 - Live-validated the issue #152 global Pi-hole rollout with normal public DNS, internal `home.arpa`, a Gravity-blocked advertising domain and normal HTTPS connectivity; a follow-up Fedora test also confirmed that a fresh classic-DNS marker reached Pi-hole under the workstation's Tailscale identity after adding it to the selected source-scoped transport.
