@@ -70,6 +70,10 @@ remove_jump_and_chain nat PREROUTING "$EDGE_TS_IF" EDGE_TS_PREROUTING
 remove_jump_and_chain filter FORWARD "$EDGE_LAN_IF" EDGE_LAN_DOT_FORWARD
 remove_jump_and_chain nat PREROUTING "$EDGE_LAN_IF" EDGE_LAN_DNS_PREROUTING
 
+if executable_exists cru >/dev/null 2>&1; then
+    cru d AsusEdgeDNSGuard >/dev/null 2>&1 || true
+fi
+
 if executable_exists "$IP6TABLES" >/dev/null 2>&1; then
     while "$IP6TABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j EDGE_TS6_INPUT 2>/dev/null; do :; done
     while "$IP6TABLES" -t filter -D FORWARD -i "$EDGE_TS_IF" -j EDGE_TS6_FORWARD 2>/dev/null; do :; done
@@ -105,6 +109,11 @@ for hook in firewall-start services-start wan-event; do
         fi
     fi
 done
+
+breakglass_path="$JFFS_DIR/scripts/edge-dns-breakglass.sh"
+if [ -f "$breakglass_path" ] && grep -q 'ASUS_EDGE_MANAGED_RECOVERY' "$breakglass_path"; then
+    rm -f "$breakglass_path" || hook_restore_failed=1
+fi
 
 if [ "$hook_restore_failed" = "1" ] || [ "$webui_unmount_failed" = "1" ]; then
     echo "ERROR: uninstall incomplete; inspect /jffs/scripts and WebUI runtime state using local access" >&2
