@@ -1,5 +1,16 @@
 # Roadmap
 
+### Current reference router checkpoint — 2026-10-06
+
+- Current router: ASUS TUF-AX5400 / GNUton 3004.388.11_1.
+- Current live Tailscale: **1.103.375 unstable/dev**; earlier 1.102.3 evidence
+  is historical pre-upgrade state.
+- DNS Guard v3.1 cold-boot/fail-open policy is production-validated.
+- Planned next router: **ASUS RT-BE88U / compatible Asuswrt-Merlin 3006.x**.
+- OPNsense/x86 is not the current migration target; keep it only as a future
+  contingency if requirements exceed the ASUS platform.
+
+
 ## Completed and validated — observability baseline
 
 **Status: completed 2026-09-27.**
@@ -40,12 +51,13 @@ messages after collector restoration.
 the end of 2026-09-28: merged-PR visibility, recent repository activity/commits,
 dashboard layout cleanup and a separate Polystat infrastructure-health view.
 
-The #127 LAN-management/WAN-exposure hardening and #128 IPv6/Wi-Fi security
-parity evidence were completed on 2026-09-29. The remaining short hardening
-item is #130 (GitHub main ruleset / required validation). After that, finish the
-bounded #108 retention, rollback and LAN-interception correlation gaps,
-followed by #68 encrypted-DNS assessment and #129 Pi-hole-aware
-disaster-recovery refresh.
+The #127 LAN-management/WAN-exposure hardening, #128 IPv6/Wi-Fi security
+parity evidence and #130 GitHub main-ruleset/required-validation work are
+completed. Issue #177 Tailscale package/live-version drift hardening is also
+completed. The current bounded hardening/recovery sequence is #176 local
+source-scoping for exit-node forwarding, #129 Pi-hole-aware disaster recovery,
+the remaining #108 DNS-visibility gaps, #68 encrypted-DNS assessment and the
+later #143 trust-zone segmentation design.
 
 ## In progress — Network DNS Visibility / Client Activity Analytics
 
