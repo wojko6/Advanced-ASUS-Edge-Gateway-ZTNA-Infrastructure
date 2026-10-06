@@ -38,7 +38,7 @@ cat >"$MOCK_BIN/pidof" <<EOF
 if [ -f "$FAIL_LOCAL" ]; then
     exit 1
 fi
-case "$1" in
+case "\$1" in
     unbound|pihole-FTL) echo 1234; exit 0 ;;
 esac
 exit 1
