@@ -31,17 +31,31 @@ flowchart TD
     UB -->|"yes"| UK["Preserve current Unbound"]
     UB -->|"no"| UR["Validate config and recover Unbound directly"]
     UR --> RD["restart dnsmasq<br/>after successful recovery"]
-    UK --> SL["Preserve/start optional syslog-ng"]
-    RD --> SL
+    UK --> DG["Schedule DNS Guard watchdog<br/>AsusEdgeDNSGuard"]
+    RD --> DG
+    DG --> SL["Preserve/start optional syslog-ng"]
     SL --> FW["Run /jffs/scripts/firewall-start"]
     FW --> OK["services startup completed"]
     OK --> HC["healthcheck.sh available<br/>manual / validation step<br/>not auto-run by services-start"]
 
     WE["WAN connected event"] --> WH["wan-event-handler"]
-    WH --> WD["Wait for dnsmasq + Unbound<br/>127.0.0.1:53535"]
-    WD --> SR["Enforce /tmp/resolv.conf<br/>nameserver 127.0.0.1"]
-    SR --> RT["Restart S06tailscaled"]
+    WH --> GI["DNS Guard auto<br/>initial fail-open decision"]
+    GI --> BP{"Local DNS fully healthy?"}
+    BP -->|"no"| WB["Keep/restore WAN bootstrap DNS"]
+    BP -->|"yes"| LP["Promote runtime resolver<br/>to Pi-hole alias"]
+    WB --> BW["Bounded wait for dnsmasq + Unbound"]
+    LP --> BW
+    BW --> GS["DNS Guard auto<br/>settled re-evaluation"]
+    GS --> RS{"Result"}
+    RS -->|"healthy"| PL["Runtime resolver = Pi-hole"]
+    RS -->|"unhealthy / break-glass"| WA["Runtime resolver = WAN bootstrap DNS"]
+    PL --> RT["Restart S06tailscaled"]
+    WA --> RT
     RT --> RR["Wait for Tailscale status ready"]
+
+    CRON["cru every minute"] --> GA["dns-guard auto"]
+    GA -->|"healthy"| PL
+    GA -->|"unhealthy / break-glass"| WA
 ```
 
 ## Validated scope and limitations
@@ -58,7 +72,9 @@ flowchart TD
 - syslog-ng is optional in services-start.
 - firewall-start is required. Required service/firewall failures cause services-start to exit non-zero.
 - healthcheck.sh is an explicit validation tool; services-start does not automatically invoke it.
-- wan-event-handler is a separate WAN-connected recovery path. It waits for the local DNS path, points the system resolver at 127.0.0.1, restarts the Entware Tailscale service and waits for the local Tailscale API to become ready.
+- wan-event-handler is a separate WAN-connected recovery path. It delegates resolver selection to DNS Guard instead of hard-coding `127.0.0.1`: the initial pass fails open to WAN bootstrap DNS when the local stack is not yet healthy, a bounded wait gives dnsmasq/Unbound time to settle, and a second DNS Guard pass promotes the runtime resolver to Pi-hole only when the full local path is ready. Tailscale is restarted only after the resolver policy step.
+- services-start recreates the named `AsusEdgeDNSGuard` cron watchdog. The watchdog re-evaluates the same policy once per minute and keeps sticky break-glass priority over automatic Pi-hole promotion.
+- The 2026-10-06 full cold-boot validation returned NTP, Unbound, Pi-hole, Tailscale, the DNS Guard watchdog and the Pi-hole steady-state runtime resolver without reproducing the earlier DNS/NTP/Unbound dependency cycle.
 
 ## Traceability
 
@@ -68,3 +84,5 @@ flowchart TD
 - [config/edge.conf.example](../../config/edge.conf.example)
 - [Clean startup and persistence evidence — 2026-09-27](../../evidence/2026-09-27/issue-66-clean-startup-persistence-evidence.md)
 - [Pi-hole main-LAN cutover and final reboot evidence — 2026-09-28](../../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
+- [DNS Guard v3.1 production validation — 2026-10-06](../../evidence/2026-10-06/dns-guard-v3.1-production-validation.md)
+- [DNS bootstrap deadlock and fail-open resolver recovery](../dns-guard-cold-boot-case-study.md)
