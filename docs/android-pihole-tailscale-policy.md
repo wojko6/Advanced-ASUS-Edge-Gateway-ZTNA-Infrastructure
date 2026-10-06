@@ -164,9 +164,12 @@ warnings.
 
 Basic global smoke testing confirmed public DNS resolution, internal
 `home.arpa` resolution, a Gravity-blocked advertising domain and normal HTTPS
-connectivity. Longer application-compatibility observation, including
-representative banking/payment use, remains open. Exit-node-enabled Android DNS
-and encrypted-DNS interception are still outside the current validated claim.
+connectivity. A representative manual Android compatibility check then passed
+without observed regression across banking/payment use, Google Play, routine
+applications, notifications and internal-service access. This completes the
+current issue #152 acceptance target. Exit-node-enabled Android DNS,
+encrypted-DNS interception and long-term endurance remain outside the current
+validated claim.
 
 See the [sanitized 2026-10-06 live validation](../evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
 

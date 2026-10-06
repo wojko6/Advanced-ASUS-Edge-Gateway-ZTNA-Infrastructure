@@ -1,8 +1,8 @@
 # Issue #152 — Android Pi-hole/Tailscale source-scoped validation
 
-**Status:** PARTIAL PASS — transport/DNS/management path, global stricter
-Pi-hole policy and Fedora source-scoped DNS validated; longer application
-compatibility remains open
+**Status:** PASS — transport/DNS/management path, global stricter Pi-hole
+policy, Fedora source-scoped DNS and representative Android application
+compatibility validated
 
 **Date:** 2026-10-06  
 **Evidence class:** Live functional validation / sanitized  
@@ -135,7 +135,10 @@ A basic global smoke test confirmed normal public DNS resolution, internal
 Pi-hole blocking result, and normal HTTPS connectivity.
 
 This is a same-day functional smoke test, not a long-term claim that every
-application is free of false positives.
+application is permanently free of false positives. A subsequent representative
+Android compatibility check covered banking/payment use, Google Play, routine
+applications, notifications and internal-service access without an observed
+regression.
 
 ## Fedora Tailscale DNS bypass discovery
 
@@ -171,10 +174,14 @@ conditions:
 
 ## Remaining scope
 
-Issue #152 is intentionally still open. The per-device strict-policy experiment
-was superseded by the global `Default` rollout described above. Remaining work
-is longer compatibility observation, including representative banking/payment
-and Android-connectivity checks, plus any separate exit-node/encrypted-DNS work.
+The current issue #152 acceptance target is complete. The per-device
+strict-policy experiment was superseded by the global `Default` rollout
+described above, and the representative Android compatibility check completed
+without an observed regression.
+
+Long-term observation remains an operational follow-up rather than a blocker.
+Exit-node-enabled Android DNS and encrypted-DNS interception remain separate
+out-of-scope work and are not claimed by this artifact.
 
 See [Android global DNS filtering through Pi-hole and Tailscale](../../docs/android-pihole-tailscale-policy.md)
 and the [troubleshooting case study](../../docs/case-studies/android-tailscale-pihole-debugging.md).

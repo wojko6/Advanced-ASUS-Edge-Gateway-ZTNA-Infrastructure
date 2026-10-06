@@ -565,23 +565,23 @@ Tailscale transport policy:
 ~~~
 
 A same-day smoke test confirmed normal public DNS, internal `home.arpa`, a
-Gravity-blocked advertising domain and normal HTTPS connectivity. This does not
-replace longer application-compatibility observation.
+Gravity-blocked advertising domain and normal HTTPS connectivity. A subsequent
+representative Android compatibility check also completed without an observed
+regression across banking/payment use, Google Play, routine applications,
+notifications and internal-service access.
 
 ---
 
 ## 16. Remaining scope
 
-This case study covers the validated transport, DNS, and remote-management path.
+This case study covers the validated transport, DNS, remote-management and
+representative application-compatibility path.
 
-The following work remains separate:
-
-- longer application compatibility testing,
-- banking and payment application validation,
-- encrypted DNS bypass work such as DoH/DoQ,
-- wider DNS analytics and disaster-recovery work.
-
-These items are intentionally not presented as completed.
+Long-term false-positive observation remains useful operationally, but it is no
+longer a blocker for the current issue #152 acceptance target. Separate work
+still includes encrypted DNS bypass such as DoH/DoQ, exit-node-enabled Android
+DNS, wider DNS analytics and disaster-recovery work. These separate boundaries
+are intentionally not presented as completed.
 
 ---
 

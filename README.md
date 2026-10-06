@@ -255,8 +255,11 @@ source-scoped Pi-hole transport restored Pi-hole visibility while preserving
 Tailscale DNS/MagicDNS; a fresh marker appeared under the workstation's
 Tailscale identity and the healthcheck remained clean.
 
-The result does not claim exit-node-enabled Android DNS, encrypted-DNS
-interception or long-term application compatibility. See the
+A representative Android compatibility check subsequently passed without
+observed regression across banking/payment use, Google Play, routine
+applications, notifications and internal-service access. The result still does
+not claim exit-node-enabled Android DNS, encrypted-DNS interception or
+long-term endurance. See the
 [issue #152 policy](docs/android-pihole-tailscale-policy.md) and
 [sanitized live validation](evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md).
 

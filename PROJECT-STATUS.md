@@ -8,7 +8,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 is in progress: the Android source-scoped Pi-hole/Tailscale transport and remote-management path are live-validated in PR #182, the stricter Pi-hole list has been promoted to the global Default policy, and longer application compatibility observation remains pending.
+**Current phase:** Personal Cloud / RouterCloud issues #136, #137 and #138 are completed. Issue #152 has met its current acceptance target: the Android source-scoped Pi-hole/Tailscale transport and remote-management path are live-validated in PR #182, the stricter Pi-hole list is promoted to the global Default policy, Fedora's Tailscale DNS visibility gap is remediated, and representative Android application compatibility passed without observed regression. PR #182 remains open pending merge.
 
 ## Executive status
 
@@ -86,10 +86,11 @@ to the selected source-scoped Pi-hole transport, after which a fresh unique
 query appeared in Pi-hole under the workstation's Tailscale identity and the
 project healthcheck again reported zero failures and warnings.
 
-Remaining #152 scope is now longer application compatibility observation,
-including representative banking/payment and Android-connectivity use. Exit-node-
-enabled Android DNS and encrypted-DNS interception are not claimed by the current
-#152 validation.
+Representative Android application compatibility, including banking/payment
+use and normal Android connectivity, passed without observed regression. The
+current #152 acceptance target is therefore complete and PR #182 is ready for
+merge. Exit-node-enabled Android DNS, encrypted-DNS interception and long-term
+endurance are not claimed by the current #152 validation.
 
 See [the Android Pi-hole/Tailscale policy](docs/android-pihole-tailscale-policy.md),
 [the troubleshooting case study](docs/case-studies/android-tailscale-pihole-debugging.md)

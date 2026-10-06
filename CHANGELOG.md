@@ -74,6 +74,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Completed the current issue #152 acceptance check with representative Android banking/payment use, Google Play, routine applications, notifications and internal-service access showing no observed regression under the global Pi-hole policy.
 - Live-validated the issue #152 global Pi-hole rollout with normal public DNS, internal `home.arpa`, a Gravity-blocked advertising domain and normal HTTPS connectivity; a follow-up Fedora test also confirmed that a fresh classic-DNS marker reached Pi-hole under the workstation's Tailscale identity after adding it to the selected source-scoped transport.
 - Live-validated the issue #152 Android target path with Wi-Fi off, LTE/5G on, Tailscale on and exit node off: a fresh query reached Pi-hole under the selected client identity, internal RouterCloud naming worked, a known advertising domain was blocked by Gravity, RouterCloud remained reachable, ASUS management reached the real TCP/443 listener through external TCP/8443, and the production healthcheck returned zero failures and warnings.
 - Production-validated RouterCloud login through both the canonical username and the configured email alias on 2026-10-03; both identifiers used the same password and resolved to the same account.
