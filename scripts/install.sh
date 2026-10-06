@@ -117,6 +117,8 @@ esac
 for file in \
     "$REPO_DIR/router/scripts/firewall-start" \
     "$REPO_DIR/router/scripts/services-start" \
+    "$REPO_DIR/router/scripts/dns-guard" \
+    "$REPO_DIR/router/scripts/edge-dns-breakglass.sh" \
     "$REPO_DIR/router/scripts/wan-event" \
     "$REPO_DIR/router/scripts/wan-event-handler" \
     "$REPO_DIR/router/scripts/webui-mount" \
@@ -166,6 +168,7 @@ snapshot_path "$JFFS_DIR/configs/asus-edge.conf" asus-edge.conf
 snapshot_path "$JFFS_DIR/scripts/firewall-start" firewall-start
 snapshot_path "$JFFS_DIR/scripts/services-start" services-start
 snapshot_path "$JFFS_DIR/scripts/wan-event" wan-event
+snapshot_path "$JFFS_DIR/scripts/edge-dns-breakglass.sh" edge-dns-breakglass.sh
 snapshot_path "$ADDON_DIR/bin" bin
 snapshot_path "$ADDON_DIR/legacy" legacy
 snapshot_path "$ADDON_DIR/webui" webui
@@ -253,6 +256,7 @@ finish_installation() {
         restore_path "$JFFS_DIR/scripts/firewall-start" firewall-start || rollback_failed=1
         restore_path "$JFFS_DIR/scripts/services-start" services-start || rollback_failed=1
         restore_path "$JFFS_DIR/scripts/wan-event" wan-event || rollback_failed=1
+        restore_path "$JFFS_DIR/scripts/edge-dns-breakglass.sh" edge-dns-breakglass.sh || rollback_failed=1
         if [ "$rollback_failed" = "1" ]; then
             echo "ERROR: rollback incomplete; recover from $BACKUP_DIR using local access" >&2
         elif [ "$firewall_attempted" = "1" ]; then
@@ -295,6 +299,8 @@ install_file() {
 install_file "$REPO_DIR/config/edge.conf" "$JFFS_DIR/configs/asus-edge.conf" 0600
 install_file "$REPO_DIR/router/scripts/firewall-start" "$ADDON_DIR/bin/firewall-start" 0755
 install_file "$REPO_DIR/router/scripts/services-start" "$ADDON_DIR/bin/services-start" 0755
+install_file "$REPO_DIR/router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755
+install_file "$REPO_DIR/router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700
 install_file "$REPO_DIR/router/scripts/wan-event" "$ADDON_DIR/bin/wan-event" 0755
 install_file "$REPO_DIR/router/scripts/wan-event-handler" "$ADDON_DIR/bin/wan-event-handler" 0755
 install_file "$REPO_DIR/router/scripts/webui-mount" "$ADDON_DIR/bin/webui-mount" 0755
