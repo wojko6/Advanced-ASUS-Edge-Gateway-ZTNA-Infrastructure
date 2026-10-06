@@ -2,9 +2,9 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-09-28
+**Last reviewed:** 2026-10-06
 
-**Reference evidence:** 2026-09-11 storage baseline, 2026-09-22/23 exit-node and DNS datapath validation, 2026-09-27 startup/current-firmware checks, and the [2026-09-28 Pi-hole cutover validation](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
+**Reference evidence:** 2026-09-11 storage baseline, 2026-09-22/23 exit-node and DNS datapath validation, 2026-09-27 startup/current-firmware checks, the [2026-09-28 Pi-hole cutover validation](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md), the [2026-10-06 Tailscale 1.103.375 runtime validation](../evidence/2026-10-06/tailscale-1.103.375-router-upgrade-validation.md), and the [DNS Guard v3.1 production validation](../evidence/2026-10-06/dns-guard-v3.1-production-validation.md)
 
 The project is validated against a specific reference deployment. It does not claim a universal minimum version for every Asuswrt-Merlin or Entware package combination.
 
@@ -14,12 +14,26 @@ The project is validated against a specific reference deployment. It does not cl
 | Firmware | ASUSWRT-Merlin 3004.388.9_2-gnuton1 in the published 2026-09-11 baseline; GNUton 3004.388.11_1-gnuton1_tuf in the 2026-09-23 reference-router health, reboot, DNS and HTTPS smoke checks | firmware upgrade or firewall architecture change |
 | Shell/runtime | BusyBox-compatible POSIX `sh` for deployed scripts | shell/tooling change |
 | Entware/storage | persistent `/opt` on the validated SSD-backed layout | storage migration, mount or startup-ownership change |
-| Tailscale | configured local socket, required subnet/exit routing and intentional `netfilter-mode=off` ownership model must remain functional | Tailscale update, socket/state-path or netfilter-mode change |
+| Tailscale | current reference runtime `1.103.375` on the unstable/dev track; configured local socket, required subnet/exit routing and intentional `netfilter-mode=off` ownership model must remain functional. Earlier `1.102.3` evidence is historical pre-upgrade state. | Tailscale update, track/source change, socket/state-path or netfilter-mode change |
 | Unbound | deployed configuration validates and exposes the configured loopback listener; both current local resolver front ends use `127.0.0.1:53535` for ordinary external resolution | Unbound update, listener or config-manager change |
 | Pi-hole FTL | current main-LAN DHCP filtering service on a dedicated LAN alias; Pi-hole DHCP disabled; allowed queries use local Unbound upstream | Pi-hole/FTL update, database/schema change used by analytics, listener/alias change, Gravity/policy change or startup-order change |
 | dnsmasq | firmware-owned router-LAN/Tailscale port-53 listener retained for DHCP/local naming and existing classic-DNS interception, forwarding ordinary external resolution to local Unbound | firmware update, resolver ownership/port change, DHCP option change or interception-path redesign |
 | syslog-ng | optional unless remote logging is configured; configured TLS path must validate on both peers | package, TLS or collector change |
 | WAN NAT | platform-owned Asuswrt-Merlin `MASQUERADE`/SNAT is a runtime dependency for the validated exit-node architecture | firmware, firewall or WAN-interface policy change |
+
+## Planned platform migration
+
+The current reference device remains the ASUS TUF-AX5400. The planned next
+router platform is **ASUS RT-BE88U** on a compatible Asuswrt-Merlin 3006.x
+branch.
+
+The RT-BE88U migration is a **full revalidation trigger**, not an assumption of
+drop-in compatibility. Interface names, WAN/NAT ownership, hook ordering,
+Entware startup, storage/swap behavior, DNS listeners, firewall contracts,
+Tailscale routing and WebUI integration must be re-proved on the new platform.
+
+OPNsense/x86 is not the current target architecture; it is retained only as a
+possible future contingency if requirements exceed the RT-BE88U platform.
 
 ## Version evidence policy
 
