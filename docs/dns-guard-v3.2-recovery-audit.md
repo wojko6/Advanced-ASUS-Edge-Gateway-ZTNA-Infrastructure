@@ -1,0 +1,225 @@
+# DNS Guard v3.2 recovery audit
+
+**Status:** source-controlled hardening candidate for issue #196 / PR #197.  
+**Production baseline:** `main` at DNS Guard v3.2 after #193.  
+**Live deployment:** not performed by this audit.
+
+This audit follows the historical
+[`dns-bootstrap-deadlock-dns-guard-v3.1.md`](case-studies/dns-bootstrap-deadlock-dns-guard-v3.1.md)
+incident and the accepted
+[`dns-guard-v3.2-live-validation.md`](dns-guard-v3.2-live-validation.md)
+baseline.
+
+## Executive verdict
+
+```text
+DNS GUARD RECOVERY = ROBUST WITH GAPS
+```
+
+The v3.2 baseline already prevents the original NTP/Pi-hole/Unbound bootstrap
+deadlock, but the post-v3.2 audit reproduced several narrower recovery gaps.
+
+The candidate branch closes the confirmed source-level gaps without adding a
+hard-coded public emergency resolver and without changing the normal
+Pi-hole -> Unbound steady-state architecture.
+
+The remaining material gap is the local readiness oracle: fixed probe names can
+be answered from cache/stale cache, so a successful probe does not prove that
+fresh recursive resolution is currently possible. This is documented as a
+residual design risk rather than silently reintroducing unique public probe
+names.
+
+## Findings
+
+| ID | Severity | Failure mode | Baseline evidence | Candidate result |
+| --- | --- | --- | --- | --- |
+| DG-R01 | P1 | A stalled DNS helper can hold the global DNS Guard lock and delay later watchdog runs. | UDP readiness used unbounded BusyBox `nslookup`; lock acquisition was unbounded. | DNS/helper execution is bounded and lock acquisition has a finite wait. |
+| DG-R02 | P1 | Fallback can write syntactically valid WAN DNS and report success even when no selected bootstrap resolver answers. | Baseline `fallback_bootstrap()` validated resolver addresses but not DNS function. | Fallback keeps fail-open resolver selection but returns `FALLBACK=UNHEALTHY_BOOTSTRAP` if functional bootstrap validation fails. |
+| DG-R03 | P1 | A stale but syntactically valid higher-priority WAN DNS source can hide a later valid resolver source. | Baseline `bootstrap_dns()` returned after the first key containing accepted candidates. | Valid unique candidates are aggregated across known WAN DNS keys, capped at three nameservers. |
+| DG-R04 | P1 | If bootstrap DNS is dead while the complete local path has recovered, normal failback hysteresis can unnecessarily extend the outage. | Healthy local path plus broken bootstrap still entered the normal recovery-streak path. | Broken bootstrap is escaped immediately to a healthy local resolver; hysteresis remains for healthy bootstrap -> local failback. |
+| DG-R05 | P1 | The watchdog could be scheduled only after a long/failing Entware startup path. | `services-start` configured the watchdog after `/opt` recovery. | The watchdog is scheduled before waiting for `/opt` and before Entware service recovery. |
+| DG-R06 | P1 | Break-glass DNS validation can hang even after WAN recovery. | Break-glass used an unbounded `nslookup`. | Break-glass DNS validation has an explicit timeout. |
+| DG-R07 | P2 | Corrupted oversized runtime counters can reach shell arithmetic/telemetry paths. | Runtime numeric state accepted arbitrary digit strings. | Recovery streak is clamped/reset safely; generic numeric telemetry rejects implausibly large values while preserving current 10-digit epoch timestamps. |
+| DG-R08 | P2 | `mode_bootstrap=1` does not distinguish working bootstrap DNS from selected-but-broken bootstrap DNS. | Baseline had resolver-mode telemetry only. | Added bootstrap-health and last-check metrics plus a Grafana alert. |
+| DG-R09 | P2 | Loss of the Fedora DNS Guard collector can hide state changes. | Sustained fail-open alert required fresh telemetry but there was no dedicated stale-collector alert. | Added a stale DNS Guard telemetry alert. |
+| DG-R10 | P1 residual | Fixed local probe names can be answered from cached/stale data and may not prove fresh recursion. | Pi-hole/Unbound readiness uses stable names; the project Unbound config enables `serve-expired`. | Not changed automatically. Requires a separate design decision for a cache-resistant recursion oracle. |
+| DG-R11 | P2 residual | Bootstrap functional validation primarily proves a normal small DNS lookup, not every TCP/truncation case. | BusyBox `nslookup` is the mandatory low-dependency probe. | Retained as a bounded availability probe; TCP-specific bootstrap proof remains a live/design follow-up. |
+
+## State machine
+
+| State | Resolver state | `dns-guard auto` behavior | Automatic exit |
+| --- | --- | --- | --- |
+| LOCAL | configured local Pi-hole only | verifies complete local readiness; stays local when healthy, fails open when unhealthy | yes |
+| BOOTSTRAP | validated WAN resolver set | verifies local path and bootstrap function; applies hysteresis only when bootstrap itself is usable | yes |
+| BOOTSTRAP_UNHEALTHY | WAN resolver selected but functional probe fails | retries bootstrap while local is unhealthy; immediately selects local once the complete local path is healthy | yes, if either path recovers |
+| UNKNOWN | missing/empty/foreign/mixed resolver state | evaluates local health, then converges to bootstrap or local according to current health | yes |
+| LOCAL_UNHEALTHY | local target selected but Pi-hole/Unbound/NTP/query path fails | immediate fail-open attempt | yes if a bootstrap resolver becomes usable |
+| BOOTSTRAP_UNAVAILABLE | no independent usable WAN candidate exists | returns non-zero and retries on later watchdog/WAN events | yes if NVRAM later supplies a usable resolver or local path recovers |
+| RECOVERY_PENDING | local healthy, bootstrap healthy, streak below threshold | keeps/reasserts functional bootstrap until the configured success threshold | yes |
+| CONFIG_INVALID | local resolver target missing/invalid | keeps attempting independent bootstrap DNS | yes after config correction or available bootstrap |
+| BREAKGLASS | persistent break-glass flag exists | keeps the router on bootstrap and blocks automatic local promotion | operator-controlled by design |
+
+The only intentionally non-automatic state is `BREAKGLASS`. Sticky
+break-glass is a manual override and is therefore not treated as a recovery
+dead-end defect.
+
+## Bootstrap failure matrix
+
+The candidate behavior is:
+
+| Condition | Expected behavior |
+| --- | --- |
+| all WAN DNS NVRAM keys empty | fallback fails non-zero; watchdog retries |
+| invalid / loopback / `0.0.0.0` / local Pi-hole candidates | candidates rejected |
+| duplicate candidates | deduplicated |
+| first resolver dead, later resolver healthy | later resolver can satisfy functional bootstrap validation |
+| higher-priority NVRAM key stale, later key valid | candidates from later known keys remain available |
+| all syntactically valid candidates dead | resolver can still be written for fail-open recovery, but fallback is reported unhealthy rather than successful |
+| DHCP/WAN later supplies new DNS | next watchdog/WAN invocation rereads NVRAM and can self-heal |
+| local and bootstrap both fail | watchdog remains retrying; no hard-coded third-party resolver is injected |
+| local recovers while bootstrap is dead | immediate local promotion |
+| firmware rewrites resolver to an unknown set | watchdog reconverges on a legal local/bootstrap state if either path is usable |
+
+## Hysteresis and concurrency
+
+The normal threshold remains:
+
+```text
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+```
+
+The candidate preserves the intended semantics:
+
+```text
+PASS PASS FAIL -> streak reset
+PASS FAIL PASS -> no premature promotion
+FAIL PASS PASS PASS -> promotion after three consecutive healthy checks
+LOCAL failure -> immediate fail-open attempt
+dead bootstrap + healthy local -> immediate local recovery
+```
+
+Concurrent state transitions remain serialized. Lock acquisition itself is now
+bounded, so a second watchdog invocation cannot build an indefinite waiter
+queue behind a stuck first invocation.
+
+## State corruption
+
+The following states converge safely or fail safe:
+
+- textual recovery streak -> treated as zero;
+- oversized recovery streak -> treated as zero;
+- oversized runtime counters -> sanitized;
+- invalid current-mode state -> reconciled from the observed resolver;
+- missing runtime directory after reboot -> recreated;
+- stale lock file without a live lock owner -> harmless because `flock`
+  ownership is process-bound;
+- empty/corrupt break-glass flag file -> treated as active, preserving the
+  fail-safe manual override;
+- interrupted atomic runtime-state write -> previous committed state remains
+  usable; a temporary file may remain but is not authoritative.
+
+A physically read-only or failed JFFS/`/tmp` filesystem remains outside what
+DNS Guard can fully self-heal. That is a platform/storage failure, not a DNS
+state-machine transition.
+
+## Boot sequencing
+
+The validated v3.2 architecture already performs immediate fail-open at WAN
+events and periodic watchdog recovery. The candidate additionally schedules the
+watchdog before waiting for Entware storage/services, reducing the chance that a
+slow or failed `/opt` recovery removes the periodic DNS recovery path.
+
+The following ordering is expected:
+
+```text
+services-start
+  -> schedule DNS Guard watchdog
+  -> wait for /opt
+  -> recover Entware / Unbound / Tailscale
+  -> local readiness becomes true
+  -> watchdog counts stable checks
+  -> promote to local DNS
+```
+
+A new cold-boot live test is still required before production rollout.
+
+## Monitoring
+
+New coarse metrics:
+
+```text
+asus_edge_dns_guard_bootstrap_dns_healthy
+asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds
+```
+
+Existing mode, transition and collection-timestamp metrics remain unchanged.
+
+New Grafana conditions distinguish:
+
+- sustained fail-open with fresh telemetry;
+- bootstrap selected but unhealthy/stale bootstrap health;
+- stale DNS Guard telemetry.
+
+Resolver `UNKNOWN` remains represented by
+`asus_edge_dns_guard_state_valid 0`; a dedicated alert can be added later if
+live evidence shows that the existing healthcheck/telemetry path is not
+sufficient.
+
+## Residual risk: cache-resistant recursion proof
+
+The current local-path probe deliberately uses stable names from independent
+providers rather than unique public names. That avoids turning the watchdog
+into a high-rate public-query generator.
+
+However, the project Unbound configuration enables `serve-expired`. Therefore
+a fixed probe can still receive a stale answer while upstream recursion is
+impaired. The current probe proves:
+
+```text
+Pi-hole listener + path can return an expected DNS answer
+```
+
+but it does not always prove:
+
+```text
+a previously uncached name can be recursively resolved right now
+```
+
+No automatic code change is made here because the alternatives introduce
+trade-offs: cache flushing, an `unbound-control` dependency, a unique public
+probe namespace, or a dedicated health-check zone.
+
+This is the main reason the audit verdict is **ROBUST WITH GAPS** rather than
+**ROBUST**.
+
+## Source-controlled validation
+
+Regression coverage now includes:
+
+- concurrent invocation serialization;
+- bounded lock acquisition;
+- bounded UDP DNS probe execution;
+- functional bootstrap validation;
+- stale higher-priority WAN DNS with a later usable source;
+- dead-bootstrap immediate escape to recovered local DNS;
+- three-success failback hysteresis;
+- recovery-streak reset on failure;
+- oversized/corrupt runtime state;
+- break-glass DNS timeout;
+- coarse bootstrap-health telemetry;
+- Fedora exporter forwarding the new metrics;
+- static guards for early watchdog scheduling and Grafana alert definitions.
+
+The project Validation suite must be green at the candidate head before live
+testing.
+
+## Live validation gate
+
+Do not merge or deploy solely from source-level evidence.
+
+Run the bounded live-validation runbook in
+[`dns-guard-v3.2-recovery-audit-live-validation.md`](dns-guard-v3.2-recovery-audit-live-validation.md)
+with a trusted LAN recovery session and an immediate rollback path.
+
+Only after the live checkpoints pass should the candidate be considered for
+merge into `main`.
