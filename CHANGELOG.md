@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Added four RouterCloud Grafana rules for backup/maintenance failure and staleness, static guards for the nine-rule alert baseline, and a live E2E test that injects a controlled backup failure and verifies recovery.
 - Added a canonical incident-response case study for the 2026-10-06 DNS bootstrap outage, documenting the user-visible website failure, root-cause dependency cycle, DNS Guard v3.1 remediation, controlled fault tests, cold-boot acceptance and Android LTE + ASUS Exit Node DNS proof.
 - Added DNS Guard v3.1 with independent WAN bootstrap DNS, conditional Pi-hole promotion, automatic fail-open fallback, sticky break-glass recovery, a persistent one-minute watchdog, and managed installer/backup integration.
 - Added optional source-scoped Pi-hole DNS enforcement for selected Tailscale IPv4 clients, with client identity preserved for Pi-hole analytics and the generic dnsmasq redirect retained as fallback for non-matching sources.
@@ -33,6 +34,7 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Reconciled README, project status, monitoring, RouterCloud backup, roadmap, requirements, evidence and worklog documentation with the merged RouterCloud alerting baseline from PR #190.
 - Recorded the current reference-router Tailscale runtime as `1.103.375` on the unstable/dev track, with the earlier `1.102.3` evidence retained as a historical pre-upgrade checkpoint.
 - Reconciled README, project status, architecture, operations and roadmap documentation with DNS Guard v3.1, the validated Android LTE + ASUS exit-node DNS path, and the ASUS RT-BE88U / Asuswrt-Merlin 3006.x migration target.
 - Replaced the previous OPNsense/x86 target architecture with RT-BE88U as the planned next router platform; OPNsense remains only a future contingency.
@@ -81,6 +83,7 @@
 - Removed unnecessary router-side printer exposure while preserving direct LAN printing through the printer's own network service.
 
 ### Validated
+- Live-validated `routercloud_backup_bad` on 2026-10-07 with a controlled synthetic failure, Grafana `Firing` detection, restoration of the healthy metric, and recovery to no active alert instance; the test confirms the Grafana notification path but does not claim a separate RouterCloud inbox-delivery capture.
 - Live-validated the reference router on Tailscale `1.103.375` unstable/dev after checksum-verified deployment, controlled daemon restart and later full cold boot; subnet/exit-node advertisement and direct peer connectivity remained functional.
 - Production-validated DNS Guard v3.1 with isolated healthy/unhealthy/break-glass tests, real watchdog failover and recovery, full cold reboot persistence, and Android LTE Tailscale exit-node DNS captured from the router system resolver to the local Pi-hole alias.
 - Completed the current issue #152 acceptance check with representative Android banking/payment use, Google Play, routine applications, notifications and internal-service access showing no observed regression under the global Pi-hole policy.

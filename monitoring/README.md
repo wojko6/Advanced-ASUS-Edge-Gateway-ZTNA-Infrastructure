@@ -87,33 +87,55 @@ directory.
 
 ## Grafana alerting
 
-Five live-validated Grafana alert rules are provisioned from
+Nine source-controlled Grafana alert rules are provisioned from
 [`grafana/provisioning/alerting/asus-tuf-alerts.yml`](grafana/provisioning/alerting/asus-tuf-alerts.yml):
 
 - SSH collector unavailable;
 - router-reported WAN down;
 - failed HTTPS / ICMP / router-DNS blackbox probe;
 - stale router telemetry;
-- negotiated WAN link speed below 900 Mb/s for at least three minutes.
+- negotiated WAN link speed below 900 Mb/s for at least three minutes;
+- RouterCloud backup result is failed;
+- RouterCloud backup age exceeds eight hours, with an additional five-minute `for` window;
+- RouterCloud maintenance/integrity result is failed;
+- RouterCloud maintenance age exceeds eight days, with an additional thirty-minute `for` window.
 
-A controlled collector outage drove the collector and telemetry rules through
-`Pending -> Firing`, while the independent blackbox rule remained healthy.
-After the collector restarted, all rules returned to normal.
+The original controlled collector outage drove the collector and telemetry rules
+through `Pending -> Firing`, while the independent blackbox rule remained
+healthy. After the collector restarted, all rules returned to normal. The same
+test established the dependency boundary that missing collector data must not
+masquerade as WAN-down evidence, so the WAN rule uses `noDataState: OK`.
 
-The same test identified an important dependency boundary: loss of collector
-data must not masquerade as a WAN failure. The WAN rule therefore uses
-`noDataState: OK`; collector and telemetry loss are handled by their dedicated
-rules.
-
-An email contact point is provisioned from
+An e-mail contact point is provisioned from
 [`grafana/provisioning/alerting/asus-email-contact.yml`](grafana/provisioning/alerting/asus-email-contact.yml).
 SMTP credentials remain local to the Fedora host and are not stored in Git.
-The WAN-speed rule sends both firing and resolved notifications through this
-contact point. This proves the e-mail transport/contact point for that bounded rule path; it does **not** yet prove the complete severity-routing baseline. Issue #178 still owns warning/critical policy routing, RouterCloud Backup BAD coverage, grouping/anti-flap validation and optional Telegram/mobile escalation.
+All nine current rules route directly to `ASUS Edge Gateway Email`, and the
+contact point keeps resolved notifications enabled. Actual firing/resolved inbox
+delivery is live-validated for the WAN-speed path.
 
-See [the original alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md)
-and the
-[WAN-speed email validation](../evidence/2026-10-06/grafana-wan-speed-email-alert-validation.md).
+On 2026-10-07, `routercloud_backup_bad` was also exercised with a controlled
+live E2E test. The test injected only the coarse success metric into local
+VictoriaMetrics, waited for Grafana to reach `Alerting/Firing`, restored the
+real healthy metric from `status.env`, and required recovery to `Normal` or no
+active alert instance. It also leaves a cleanup trap so an interrupted test
+attempts to restore the real metric. This proves the RouterCloud rule evaluation
+and Grafana notification-routing path; it does not claim a separately captured
+RouterCloud inbox delivery.
+
+The live test is intentionally **not** part of normal CI because it mutates the
+local metrics state and can generate real notifications:
+
+```sh
+./tests/test-grafana-routercloud-alerting-live.sh
+```
+
+Issue #178 still owns grouping/anti-flap validation and bounded
+Telegram/mobile critical escalation. The four RouterCloud rules and direct
+e-mail routing are no longer open items.
+
+See [the original alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md),
+the [WAN-speed e-mail validation](../evidence/2026-10-06/grafana-wan-speed-email-alert-validation.md),
+and the [RouterCloud live alerting validation](../evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
 
 ## Pi-hole DNS activity collector
 

@@ -8,7 +8,7 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152 and the 2026-10-07 multi-vantage port-exposure audit are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.1 is production-validated. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, #178 complete Grafana notification routing/mobile escalation and #143 trust-zone segmentation before the planned RT-BE88U migration.
+**Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.1 is production-validated. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
 
 ## 2026-10-07 port-exposure and network-design documentation checkpoint
 
@@ -44,6 +44,28 @@ The new topology/addressing/availability documents describe the **current**
 single-gateway design and mark VLAN segmentation, enterprise switching controls,
 gateway HA and UPS/power continuity honestly as planned, not applicable or not
 yet validated. They do not convert those gaps into implementation claims.
+
+## 2026-10-07 RouterCloud Grafana alerting checkpoint
+
+PR #190 extended the source-controlled Grafana baseline from five to nine rules.
+The four RouterCloud rules cover backup failure, backup staleness, maintenance
+failure and maintenance staleness. All nine current infrastructure rules route
+to the existing `ASUS Edge Gateway Email` contact point, with recovery messages
+enabled at the contact point.
+
+A controlled live E2E test exercised `routercloud_backup_bad`: a synthetic
+failure reached Grafana `Firing`, the real healthy backup metric was restored,
+and the alert recovered to no active instance. Repository/live provisioning
+equality and the static regression suite also passed. The session did not record
+a separate RouterCloud inbox receipt; actual e-mail transport remains grounded
+by the earlier WAN-speed firing/resolved delivery evidence.
+
+This closes the RouterCloud alert-routing increment of #178, not the full issue.
+Grouping/anti-flap behavior and bounded Telegram/mobile critical escalation
+remain open.
+
+Evidence:
+[RouterCloud Grafana alerting live validation](evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
 
 ## 2026-10-06 final router runtime and architecture checkpoint
 
@@ -82,7 +104,7 @@ Current material follow-up:
   production state;
 - #68 — assess DoH/DoQ and other encrypted-DNS bypass paths;
 - #143 — design Trusted/IoT/Guest segmentation;
-- #178 — complete severity routing, RouterCloud backup alerting and mobile escalation after the already validated e-mail contact-point/WAN-speed path.
+- #178 — finish grouping/anti-flap behavior and bounded mobile/critical escalation; all nine current rules now route to e-mail and RouterCloud backup/maintenance alerting is merged through PR #190.
 
 The planned router migration target is ASUS RT-BE88U on a compatible
 Asuswrt-Merlin 3006.x branch. OPNsense/x86 is not the current migration target
@@ -370,7 +392,12 @@ See [the case study](docs/asus-tuf-ax5400-observability-case-study.md),
 [reproducible monitoring configuration](monitoring/README.md).
 
 Centralized logging and the initial Grafana alerting baseline are now
-live-validated. Issue #108 has also advanced through the Fedora collector,
+live-validated. On 2026-10-07 PR #190 added four RouterCloud backup/maintenance
+rules, routed all nine current rules to the e-mail contact point, and added a
+controlled live `routercloud_backup_bad` firing/recovery test; see
+[evidence](evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
+
+Issue #108 has also advanced through the Fedora collector,
 local Alloy/Loki ingestion, the Grafana DNS dashboard, full Fedora reboot
 persistence and controlled two-client main-LAN acceptance. The tested
 Tailscale classic-DNS exclusion is evidence-backed. Remaining #108 work is
