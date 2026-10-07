@@ -15,6 +15,9 @@ FLAG="$STATE_DIR/dns-breakglass"
 FAIL_LOCAL="$TMP_DIR/fail-local"
 FAIL_BOOTSTRAP="$TMP_DIR/fail-bootstrap"
 BUSYBOX_MOCK="$TMP_DIR/busybox"
+QUERY_ACTIVE="$TMP_DIR/query-active"
+QUERY_STARTED="$TMP_DIR/query-started"
+QUERY_COLLISION="$TMP_DIR/query-collision"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR"
 
@@ -61,18 +64,25 @@ cat >"$MOCK_BIN/logger" <<'EOF'
 exit 0
 EOF
 
-cat >"$BUSYBOX_MOCK" <<'EOF'
+cat >"$BUSYBOX_MOCK" <<EOF
 #!/bin/sh
-applet="$1"
+applet="\$1"
 shift
-case "$applet" in
+case "\$applet" in
     nslookup)
+        if [ -n "\${EDGE_DNS_TEST_QUERY_SERIALIZE:-}" ]; then
+            [ -f "$QUERY_ACTIVE" ] && : >"$QUERY_COLLISION"
+            : >"$QUERY_ACTIVE"
+            : >"$QUERY_STARTED"
+            sleep 1
+            rm -f "$QUERY_ACTIVE"
+        fi
         echo "Server: 192.0.2.53"
         echo "Address 1: 1.1.1.1"
         exit 0
         ;;
     cmp)
-        cmp "$@"
+        cmp "\$@"
         ;;
     *)
         exit 127
@@ -87,6 +97,38 @@ run_guard() {
 }
 
 printf '%s\n'     'nameserver 9.9.9.9'     'nameserver 149.112.112.112'     >"$RESOLV"
+
+echo "=== concurrent invocations are serialized ==="
+rm -f "$QUERY_ACTIVE" "$QUERY_STARTED" "$QUERY_COLLISION"
+
+EDGE_DNS_TEST_QUERY_SERIALIZE=1 run_guard auto >"$TMP_DIR/lock-first.out" 2>&1 &
+first_pid=$!
+
+lock_wait=0
+while [ ! -f "$QUERY_STARTED" ] && [ "$lock_wait" -lt 50 ]; do
+    lock_wait=$((lock_wait + 1))
+    sleep 0.1
+done
+
+[ -f "$QUERY_STARTED" ] || {
+    echo "FAIL: first DNS Guard invocation did not reach the serialized query section" >&2
+    kill "$first_pid" 2>/dev/null || true
+    wait "$first_pid" 2>/dev/null || true
+    exit 1
+}
+
+EDGE_DNS_TEST_QUERY_SERIALIZE=1 run_guard auto >"$TMP_DIR/lock-second.out" 2>&1 &
+second_pid=$!
+
+wait "$first_pid"
+wait "$second_pid"
+
+[ ! -f "$QUERY_COLLISION" ] || {
+    echo "FAIL: concurrent DNS Guard invocations overlapped inside the critical section" >&2
+    exit 1
+}
+grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-first.out" >/dev/null
+grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-second.out" >/dev/null
 
 echo "=== healthy promotion ==="
 healthy_output="$(run_guard auto)"

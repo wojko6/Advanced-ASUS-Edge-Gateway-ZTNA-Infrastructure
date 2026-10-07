@@ -13,11 +13,29 @@ export PATH
 
 BUSYBOX="${EDGE_BUSYBOX_BIN:-/bin/busybox}"
 
+executable_exists() {
+    executable_name="$1"
+
+    case "$executable_name" in
+        */*)
+            [ -x "$executable_name" ]
+            return
+            ;;
+    esac
+
+    for executable_dir in /opt/sbin /opt/bin /usr/sbin /usr/bin /sbin /bin; do
+        [ -x "$executable_dir/$executable_name" ] && return 0
+    done
+
+    return 1
+}
+
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
 
 STATE_DIR="${EDGE_DNS_STATE_DIR:-/jffs/addons/asus-edge/state}"
 BREAKGLASS_FLAG="${EDGE_DNS_BREAKGLASS_FLAG:-$STATE_DIR/dns-breakglass}"
+LOCK_FILE="${EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock}"
 
 log() {
     logger -t asus-edge-dns "$*"
@@ -39,6 +57,30 @@ die() {
 
 mkdir -p "$STATE_DIR" || die "cannot create $STATE_DIR"
 chmod 700 "$STATE_DIR" 2>/dev/null || true
+
+executable_exists flock >/dev/null 2>&1 ||
+    die "flock not found; cannot serialize DNS Guard state transitions"
+
+exec 9>"$LOCK_FILE" || die "cannot open DNS Guard lock file"
+flock -x 9 || die "cannot acquire DNS Guard lock"
+
+secure_temp_dir() {
+    temp_prefix="$1"
+    temp_counter=0
+
+    while [ "$temp_counter" -lt 100 ]; do
+        temp_candidate="$temp_prefix.$.${temp_counter}"
+
+        if (umask 077 && mkdir "$temp_candidate") 2>/dev/null; then
+            printf '%s\n' "$temp_candidate"
+            return 0
+        fi
+
+        temp_counter=$((temp_counter + 1))
+    done
+
+    return 1
+}
 
 bootstrap_dns() {
     for key in wan0_dns_r wan0_dns wan_dns_r wan_dns; do
@@ -111,13 +153,14 @@ pihole_query_ready() {
     local_resolver_config_valid || return 1
 
     probe="edge-health-$(date +%s).1-1-1-1.sslip.io"
-    logfile="/tmp/asus-edge-dns-guard-query.log"
 
-    "$BUSYBOX" nslookup "$probe" "$EDGE_DNS_LOCAL_RESOLVER_IP" \
-        >"$logfile" 2>&1 ||
+    query_output="$(
+        "$BUSYBOX" nslookup "$probe" "$EDGE_DNS_LOCAL_RESOLVER_IP" 2>&1
+    )" || return 1
+
+    printf '%s\n' "$query_output" |
+        grep -q '1\.1\.1\.1' ||
         return 1
-
-    grep -q '1\.1\.1\.1' "$logfile" || return 1
 
     return 0
 }
@@ -133,7 +176,13 @@ full_local_dns_ready() {
 
 write_resolver() {
     mode="$1"
-    tmp="${RESOLV_CONF}.asus-edge.$$"
+
+    resolv_dir="${RESOLV_CONF%/*}"
+    [ "$resolv_dir" != "$RESOLV_CONF" ] || resolv_dir="."
+
+    tmp_dir="$(secure_temp_dir "$resolv_dir/.asus-edge-dns-guard")" ||
+        return 1
+    tmp="$tmp_dir/resolv.conf"
 
     case "$mode" in
         local)
@@ -156,18 +205,22 @@ write_resolver() {
             ;;
 
         *)
+            rm -f "$tmp"
+            rmdir "$tmp_dir" 2>/dev/null || true
             return 1
             ;;
     esac
 
     [ -s "$tmp" ] || {
         rm -f "$tmp"
+        rmdir "$tmp_dir" 2>/dev/null || true
         return 1
     }
 
     if [ -f "$RESOLV_CONF" ] &&
        "$BUSYBOX" cmp -s "$tmp" "$RESOLV_CONF" 2>/dev/null; then
         rm -f "$tmp"
+        rmdir "$tmp_dir" 2>/dev/null || true
         return 2
     fi
 
@@ -175,9 +228,11 @@ write_resolver() {
 
     mv -f "$tmp" "$RESOLV_CONF" || {
         rm -f "$tmp"
+        rmdir "$tmp_dir" 2>/dev/null || true
         return 1
     }
 
+    rmdir "$tmp_dir" 2>/dev/null || true
     return 0
 }
 

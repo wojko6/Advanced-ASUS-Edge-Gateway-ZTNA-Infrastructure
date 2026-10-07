@@ -681,6 +681,28 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
 }
 
 
+for dns_guard_runtime_guard in \
+    'EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock' \
+    'flock -x 9' \
+    'secure_temp_dir()' \
+    'query_output="$('
+do
+    grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
+        echo "FAIL: DNS Guard concurrency/temp-file hardening missing: $dns_guard_runtime_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F '/tmp/asus-edge-dns-guard-query.log' "$REPO_DIR/router/scripts/dns-guard" >/dev/null; then
+    echo "FAIL: DNS Guard still uses predictable query output file" >&2
+    exit 1
+fi
+
+if grep -F '/tmp/asus-edge-dns-guard-${phase}.log' "$REPO_DIR/router/scripts/wan-event-handler" >/dev/null; then
+    echo "FAIL: WAN handler still uses predictable DNS Guard log files" >&2
+    exit 1
+fi
+
 for dns_guard_health_guard in \
     'EDGE_DNS_LOCAL_RESOLVER_IP:=}' \
     'EDGE_DNS_GUARD_WATCHDOG:=1' \
