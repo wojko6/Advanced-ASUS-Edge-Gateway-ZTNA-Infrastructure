@@ -319,6 +319,11 @@ configure_dns_guard_watchdog() {
 # services. Merlin's services-start event is the persistent mount trigger.
 mount_project_webui
 
+# Schedule DNS Guard before waiting for /opt or starting Entware services.
+# If storage/service recovery later fails or takes unusually long, the router
+# must still retain a periodic fail-open DNS recovery path.
+configure_dns_guard_watchdog
+
 elapsed=0
 while ! opt_is_ready 2>/dev/null; do
     elapsed=$((elapsed + 1))
@@ -439,7 +444,6 @@ start_entware_service_if_stopped() {
 
 start_unbound_direct_if_stopped || startup_failed=1
 configure_webui_status
-configure_dns_guard_watchdog
 start_entware_service_if_stopped syslog-ng /tmp/asus-edge-syslog-ng-start.log "" /opt/etc/init.d/S*syslog-ng || log "WARNING: optional syslog-ng service unavailable"
 if [ -x /jffs/scripts/firewall-start ]; then
     /jffs/scripts/firewall-start || { log "ERROR: firewall policy failed"; startup_failed=1; }
