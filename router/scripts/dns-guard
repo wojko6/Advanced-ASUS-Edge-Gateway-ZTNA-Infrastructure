@@ -283,6 +283,16 @@ breakglass_on() {
     return 0
 }
 
+local_dns_ready() {
+    if local_resolver_config_valid && full_local_dns_ready; then
+        echo "READY=PASS"
+        return 0
+    fi
+
+    echo "READY=FAIL"
+    return 1
+}
+
 breakglass_off() {
     if [ -f "$BREAKGLASS_FLAG" ]; then
         rm -f "$BREAKGLASS_FLAG" || return 1
@@ -400,8 +410,11 @@ case "${1:-status}" in
     breakglass-off)
         breakglass_off
         ;;
+    ready)
+        local_dns_ready
+        ;;
     *)
-        echo "Usage: $0 {status|check|auto|promote|fallback|breakglass-on [reason]|breakglass-off}"
+        echo "Usage: $0 {status|check|auto|promote|fallback|ready|breakglass-on [reason]|breakglass-off}"
         exit 2
         ;;
 esac
