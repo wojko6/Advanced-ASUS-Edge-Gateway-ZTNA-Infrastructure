@@ -97,6 +97,10 @@ esac
 [ -n "$EDGE_DNS_BOOTSTRAP_TEST_NAME" ] ||
     die "EDGE_DNS_BOOTSTRAP_TEST_NAME must not be empty"
 
+bounded_exec() {
+    "$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" "$@"
+}
+
 mkdir -p "$STATE_DIR" || die "cannot create $STATE_DIR"
 chmod 700 "$STATE_DIR" 2>/dev/null || true
 
@@ -289,7 +293,7 @@ bootstrap_dns() {
     # resolvers commonly honor at most three nameserver entries, so retain the
     # first three unique validated candidates across the ordered sources.
     for key in wan0_dns_r wan0_dns wan_dns_r wan_dns; do
-        value="$(nvram get "$key" 2>/dev/null)"
+        value="$(bounded_exec nvram get "$key" 2>/dev/null)"
         [ -n "$value" ] || continue
 
         key_accepted=0
@@ -418,13 +422,13 @@ record_resolver_mode() {
 }
 
 ntp_ready() {
-    [ "$(nvram get ntp_ready 2>/dev/null)" = "1" ]
+    [ "$(bounded_exec nvram get ntp_ready 2>/dev/null)" = "1" ]
 }
 
 unbound_ready() {
-    pidof unbound >/dev/null 2>&1 || return 1
+    bounded_exec pidof unbound >/dev/null 2>&1 || return 1
 
-    netstat -ln 2>/dev/null |
+    bounded_exec netstat -ln 2>/dev/null |
         grep -q "127\\.0\\.0\\.1:${EDGE_UNBOUND_PORT}[[:space:]]" ||
         return 1
 
@@ -433,9 +437,9 @@ unbound_ready() {
 
 pihole_listener_ready() {
     local_resolver_config_valid || return 1
-    pidof pihole-FTL >/dev/null 2>&1 || return 1
+    bounded_exec pidof pihole-FTL >/dev/null 2>&1 || return 1
 
-    netstat -ln 2>/dev/null |
+    bounded_exec netstat -ln 2>/dev/null |
         awk -v endpoint="$EDGE_DNS_LOCAL_RESOLVER_IP:53" '
             $4 == endpoint && $1 ~ /^udp/ { udp=1 }
             $4 == endpoint && $1 ~ /^tcp/ { tcp=1 }
@@ -464,13 +468,11 @@ bounded_nslookup() {
     query_server="${2:-}"
 
     if [ -n "$query_server" ]; then
-        "$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" \
-            "$BUSYBOX" nslookup "$query_name" "$query_server"
+        bounded_exec "$BUSYBOX" nslookup "$query_name" "$query_server"
         return
     fi
 
-    "$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" \
-        "$BUSYBOX" nslookup "$query_name"
+    bounded_exec "$BUSYBOX" nslookup "$query_name"
 }
 
 dns_probe_udp_ready() {
@@ -493,15 +495,13 @@ dns_probe_tcp_ready() {
     # binary must not force DNS Guard into fail-open by itself.
     executable_exists dig >/dev/null 2>&1 || return 0
 
-    if ! "$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" \
-        dig -v >/dev/null 2>&1; then
+    if ! bounded_exec dig -v >/dev/null 2>&1; then
         log "WARNING: dig is installed but not runnable; skipping active TCP DNS query probe"
         return 0
     fi
 
     query_output="$(
-        "$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" \
-            dig +tcp +time=2 +tries=1 +short \
+        bounded_exec dig +tcp +time=2 +tries=1 +short \
             @"$EDGE_DNS_LOCAL_RESOLVER_IP" "$probe_name" A 2>&1
     )" || return 1
 
