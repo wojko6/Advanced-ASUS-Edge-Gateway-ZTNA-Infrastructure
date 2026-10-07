@@ -31,6 +31,7 @@ FAIL_DIG_RUNTIME="$TMP_DIR/fail-dig-runtime"
 FAIL_PIHOLE_TCP_LISTENER="$TMP_DIR/fail-pihole-tcp-listener"
 FAIL_BOOTSTRAP_HEALTH="$TMP_DIR/fail-bootstrap-health"
 HANG_PROBE="$TMP_DIR/hang-probe"
+LOCK_HELD="$TMP_DIR/lock-held"
 FAIL_BOOTSTRAP_PRIMARY_SERVER="$TMP_DIR/fail-bootstrap-primary-server"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR" "$RUNTIME_STATE_DIR"
@@ -215,6 +216,63 @@ wait "$second_pid"
 }
 grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-first.out" >/dev/null
 grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-second.out" >/dev/null
+
+echo "=== lock acquisition is bounded ==="
+rm -f "$LOCK_HELD"
+(
+    exec 8>"$STATE_DIR/dns-guard.lock"
+    flock -x 8
+    : >"$LOCK_HELD"
+    /bin/sleep 5
+) &
+lock_holder_pid=$!
+
+lock_wait=0
+while [ ! -f "$LOCK_HELD" ] && [ "$lock_wait" -lt 50 ]; do
+    lock_wait=$((lock_wait + 1))
+    /bin/sleep 0.1
+done
+
+[ -f "$LOCK_HELD" ] || {
+    echo "FAIL: test lock holder did not acquire DNS Guard lock" >&2
+    kill "$lock_holder_pid" 2>/dev/null || true
+    wait "$lock_holder_pid" 2>/dev/null || true
+    exit 1
+}
+
+set +e
+lock_blocked_output="$(
+    timeout 5 env \
+        EDGE_CONFIG_FILE="$CONFIG" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_FLAG="$FLAG" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK" \
+        sh "$GUARD" status 2>&1
+)"
+lock_blocked_rc=$?
+set -e
+
+[ "$lock_blocked_rc" -ne 124 ] || {
+    echo "FAIL: DNS Guard waited indefinitely on the global lock" >&2
+    kill "$lock_holder_pid" 2>/dev/null || true
+    wait "$lock_holder_pid" 2>/dev/null || true
+    exit 1
+}
+[ "$lock_blocked_rc" -ne 0 ] || {
+    echo "FAIL: DNS Guard unexpectedly acquired a held lock" >&2
+    kill "$lock_holder_pid" 2>/dev/null || true
+    wait "$lock_holder_pid" 2>/dev/null || true
+    exit 1
+}
+printf '%s\n' "$lock_blocked_output" |
+    grep -F 'cannot acquire DNS Guard lock within' >/dev/null
+
+kill "$lock_holder_pid" 2>/dev/null || true
+wait "$lock_holder_pid" 2>/dev/null || true
+rm -f "$LOCK_HELD"
 
 echo "=== stable multi-provider DNS probes use UDP and TCP when dig is available ==="
 rm -f "$PROBE_LOG" "$FAIL_PROBE_PRIMARY" "$FAIL_PROBE_SECONDARY" \
@@ -569,6 +627,32 @@ $promoted_output
 EOF
 grep -qx 'nameserver 192.0.2.53' "$RESOLV"
 [ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== corrupted oversized recovery streak cannot deadlock auto recovery ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+EDGE_DNS_QUERY_TIMEOUT_SECONDS=2
+EDGE_DNS_LOCK_WAIT_SECONDS=2
+EOF
+rm -f "$FAIL_LOCAL"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+printf '%s\n' '999999999999999999999999999999999999999999' >"$RECOVERY_STREAK_FILE"
+printf '%s\n' '999999999999999999999999999999999999999999' >"$RUNTIME_STATE_DIR/fallback-transitions"
+
+corrupt_state_output="$(run_guard auto)"
+printf '%s\n' "$corrupt_state_output"
+grep -F 'RECOVERY_STREAK=1/3' <<EOF >/dev/null
+$corrupt_state_output
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$corrupt_state_output
+EOF
+
+corrupt_metrics="$(run_guard metrics)"
+printf '%s\n' "$corrupt_metrics" |
+    grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 0'
 
 echo "=== local failure still fails open on first unhealthy check ==="
 : >"$FAIL_LOCAL"
