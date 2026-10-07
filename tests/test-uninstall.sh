@@ -165,9 +165,9 @@ if run_uninstall "$FAIL_CRU_ROOT" "$TMP_DIR/fail-cru.out" "$TMP_DIR/fail-cru.err
     exit 1
 fi
 grep -F 'watchdog remains scheduled' "$TMP_DIR/fail-cru.err" >/dev/null
-grep -F '^dns-guard fallback$' "$MOCK_LOG" >/dev/null
+grep -qx 'dns-guard fallback' "$MOCK_LOG"
 grep -qx 'cru d AsusEdgeDNSGuard' "$MOCK_LOG"
-! grep -F '^iptables ' "$MOCK_LOG" >/dev/null
+! grep -q '^iptables ' "$MOCK_LOG"
 rm -f "$FAIL_CRU_DELETE"
 
 echo "PASS: uninstall restores independent DNS before watchdog and firewall cleanup"
