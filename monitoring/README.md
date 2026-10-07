@@ -87,7 +87,7 @@ directory.
 
 ## Grafana alerting
 
-Nine source-controlled Grafana alert rules are provisioned from
+Ten source-controlled Grafana alert rules are provisioned from
 [`grafana/provisioning/alerting/asus-tuf-alerts.yml`](grafana/provisioning/alerting/asus-tuf-alerts.yml):
 
 - SSH collector unavailable;
@@ -95,6 +95,7 @@ Nine source-controlled Grafana alert rules are provisioned from
 - failed HTTPS / ICMP / router-DNS blackbox probe;
 - stale router telemetry;
 - negotiated WAN link speed below 900 Mb/s for at least three minutes;
+- DNS Guard remains in validated fail-open/bootstrap mode for at least ten minutes, with fresh DNS Guard telemetry required;
 - RouterCloud backup result is failed;
 - RouterCloud backup age exceeds eight hours, with an additional five-minute `for` window;
 - RouterCloud maintenance/integrity result is failed;
@@ -109,7 +110,7 @@ masquerade as WAN-down evidence, so the WAN rule uses `noDataState: OK`.
 An e-mail contact point is provisioned from
 [`grafana/provisioning/alerting/asus-email-contact.yml`](grafana/provisioning/alerting/asus-email-contact.yml).
 SMTP credentials remain local to the Fedora host and are not stored in Git.
-All nine current rules route directly to `ASUS Edge Gateway Email`, and the
+All ten current rules route directly to `ASUS Edge Gateway Email`, and the
 contact point keeps resolved notifications enabled. Actual firing/resolved inbox
 delivery is live-validated for the WAN-speed path.
 
@@ -121,6 +122,18 @@ active alert instance. It also leaves a cleanup trap so an interrupted test
 attempts to restore the real metric. This proves the RouterCloud rule evaluation
 and Grafana notification-routing path; it does not claim a separately captured
 RouterCloud inbox delivery.
+
+DNS Guard v3.2 also exposes a coarse, privacy-safe machine-readable state through
+`dns-guard metrics`. The Fedora-side `dns-guard-metrics` helper polls that state
+over the existing SSH management path once per minute and imports only mode,
+break-glass state, transition timestamps and a runtime fallback counter into
+VictoriaMetrics. It does not export DNS names, client identities or query
+history. The `dns_guard_sustained_failopen` rule warns only when bootstrap mode
+persists for ten minutes and the most recent DNS Guard collection is younger
+than three minutes, so stale pushed data cannot indefinitely masquerade as a
+current fail-open state. Source-controlled rule and mock coverage are present;
+live router/Grafana acceptance remains required before the v3.2 issue can be
+closed.
 
 The live test is intentionally **not** part of normal CI because it mutates the
 local metrics state and can generate real notifications:

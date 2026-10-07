@@ -98,12 +98,15 @@ apply_dns_policy() {
         return 1
     }
 
-    if "$DNS_GUARD" auto         >"/tmp/asus-edge-dns-guard-${phase}.log" 2>&1; then
+    guard_output="$("$DNS_GUARD" auto 2>&1)"
+    guard_rc=$?
+
+    if [ "$guard_rc" -eq 0 ]; then
         log "DNS Guard policy applied during WAN ${phase} phase"
         return 0
     fi
 
-    log "ERROR: DNS Guard policy failed during WAN ${phase} phase"
+    log "ERROR: DNS Guard policy failed during WAN ${phase} phase: $guard_output"
     return 1
 }
 

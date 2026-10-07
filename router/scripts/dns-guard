@@ -1,5 +1,5 @@
 #!/bin/sh
-# ASUS Edge DNS Guard v3.1
+# ASUS Edge DNS Guard v3.2
 # Fail-open runtime resolver controller.
 
 BASE_PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -13,11 +13,35 @@ export PATH
 
 BUSYBOX="${EDGE_BUSYBOX_BIN:-/bin/busybox}"
 
+executable_exists() {
+    executable_name="$1"
+
+    case "$executable_name" in
+        */*)
+            [ -x "$executable_name" ]
+            return
+            ;;
+    esac
+
+    for executable_dir in /opt/sbin /opt/bin /usr/sbin /usr/bin /sbin /bin; do
+        [ -x "$executable_dir/$executable_name" ] && return 0
+    done
+
+    return 1
+}
+
 CONFIG_FILE="${EDGE_CONFIG_FILE:-/jffs/configs/asus-edge.conf}"
 RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
 
 STATE_DIR="${EDGE_DNS_STATE_DIR:-/jffs/addons/asus-edge/state}"
 BREAKGLASS_FLAG="${EDGE_DNS_BREAKGLASS_FLAG:-$STATE_DIR/dns-breakglass}"
+LOCK_FILE="${EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock}"
+RUNTIME_STATE_DIR="${EDGE_DNS_RUNTIME_STATE_DIR:-/tmp/asus-edge-dns-guard}"
+RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"
+MODE_FILE="$RUNTIME_STATE_DIR/current-mode"
+LAST_TRANSITION_FILE="$RUNTIME_STATE_DIR/last-transition-epoch"
+FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"
+FALLBACK_SINCE_FILE="$RUNTIME_STATE_DIR/fallback-since-epoch"
 
 log() {
     logger -t asus-edge-dns "$*"
@@ -35,22 +59,282 @@ die() {
 . "$CONFIG_FILE"
 
 : "${EDGE_UNBOUND_PORT:=53535}"
-: "${EDGE_TS_PIHOLE_DNS_IP:=192.168.50.253}"
+: "${EDGE_DNS_LOCAL_RESOLVER_IP:=}"
+: "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
+
+case "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" in
+    ''|*[!0-9]*)
+        die "EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD must be a positive integer"
+        ;;
+esac
+
+[ "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" -gt 0 ] ||
+    die "EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD must be greater than zero"
 
 mkdir -p "$STATE_DIR" || die "cannot create $STATE_DIR"
 chmod 700 "$STATE_DIR" 2>/dev/null || true
 
-bootstrap_dns() {
-    for key in wan0_dns_r wan0_dns wan_dns_r wan_dns; do
-        value="$(nvram get "$key" 2>/dev/null)"
+mkdir -p "$RUNTIME_STATE_DIR" || die "cannot create $RUNTIME_STATE_DIR"
+chmod 700 "$RUNTIME_STATE_DIR" 2>/dev/null || true
 
-        if [ -n "$value" ]; then
-            printf '%s\n' "$value"
+executable_exists flock >/dev/null 2>&1 ||
+    die "flock not found; cannot serialize DNS Guard state transitions"
+
+exec 9>"$LOCK_FILE" || die "cannot open DNS Guard lock file"
+flock -x 9 || die "cannot acquire DNS Guard lock"
+
+secure_temp_dir() {
+    temp_prefix="$1"
+    temp_counter=0
+
+    while [ "$temp_counter" -lt 100 ]; do
+        temp_candidate="$temp_prefix.$$.${temp_counter}"
+
+        if (umask 077 && mkdir "$temp_candidate") 2>/dev/null; then
+            printf '%s\n' "$temp_candidate"
             return 0
         fi
+
+        temp_counter=$((temp_counter + 1))
     done
 
     return 1
+}
+
+recovery_streak_read() {
+    [ -r "$RECOVERY_STREAK_FILE" ] || {
+        printf '%s\n' 0
+        return 0
+    }
+
+    streak="$(cat "$RECOVERY_STREAK_FILE" 2>/dev/null)" || streak=0
+
+    case "$streak" in
+        ''|*[!0-9]*)
+            printf '%s\n' 0
+            ;;
+        *)
+            printf '%s\n' "$streak"
+            ;;
+    esac
+}
+
+runtime_state_write() {
+    state_file="$1"
+    state_value="$2"
+    tmp="$state_file.tmp.$$"
+
+    umask 077
+    printf '%s\n' "$state_value" >"$tmp" || {
+        rm -f "$tmp"
+        return 1
+    }
+
+    chmod 600 "$tmp" 2>/dev/null || true
+
+    mv -f "$tmp" "$state_file" || {
+        rm -f "$tmp"
+        return 1
+    }
+
+    return 0
+}
+
+runtime_uint_read() {
+    state_file="$1"
+    default_value="${2:-0}"
+
+    [ -r "$state_file" ] || {
+        printf '%s\n' "$default_value"
+        return 0
+    }
+
+    state_value="$(cat "$state_file" 2>/dev/null)" || state_value="$default_value"
+
+    case "$state_value" in
+        ''|*[!0-9]*) printf '%s\n' "$default_value" ;;
+        *) printf '%s\n' "$state_value" ;;
+    esac
+}
+
+recovery_streak_write() {
+    runtime_state_write "$RECOVERY_STREAK_FILE" "$1"
+}
+
+recovery_streak_reset() {
+    rm -f "$RECOVERY_STREAK_FILE" 2>/dev/null || true
+}
+
+recovery_streak_increment() {
+    streak="$(recovery_streak_read)"
+    streak=$((streak + 1))
+
+    if [ "$streak" -gt "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" ]; then
+        streak="$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+    fi
+
+    recovery_streak_write "$streak" || return 1
+    printf '%s\n' "$streak"
+}
+
+resolver_is_local() {
+    [ -r "$RESOLV_CONF" ] || return 1
+
+    awk -v local="$EDGE_DNS_LOCAL_RESOLVER_IP" '
+        $1 == "nameserver" {
+            count++
+            if ($2 == local)
+                local_count++
+        }
+        END {
+            exit !(count == 1 && local_count == 1)
+        }
+    ' "$RESOLV_CONF"
+}
+
+bootstrap_dns_candidate_valid() {
+    candidate="$1"
+
+    valid_ipv4 "$candidate" || return 1
+
+    case "$candidate" in
+        127.*|0.0.0.0)
+            return 1
+            ;;
+    esac
+
+    if [ -n "$EDGE_DNS_LOCAL_RESOLVER_IP" ] &&
+       [ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+bootstrap_dns() {
+    for key in wan0_dns_r wan0_dns wan_dns_r wan_dns; do
+        value="$(nvram get "$key" 2>/dev/null)"
+        [ -n "$value" ] || continue
+
+        accepted=""
+
+        for candidate in $value; do
+            if ! bootstrap_dns_candidate_valid "$candidate"; then
+                log "WARNING: rejected non-independent WAN bootstrap DNS candidate from $key: $candidate"
+                continue
+            fi
+
+            case " $accepted " in
+                *" $candidate "*)
+                    ;;
+                *)
+                    accepted="$accepted $candidate"
+                    ;;
+            esac
+        done
+
+        if [ -n "$accepted" ]; then
+            for candidate in $accepted; do
+                printf '%s\n' "$candidate"
+            done
+            return 0
+        fi
+
+        log "WARNING: no valid independent WAN bootstrap DNS candidates in $key"
+    done
+
+    return 1
+}
+
+valid_ipv4() {
+    old_ifs="$IFS"
+    IFS=.
+    set -- $1
+    IFS="$old_ifs"
+
+    [ "$#" -eq 4 ] || return 1
+
+    for octet in "$@"; do
+        case "$octet" in
+            ''|*[!0-9]*)
+                return 1
+                ;;
+        esac
+
+        [ "$octet" -le 255 ] 2>/dev/null || return 1
+    done
+
+    return 0
+}
+
+local_resolver_config_valid() {
+    [ -n "$EDGE_DNS_LOCAL_RESOLVER_IP" ] || return 1
+    valid_ipv4 "$EDGE_DNS_LOCAL_RESOLVER_IP"
+}
+
+resolver_is_bootstrap() {
+    [ -r "$RESOLV_CONF" ] || return 1
+
+    expected_bootstrap="$(bootstrap_dns)" || return 1
+    current_resolvers="$(awk '$1 == "nameserver" {print $2}' "$RESOLV_CONF" 2>/dev/null)"
+
+    [ -n "$current_resolvers" ] || return 1
+    [ "$current_resolvers" = "$expected_bootstrap" ]
+}
+
+resolver_mode_observed() {
+    if local_resolver_config_valid && resolver_is_local; then
+        printf '%s\n' local
+        return 0
+    fi
+
+    if resolver_is_bootstrap; then
+        printf '%s\n' bootstrap
+        return 0
+    fi
+
+    printf '%s\n' unknown
+    return 1
+}
+
+record_resolver_mode() {
+    new_mode="$1"
+
+    case "$new_mode" in
+        local|bootstrap) ;;
+        *) return 1 ;;
+    esac
+
+    previous_mode="unknown"
+    [ -r "$MODE_FILE" ] && previous_mode="$(cat "$MODE_FILE" 2>/dev/null || printf '%s\n' unknown)"
+
+    now_epoch="$(date +%s 2>/dev/null)" || return 1
+    case "$now_epoch" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+
+    if [ "$previous_mode" != "$new_mode" ]; then
+        runtime_state_write "$MODE_FILE" "$new_mode" || return 1
+        runtime_state_write "$LAST_TRANSITION_FILE" "$now_epoch" || return 1
+
+        if [ "$new_mode" = "bootstrap" ]; then
+            fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0)"
+            fallback_count=$((fallback_count + 1))
+            runtime_state_write "$FALLBACK_COUNT_FILE" "$fallback_count" || return 1
+            runtime_state_write "$FALLBACK_SINCE_FILE" "$now_epoch" || return 1
+        else
+            rm -f "$FALLBACK_SINCE_FILE" 2>/dev/null || true
+        fi
+        return 0
+    fi
+
+    [ -r "$LAST_TRANSITION_FILE" ] || runtime_state_write "$LAST_TRANSITION_FILE" "$now_epoch" || return 1
+
+    if [ "$new_mode" = "bootstrap" ] && [ ! -r "$FALLBACK_SINCE_FILE" ]; then
+        runtime_state_write "$FALLBACK_SINCE_FILE" "$now_epoch" || return 1
+    fi
+
+    return 0
 }
 
 ntp_ready() {
@@ -68,26 +352,89 @@ unbound_ready() {
 }
 
 pihole_listener_ready() {
+    local_resolver_config_valid || return 1
     pidof pihole-FTL >/dev/null 2>&1 || return 1
 
     netstat -ln 2>/dev/null |
-        grep -q "${EDGE_TS_PIHOLE_DNS_IP}:53[[:space:]]" ||
+        awk -v endpoint="$EDGE_DNS_LOCAL_RESOLVER_IP:53" '
+            $4 == endpoint && $1 ~ /^udp/ { udp=1 }
+            $4 == endpoint && $1 ~ /^tcp/ { tcp=1 }
+            END { exit !(udp && tcp) }
+        ' ||
         return 1
 
     return 0
 }
 
-pihole_query_ready() {
-    probe="edge-health-$(date +%s).1-1-1-1.sslip.io"
-    logfile="/tmp/asus-edge-dns-guard-query.log"
+probe_output_has_expected_ipv4() {
+    probe_output="$1"
+    expected_ipv4s="$2"
 
-    "$BUSYBOX" nslookup "$probe" "$EDGE_TS_PIHOLE_DNS_IP" \
-        >"$logfile" 2>&1 ||
-        return 1
+    for expected_ipv4 in $expected_ipv4s; do
+        printf '%s\n' "$probe_output" |
+            grep -F "$expected_ipv4" >/dev/null 2>&1 &&
+            return 0
+    done
 
-    grep -q '1\.1\.1\.1' "$logfile" || return 1
+    return 1
+}
+
+dns_probe_udp_ready() {
+    probe_name="$1"
+    expected_ipv4s="$2"
+
+    query_output="$(
+        "$BUSYBOX" nslookup "$probe_name" "$EDGE_DNS_LOCAL_RESOLVER_IP" 2>&1
+    )" || return 1
+
+    probe_output_has_expected_ipv4 "$query_output" "$expected_ipv4s"
+}
+
+dns_probe_tcp_ready() {
+    probe_name="$1"
+    expected_ipv4s="$2"
+
+    # dig is optional on the router. Treat it as available only when the
+    # binary can actually execute; an installed but ABI-incompatible Entware
+    # binary must not force DNS Guard into fail-open by itself.
+    executable_exists dig >/dev/null 2>&1 || return 0
+
+    if ! dig -v >/dev/null 2>&1; then
+        log "WARNING: dig is installed but not runnable; skipping active TCP DNS query probe"
+        return 0
+    fi
+
+    query_output="$(
+        dig +tcp +time=2 +tries=1 +short \
+            @"$EDGE_DNS_LOCAL_RESOLVER_IP" "$probe_name" A 2>&1
+    )" || return 1
+
+    probe_output_has_expected_ipv4 "$query_output" "$expected_ipv4s"
+}
+
+dns_probe_path_ready() {
+    probe_name="$1"
+    expected_ipv4s="$2"
+
+    dns_probe_udp_ready "$probe_name" "$expected_ipv4s" || return 1
+    dns_probe_tcp_ready "$probe_name" "$expected_ipv4s" || return 1
 
     return 0
+}
+
+pihole_query_ready() {
+    local_resolver_config_valid || return 1
+
+    # Use two stable, cache-friendly public names from independent providers.
+    # A successful primary OR secondary path is enough to avoid making one
+    # external domain/provider the sole availability oracle.
+    dns_probe_path_ready one.one.one.one "1.1.1.1 1.0.0.1" &&
+        return 0
+
+    dns_probe_path_ready dns.google "8.8.8.8 8.8.4.4" &&
+        return 0
+
+    return 1
 }
 
 full_local_dns_ready() {
@@ -101,16 +448,36 @@ full_local_dns_ready() {
 
 write_resolver() {
     mode="$1"
-    tmp="${RESOLV_CONF}.asus-edge.$$"
+
+    resolv_dir="${RESOLV_CONF%/*}"
+    [ "$resolv_dir" != "$RESOLV_CONF" ] || resolv_dir="."
+
+    tmp_dir="$(secure_temp_dir "$resolv_dir/.asus-edge-dns-guard")" ||
+        return 1
+    tmp="$tmp_dir/resolv.conf"
 
     case "$mode" in
         local)
-            printf 'nameserver %s\n'                 "$EDGE_TS_PIHOLE_DNS_IP" >"$tmp" ||
+            if ! local_resolver_config_valid; then
+                rm -f "$tmp"
+                rmdir "$tmp_dir" 2>/dev/null || true
                 return 1
+            fi
+
+            printf 'nameserver %s\n' \
+                "$EDGE_DNS_LOCAL_RESOLVER_IP" >"$tmp" || {
+                rm -f "$tmp"
+                rmdir "$tmp_dir" 2>/dev/null || true
+                return 1
+            }
             ;;
 
         bootstrap)
-            dns_list="$(bootstrap_dns)" || return 1
+            dns_list="$(bootstrap_dns)" || {
+                rm -f "$tmp"
+                rmdir "$tmp_dir" 2>/dev/null || true
+                return 1
+            }
 
             : >"$tmp" || return 1
 
@@ -121,18 +488,22 @@ write_resolver() {
             ;;
 
         *)
+            rm -f "$tmp"
+            rmdir "$tmp_dir" 2>/dev/null || true
             return 1
             ;;
     esac
 
     [ -s "$tmp" ] || {
         rm -f "$tmp"
+        rmdir "$tmp_dir" 2>/dev/null || true
         return 1
     }
 
     if [ -f "$RESOLV_CONF" ] &&
        "$BUSYBOX" cmp -s "$tmp" "$RESOLV_CONF" 2>/dev/null; then
         rm -f "$tmp"
+        rmdir "$tmp_dir" 2>/dev/null || true
         return 2
     fi
 
@@ -140,13 +511,53 @@ write_resolver() {
 
     mv -f "$tmp" "$RESOLV_CONF" || {
         rm -f "$tmp"
+        rmdir "$tmp_dir" 2>/dev/null || true
         return 1
     }
 
+    rmdir "$tmp_dir" 2>/dev/null || true
     return 0
 }
 
+promote_local_ready() {
+    if [ -f "$BREAKGLASS_FLAG" ]; then
+        echo "PROMOTE=BLOCKED_BREAKGLASS"
+        log "local DNS promotion aborted: break-glass became active"
+        return 1
+    fi
+
+    write_resolver local
+    rc=$?
+
+    case "$rc" in
+        0)
+            record_resolver_mode local ||
+                log "WARNING: failed to record local DNS Guard monitoring state"
+            echo "PROMOTE=PASS"
+            log "system resolver promoted to Pi-hole $EDGE_DNS_LOCAL_RESOLVER_IP"
+            return 0
+            ;;
+        2)
+            record_resolver_mode local ||
+                log "WARNING: failed to record local DNS Guard monitoring state"
+            echo "PROMOTE=ALREADY_LOCAL"
+            return 0
+            ;;
+        *)
+            echo "PROMOTE=FAILED"
+            log "ERROR: failed to promote resolver to Pi-hole"
+            return 1
+            ;;
+    esac
+}
+
 promote_local() {
+    if ! local_resolver_config_valid; then
+        echo "PROMOTE=BLOCKED_INVALID_LOCAL_RESOLVER"
+        log "ERROR: local DNS resolver target is missing or invalid"
+        return 1
+    fi
+
     if [ -f "$BREAKGLASS_FLAG" ]; then
         echo "PROMOTE=BLOCKED_BREAKGLASS"
         log "local DNS promotion blocked by active break-glass"
@@ -159,31 +570,7 @@ promote_local() {
         return 1
     fi
 
-    if [ -f "$BREAKGLASS_FLAG" ]; then
-        echo "PROMOTE=BLOCKED_BREAKGLASS"
-        log "local DNS promotion aborted: break-glass became active"
-        return 1
-    fi
-
-    write_resolver local
-    rc=$?
-
-    case "$rc" in
-        0)
-            echo "PROMOTE=PASS"
-            log "system resolver promoted to Pi-hole $EDGE_TS_PIHOLE_DNS_IP"
-            return 0
-            ;;
-        2)
-            echo "PROMOTE=ALREADY_LOCAL"
-            return 0
-            ;;
-        *)
-            echo "PROMOTE=FAILED"
-            log "ERROR: failed to promote resolver to Pi-hole"
-            return 1
-            ;;
-    esac
+    promote_local_ready
 }
 
 fallback_bootstrap() {
@@ -192,11 +579,15 @@ fallback_bootstrap() {
 
     case "$rc" in
         0)
+            record_resolver_mode bootstrap ||
+                log "WARNING: failed to record bootstrap DNS Guard monitoring state"
             echo "FALLBACK=PASS"
             log "system resolver restored to WAN bootstrap DNS"
             return 0
             ;;
         2)
+            record_resolver_mode bootstrap ||
+                log "WARNING: failed to record bootstrap DNS Guard monitoring state"
             echo "FALLBACK=ALREADY_BOOTSTRAP"
             return 0
             ;;
@@ -210,6 +601,7 @@ fallback_bootstrap() {
 
 breakglass_on() {
     reason="${1:-manual}"
+    recovery_streak_reset
     tmp="${BREAKGLASS_FLAG}.tmp.$$"
 
     umask 077
@@ -233,12 +625,23 @@ breakglass_on() {
     log "DNS break-glass activated: $reason"
 
     if ! fallback_bootstrap; then
-        echo "BREAKGLASS=ACTIVE_FALLBACK_FAILED"
-        return 1
+        echo "BREAKGLASS=ACTIVE_FALLBACK_PENDING"
+        log "WARNING: DNS break-glass is active but WAN bootstrap DNS is not available yet"
+        return 0
     fi
 
     echo "BREAKGLASS=ACTIVE"
     return 0
+}
+
+local_dns_ready() {
+    if local_resolver_config_valid && full_local_dns_ready; then
+        echo "READY=PASS"
+        return 0
+    fi
+
+    echo "READY=FAIL"
+    return 1
 }
 
 breakglass_off() {
@@ -253,6 +656,8 @@ breakglass_off() {
 
 auto_policy() {
     if [ -f "$BREAKGLASS_FLAG" ]; then
+        recovery_streak_reset
+
         if fallback_bootstrap; then
             echo "AUTO=BOOTSTRAP_BREAKGLASS"
             return 0
@@ -261,8 +666,25 @@ auto_policy() {
         return 1
     fi
 
-    if full_local_dns_ready; then
-        if promote_local; then
+    if ! local_resolver_config_valid; then
+        recovery_streak_reset
+        log "ERROR: local DNS resolver target is missing or invalid; keeping bootstrap DNS"
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP_CONFIG_INVALID"
+        return 0
+    fi
+
+    if ! full_local_dns_ready; then
+        recovery_streak_reset
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP_UNHEALTHY"
+        return 0
+    fi
+
+    if resolver_is_local; then
+        recovery_streak_reset
+
+        if promote_local_ready; then
             echo "AUTO=LOCAL_DNS"
             return 0
         fi
@@ -272,16 +694,89 @@ auto_policy() {
         return 0
     fi
 
+    streak="$(recovery_streak_increment)" || {
+        log "ERROR: failed to update DNS recovery hysteresis state"
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP_HYSTERESIS_STATE_ERROR"
+        return 0
+    }
+
+    echo "RECOVERY_STREAK=$streak/$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+
+    if [ "$streak" -lt "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" ]; then
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP_RECOVERY_PENDING"
+        return 0
+    fi
+
+    if promote_local_ready; then
+        recovery_streak_reset
+        echo "AUTO=LOCAL_DNS"
+        return 0
+    fi
+
+    recovery_streak_reset
     fallback_bootstrap || return 1
-    echo "AUTO=BOOTSTRAP_UNHEALTHY"
+    echo "AUTO=BOOTSTRAP"
     return 0
 }
 
+show_metrics() {
+    observed_mode="$(resolver_mode_observed 2>/dev/null || true)"
+
+    case "$observed_mode" in
+        local)
+            mode_local=1
+            mode_bootstrap=0
+            state_valid=1
+            record_resolver_mode local || log "WARNING: failed to reconcile local DNS Guard monitoring state"
+            ;;
+        bootstrap)
+            mode_local=0
+            mode_bootstrap=1
+            state_valid=1
+            record_resolver_mode bootstrap || log "WARNING: failed to reconcile bootstrap DNS Guard monitoring state"
+            ;;
+        *)
+            mode_local=0
+            mode_bootstrap=0
+            state_valid=0
+            ;;
+    esac
+
+    if [ -f "$BREAKGLASS_FLAG" ]; then
+        breakglass_active=1
+    else
+        breakglass_active=0
+    fi
+
+    last_transition="$(runtime_uint_read "$LAST_TRANSITION_FILE" 0)"
+    fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0)"
+    fallback_since="$(runtime_uint_read "$FALLBACK_SINCE_FILE" 0)"
+
+    printf '%s\n' \
+        "asus_edge_dns_guard_mode_local $mode_local" \
+        "asus_edge_dns_guard_mode_bootstrap $mode_bootstrap" \
+        "asus_edge_dns_guard_state_valid $state_valid" \
+        "asus_edge_dns_guard_breakglass_active $breakglass_active" \
+        "asus_edge_dns_guard_last_transition_timestamp_seconds $last_transition" \
+        "asus_edge_dns_guard_fallback_transitions_runtime_total $fallback_count" \
+        "asus_edge_dns_guard_fallback_since_timestamp_seconds $fallback_since"
+}
+
 show_status() {
-    echo "=== ASUS EDGE DNS GUARD v3.1 ==="
+    echo "=== ASUS EDGE DNS GUARD v3.2 ==="
     echo "resolver=$RESOLV_CONF"
-    echo "pihole=$EDGE_TS_PIHOLE_DNS_IP"
+    if local_resolver_config_valid; then
+        echo "local_resolver=$EDGE_DNS_LOCAL_RESOLVER_IP"
+        echo "LOCAL_RESOLVER_CONFIG=PASS"
+    else
+        echo "local_resolver=UNCONFIGURED_OR_INVALID"
+        echo "LOCAL_RESOLVER_CONFIG=FAIL"
+    fi
     echo "unbound_port=$EDGE_UNBOUND_PORT"
+    echo "failback_success_threshold=$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+    echo "recovery_streak=$(recovery_streak_read)/$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
     echo
 
     if [ -f "$BREAKGLASS_FLAG" ]; then
@@ -317,6 +812,8 @@ show_status() {
     echo
     if [ -f "$BREAKGLASS_FLAG" ]; then
         echo "DECISION=KEEP_BOOTSTRAP_BREAKGLASS"
+    elif ! local_resolver_config_valid; then
+        echo "DECISION=KEEP_BOOTSTRAP_CONFIG_INVALID"
     elif full_local_dns_ready; then
         echo "DECISION=LOCAL_DNS_READY"
     else
@@ -335,6 +832,7 @@ case "${1:-status}" in
         promote_local
         ;;
     fallback)
+        recovery_streak_reset
         fallback_bootstrap
         ;;
     breakglass-on)
@@ -343,8 +841,14 @@ case "${1:-status}" in
     breakglass-off)
         breakglass_off
         ;;
+    ready)
+        local_dns_ready
+        ;;
+    metrics)
+        show_metrics
+        ;;
     *)
-        echo "Usage: $0 {status|check|auto|promote|fallback|breakglass-on [reason]|breakglass-off}"
+        echo "Usage: $0 {status|check|auto|promote|fallback|ready|metrics|breakglass-on [reason]|breakglass-off}"
         exit 2
         ;;
 esac

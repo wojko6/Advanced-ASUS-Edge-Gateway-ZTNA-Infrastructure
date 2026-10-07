@@ -46,6 +46,14 @@ EDGE_INTERCEPT_DNS="1"
 EDGE_TS_PIHOLE_SOURCES=""
 EDGE_TS_PIHOLE_DNS_IP=""
 
+# Router system-resolver target used by DNS Guard after the complete local DNS
+# path is healthy. This is intentionally separate from EDGE_TS_PIHOLE_DNS_IP:
+# the latter controls source-scoped Tailscale DNAT, while this setting controls
+# /tmp/resolv.conf promotion for router-originated DNS. Configure the validated
+# local Pi-hole IPv4 address explicitly; DNS Guard fails open to WAN bootstrap
+# DNS when this value is missing or invalid.
+EDGE_DNS_LOCAL_RESOLVER_IP=""
+
 # Optional LAN classic-DNS enforcement. When enabled, TCP/UDP port 53 arriving
 # from EDGE_LAN_IF is redirected to the router resolver even if a client targets
 # an external DNS server. This does not intercept DoH, DoT, DoQ, VPN-carried DNS,
@@ -77,6 +85,11 @@ EDGE_UNBOUND_PORT="53535"
 # maximum startup wait, not an unconditional 90-second delay.
 EDGE_WAN_DNS_WAIT_SECONDS="90"
 EDGE_DNS_GUARD_WATCHDOG="1"
+# Fail open immediately on an unhealthy local DNS path, but require this many
+# consecutive healthy watchdog checks before switching back from WAN bootstrap
+# DNS to the local Pi-hole path. Runtime streak state lives under /tmp and is
+# intentionally reset on reboot.
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD="3"
 # Leave empty to auto-detect amtm Unbound Manager first, then standard Entware.
 # Set an explicit path if more than one Unbound configuration is present.
 EDGE_UNBOUND_CONFIG=""

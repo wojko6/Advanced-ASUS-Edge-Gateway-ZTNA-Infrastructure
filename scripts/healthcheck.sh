@@ -83,6 +83,13 @@ fi
 : "${EDGE_REQUIRE_WAN_WEBUI_DISABLED:=1}"
 : "${EDGE_REQUIRE_ACCESS_RESTRICTION:=1}"
 : "${EDGE_EXPECT_HTTP_AUTOLOGOUT:=}"
+: "${EDGE_DNS_LOCAL_RESOLVER_IP:=}"
+: "${EDGE_DNS_GUARD_WATCHDOG:=1}"
+: "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
+
+DNS_GUARD_BIN="${EDGE_DNS_GUARD_BIN:-/jffs/addons/asus-edge/bin/dns-guard}"
+DNS_GUARD_BREAKGLASS_FLAG="${EDGE_DNS_BREAKGLASS_FLAG:-/jffs/addons/asus-edge/state/dns-breakglass}"
+DNS_GUARD_RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
 
 valid_port() {
     case "$1" in ''|*[!0-9]*) return 1 ;; esac
@@ -128,6 +135,53 @@ valid_host() {
     done
 }
 
+# BEGIN DNS Guard health helpers
+dns_guard_cron_entry_ok() {
+    executable_exists cru >/dev/null 2>&1 || return 1
+
+    expected="* * * * * $DNS_GUARD_BIN auto >/dev/null 2>&1 #AsusEdgeDNSGuard#"
+
+    cru l 2>/dev/null |
+        grep -F -x "$expected" >/dev/null 2>&1
+}
+
+dns_guard_resolver_mode() {
+    [ -r "$DNS_GUARD_RESOLV_CONF" ] || {
+        printf '%s\n' UNKNOWN
+        return 1
+    }
+
+    resolver_count=0
+    local_count=0
+
+    while read -r keyword value _; do
+        [ "$keyword" = "nameserver" ] || continue
+
+        resolver_count=$((resolver_count + 1))
+        [ "$value" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ] &&
+            local_count=$((local_count + 1))
+    done <"$DNS_GUARD_RESOLV_CONF"
+
+    [ "$resolver_count" -gt 0 ] || {
+        printf '%s\n' UNKNOWN
+        return 1
+    }
+
+    if [ "$local_count" -gt 0 ]; then
+        if [ "$resolver_count" -eq 1 ] && [ "$local_count" -eq 1 ]; then
+            printf '%s\n' LOCAL
+            return 0
+        fi
+
+        printf '%s\n' MIXED
+        return 1
+    fi
+
+    printf '%s\n' BOOTSTRAP
+    return 0
+}
+# END DNS Guard health helpers
+
 valid_boolean "$EDGE_REQUIRE_USB_PRINTER_DISABLED" || fail "invalid EDGE_REQUIRE_USB_PRINTER_DISABLED value: $EDGE_REQUIRE_USB_PRINTER_DISABLED"
 valid_boolean "$EDGE_ALLOW_ROUTER_HTTPS" || fail "invalid EDGE_ALLOW_ROUTER_HTTPS value: $EDGE_ALLOW_ROUTER_HTTPS"
 valid_boolean "$EDGE_ALLOW_ROUTERCLOUD" || fail "invalid EDGE_ALLOW_ROUTERCLOUD value: $EDGE_ALLOW_ROUTERCLOUD"
@@ -137,6 +191,16 @@ valid_boolean "$EDGE_ENFORCE_LAN_DNS" || fail "invalid EDGE_ENFORCE_LAN_DNS valu
 valid_boolean "$EDGE_BLOCK_LAN_DOT" || fail "invalid EDGE_BLOCK_LAN_DOT value: $EDGE_BLOCK_LAN_DOT"
 valid_boolean "$EDGE_REQUIRE_WAN_WEBUI_DISABLED" || fail "invalid EDGE_REQUIRE_WAN_WEBUI_DISABLED value: $EDGE_REQUIRE_WAN_WEBUI_DISABLED"
 valid_boolean "$EDGE_REQUIRE_ACCESS_RESTRICTION" || fail "invalid EDGE_REQUIRE_ACCESS_RESTRICTION value: $EDGE_REQUIRE_ACCESS_RESTRICTION"
+valid_boolean "$EDGE_DNS_GUARD_WATCHDOG" || fail "invalid EDGE_DNS_GUARD_WATCHDOG value: $EDGE_DNS_GUARD_WATCHDOG"
+case "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" in
+    ''|*[!0-9]*)
+        fail "invalid EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD value: $EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+        ;;
+    *)
+        [ "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" -gt 0 ] 2>/dev/null ||
+            fail "invalid EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD value: $EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+        ;;
+esac
 [ -z "$EDGE_EXPECT_HTTP_AUTOLOGOUT" ] || valid_http_autologout "$EDGE_EXPECT_HTTP_AUTOLOGOUT" || fail "invalid EDGE_EXPECT_HTTP_AUTOLOGOUT value: $EDGE_EXPECT_HTTP_AUTOLOGOUT"
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
@@ -183,6 +247,12 @@ fi
     valid_ipv4 "$EDGE_TS_PIHOLE_DNS_IP" ||
     fail "invalid EDGE_TS_PIHOLE_DNS_IP value: $EDGE_TS_PIHOLE_DNS_IP"
 
+[ -n "$EDGE_DNS_LOCAL_RESOLVER_IP" ] ||
+    fail "EDGE_DNS_LOCAL_RESOLVER_IP must be configured for DNS Guard"
+[ -z "$EDGE_DNS_LOCAL_RESOLVER_IP" ] ||
+    valid_ipv4 "$EDGE_DNS_LOCAL_RESOLVER_IP" ||
+    fail "invalid EDGE_DNS_LOCAL_RESOLVER_IP value: $EDGE_DNS_LOCAL_RESOLVER_IP"
+
 valid_port "$EDGE_DNS_PORT" || fail "invalid EDGE_DNS_PORT value: $EDGE_DNS_PORT"
 valid_port "$EDGE_DOT_PORT" || fail "invalid EDGE_DOT_PORT value: $EDGE_DOT_PORT"
 [ -z "$EDGE_WAN_IF" ] || valid_interface "$EDGE_WAN_IF" || fail "invalid EDGE_WAN_IF value: $EDGE_WAN_IF"
@@ -202,6 +272,52 @@ esac
 if [ "$FAILURES" -ne 0 ]; then
     printf '\nSummary: %s failure(s), %s warning(s)\n' "$FAILURES" "$WARNINGS"
     exit 1
+fi
+
+if [ "$EDGE_DNS_GUARD_WATCHDOG" = "1" ]; then
+    if [ -x "$DNS_GUARD_BIN" ]; then
+        ok "DNS Guard executable available"
+    else
+        fail "DNS Guard executable missing: $DNS_GUARD_BIN"
+    fi
+
+    if executable_exists cru >/dev/null 2>&1; then
+        if dns_guard_cron_entry_ok; then
+            ok "DNS Guard watchdog scheduled every minute"
+        else
+            fail "DNS Guard watchdog cron entry missing or drifted"
+        fi
+    else
+        fail "cru unavailable; DNS Guard watchdog cannot be verified"
+    fi
+else
+    warn "DNS Guard watchdog disabled by configuration"
+fi
+
+if [ -f "$DNS_GUARD_BREAKGLASS_FLAG" ]; then
+    warn "DNS Guard break-glass is ACTIVE"
+else
+    ok "DNS Guard break-glass inactive"
+fi
+
+dns_guard_mode="$(dns_guard_resolver_mode 2>/dev/null)" || true
+case "$dns_guard_mode" in
+    LOCAL)
+        ok "DNS Guard resolver mode: local"
+        ;;
+    BOOTSTRAP)
+        warn "DNS Guard resolver mode: bootstrap/fail-open"
+        ;;
+    MIXED)
+        fail "DNS Guard resolver state is mixed between local and bootstrap targets"
+        ;;
+    *)
+        fail "DNS Guard resolver state is not parseable"
+        ;;
+esac
+
+if [ -f "$DNS_GUARD_BREAKGLASS_FLAG" ] && [ "$dns_guard_mode" = "LOCAL" ]; then
+    fail "DNS Guard break-glass active while resolver still points to local DNS"
 fi
 
 if [ "$EDGE_REQUIRE_WAN_WEBUI_DISABLED" = "1" ]; then

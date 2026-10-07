@@ -352,9 +352,12 @@ exit 0
         config = self.root / "jffs/configs/asus-edge.conf"
         config.write_text('EDGE_INTERCEPT_DNS=0\nEDGE_REQUIRE_SWAP=0\n'
                           'EDGE_EXPECT_HTTP_AUTOLOGOUT=0\n'
+                          'EDGE_DNS_LOCAL_RESOLVER_IP="192.0.2.53"\n'
+                          'EDGE_DNS_GUARD_WATCHDOG=0\n'
                           'EDGE_PRINTER_TS_SOURCES="192.0.2.95/32"\n'
                           'EDGE_PRINTER_LAN_IP="198.51.100.140"\n'
                           'EDGE_PRINTER_TCP_PORTS="80"\nEDGE_PRINTER_UDP_PORTS=" "\n')
+        (self.root / "tmp/resolv.conf").write_text("nameserver 192.0.2.53\n")
         self.command("iptables", r'''
 chain="$4"
 case "$chain" in

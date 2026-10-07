@@ -392,6 +392,19 @@ grep -F '"$ADDON_DIR/bin/webui-mount" unmount' "$REPO_DIR/scripts/uninstall.sh" 
     exit 1
 }
 
+for dns_uninstall_guard in \
+    'prepare_dns_guard_uninstall()' \
+    'DNS_UNINSTALL_BOOTSTRAP=PASS' \
+    'remove_dns_guard_watchdog()' \
+    'DNS_GUARD_WATCHDOG=REMOVED' \
+    'refusing uninstall'
+do
+    grep -F "$dns_uninstall_guard" "$REPO_DIR/scripts/uninstall.sh" >/dev/null || {
+        echo "FAIL: DNS Guard uninstall safety contract missing: $dns_uninstall_guard" >&2
+        exit 1
+    }
+done
+
 grep -F 'unmount_polish_overlay || return 1' "$REPO_DIR/router/scripts/webui-mount" >/dev/null || {
     echo "FAIL: WebUI unmount does not remove the Polish overlay first" >&2
     exit 1
@@ -681,10 +694,70 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
 }
 
 
+for dns_guard_runtime_guard in \
+    'EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock' \
+    'flock -x 9' \
+    'secure_temp_dir()' \
+    'temp_candidate="$temp_prefix.$$.${temp_counter}"' \
+    'query_output="$(' \
+    'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3' \
+    'RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"' \
+    'AUTO=BOOTSTRAP_RECOVERY_PENDING' \
+    'bootstrap_dns_candidate_valid()' \
+    '127.*|0.0.0.0' \
+    '[ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]' \
+    'dns_probe_path_ready one.one.one.one "1.1.1.1 1.0.0.1"' \
+    'dns_probe_path_ready dns.google "8.8.8.8 8.8.4.4"' \
+    'dig +tcp +time=2 +tries=1 +short' \
+    'show_metrics()' \
+    'asus_edge_dns_guard_mode_bootstrap' \
+    'FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"'
+do
+    grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
+        echo "FAIL: DNS Guard concurrency/temp-file hardening missing: $dns_guard_runtime_guard" >&2
+        exit 1
+    }
+done
+
+if grep -F 'temp_candidate="$temp_prefix.$.${temp_counter}"' "$REPO_DIR/router/scripts/dns-guard" >/dev/null; then
+    echo "FAIL: DNS Guard secure temp directory still uses predictable literal-dollar suffix" >&2
+    exit 1
+fi
+
+if grep -F '/tmp/asus-edge-dns-guard-query.log' "$REPO_DIR/router/scripts/dns-guard" >/dev/null; then
+    echo "FAIL: DNS Guard still uses predictable query output file" >&2
+    exit 1
+fi
+
+if grep -E 'sslip\.io|edge-health-.*date \+%s' "$REPO_DIR/router/scripts/dns-guard" >/dev/null; then
+    echo "FAIL: DNS Guard still uses unique public DNS probe names" >&2
+    exit 1
+fi
+
+if grep -F '/tmp/asus-edge-dns-guard-${phase}.log' "$REPO_DIR/router/scripts/wan-event-handler" >/dev/null; then
+    echo "FAIL: WAN handler still uses predictable DNS Guard log files" >&2
+    exit 1
+fi
+
+for dns_guard_health_guard in \
+    'EDGE_DNS_LOCAL_RESOLVER_IP:=}' \
+    'EDGE_DNS_GUARD_WATCHDOG:=1' \
+    'dns_guard_cron_entry_ok()' \
+    'DNS Guard watchdog cron entry missing or drifted' \
+    'DNS Guard break-glass is ACTIVE' \
+    'DNS Guard resolver mode: bootstrap/fail-open'
+do
+    grep -F "$dns_guard_health_guard" "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: DNS Guard health contract missing: $dns_guard_health_guard" >&2
+        exit 1
+    }
+done
+
 for dns_guard_guard in \
     'router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755' \
     'router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700' \
     'EDGE_DNS_GUARD_WATCHDOG="1"' \
+    'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD="3"' \
     'configure_dns_guard_watchdog()' \
     'cru a AsusEdgeDNSGuard' \
     'DNS_GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"'
@@ -705,6 +778,10 @@ if grep -F 'nameserver 127.0.0.1' "$REPO_DIR/router/scripts/wan-event-handler" >
 fi
 
 sh "$REPO_DIR/tests/test-dns-guard.sh"
+sh "$REPO_DIR/tests/test-dns-guard-observability.sh"
+bash "$REPO_DIR/tests/test-dns-guard-metrics-exporter.sh"
+sh "$REPO_DIR/tests/test-dns-breakglass.sh"
+sh "$REPO_DIR/tests/test-healthcheck-dns-guard-contract.sh"
 sh "$REPO_DIR/tests/test-wan-event-handler.sh"
 
 
@@ -873,6 +950,43 @@ grep -F 'EDGE_WAN_DNS_WAIT_SECONDS="90"' \
 
 GRAFANA_ALERTS="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml"
 GRAFANA_EMAIL_CONTACT="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-email-contact.yml"
+
+for dns_guard_observability_guard in \
+    'uid: dns_guard_sustained_failopen' \
+    'asus_edge_dns_guard_mode_bootstrap' \
+    'asus_edge_dns_guard_collection_timestamp_seconds' \
+    'for: 10m' \
+    'component: dns-guard'
+do
+    grep -F "$dns_guard_observability_guard" \
+        "$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml" >/dev/null || {
+        echo "FAIL: DNS Guard sustained fail-open alert guard missing: $dns_guard_observability_guard" >&2
+        exit 1
+    }
+done
+
+for dns_guard_monitoring_file in \
+    "$REPO_DIR/scripts/dns-guard-metrics.sh" \
+    "$REPO_DIR/monitoring/systemd/dns-guard-monitoring.service" \
+    "$REPO_DIR/monitoring/systemd/dns-guard-monitoring.timer"
+do
+    [ -s "$dns_guard_monitoring_file" ] || {
+        echo "FAIL: DNS Guard monitoring integration missing: $dns_guard_monitoring_file" >&2
+        exit 1
+    }
+done
+
+dns_guard_monitoring_service="$REPO_DIR/monitoring/systemd/dns-guard-monitoring.service"
+
+grep -F 'NoNewPrivileges=true' "$dns_guard_monitoring_service" >/dev/null || {
+    echo "FAIL: DNS Guard monitoring service must retain NoNewPrivileges=true" >&2
+    exit 1
+}
+
+if grep -F 'PrivateTmp=true' "$dns_guard_monitoring_service" >/dev/null; then
+    echo "FAIL: DNS Guard SSH monitoring service must not use PrivateTmp=true" >&2
+    exit 1
+fi
 
 for grafana_routercloud_guard in \
     'uid: routercloud_backup_bad' \
