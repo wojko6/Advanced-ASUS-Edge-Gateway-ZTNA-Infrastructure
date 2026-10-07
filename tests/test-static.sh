@@ -696,7 +696,7 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
 
 for dns_guard_runtime_guard in \
     'EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock' \
-    'flock -w "$EDGE_DNS_LOCK_WAIT_SECONDS" 9' \
+    'flock -xn 9' \
     'secure_temp_dir()' \
     'temp_candidate="$temp_prefix.$$.${temp_counter}"' \
     'query_output="$(' \
@@ -704,6 +704,7 @@ for dns_guard_runtime_guard in \
     'EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5' \
     'EDGE_DNS_LOCK_WAIT_SECONDS:=5' \
     'bounded_nslookup()' \
+    '"$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS"' \
     'bootstrap_dns_ready()' \
     'FALLBACK=UNHEALTHY_BOOTSTRAP' \
     'RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"' \
