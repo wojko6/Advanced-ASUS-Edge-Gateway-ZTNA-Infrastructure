@@ -31,6 +31,7 @@ FAIL_DIG_RUNTIME="$TMP_DIR/fail-dig-runtime"
 FAIL_PIHOLE_TCP_LISTENER="$TMP_DIR/fail-pihole-tcp-listener"
 FAIL_BOOTSTRAP_HEALTH="$TMP_DIR/fail-bootstrap-health"
 HANG_PROBE="$TMP_DIR/hang-probe"
+FAIL_BOOTSTRAP_PRIMARY_SERVER="$TMP_DIR/fail-bootstrap-primary-server"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR" "$RUNTIME_STATE_DIR"
 
@@ -365,6 +366,22 @@ grep -qx 'nameserver 8.8.8.8' "$RESOLV"
 grep -qx 'nameserver 1.1.1.1' "$RESOLV"
 [ "$(grep -c '^nameserver 8\.8\.8\.8$' "$RESOLV")" -eq 1 ]
 [ "$(grep -c '^nameserver ' "$RESOLV")" -eq 2 ]
+
+echo "=== valid later WAN DNS source rescues a dead higher-priority source ==="
+printf '%s\n' '9.9.9.9' >"$BOOTSTRAP_PRIMARY"
+printf '%s\n' '8.8.8.8' >"$BOOTSTRAP_SECONDARY"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+: >"$FAIL_BOOTSTRAP_PRIMARY_SERVER"
+
+later_source_output="$(run_guard fallback)"
+printf '%s\n' "$later_source_output"
+grep -F 'FALLBACK=PASS' <<EOF >/dev/null
+$later_source_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 8.8.8.8' "$RESOLV"
+[ "$(grep -c '^nameserver ' "$RESOLV")" -eq 2 ]
+rm -f "$FAIL_BOOTSTRAP_PRIMARY_SERVER"
 
 echo "=== bootstrap DNS refuses all-local or invalid candidate sets ==="
 printf '%s\n' '127.0.0.1 192.0.2.53 0.0.0.0 999.1.1.1' >"$BOOTSTRAP_PRIMARY"
