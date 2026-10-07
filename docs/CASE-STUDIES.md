@@ -1,10 +1,10 @@
 # Case Studies
 
-This directory contains incident and integration case studies based on observed project evidence.
+This index lists incident, integration and security-remediation case studies based on observed project evidence. The canonical case-study files live under [`docs/case-studies/`](case-studies/). Historical root-level paths are retained only as compatibility pointers where needed.
 
 ## 1. uiDivStats high-load incident
 
-**File:** [uiDivStats High Load Incident](uidivstats-high-load-case-study.md)
+**File:** [uiDivStats High Load Incident](case-studies/uidivstats-high-load-case-study.md)
 
 A router troubleshooting case study covering:
 
@@ -20,7 +20,7 @@ The case study deliberately distinguishes a strongly supported operational root-
 
 ## 2. Zen Linux proxy integration
 
-**File:** [Zen Linux Proxy Integration](zen-linux-proxy-integration-case-study.md)
+**File:** [Zen Linux Proxy Integration](case-studies/zen-linux-proxy-integration-case-study.md)
 
 A Fedora/GNOME endpoint validation covering:
 
@@ -36,7 +36,7 @@ This case study is observational and does not claim that every Linux application
 
 ## 3. Tailscale Android DNS and routing failure
 
-**File:** [Tailscale Android DNS and Routing Troubleshooting](tailscale-android-dns-routing-case-study.md)
+**File:** [Tailscale Android DNS and Routing Troubleshooting](case-studies/tailscale-android-dns-routing-case-study.md)
 
 An Android/Tailscale troubleshooting case study covering:
 
@@ -54,7 +54,7 @@ The case demonstrates how multiple valid-looking network controls can interact a
 
 ## 4. GeForce NOW Ethernet vs Wi-Fi 6 stability
 
-**File:** [GeForce NOW Ethernet vs Wi-Fi 6 Stability](geforce-now-ethernet-vs-wifi6-case-study.md)
+**File:** [GeForce NOW Ethernet vs Wi-Fi 6 Stability](case-studies/geforce-now-ethernet-vs-wifi6-case-study.md)
 
 A real-time network stability case study covering:
 
@@ -71,7 +71,7 @@ reinterpret interface counters as application packet loss.
 
 ## 5. Xbox Cloud Gaming in Microsoft Edge / WebRTC
 
-**File:** [Xbox Cloud Gaming in Microsoft Edge — WebRTC](xbox-cloud-edge-webrtc-case-study.md)
+**File:** [Xbox Cloud Gaming in Microsoft Edge — WebRTC](case-studies/xbox-cloud-edge-webrtc-case-study.md)
 
 A browser-native real-time streaming case study covering:
 
@@ -91,7 +91,7 @@ claim.
 
 ## 6. Wi-Fi 6 HE160 interoperability – MediaTek MT7922 vs ASUS/Broadcom
 
-**File:** [Wi-Fi 6 HE160 Interoperability](wifi6-he160-mt7922-interoperability-case-study.md)
+**File:** [Wi-Fi 6 HE160 Interoperability](case-studies/wifi6-he160-mt7922-interoperability-case-study.md)
 
 A controlled Wi-Fi interoperability investigation covering:
 
@@ -112,7 +112,7 @@ evidence and root-cause inference.
 
 ## 7. ASUS TUF-AX5400 external observability
 
-**File:** [ASUS TUF-AX5400 External Observability](asus-tuf-ax5400-observability-case-study.md)
+**File:** [ASUS TUF-AX5400 External Observability](case-studies/asus-tuf-ax5400-observability-case-study.md)
 
 A read-only router observability integration covering:
 
@@ -131,7 +131,7 @@ compatibility.
 
 ## 8. Diversion to Pi-hole on-router migration
 
-**File:** [Diversion to Pi-hole on-router migration](pi-hole-on-router-case-study.md)
+**File:** [Diversion to Pi-hole on-router migration](case-studies/pi-hole-on-router-case-study.md)
 
 A staged DNS-filtering migration on the 512 MiB ASUS TUF-AX5400 covering:
 
@@ -150,7 +150,7 @@ not as a result to omit from the portfolio narrative.
 
 ## 9. syslog-ng local archive resilience under collector outage
 
-**File:** [syslog-ng Local Archive Resilience](syslog-ng-flow-control-resilience-case-study.md)
+**File:** [syslog-ng Local Archive Resilience](case-studies/syslog-ng-flow-control-resilience-case-study.md)
 
 A centralized-logging failure and recovery case covering:
 
@@ -169,7 +169,7 @@ from the unmeasured internal queue depth at the moment of the original stall.
 
 ## 10. RouterCloud secure browser file service
 
-**File:** [RouterCloud production checkpoint — 2026-10-03](routercloud-production-checkpoint-2026-10-03.md)
+**File:** [RouterCloud production checkpoint — 2026-10-03](case-studies/routercloud-secure-browser-file-service.md)
 
 A constrained browser/file-service case covering:
 
@@ -223,7 +223,7 @@ compatibility testing remain separate follow-up work.
 
 ## 12. DNS bootstrap deadlock and fail-open resolver recovery
 
-**File:** [DNS bootstrap deadlock and fail-open resolver recovery](dns-guard-cold-boot-case-study.md)
+**File:** [DNS bootstrap deadlock and fail-open resolver recovery](case-studies/dns-bootstrap-deadlock-dns-guard-v3.1.md)
 
 A resolver-startup resilience case covering:
 
@@ -271,6 +271,26 @@ The case study is intentionally sanitized: deployment-specific public addresses,
 DDNS names, tailnet addresses, device identifiers, MAC addresses, credentials,
 and exact administrative source allowlists are excluded. It preserves the
 methodology and decision trail, including tests that were rejected as invalid.
+
+## 14. Unbound 1.26.1 security remediation
+
+**File:** [Unbound 1.26.1 Security Remediation — CVE-2026-81642](case-studies/unbound-cve-2026-81642-remediation-case-study.md)
+
+A security-remediation case study covering:
+
+- detection of an Unbound security release while the Entware feed still exposed an older package;
+- assessment of why loopback-only binding did not eliminate resolver-parser risk;
+- upstream coordination and local tracking;
+- a controlled Entware-compatible ARM build rather than an unmanaged binary replacement;
+- build-environment failures caused by an obsolete Debian builder and a legacy Python 2 prerequisite;
+- package-set integrity, SHA-256 verification and rollback preparation;
+- controlled deployment of Unbound 1.26.1;
+- positive and negative DNSSEC validation after the upgrade;
+- explicit separation of resolver remediation from unrelated project-health findings.
+
+The case demonstrates a full vulnerability-remediation lifecycle: detection,
+risk analysis, upstream coordination, reproducible build engineering, staged
+deployment, rollback readiness and bounded post-change claims.
 
 ## How to read these cases
 
