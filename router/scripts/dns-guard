@@ -817,6 +817,24 @@ auto_policy() {
         return 0
     fi
 
+    # Hysteresis protects against local-path flapping only while the current
+    # bootstrap escape path is itself usable. If bootstrap DNS is known-broken
+    # and the complete local path is healthy, staying on bootstrap would create
+    # an avoidable outage, so recover to local immediately.
+    if ! bootstrap_dns_ready; then
+        recovery_streak_reset
+
+        if promote_local_ready; then
+            echo "AUTO=LOCAL_DNS_BOOTSTRAP_UNHEALTHY"
+            log "bootstrap DNS unhealthy; promoted immediately to healthy local DNS"
+            return 0
+        fi
+
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP"
+        return 0
+    fi
+
     streak="$(recovery_streak_increment)" || {
         log "ERROR: failed to update DNS recovery hysteresis state"
         fallback_bootstrap || return 1
