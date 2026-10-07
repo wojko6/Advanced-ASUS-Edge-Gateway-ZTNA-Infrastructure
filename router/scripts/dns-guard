@@ -107,8 +107,13 @@ executable_exists flock >/dev/null 2>&1 ||
     die "flock not found; cannot serialize DNS Guard state transitions"
 
 exec 9>"$LOCK_FILE" || die "cannot open DNS Guard lock file"
-flock -w "$EDGE_DNS_LOCK_WAIT_SECONDS" 9 || \
-    die "cannot acquire DNS Guard lock within ${EDGE_DNS_LOCK_WAIT_SECONDS}s"
+lock_waited=0
+while ! flock -xn 9; do
+    [ "$lock_waited" -lt "$EDGE_DNS_LOCK_WAIT_SECONDS" ] ||
+        die "cannot acquire DNS Guard lock within ${EDGE_DNS_LOCK_WAIT_SECONDS}s"
+    lock_waited=$((lock_waited + 1))
+    sleep 1
+done
 
 secure_temp_dir() {
     temp_prefix="$1"
@@ -139,11 +144,22 @@ recovery_streak_read() {
     case "$streak" in
         ''|*[!0-9]*)
             printf '%s\n' 0
-            ;;
-        *)
-            printf '%s\n' "$streak"
+            return 0
             ;;
     esac
+
+    # Keep shell arithmetic bounded on 32-bit BusyBox targets. A corrupted
+    # runtime file with an arbitrarily long digit string must not abort auto.
+    [ "${#streak}" -le 9 ] || {
+        printf '%s\n' 0
+        return 0
+    }
+
+    if [ "$streak" -gt "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" ]; then
+        printf '%s\n' "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+    else
+        printf '%s\n' "$streak"
+    fi
 }
 
 runtime_state_write() {
@@ -179,8 +195,16 @@ runtime_uint_read() {
     state_value="$(cat "$state_file" 2>/dev/null)" || state_value="$default_value"
 
     case "$state_value" in
-        ''|*[!0-9]*) printf '%s\n' "$default_value" ;;
-        *) printf '%s\n' "$state_value" ;;
+        ''|*[!0-9]*)
+            printf '%s\n' "$default_value"
+            ;;
+        *)
+            if [ "${#state_value}" -le 9 ]; then
+                printf '%s\n' "$state_value"
+            else
+                printf '%s\n' "$default_value"
+            fi
+            ;;
     esac
 }
 
@@ -469,13 +493,15 @@ dns_probe_tcp_ready() {
     # binary must not force DNS Guard into fail-open by itself.
     executable_exists dig >/dev/null 2>&1 || return 0
 
-    if ! dig -v >/dev/null 2>&1; then
+    if ! "$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" \
+        dig -v >/dev/null 2>&1; then
         log "WARNING: dig is installed but not runnable; skipping active TCP DNS query probe"
         return 0
     fi
 
     query_output="$(
-        dig +tcp +time=2 +tries=1 +short \
+        "$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" \
+            dig +tcp +time=2 +tries=1 +short \
             @"$EDGE_DNS_LOCAL_RESOLVER_IP" "$probe_name" A 2>&1
     )" || return 1
 
