@@ -688,7 +688,10 @@ for dns_guard_runtime_guard in \
     'query_output="$(' \
     'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3' \
     'RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"' \
-    'AUTO=BOOTSTRAP_RECOVERY_PENDING'
+    'AUTO=BOOTSTRAP_RECOVERY_PENDING' \
+    'bootstrap_dns_candidate_valid()' \
+    '127.*|0.0.0.0' \
+    '[ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]'
 do
     grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
         echo "FAIL: DNS Guard concurrency/temp-file hardening missing: $dns_guard_runtime_guard" >&2

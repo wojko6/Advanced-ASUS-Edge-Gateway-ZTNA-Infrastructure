@@ -16,6 +16,8 @@ FLAG="$STATE_DIR/dns-breakglass"
 RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"
 FAIL_LOCAL="$TMP_DIR/fail-local"
 FAIL_BOOTSTRAP="$TMP_DIR/fail-bootstrap"
+BOOTSTRAP_PRIMARY="$TMP_DIR/bootstrap-primary"
+BOOTSTRAP_SECONDARY="$TMP_DIR/bootstrap-secondary"
 BUSYBOX_MOCK="$TMP_DIR/busybox"
 QUERY_ACTIVE="$TMP_DIR/query-active"
 QUERY_STARTED="$TMP_DIR/query-started"
@@ -35,9 +37,20 @@ cat >"$MOCK_BIN/nvram" <<EOF
 case "\$2" in
     ntp_ready) echo 1 ;;
     wan0_dns_r)
-        [ -f "$FAIL_BOOTSTRAP" ] || echo "9.9.9.9 149.112.112.112"
+        if [ ! -f "$FAIL_BOOTSTRAP" ]; then
+            if [ -f "$BOOTSTRAP_PRIMARY" ]; then
+                cat "$BOOTSTRAP_PRIMARY"
+            else
+                echo "9.9.9.9 149.112.112.112"
+            fi
+        fi
         ;;
-    wan0_dns|wan_dns_r|wan_dns) echo "" ;;
+    wan0_dns)
+        if [ ! -f "$FAIL_BOOTSTRAP" ] && [ -f "$BOOTSTRAP_SECONDARY" ]; then
+            cat "$BOOTSTRAP_SECONDARY"
+        fi
+        ;;
+    wan_dns_r|wan_dns) echo "" ;;
     *) echo "" ;;
 esac
 EOF
@@ -164,6 +177,528 @@ rm -f /tmp/asus-edge-dns-guard-promote-test.out
 
 run_guard breakglass-off >/dev/null
 [ ! -f "$FLAG" ]
+
+echo "=== bootstrap DNS filters invalid, local, loopback and duplicate candidates ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=1
+EOF
+rm -f "$FAIL_BOOTSTRAP" "$BOOTSTRAP_SECONDARY"
+printf '%s\n' '127.0.0.1 192.0.2.53 9.9.9.9 9.9.9.9 149.112.112.112 999.1.1.1 0.0.0.0' >"$BOOTSTRAP_PRIMARY"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+filtered_output="$(run_guard fallback)"
+printf '%s\n' "$filtered_output"
+grep -F 'FALLBACK=PASS' <<EOF >/dev/null
+$filtered_output
+EOF
+[ "$(grep -c '^nameserver 9\.9\.9\.9
+: >"$FAIL_BOOTSTRAP"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+pending_output="$(run_guard breakglass-on bootstrap-not-ready)"
+printf '%s\n' "$pending_output"
+grep -F 'BREAKGLASS=ACTIVE_FALLBACK_PENDING' <<EOF >/dev/null
+$pending_output
+EOF
+[ -f "$FLAG" ]
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+
+rm -f "$FAIL_BOOTSTRAP"
+reassert_output="$(run_guard fallback)"
+printf '%s\n' "$reassert_output"
+grep -F 'FALLBACK=PASS' <<EOF >/dev/null
+$reassert_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+run_guard breakglass-off >/dev/null
+[ ! -f "$FLAG" ]
+
+echo "=== fail-open unhealthy path ==="
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+: >"$FAIL_LOCAL"
+
+unhealthy_output="$(run_guard auto)"
+printf '%s\n' "$unhealthy_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$unhealthy_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+echo "=== idempotent fallback ==="
+fallback_output="$(run_guard fallback)"
+printf '%s\n' "$fallback_output"
+grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
+$fallback_output
+EOF
+
+echo "=== failback hysteresis requires consecutive healthy checks ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+EOF
+rm -f "$FAIL_LOCAL" "$RECOVERY_STREAK_FILE"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+
+pending_one="$(run_guard auto)"
+printf '%s\n' "$pending_one"
+grep -F 'RECOVERY_STREAK=1/3' <<EOF >/dev/null
+$pending_one
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_one
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+
+pending_two="$(run_guard auto)"
+printf '%s\n' "$pending_two"
+grep -F 'RECOVERY_STREAK=2/3' <<EOF >/dev/null
+$pending_two
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_two
+EOF
+
+echo "=== unhealthy sample resets recovery streak immediately ==="
+: >"$FAIL_LOCAL"
+reset_output="$(run_guard auto)"
+printf '%s\n' "$reset_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$reset_output
+EOF
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+
+rm -f "$FAIL_LOCAL"
+
+for expected in 1 2; do
+    pending_output="$(run_guard auto)"
+    printf '%s\n' "$pending_output"
+    grep -F "RECOVERY_STREAK=$expected/3" <<EOF >/dev/null
+$pending_output
+EOF
+    grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_output
+EOF
+    grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+done
+
+promoted_output="$(run_guard auto)"
+printf '%s\n' "$promoted_output"
+grep -F 'RECOVERY_STREAK=3/3' <<EOF >/dev/null
+$promoted_output
+EOF
+grep -F 'AUTO=LOCAL_DNS' <<EOF >/dev/null
+$promoted_output
+EOF
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== local failure still fails open on first unhealthy check ==="
+: >"$FAIL_LOCAL"
+failopen_output="$(run_guard auto)"
+printf '%s\n' "$failopen_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$failopen_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== missing local resolver target fails open ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EOF
+rm -f "$FAIL_LOCAL"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+missing_output="$(run_guard auto)"
+printf '%s\n' "$missing_output"
+grep -F 'AUTO=BOOTSTRAP_CONFIG_INVALID' <<EOF >/dev/null
+$missing_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+if run_guard promote >/tmp/asus-edge-dns-guard-invalid-target.out 2>&1; then
+    echo "FAIL: promotion succeeded without a configured local resolver target" >&2
+    exit 1
+fi
+grep -F 'PROMOTE=BLOCKED_INVALID_LOCAL_RESOLVER' \
+    /tmp/asus-edge-dns-guard-invalid-target.out >/dev/null
+rm -f /tmp/asus-edge-dns-guard-invalid-target.out
+
+echo "=== invalid local resolver target fails open ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=999.0.2.53
+EOF
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+invalid_output="$(run_guard auto)"
+printf '%s\n' "$invalid_output"
+grep -F 'AUTO=BOOTSTRAP_CONFIG_INVALID' <<EOF >/dev/null
+$invalid_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+echo "PASS: DNS Guard healthy, fail-open, explicit-target and idempotency policies"
+ "$RESOLV")" -eq 1 ]
+[ "$(grep -c '^nameserver 149\.112\.112\.112
+: >"$FAIL_BOOTSTRAP"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+pending_output="$(run_guard breakglass-on bootstrap-not-ready)"
+printf '%s\n' "$pending_output"
+grep -F 'BREAKGLASS=ACTIVE_FALLBACK_PENDING' <<EOF >/dev/null
+$pending_output
+EOF
+[ -f "$FLAG" ]
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+
+rm -f "$FAIL_BOOTSTRAP"
+reassert_output="$(run_guard fallback)"
+printf '%s\n' "$reassert_output"
+grep -F 'FALLBACK=PASS' <<EOF >/dev/null
+$reassert_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+run_guard breakglass-off >/dev/null
+[ ! -f "$FLAG" ]
+
+echo "=== fail-open unhealthy path ==="
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+: >"$FAIL_LOCAL"
+
+unhealthy_output="$(run_guard auto)"
+printf '%s\n' "$unhealthy_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$unhealthy_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+echo "=== idempotent fallback ==="
+fallback_output="$(run_guard fallback)"
+printf '%s\n' "$fallback_output"
+grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
+$fallback_output
+EOF
+
+echo "=== failback hysteresis requires consecutive healthy checks ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+EOF
+rm -f "$FAIL_LOCAL" "$RECOVERY_STREAK_FILE"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+
+pending_one="$(run_guard auto)"
+printf '%s\n' "$pending_one"
+grep -F 'RECOVERY_STREAK=1/3' <<EOF >/dev/null
+$pending_one
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_one
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+
+pending_two="$(run_guard auto)"
+printf '%s\n' "$pending_two"
+grep -F 'RECOVERY_STREAK=2/3' <<EOF >/dev/null
+$pending_two
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_two
+EOF
+
+echo "=== unhealthy sample resets recovery streak immediately ==="
+: >"$FAIL_LOCAL"
+reset_output="$(run_guard auto)"
+printf '%s\n' "$reset_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$reset_output
+EOF
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+
+rm -f "$FAIL_LOCAL"
+
+for expected in 1 2; do
+    pending_output="$(run_guard auto)"
+    printf '%s\n' "$pending_output"
+    grep -F "RECOVERY_STREAK=$expected/3" <<EOF >/dev/null
+$pending_output
+EOF
+    grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_output
+EOF
+    grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+done
+
+promoted_output="$(run_guard auto)"
+printf '%s\n' "$promoted_output"
+grep -F 'RECOVERY_STREAK=3/3' <<EOF >/dev/null
+$promoted_output
+EOF
+grep -F 'AUTO=LOCAL_DNS' <<EOF >/dev/null
+$promoted_output
+EOF
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== local failure still fails open on first unhealthy check ==="
+: >"$FAIL_LOCAL"
+failopen_output="$(run_guard auto)"
+printf '%s\n' "$failopen_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$failopen_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== missing local resolver target fails open ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EOF
+rm -f "$FAIL_LOCAL"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+missing_output="$(run_guard auto)"
+printf '%s\n' "$missing_output"
+grep -F 'AUTO=BOOTSTRAP_CONFIG_INVALID' <<EOF >/dev/null
+$missing_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+if run_guard promote >/tmp/asus-edge-dns-guard-invalid-target.out 2>&1; then
+    echo "FAIL: promotion succeeded without a configured local resolver target" >&2
+    exit 1
+fi
+grep -F 'PROMOTE=BLOCKED_INVALID_LOCAL_RESOLVER' \
+    /tmp/asus-edge-dns-guard-invalid-target.out >/dev/null
+rm -f /tmp/asus-edge-dns-guard-invalid-target.out
+
+echo "=== invalid local resolver target fails open ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=999.0.2.53
+EOF
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+invalid_output="$(run_guard auto)"
+printf '%s\n' "$invalid_output"
+grep -F 'AUTO=BOOTSTRAP_CONFIG_INVALID' <<EOF >/dev/null
+$invalid_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+echo "PASS: DNS Guard healthy, fail-open, explicit-target and idempotency policies"
+ "$RESOLV")" -eq 1 ]
+[ "$(grep -c '^nameserver ' "$RESOLV")" -eq 2 ]
+! grep -F 'nameserver 127.0.0.1' "$RESOLV" >/dev/null
+! grep -F 'nameserver 192.0.2.53' "$RESOLV" >/dev/null
+! grep -F 'nameserver 0.0.0.0' "$RESOLV" >/dev/null
+
+echo "=== bootstrap DNS falls through when higher-priority source has no valid candidates ==="
+printf '%s\n' '127.0.0.1 192.0.2.53 999.1.1.1' >"$BOOTSTRAP_PRIMARY"
+printf '%s\n' '8.8.8.8 8.8.8.8 1.1.1.1' >"$BOOTSTRAP_SECONDARY"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+secondary_output="$(run_guard fallback)"
+printf '%s\n' "$secondary_output"
+grep -F 'FALLBACK=PASS' <<EOF >/dev/null
+$secondary_output
+EOF
+grep -qx 'nameserver 8.8.8.8' "$RESOLV"
+grep -qx 'nameserver 1.1.1.1' "$RESOLV"
+[ "$(grep -c '^nameserver 8\.8\.8\.8
+: >"$FAIL_BOOTSTRAP"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+pending_output="$(run_guard breakglass-on bootstrap-not-ready)"
+printf '%s\n' "$pending_output"
+grep -F 'BREAKGLASS=ACTIVE_FALLBACK_PENDING' <<EOF >/dev/null
+$pending_output
+EOF
+[ -f "$FLAG" ]
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+
+rm -f "$FAIL_BOOTSTRAP"
+reassert_output="$(run_guard fallback)"
+printf '%s\n' "$reassert_output"
+grep -F 'FALLBACK=PASS' <<EOF >/dev/null
+$reassert_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+run_guard breakglass-off >/dev/null
+[ ! -f "$FLAG" ]
+
+echo "=== fail-open unhealthy path ==="
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+: >"$FAIL_LOCAL"
+
+unhealthy_output="$(run_guard auto)"
+printf '%s\n' "$unhealthy_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$unhealthy_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+echo "=== idempotent fallback ==="
+fallback_output="$(run_guard fallback)"
+printf '%s\n' "$fallback_output"
+grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
+$fallback_output
+EOF
+
+echo "=== failback hysteresis requires consecutive healthy checks ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+EOF
+rm -f "$FAIL_LOCAL" "$RECOVERY_STREAK_FILE"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+
+pending_one="$(run_guard auto)"
+printf '%s\n' "$pending_one"
+grep -F 'RECOVERY_STREAK=1/3' <<EOF >/dev/null
+$pending_one
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_one
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+
+pending_two="$(run_guard auto)"
+printf '%s\n' "$pending_two"
+grep -F 'RECOVERY_STREAK=2/3' <<EOF >/dev/null
+$pending_two
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_two
+EOF
+
+echo "=== unhealthy sample resets recovery streak immediately ==="
+: >"$FAIL_LOCAL"
+reset_output="$(run_guard auto)"
+printf '%s\n' "$reset_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$reset_output
+EOF
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+
+rm -f "$FAIL_LOCAL"
+
+for expected in 1 2; do
+    pending_output="$(run_guard auto)"
+    printf '%s\n' "$pending_output"
+    grep -F "RECOVERY_STREAK=$expected/3" <<EOF >/dev/null
+$pending_output
+EOF
+    grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_output
+EOF
+    grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+done
+
+promoted_output="$(run_guard auto)"
+printf '%s\n' "$promoted_output"
+grep -F 'RECOVERY_STREAK=3/3' <<EOF >/dev/null
+$promoted_output
+EOF
+grep -F 'AUTO=LOCAL_DNS' <<EOF >/dev/null
+$promoted_output
+EOF
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== local failure still fails open on first unhealthy check ==="
+: >"$FAIL_LOCAL"
+failopen_output="$(run_guard auto)"
+printf '%s\n' "$failopen_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$failopen_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== missing local resolver target fails open ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EOF
+rm -f "$FAIL_LOCAL"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+missing_output="$(run_guard auto)"
+printf '%s\n' "$missing_output"
+grep -F 'AUTO=BOOTSTRAP_CONFIG_INVALID' <<EOF >/dev/null
+$missing_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+if run_guard promote >/tmp/asus-edge-dns-guard-invalid-target.out 2>&1; then
+    echo "FAIL: promotion succeeded without a configured local resolver target" >&2
+    exit 1
+fi
+grep -F 'PROMOTE=BLOCKED_INVALID_LOCAL_RESOLVER' \
+    /tmp/asus-edge-dns-guard-invalid-target.out >/dev/null
+rm -f /tmp/asus-edge-dns-guard-invalid-target.out
+
+echo "=== invalid local resolver target fails open ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=999.0.2.53
+EOF
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+invalid_output="$(run_guard auto)"
+printf '%s\n' "$invalid_output"
+grep -F 'AUTO=BOOTSTRAP_CONFIG_INVALID' <<EOF >/dev/null
+$invalid_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+echo "PASS: DNS Guard healthy, fail-open, explicit-target and idempotency policies"
+ "$RESOLV")" -eq 1 ]
+[ "$(grep -c '^nameserver ' "$RESOLV")" -eq 2 ]
+
+echo "=== bootstrap DNS refuses all-local or invalid candidate sets ==="
+printf '%s\n' '127.0.0.1 192.0.2.53 0.0.0.0 999.1.1.1' >"$BOOTSTRAP_PRIMARY"
+printf '%s\n' '127.0.0.2 192.0.2.53' >"$BOOTSTRAP_SECONDARY"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+if rejected_output="$(run_guard fallback 2>&1)"; then
+    echo "FAIL: fallback accepted a bootstrap set without an independent resolver" >&2
+    exit 1
+fi
+printf '%s\n' "$rejected_output"
+grep -F 'FALLBACK=FAILED' <<EOF >/dev/null
+$rejected_output
+EOF
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+
+rm -f "$BOOTSTRAP_PRIMARY" "$BOOTSTRAP_SECONDARY"
 
 echo "=== break-glass arms even before bootstrap DNS is available ==="
 : >"$FAIL_BOOTSTRAP"

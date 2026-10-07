@@ -166,14 +166,55 @@ resolver_is_local() {
     ' "$RESOLV_CONF"
 }
 
+bootstrap_dns_candidate_valid() {
+    candidate="$1"
+
+    valid_ipv4 "$candidate" || return 1
+
+    case "$candidate" in
+        127.*|0.0.0.0)
+            return 1
+            ;;
+    esac
+
+    if [ -n "$EDGE_DNS_LOCAL_RESOLVER_IP" ] &&
+       [ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
 bootstrap_dns() {
     for key in wan0_dns_r wan0_dns wan_dns_r wan_dns; do
         value="$(nvram get "$key" 2>/dev/null)"
+        [ -n "$value" ] || continue
 
-        if [ -n "$value" ]; then
-            printf '%s\n' "$value"
+        accepted=""
+
+        for candidate in $value; do
+            if ! bootstrap_dns_candidate_valid "$candidate"; then
+                log "WARNING: rejected non-independent WAN bootstrap DNS candidate from $key: $candidate"
+                continue
+            fi
+
+            case " $accepted " in
+                *" $candidate "*)
+                    ;;
+                *)
+                    accepted="$accepted $candidate"
+                    ;;
+            esac
+        done
+
+        if [ -n "$accepted" ]; then
+            for candidate in $accepted; do
+                printf '%s\n' "$candidate"
+            done
             return 0
         fi
+
+        log "WARNING: no valid independent WAN bootstrap DNS candidates in $key"
     done
 
     return 1
@@ -270,15 +311,26 @@ write_resolver() {
 
     case "$mode" in
         local)
-            local_resolver_config_valid || return 1
+            if ! local_resolver_config_valid; then
+                rm -f "$tmp"
+                rmdir "$tmp_dir" 2>/dev/null || true
+                return 1
+            fi
 
             printf 'nameserver %s\n' \
-                "$EDGE_DNS_LOCAL_RESOLVER_IP" >"$tmp" ||
+                "$EDGE_DNS_LOCAL_RESOLVER_IP" >"$tmp" || {
+                rm -f "$tmp"
+                rmdir "$tmp_dir" 2>/dev/null || true
                 return 1
+            }
             ;;
 
         bootstrap)
-            dns_list="$(bootstrap_dns)" || return 1
+            dns_list="$(bootstrap_dns)" || {
+                rm -f "$tmp"
+                rmdir "$tmp_dir" 2>/dev/null || true
+                return 1
+            }
 
             : >"$tmp" || return 1
 
@@ -515,7 +567,7 @@ auto_policy() {
 }
 
 show_status() {
-    echo "=== ASUS EDGE DNS GUARD v3.1 ==="
+    echo "=== ASUS EDGE DNS GUARD v3.2 ==="
     echo "resolver=$RESOLV_CONF"
     if local_resolver_config_valid; then
         echo "local_resolver=$EDGE_DNS_LOCAL_RESOLVER_IP"
