@@ -274,7 +274,7 @@ See the
 [sanitized issue #152 validation](evidence/2026-10-06/issue-152-android-pihole-tailscale-validation.md),
 [DNS Guard validation](evidence/2026-10-06/dns-guard-v3.1-production-validation.md),
 and the
-[DNS bootstrap resilience case study](docs/dns-guard-cold-boot-case-study.md).
+[DNS bootstrap deadlock incident case study](docs/case-studies/dns-bootstrap-deadlock-dns-guard-v3.1.md).
 
 On **2026-09-25**, a fresh read-only router checkpoint reconfirmed the reference deployment on GNUton `3004.388.11_1-gnuton1_tuf`: both SSD filesystems and swap were active, core services were running, direct Unbound resolution returned the DNSSEC `AD` flag, and the project health check completed with `0 failure(s), 0 warning(s)` and `HEALTHCHECK_RC=0`. Controlled Fedora tests also produced exact production counter deltas for LAN UDP/TCP 53 interception, direct TCP/853 rejection and Tailscale UDP/53 interception. A same-day Exit Node retest was deliberately not promoted into new datapath evidence because the first flow ran without an exit node selected and a later router capture attempt did not start; the 2026-09-23 fixed-flow capture remains authoritative for the current-firmware Exit Node claim. See the [sanitized checkpoint](evidence/2026-09-25/router-live-checkpoint.md) and [dated worklog](docs/worklog/2026-09-25.md).
 

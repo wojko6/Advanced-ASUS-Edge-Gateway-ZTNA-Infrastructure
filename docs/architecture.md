@@ -69,6 +69,10 @@ observed on 2026-10-06. The fail-open behavior intentionally prioritizes router
 DNS availability over Pi-hole filtering while the local resolver stack is
 unhealthy.
 
+The complete incident narrative, including the user-visible symptom that normal
+websites stopped opening while IP connectivity remained available, is documented
+in the [DNS bootstrap deadlock incident case study](case-studies/dns-bootstrap-deadlock-dns-guard-v3.1.md).
+
 ### DNS analytics boundary
 
 Issue #108 is a live-validated **off-router observability extension**, not a

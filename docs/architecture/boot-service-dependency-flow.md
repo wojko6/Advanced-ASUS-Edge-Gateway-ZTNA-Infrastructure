@@ -85,4 +85,4 @@ flowchart TD
 - [Clean startup and persistence evidence — 2026-09-27](../../evidence/2026-09-27/issue-66-clean-startup-persistence-evidence.md)
 - [Pi-hole main-LAN cutover and final reboot evidence — 2026-09-28](../../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md)
 - [DNS Guard v3.1 production validation — 2026-10-06](../../evidence/2026-10-06/dns-guard-v3.1-production-validation.md)
-- [DNS bootstrap deadlock and fail-open resolver recovery](../dns-guard-cold-boot-case-study.md)
+- [DNS bootstrap deadlock incident case study](../case-studies/dns-bootstrap-deadlock-dns-guard-v3.1.md)
