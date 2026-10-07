@@ -1,20 +1,34 @@
 # Architecture
 
-The current architecture is documented as a **source-controlled canonical diagram set** rather than a single raster image. Each diagram has one purpose, explicit claim boundaries and links back to current implementation or dated live evidence.
+The current architecture is documented as a **source-controlled canonical network-design set** rather than a single raster image. The set now includes physical topology, addressing/trust-zone ownership, logical datapaths, availability/failure-domain boundaries and Layer-2 control applicability. Each document has one purpose, explicit claim boundaries and links back to current implementation or dated live evidence.
 
-## Canonical architecture diagrams
+Start with the [Network design documentation index](network-design.md).
 
-1. [High-Level Architecture and Trust Boundaries](architecture/high-level-trust-boundaries.md)  
+## Canonical architecture documents
+
+1. [Physical Topology](architecture/physical-topology.md)  
+   Hardware roles, attachment relationships, current single points of failure and the absence of a separate access/distribution or OOB layer.
+
+2. [High-Level Architecture and Trust Boundaries](architecture/high-level-trust-boundaries.md)  
    Identity/policy, Tailscale overlay, project-owned firewall boundary, router management, selected LAN forwarding and optional exit-node egress.
 
-2. [DNS Enforcement Flow](architecture/dns-enforcement-flow.md)  
+3. [Addressing and Trust-Zone Plan](architecture/addressing-and-zones.md)  
+   Current public IPAM/service-alias ownership plus the explicitly planned Trusted/IoT/Guest zone model.
+
+4. [DNS Enforcement Flow](architecture/dns-enforcement-flow.md)  
    Exact LAN/br0 and Tailscale/tailscale0 classic-DNS paths, EDGE_LAN_DNS_PREROUTING, EDGE_TS_PREROUTING, dnsmasq, Unbound, direct LAN DoT/TCP 853 rejection and explicit encrypted-DNS scope limits.
 
-3. [Tailscale Management and Exit-Node Flow](architecture/tailscale-management-exit-node-flow.md)  
+5. [Tailscale Management and Exit-Node Flow](architecture/tailscale-management-exit-node-flow.md)  
    Source-scoped management, default-deny behavior, selected LAN forwarding, EDGE_TS_FORWARD, WAN egress and platform-owned NAT.
 
-4. [Boot and Service Dependency Flow](architecture/boot-service-dependency-flow.md)  
+6. [Boot and Service Dependency Flow](architecture/boot-service-dependency-flow.md)  
    Current reference post-mount/AMTM ordering, pre-Entware swap evidence, repository services-start recovery behavior, DNS Guard v3.1 bootstrap/steady-state resolver policy, firewall apply and WAN-triggered Tailscale restart.
+
+7. [Availability, Redundancy and Single Points of Failure](architecture/availability-and-redundancy.md)  
+   Explicit separation between recoverability and high availability, plus applicability of FHRP/LACP/redundant-WAN controls.
+
+8. [L2 and Network-Access Security Applicability](architecture/l2-security-applicability.md)  
+   Current/deferred/N/A treatment of VLANs, DHCP Snooping, DAI, Port Security, STP protections, 802.1X, RADIUS and TACACS+.
 
 The old [Architecture.png](images/Architecture.png) is retained only as a historical/illustrative artifact. It is not a source of truth for current ports, interfaces, chain ownership or validation status. See [docs/images/README.md](images/README.md).
 
@@ -120,6 +134,7 @@ Current architecture claims are anchored to dated evidence:
 - **2026-10-06:** the reference Tailscale runtime was upgraded from the historical 1.102.3 checkpoint to checksum-verified official ARM 1.103.375 unstable/dev; controlled daemon restart and later full cold boot passed.
 - **2026-10-06:** DNS Guard v3.1 was production-validated with fail-open bootstrap DNS, conditional Pi-hole promotion, sticky break-glass, watchdog recovery and full cold boot.
 - **2026-10-06:** Android LTE with the ASUS selected as exit node resolved a fresh unique hostname through the router system resolver to the local Pi-hole alias and Unbound.
+- **2026-10-07:** a multi-vantage port-exposure audit validated LAN/Tailscale trust boundaries, source-specific Fedora syslog access, a genuine mobile-Internet public-IPv4 TCP probe with all selected tested ports filtered/time-out, and native WAN IPv6 disabled with no WAN IPv6 address/default route. External WAN UDP remains explicitly untested.
 
 These dated results do not establish universal firmware compatibility or enforcement outside their stated protocol/interface scope. Time-sensitive project status remains governed by [PROJECT-STATUS.md](../PROJECT-STATUS.md) and the dated [evidence](../evidence/) tree.
 
