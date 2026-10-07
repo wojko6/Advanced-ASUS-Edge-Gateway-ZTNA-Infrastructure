@@ -22,6 +22,7 @@ N/A, PLANNED or NOT VALIDATED instead of implying that it exists.
 
 ## 2. Physical topology and hardware boundary
 
+- [Hardware and infrastructure inventory](hardware-inventory.md)
 - [Physical topology](architecture/physical-topology.md)
 - [High-level architecture and trust boundaries](architecture/high-level-trust-boundaries.md)
 
