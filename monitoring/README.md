@@ -47,7 +47,7 @@ sudo loginctl enable-linger "$USER"
 
 Security boundary: no private SSH key, client identifiers, WAN address or
 Tailscale identity belongs in this directory. See
-[the case study](../docs/asus-tuf-ax5400-observability-case-study.md) and
+[the case study](../docs/case-studies/asus-tuf-ax5400-observability-case-study.md) and
 [sanitized evidence](../evidence/2026-09-27/observability-stack-validation.md).
 
 
@@ -109,7 +109,7 @@ An email contact point is provisioned from
 [`grafana/provisioning/alerting/asus-email-contact.yml`](grafana/provisioning/alerting/asus-email-contact.yml).
 SMTP credentials remain local to the Fedora host and are not stored in Git.
 The WAN-speed rule sends both firing and resolved notifications through this
-contact point.
+contact point. This proves the e-mail transport/contact point for that bounded rule path; it does **not** yet prove the complete severity-routing baseline. Issue #178 still owns warning/critical policy routing, RouterCloud Backup BAD coverage, grouping/anti-flap validation and optional Telegram/mobile escalation.
 
 See [the original alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md)
 and the
