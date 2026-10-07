@@ -12,7 +12,7 @@ This project deliberately separates current state, implementation, live evidence
 
 1. **`PROJECT-STATUS.md`** — current project phase, accepted baseline, open/closed findings and explicit deployment boundaries.
 2. **Dated `evidence/` artifacts** — proof for specific observed claims under the documented date, device, method and limitations. Evidence proves only the claim it records; it does not automatically mean the same code/configuration is still deployed.
-3. **Current operational documentation** — `docs/operations.md`, `docs/deployment-pl.md`, `docs/requirements.md`, security/firewall/testing documentation and current architecture documentation. The requirements map records test ownership and limits; it must follow current status and dated observations when deployment state changes.
+3. **Current operational/network-design documentation** — `docs/network-design.md`, `docs/hardware-inventory.md`, `docs/operations.md`, `docs/deployment-pl.md`, `docs/requirements.md`, security/firewall/testing documentation and current architecture documentation. The network-design index organizes the current L1-L7 documentation; the requirements map records test ownership and limits. Both must follow current status and dated observations when deployment state changes.
 4. **`README.md`** — public summary derived from the current status and supporting evidence.
 5. **`docs/roadmap.md`** — planned or candidate work; a roadmap item is not implemented or validated unless another current source says so.
 6. **`docs/worklog/`** — dated public engineering chronology. A worklog explains what happened; it is not a substitute for evidence.
