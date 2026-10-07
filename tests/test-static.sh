@@ -685,7 +685,10 @@ for dns_guard_runtime_guard in \
     'EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock' \
     'flock -x 9' \
     'secure_temp_dir()' \
-    'query_output="$('
+    'query_output="$(' \
+    'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3' \
+    'RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"' \
+    'AUTO=BOOTSTRAP_RECOVERY_PENDING'
 do
     grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
         echo "FAIL: DNS Guard concurrency/temp-file hardening missing: $dns_guard_runtime_guard" >&2
@@ -721,6 +724,7 @@ for dns_guard_guard in \
     'router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755' \
     'router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700' \
     'EDGE_DNS_GUARD_WATCHDOG="1"' \
+    'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD="3"' \
     'configure_dns_guard_watchdog()' \
     'cru a AsusEdgeDNSGuard' \
     'DNS_GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"'

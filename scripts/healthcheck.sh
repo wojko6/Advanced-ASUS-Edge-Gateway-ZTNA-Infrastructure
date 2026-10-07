@@ -85,6 +85,7 @@ fi
 : "${EDGE_EXPECT_HTTP_AUTOLOGOUT:=}"
 : "${EDGE_DNS_LOCAL_RESOLVER_IP:=}"
 : "${EDGE_DNS_GUARD_WATCHDOG:=1}"
+: "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
 
 DNS_GUARD_BIN="${EDGE_DNS_GUARD_BIN:-/jffs/addons/asus-edge/bin/dns-guard}"
 DNS_GUARD_BREAKGLASS_FLAG="${EDGE_DNS_BREAKGLASS_FLAG:-/jffs/addons/asus-edge/state/dns-breakglass}"
@@ -191,6 +192,15 @@ valid_boolean "$EDGE_BLOCK_LAN_DOT" || fail "invalid EDGE_BLOCK_LAN_DOT value: $
 valid_boolean "$EDGE_REQUIRE_WAN_WEBUI_DISABLED" || fail "invalid EDGE_REQUIRE_WAN_WEBUI_DISABLED value: $EDGE_REQUIRE_WAN_WEBUI_DISABLED"
 valid_boolean "$EDGE_REQUIRE_ACCESS_RESTRICTION" || fail "invalid EDGE_REQUIRE_ACCESS_RESTRICTION value: $EDGE_REQUIRE_ACCESS_RESTRICTION"
 valid_boolean "$EDGE_DNS_GUARD_WATCHDOG" || fail "invalid EDGE_DNS_GUARD_WATCHDOG value: $EDGE_DNS_GUARD_WATCHDOG"
+case "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" in
+    ''|*[!0-9]*)
+        fail "invalid EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD value: $EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+        ;;
+    *)
+        [ "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" -gt 0 ] 2>/dev/null ||
+            fail "invalid EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD value: $EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+        ;;
+esac
 [ -z "$EDGE_EXPECT_HTTP_AUTOLOGOUT" ] || valid_http_autologout "$EDGE_EXPECT_HTTP_AUTOLOGOUT" || fail "invalid EDGE_EXPECT_HTTP_AUTOLOGOUT value: $EDGE_EXPECT_HTTP_AUTOLOGOUT"
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"

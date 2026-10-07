@@ -1,5 +1,5 @@
 #!/bin/sh
-# ASUS Edge DNS Guard v3.1
+# ASUS Edge DNS Guard v3.2
 # Fail-open runtime resolver controller.
 
 BASE_PATH="/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -36,6 +36,8 @@ RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
 STATE_DIR="${EDGE_DNS_STATE_DIR:-/jffs/addons/asus-edge/state}"
 BREAKGLASS_FLAG="${EDGE_DNS_BREAKGLASS_FLAG:-$STATE_DIR/dns-breakglass}"
 LOCK_FILE="${EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock}"
+RUNTIME_STATE_DIR="${EDGE_DNS_RUNTIME_STATE_DIR:-/tmp/asus-edge-dns-guard}"
+RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"
 
 log() {
     logger -t asus-edge-dns "$*"
@@ -54,9 +56,22 @@ die() {
 
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_DNS_LOCAL_RESOLVER_IP:=}"
+: "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
+
+case "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" in
+    ''|*[!0-9]*)
+        die "EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD must be a positive integer"
+        ;;
+esac
+
+[ "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" -gt 0 ] ||
+    die "EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD must be greater than zero"
 
 mkdir -p "$STATE_DIR" || die "cannot create $STATE_DIR"
 chmod 700 "$STATE_DIR" 2>/dev/null || true
+
+mkdir -p "$RUNTIME_STATE_DIR" || die "cannot create $RUNTIME_STATE_DIR"
+chmod 700 "$RUNTIME_STATE_DIR" 2>/dev/null || true
 
 executable_exists flock >/dev/null 2>&1 ||
     die "flock not found; cannot serialize DNS Guard state transitions"
@@ -80,6 +95,75 @@ secure_temp_dir() {
     done
 
     return 1
+}
+
+recovery_streak_read() {
+    [ -r "$RECOVERY_STREAK_FILE" ] || {
+        printf '%s\n' 0
+        return 0
+    }
+
+    streak="$(cat "$RECOVERY_STREAK_FILE" 2>/dev/null)" || streak=0
+
+    case "$streak" in
+        ''|*[!0-9]*)
+            printf '%s\n' 0
+            ;;
+        *)
+            printf '%s\n' "$streak"
+            ;;
+    esac
+}
+
+recovery_streak_write() {
+    streak="$1"
+    tmp="$RECOVERY_STREAK_FILE.tmp.$"
+
+    umask 077
+    printf '%s\n' "$streak" >"$tmp" || {
+        rm -f "$tmp"
+        return 1
+    }
+
+    chmod 600 "$tmp" 2>/dev/null || true
+
+    mv -f "$tmp" "$RECOVERY_STREAK_FILE" || {
+        rm -f "$tmp"
+        return 1
+    }
+
+    return 0
+}
+
+recovery_streak_reset() {
+    rm -f "$RECOVERY_STREAK_FILE" 2>/dev/null || true
+}
+
+recovery_streak_increment() {
+    streak="$(recovery_streak_read)"
+    streak=$((streak + 1))
+
+    if [ "$streak" -gt "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" ]; then
+        streak="$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+    fi
+
+    recovery_streak_write "$streak" || return 1
+    printf '%s\n' "$streak"
+}
+
+resolver_is_local() {
+    [ -r "$RESOLV_CONF" ] || return 1
+
+    awk -v local="$EDGE_DNS_LOCAL_RESOLVER_IP" '
+        $1 == "nameserver" {
+            count++
+            if ($2 == local)
+                local_count++
+        }
+        END {
+            exit !(count == 1 && local_count == 1)
+        }
+    ' "$RESOLV_CONF"
 }
 
 bootstrap_dns() {
@@ -236,25 +320,7 @@ write_resolver() {
     return 0
 }
 
-promote_local() {
-    if ! local_resolver_config_valid; then
-        echo "PROMOTE=BLOCKED_INVALID_LOCAL_RESOLVER"
-        log "ERROR: local DNS resolver target is missing or invalid"
-        return 1
-    fi
-
-    if [ -f "$BREAKGLASS_FLAG" ]; then
-        echo "PROMOTE=BLOCKED_BREAKGLASS"
-        log "local DNS promotion blocked by active break-glass"
-        return 1
-    fi
-
-    if ! full_local_dns_ready; then
-        echo "PROMOTE=BLOCKED_UNHEALTHY"
-        log "local DNS promotion blocked because DNS path is unhealthy"
-        return 1
-    fi
-
+promote_local_ready() {
     if [ -f "$BREAKGLASS_FLAG" ]; then
         echo "PROMOTE=BLOCKED_BREAKGLASS"
         log "local DNS promotion aborted: break-glass became active"
@@ -282,6 +348,28 @@ promote_local() {
     esac
 }
 
+promote_local() {
+    if ! local_resolver_config_valid; then
+        echo "PROMOTE=BLOCKED_INVALID_LOCAL_RESOLVER"
+        log "ERROR: local DNS resolver target is missing or invalid"
+        return 1
+    fi
+
+    if [ -f "$BREAKGLASS_FLAG" ]; then
+        echo "PROMOTE=BLOCKED_BREAKGLASS"
+        log "local DNS promotion blocked by active break-glass"
+        return 1
+    fi
+
+    if ! full_local_dns_ready; then
+        echo "PROMOTE=BLOCKED_UNHEALTHY"
+        log "local DNS promotion blocked because DNS path is unhealthy"
+        return 1
+    fi
+
+    promote_local_ready
+}
+
 fallback_bootstrap() {
     write_resolver bootstrap
     rc=$?
@@ -306,6 +394,7 @@ fallback_bootstrap() {
 
 breakglass_on() {
     reason="${1:-manual}"
+    recovery_streak_reset
     tmp="${BREAKGLASS_FLAG}.tmp.$$"
 
     umask 077
@@ -360,6 +449,8 @@ breakglass_off() {
 
 auto_policy() {
     if [ -f "$BREAKGLASS_FLAG" ]; then
+        recovery_streak_reset
+
         if fallback_bootstrap; then
             echo "AUTO=BOOTSTRAP_BREAKGLASS"
             return 0
@@ -369,14 +460,24 @@ auto_policy() {
     fi
 
     if ! local_resolver_config_valid; then
+        recovery_streak_reset
         log "ERROR: local DNS resolver target is missing or invalid; keeping bootstrap DNS"
         fallback_bootstrap || return 1
         echo "AUTO=BOOTSTRAP_CONFIG_INVALID"
         return 0
     fi
 
-    if full_local_dns_ready; then
-        if promote_local; then
+    if ! full_local_dns_ready; then
+        recovery_streak_reset
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP_UNHEALTHY"
+        return 0
+    fi
+
+    if resolver_is_local; then
+        recovery_streak_reset
+
+        if promote_local_ready; then
             echo "AUTO=LOCAL_DNS"
             return 0
         fi
@@ -386,8 +487,30 @@ auto_policy() {
         return 0
     fi
 
+    streak="$(recovery_streak_increment)" || {
+        log "ERROR: failed to update DNS recovery hysteresis state"
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP_HYSTERESIS_STATE_ERROR"
+        return 0
+    }
+
+    echo "RECOVERY_STREAK=$streak/$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+
+    if [ "$streak" -lt "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" ]; then
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP_RECOVERY_PENDING"
+        return 0
+    fi
+
+    if promote_local_ready; then
+        recovery_streak_reset
+        echo "AUTO=LOCAL_DNS"
+        return 0
+    fi
+
+    recovery_streak_reset
     fallback_bootstrap || return 1
-    echo "AUTO=BOOTSTRAP_UNHEALTHY"
+    echo "AUTO=BOOTSTRAP"
     return 0
 }
 
@@ -402,6 +525,8 @@ show_status() {
         echo "LOCAL_RESOLVER_CONFIG=FAIL"
     fi
     echo "unbound_port=$EDGE_UNBOUND_PORT"
+    echo "failback_success_threshold=$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+    echo "recovery_streak=$(recovery_streak_read)/$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
     echo
 
     if [ -f "$BREAKGLASS_FLAG" ]; then
@@ -457,6 +582,7 @@ case "${1:-status}" in
         promote_local
         ;;
     fallback)
+        recovery_streak_reset
         fallback_bootstrap
         ;;
     breakglass-on)

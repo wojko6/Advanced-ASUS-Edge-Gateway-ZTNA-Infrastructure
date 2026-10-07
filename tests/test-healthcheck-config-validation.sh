@@ -46,6 +46,8 @@ expect_rejected EDGE_PRINTER_LAN_IP '192.168.50.300' 'invalid printer LAN IPv4: 
 expect_rejected EDGE_PRINTER_TCP_PORTS 0 'invalid printer port: 0'
 expect_rejected EDGE_REQUIRE_SWAP invalid 'invalid EDGE_REQUIRE_SWAP value: invalid'
 expect_rejected EDGE_DNS_GUARD_WATCHDOG maybe 'invalid EDGE_DNS_GUARD_WATCHDOG value: maybe'
+expect_rejected EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD 0 'invalid EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD value: 0'
+expect_rejected EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD nope 'invalid EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD value: nope'
 expect_rejected EDGE_DNS_LOCAL_RESOLVER_IP '999.0.2.53' 'invalid EDGE_DNS_LOCAL_RESOLVER_IP value: 999.0.2.53'
 expect_rejected EDGE_TS_NETFILTER_MODE on 'EDGE_TS_NETFILTER_MODE must be off'
 

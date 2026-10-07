@@ -11,7 +11,9 @@ MOCK_BIN="$TMP_DIR/bin"
 CONFIG="$TMP_DIR/asus-edge.conf"
 RESOLV="$TMP_DIR/resolv.conf"
 STATE_DIR="$TMP_DIR/state"
+RUNTIME_STATE_DIR="$TMP_DIR/runtime"
 FLAG="$STATE_DIR/dns-breakglass"
+RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"
 FAIL_LOCAL="$TMP_DIR/fail-local"
 FAIL_BOOTSTRAP="$TMP_DIR/fail-bootstrap"
 BUSYBOX_MOCK="$TMP_DIR/busybox"
@@ -19,11 +21,12 @@ QUERY_ACTIVE="$TMP_DIR/query-active"
 QUERY_STARTED="$TMP_DIR/query-started"
 QUERY_COLLISION="$TMP_DIR/query-collision"
 
-mkdir -p "$MOCK_BIN" "$STATE_DIR"
+mkdir -p "$MOCK_BIN" "$STATE_DIR" "$RUNTIME_STATE_DIR"
 
 cat >"$CONFIG" <<'EOF'
 EDGE_UNBOUND_PORT=53535
 EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=1
 EOF
 
 cat >"$MOCK_BIN/nvram" <<EOF
@@ -93,7 +96,7 @@ EOF
 chmod +x "$MOCK_BIN/nvram" "$MOCK_BIN/pidof" "$MOCK_BIN/netstat"     "$MOCK_BIN/logger" "$BUSYBOX_MOCK"
 
 run_guard() {
-    EDGE_CONFIG_FILE="$CONFIG"     EDGE_RESOLV_CONF="$RESOLV"     EDGE_DNS_STATE_DIR="$STATE_DIR"     EDGE_DNS_BREAKGLASS_FLAG="$FLAG"     EDGE_TEST_PATH_PREFIX="$MOCK_BIN"     EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK"         sh "$GUARD" "$@"
+    EDGE_CONFIG_FILE="$CONFIG"     EDGE_RESOLV_CONF="$RESOLV"     EDGE_DNS_STATE_DIR="$STATE_DIR"     EDGE_DNS_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR"     EDGE_DNS_BREAKGLASS_FLAG="$FLAG"     EDGE_TEST_PATH_PREFIX="$MOCK_BIN"     EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK"         sh "$GUARD" "$@"
 }
 
 printf '%s\n'     'nameserver 9.9.9.9'     'nameserver 149.112.112.112'     >"$RESOLV"
@@ -204,6 +207,80 @@ printf '%s\n' "$fallback_output"
 grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
 $fallback_output
 EOF
+
+echo "=== failback hysteresis requires consecutive healthy checks ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+EOF
+rm -f "$FAIL_LOCAL" "$RECOVERY_STREAK_FILE"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+
+pending_one="$(run_guard auto)"
+printf '%s\n' "$pending_one"
+grep -F 'RECOVERY_STREAK=1/3' <<EOF >/dev/null
+$pending_one
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_one
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+
+pending_two="$(run_guard auto)"
+printf '%s\n' "$pending_two"
+grep -F 'RECOVERY_STREAK=2/3' <<EOF >/dev/null
+$pending_two
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_two
+EOF
+
+echo "=== unhealthy sample resets recovery streak immediately ==="
+: >"$FAIL_LOCAL"
+reset_output="$(run_guard auto)"
+printf '%s\n' "$reset_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$reset_output
+EOF
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+
+rm -f "$FAIL_LOCAL"
+
+for expected in 1 2; do
+    pending_output="$(run_guard auto)"
+    printf '%s\n' "$pending_output"
+    grep -F "RECOVERY_STREAK=$expected/3" <<EOF >/dev/null
+$pending_output
+EOF
+    grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$pending_output
+EOF
+    grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+done
+
+promoted_output="$(run_guard auto)"
+printf '%s\n' "$promoted_output"
+grep -F 'RECOVERY_STREAK=3/3' <<EOF >/dev/null
+$promoted_output
+EOF
+grep -F 'AUTO=LOCAL_DNS' <<EOF >/dev/null
+$promoted_output
+EOF
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== local failure still fails open on first unhealthy check ==="
+: >"$FAIL_LOCAL"
+failopen_output="$(run_guard auto)"
+printf '%s\n' "$failopen_output"
+grep -F 'AUTO=BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$failopen_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
 
 echo "=== missing local resolver target fails open ==="
 cat >"$CONFIG" <<'EOF'
