@@ -430,6 +430,7 @@ platform.
 - Golden configuration, reproducible restore, and quarterly recovery exercises.
 - Policy-as-code validation for Tailscale and ASUS Edge policy changes.
 - Hardware/ISP failure tests, measured RTO/RPO, and a documented incident runbook.
+- Power-continuity / UPS assessment for the gateway, ISP handoff/CPE and Fedora monitoring host; do not claim uninterrupted operation until runtime and recovery behavior are measured.
 
 The TUF-AX5400 can remain an isolated secondary lab/reference node after the
 validated gateway role moves to the RT-BE88U.
