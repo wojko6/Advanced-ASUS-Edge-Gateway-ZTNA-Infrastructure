@@ -13,6 +13,7 @@ RESOLV="$TMP_DIR/resolv.conf"
 STATE_DIR="$TMP_DIR/state"
 FLAG="$STATE_DIR/dns-breakglass"
 FAIL_LOCAL="$TMP_DIR/fail-local"
+FAIL_BOOTSTRAP="$TMP_DIR/fail-bootstrap"
 BUSYBOX_MOCK="$TMP_DIR/busybox"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR"
@@ -22,12 +23,14 @@ EDGE_UNBOUND_PORT=53535
 EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
 EOF
 
-cat >"$MOCK_BIN/nvram" <<'EOF'
+cat >"$MOCK_BIN/nvram" <<EOF
 #!/bin/sh
-[ "$1" = "get" ] || exit 1
-case "$2" in
+[ "\$1" = "get" ] || exit 1
+case "\$2" in
     ntp_ready) echo 1 ;;
-    wan0_dns_r) echo "9.9.9.9 149.112.112.112" ;;
+    wan0_dns_r)
+        [ -f "$FAIL_BOOTSTRAP" ] || echo "9.9.9.9 149.112.112.112"
+        ;;
     wan0_dns|wan_dns_r|wan_dns) echo "" ;;
     *) echo "" ;;
 esac
@@ -113,6 +116,30 @@ if run_guard promote >/tmp/asus-edge-dns-guard-promote-test.out 2>&1; then
 fi
 grep -F 'PROMOTE=BLOCKED_BREAKGLASS' /tmp/asus-edge-dns-guard-promote-test.out >/dev/null
 rm -f /tmp/asus-edge-dns-guard-promote-test.out
+
+run_guard breakglass-off >/dev/null
+[ ! -f "$FLAG" ]
+
+echo "=== break-glass arms even before bootstrap DNS is available ==="
+: >"$FAIL_BOOTSTRAP"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+pending_output="$(run_guard breakglass-on bootstrap-not-ready)"
+printf '%s\n' "$pending_output"
+grep -F 'BREAKGLASS=ACTIVE_FALLBACK_PENDING' <<EOF >/dev/null
+$pending_output
+EOF
+[ -f "$FLAG" ]
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+
+rm -f "$FAIL_BOOTSTRAP"
+reassert_output="$(run_guard fallback)"
+printf '%s\n' "$reassert_output"
+grep -F 'FALLBACK=PASS' <<EOF >/dev/null
+$reassert_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
 
 run_guard breakglass-off >/dev/null
 [ ! -f "$FLAG" ]

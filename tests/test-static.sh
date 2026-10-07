@@ -705,6 +705,7 @@ if grep -F 'nameserver 127.0.0.1' "$REPO_DIR/router/scripts/wan-event-handler" >
 fi
 
 sh "$REPO_DIR/tests/test-dns-guard.sh"
+sh "$REPO_DIR/tests/test-dns-breakglass.sh"
 sh "$REPO_DIR/tests/test-wan-event-handler.sh"
 
 

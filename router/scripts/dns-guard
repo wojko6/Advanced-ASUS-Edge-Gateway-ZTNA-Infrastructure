@@ -274,8 +274,9 @@ breakglass_on() {
     log "DNS break-glass activated: $reason"
 
     if ! fallback_bootstrap; then
-        echo "BREAKGLASS=ACTIVE_FALLBACK_FAILED"
-        return 1
+        echo "BREAKGLASS=ACTIVE_FALLBACK_PENDING"
+        log "WARNING: DNS break-glass is active but WAN bootstrap DNS is not available yet"
+        return 0
     fi
 
     echo "BREAKGLASS=ACTIVE"
