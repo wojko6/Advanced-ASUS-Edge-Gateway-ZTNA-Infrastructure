@@ -49,12 +49,16 @@ run_metrics() {
         sh "$GUARD" metrics
 }
 
+printf '%s\n' '0' >"$RUNTIME_STATE_DIR/bootstrap-dns-healthy"
+printf '%s\n' '1700000001' >"$RUNTIME_STATE_DIR/bootstrap-dns-last-check-epoch"
 printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
 bootstrap_one="$(run_metrics)"
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_mode_bootstrap 1'
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_mode_local 0'
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_state_valid 1'
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_breakglass_active 0'
+printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_bootstrap_dns_healthy 0'
+printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds 1700000001'
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 1'
 fallback_since="$(printf '%s\n' "$bootstrap_one" | awk '$1=="asus_edge_dns_guard_fallback_since_timestamp_seconds"{print $2}')"
 last_transition="$(printf '%s\n' "$bootstrap_one" | awk '$1=="asus_edge_dns_guard_last_transition_timestamp_seconds"{print $2}')"
