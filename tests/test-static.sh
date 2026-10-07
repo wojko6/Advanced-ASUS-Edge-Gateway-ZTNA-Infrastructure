@@ -691,7 +691,10 @@ for dns_guard_runtime_guard in \
     'AUTO=BOOTSTRAP_RECOVERY_PENDING' \
     'bootstrap_dns_candidate_valid()' \
     '127.*|0.0.0.0' \
-    '[ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]'
+    '[ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]' \
+    'dns_probe_path_ready one.one.one.one "1.1.1.1 1.0.0.1"' \
+    'dns_probe_path_ready dns.google "8.8.8.8 8.8.4.4"' \
+    'dig +tcp +time=2 +tries=1 +short'
 do
     grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
         echo "FAIL: DNS Guard concurrency/temp-file hardening missing: $dns_guard_runtime_guard" >&2
@@ -701,6 +704,11 @@ done
 
 if grep -F '/tmp/asus-edge-dns-guard-query.log' "$REPO_DIR/router/scripts/dns-guard" >/dev/null; then
     echo "FAIL: DNS Guard still uses predictable query output file" >&2
+    exit 1
+fi
+
+if grep -E 'sslip\.io|edge-health-.*date \+%s' "$REPO_DIR/router/scripts/dns-guard" >/dev/null; then
+    echo "FAIL: DNS Guard still uses unique public DNS probe names" >&2
     exit 1
 fi
 

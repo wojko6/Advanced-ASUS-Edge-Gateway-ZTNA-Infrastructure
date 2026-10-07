@@ -266,10 +266,61 @@ pihole_listener_ready() {
 
     netstat -ln 2>/dev/null |
         awk -v endpoint="$EDGE_DNS_LOCAL_RESOLVER_IP:53" '
-            $4 == endpoint { found=1 }
-            END { exit !found }
+            $4 == endpoint && $1 ~ /^udp/ { udp=1 }
+            $4 == endpoint && $1 ~ /^tcp/ { tcp=1 }
+            END { exit !(udp && tcp) }
         ' ||
         return 1
+
+    return 0
+}
+
+probe_output_has_expected_ipv4() {
+    probe_output="$1"
+    expected_ipv4s="$2"
+
+    for expected_ipv4 in $expected_ipv4s; do
+        printf '%s\n' "$probe_output" |
+            grep -F "$expected_ipv4" >/dev/null 2>&1 &&
+            return 0
+    done
+
+    return 1
+}
+
+dns_probe_udp_ready() {
+    probe_name="$1"
+    expected_ipv4s="$2"
+
+    query_output="$(
+        "$BUSYBOX" nslookup "$probe_name" "$EDGE_DNS_LOCAL_RESOLVER_IP" 2>&1
+    )" || return 1
+
+    probe_output_has_expected_ipv4 "$query_output" "$expected_ipv4s"
+}
+
+dns_probe_tcp_ready() {
+    probe_name="$1"
+    expected_ipv4s="$2"
+
+    # dig is optional on the router. When present, require the same local
+    # Pi-hole path to answer over TCP/53 as well as the BusyBox UDP probe.
+    executable_exists dig >/dev/null 2>&1 || return 0
+
+    query_output="$(
+        dig +tcp +time=2 +tries=1 +short \
+            @"$EDGE_DNS_LOCAL_RESOLVER_IP" "$probe_name" A 2>&1
+    )" || return 1
+
+    probe_output_has_expected_ipv4 "$query_output" "$expected_ipv4s"
+}
+
+dns_probe_path_ready() {
+    probe_name="$1"
+    expected_ipv4s="$2"
+
+    dns_probe_udp_ready "$probe_name" "$expected_ipv4s" || return 1
+    dns_probe_tcp_ready "$probe_name" "$expected_ipv4s" || return 1
 
     return 0
 }
@@ -277,17 +328,16 @@ pihole_listener_ready() {
 pihole_query_ready() {
     local_resolver_config_valid || return 1
 
-    probe="edge-health-$(date +%s).1-1-1-1.sslip.io"
+    # Use two stable, cache-friendly public names from independent providers.
+    # A successful primary OR secondary path is enough to avoid making one
+    # external domain/provider the sole availability oracle.
+    dns_probe_path_ready one.one.one.one "1.1.1.1 1.0.0.1" &&
+        return 0
 
-    query_output="$(
-        "$BUSYBOX" nslookup "$probe" "$EDGE_DNS_LOCAL_RESOLVER_IP" 2>&1
-    )" || return 1
+    dns_probe_path_ready dns.google "8.8.8.8 8.8.4.4" &&
+        return 0
 
-    printf '%s\n' "$query_output" |
-        grep -q '1\.1\.1\.1' ||
-        return 1
-
-    return 0
+    return 1
 }
 
 full_local_dns_ready() {

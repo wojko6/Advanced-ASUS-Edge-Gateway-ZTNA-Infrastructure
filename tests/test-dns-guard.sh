@@ -22,6 +22,12 @@ BUSYBOX_MOCK="$TMP_DIR/busybox"
 QUERY_ACTIVE="$TMP_DIR/query-active"
 QUERY_STARTED="$TMP_DIR/query-started"
 QUERY_COLLISION="$TMP_DIR/query-collision"
+PROBE_LOG="$TMP_DIR/probe.log"
+FAIL_PROBE_PRIMARY="$TMP_DIR/fail-probe-primary"
+FAIL_PROBE_SECONDARY="$TMP_DIR/fail-probe-secondary"
+FAIL_TCP_PRIMARY="$TMP_DIR/fail-tcp-primary"
+FAIL_TCP_SECONDARY="$TMP_DIR/fail-tcp-secondary"
+FAIL_PIHOLE_TCP_LISTENER="$TMP_DIR/fail-pihole-tcp-listener"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR" "$RUNTIME_STATE_DIR"
 
@@ -69,10 +75,10 @@ EOF
 cat >"$MOCK_BIN/netstat" <<EOF
 #!/bin/sh
 [ -f "$FAIL_LOCAL" ] && exit 0
-cat <<'OUT'
-tcp 0 0 127.0.0.1:53535 0.0.0.0:* LISTEN
-udp 0 0 192.0.2.53:53 0.0.0.0:*
-OUT
+echo 'tcp 0 0 127.0.0.1:53535 0.0.0.0:* LISTEN'
+echo 'udp 0 0 192.0.2.53:53 0.0.0.0:*'
+[ -f "$FAIL_PIHOLE_TCP_LISTENER" ] ||
+    echo 'tcp 0 0 192.0.2.53:53 0.0.0.0:* LISTEN'
 EOF
 
 cat >"$MOCK_BIN/logger" <<'EOF'
@@ -86,6 +92,9 @@ applet="\$1"
 shift
 case "\$applet" in
     nslookup)
+        probe_name="\${1:-}"
+        printf 'udp %s\n' "\$probe_name" >>"$PROBE_LOG"
+
         if [ -n "\${EDGE_DNS_TEST_QUERY_SERIALIZE:-}" ]; then
             [ -f "$QUERY_ACTIVE" ] && : >"$QUERY_COLLISION"
             : >"$QUERY_ACTIVE"
@@ -93,8 +102,22 @@ case "\$applet" in
             sleep 1
             rm -f "$QUERY_ACTIVE"
         fi
-        echo "Server: 192.0.2.53"
-        echo "Address 1: 1.1.1.1"
+
+        case "\$probe_name" in
+            one.one.one.one)
+                [ -f "$FAIL_PROBE_PRIMARY" ] && exit 1
+                echo "Server: 192.0.2.53"
+                echo "Address 1: 1.1.1.1"
+                ;;
+            dns.google)
+                [ -f "$FAIL_PROBE_SECONDARY" ] && exit 1
+                echo "Server: 192.0.2.53"
+                echo "Address 1: 8.8.8.8"
+                ;;
+            *)
+                exit 1
+                ;;
+        esac
         exit 0
         ;;
     cmp)
@@ -106,7 +129,27 @@ case "\$applet" in
 esac
 EOF
 
-chmod +x "$MOCK_BIN/nvram" "$MOCK_BIN/pidof" "$MOCK_BIN/netstat"     "$MOCK_BIN/logger" "$BUSYBOX_MOCK"
+cat >"$MOCK_BIN/dig" <<EOF
+#!/bin/sh
+printf 'tcp %s\n' "\$*" >>"$PROBE_LOG"
+
+case " \$* " in
+    *" one.one.one.one "*)
+        [ -f "$FAIL_TCP_PRIMARY" ] && exit 1
+        echo "1.0.0.1"
+        ;;
+    *" dns.google "*)
+        [ -f "$FAIL_TCP_SECONDARY" ] && exit 1
+        echo "8.8.4.4"
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+EOF
+
+chmod +x "$MOCK_BIN/nvram" "$MOCK_BIN/pidof" "$MOCK_BIN/netstat" \
+    "$MOCK_BIN/logger" "$MOCK_BIN/dig" "$BUSYBOX_MOCK"
 
 run_guard() {
     EDGE_CONFIG_FILE="$CONFIG"     EDGE_RESOLV_CONF="$RESOLV"     EDGE_DNS_STATE_DIR="$STATE_DIR"     EDGE_DNS_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR"     EDGE_DNS_BREAKGLASS_FLAG="$FLAG"     EDGE_TEST_PATH_PREFIX="$MOCK_BIN"     EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK"         sh "$GUARD" "$@"
@@ -145,6 +188,68 @@ wait "$second_pid"
 }
 grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-first.out" >/dev/null
 grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-second.out" >/dev/null
+
+echo "=== stable multi-provider DNS probes use UDP and TCP when dig is available ==="
+rm -f "$PROBE_LOG" "$FAIL_PROBE_PRIMARY" "$FAIL_PROBE_SECONDARY" \
+    "$FAIL_TCP_PRIMARY" "$FAIL_TCP_SECONDARY" "$FAIL_PIHOLE_TCP_LISTENER"
+
+ready_output="$(run_guard ready)"
+printf '%s\n' "$ready_output"
+grep -F 'READY=PASS' <<EOF >/dev/null
+$ready_output
+EOF
+grep -F 'udp one.one.one.one' "$PROBE_LOG" >/dev/null
+grep -F 'tcp ' "$PROBE_LOG" | grep -F ' one.one.one.one ' >/dev/null
+if grep -E 'sslip\.io|edge-health-' "$PROBE_LOG" >/dev/null; then
+    echo "FAIL: DNS Guard still generated unique external probe names" >&2
+    exit 1
+fi
+
+echo "=== secondary provider keeps health independent from primary probe ==="
+: >"$FAIL_PROBE_PRIMARY"
+secondary_ready_output="$(run_guard ready)"
+printf '%s\n' "$secondary_ready_output"
+grep -F 'READY=PASS' <<EOF >/dev/null
+$secondary_ready_output
+EOF
+grep -F 'udp dns.google' "$PROBE_LOG" >/dev/null
+grep -F 'tcp ' "$PROBE_LOG" | grep -F ' dns.google ' >/dev/null
+rm -f "$FAIL_PROBE_PRIMARY"
+
+echo "=== TCP probe failure on primary falls through to secondary ==="
+: >"$FAIL_TCP_PRIMARY"
+tcp_secondary_output="$(run_guard ready)"
+printf '%s\n' "$tcp_secondary_output"
+grep -F 'READY=PASS' <<EOF >/dev/null
+$tcp_secondary_output
+EOF
+grep -F 'udp dns.google' "$PROBE_LOG" >/dev/null
+rm -f "$FAIL_TCP_PRIMARY"
+
+echo "=== both providers failing makes local DNS unhealthy ==="
+: >"$FAIL_PROBE_PRIMARY"
+: >"$FAIL_PROBE_SECONDARY"
+if both_failed_output="$(run_guard ready 2>&1)"; then
+    echo "FAIL: DNS Guard accepted local DNS while both fixed probes failed" >&2
+    exit 1
+fi
+printf '%s\n' "$both_failed_output"
+grep -F 'READY=FAIL' <<EOF >/dev/null
+$both_failed_output
+EOF
+rm -f "$FAIL_PROBE_PRIMARY" "$FAIL_PROBE_SECONDARY"
+
+echo "=== Pi-hole must expose both UDP and TCP port 53 listeners ==="
+: >"$FAIL_PIHOLE_TCP_LISTENER"
+if listener_failed_output="$(run_guard ready 2>&1)"; then
+    echo "FAIL: DNS Guard accepted Pi-hole without TCP/53 listener" >&2
+    exit 1
+fi
+printf '%s\n' "$listener_failed_output"
+grep -F 'READY=FAIL' <<EOF >/dev/null
+$listener_failed_output
+EOF
+rm -f "$FAIL_PIHOLE_TCP_LISTENER"
 
 echo "=== healthy promotion ==="
 healthy_output="$(run_guard auto)"
