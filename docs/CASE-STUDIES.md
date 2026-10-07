@@ -245,6 +245,33 @@ The case makes the availability trade-off explicit: during local DNS failure,
 the router deliberately uses independent bootstrap DNS rather than preserving
 filtering at the cost of losing name resolution.
 
+## 13. Port exposure and trust-boundary audit
+
+**File:** [Port Exposure and Trust-Boundary Audit](case-studies/port-exposure-trust-boundary-audit-2026-10-07.md)
+
+A multi-vantage security exposure audit covering:
+
+- full TCP 1-65535 LAN scanning of the router and service aliases;
+- correlation of scanner results with local listeners, firewall chains, NAT policy,
+  and process ownership;
+- authorized versus non-authorized Tailscale peer testing for management access;
+- positive/negative source-restriction validation for Fedora syslog-ng;
+- correction of a false-negative Fedora LAN result caused by a preferred
+  Tailscale subnet route;
+- WAN firewall, NAT, virtual-server and UPnP runtime review;
+- public-IPv4 confirmation without publishing the address;
+- invalidation of an initially misleading "WAN" test after route diagnostics
+  showed that it had actually used an internal/Tailscale path;
+- corrected LTE/5G external validation after independent DNS-over-HTTPS resolution
+  and route verification;
+- native WAN IPv6 state validation;
+- explicit review findings and bounded claims for external UDP coverage.
+
+The case study is intentionally sanitized: deployment-specific public addresses,
+DDNS names, tailnet addresses, device identifiers, MAC addresses, credentials,
+and exact administrative source allowlists are excluded. It preserves the
+methodology and decision trail, including tests that were rejected as invalid.
+
 ## How to read these cases
 
 Where applicable, case studies separate:
