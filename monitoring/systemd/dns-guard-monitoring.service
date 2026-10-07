@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect ASUS Edge DNS Guard state into VictoriaMetrics
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=%h/.config/asus-router-monitoring.env
+ExecStart=%h/.local/bin/dns-guard-metrics
+NoNewPrivileges=true
+PrivateTmp=true

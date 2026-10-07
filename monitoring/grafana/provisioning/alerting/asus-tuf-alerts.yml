@@ -285,6 +285,60 @@ groups:
           receiver: ASUS Edge Gateway Email
         isPaused: false
 
+      - uid: dns_guard_sustained_failopen
+        title: DNS Guard pozostaje w trybie fail-open
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'asus_edge_dns_guard_mode_bootstrap * (time() - asus_edge_dns_guard_collection_timestamp_seconds < bool 180)'
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.5]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: DNS Guard utrzymuje WAN bootstrap DNS przez co najmniej 10 minut
+          description: Router działa w trybie fail-open. Sprawdź Pi-hole, Unbound, break-glass i lokalną ścieżkę DNS. Alert wymaga świeżej telemetrii DNS Guard.
+        labels:
+          severity: warning
+          component: dns-guard
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
+        isPaused: false
+
       - uid: routercloud_backup_bad
         title: RouterCloud backup nieudany
         condition: C

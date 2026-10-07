@@ -38,6 +38,10 @@ BREAKGLASS_FLAG="${EDGE_DNS_BREAKGLASS_FLAG:-$STATE_DIR/dns-breakglass}"
 LOCK_FILE="${EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock}"
 RUNTIME_STATE_DIR="${EDGE_DNS_RUNTIME_STATE_DIR:-/tmp/asus-edge-dns-guard}"
 RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"
+MODE_FILE="$RUNTIME_STATE_DIR/current-mode"
+LAST_TRANSITION_FILE="$RUNTIME_STATE_DIR/last-transition-epoch"
+FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"
+FALLBACK_SINCE_FILE="$RUNTIME_STATE_DIR/fallback-since-epoch"
 
 log() {
     logger -t asus-edge-dns "$*"
@@ -115,24 +119,46 @@ recovery_streak_read() {
     esac
 }
 
-recovery_streak_write() {
-    streak="$1"
-    tmp="$RECOVERY_STREAK_FILE.tmp.$"
+runtime_state_write() {
+    state_file="$1"
+    state_value="$2"
+    tmp="$state_file.tmp.$$"
 
     umask 077
-    printf '%s\n' "$streak" >"$tmp" || {
+    printf '%s\n' "$state_value" >"$tmp" || {
         rm -f "$tmp"
         return 1
     }
 
     chmod 600 "$tmp" 2>/dev/null || true
 
-    mv -f "$tmp" "$RECOVERY_STREAK_FILE" || {
+    mv -f "$tmp" "$state_file" || {
         rm -f "$tmp"
         return 1
     }
 
     return 0
+}
+
+runtime_uint_read() {
+    state_file="$1"
+    default_value="${2:-0}"
+
+    [ -r "$state_file" ] || {
+        printf '%s\n' "$default_value"
+        return 0
+    }
+
+    state_value="$(cat "$state_file" 2>/dev/null)" || state_value="$default_value"
+
+    case "$state_value" in
+        ''|*[!0-9]*) printf '%s\n' "$default_value" ;;
+        *) printf '%s\n' "$state_value" ;;
+    esac
+}
+
+recovery_streak_write() {
+    runtime_state_write "$RECOVERY_STREAK_FILE" "$1"
 }
 
 recovery_streak_reset() {
@@ -244,6 +270,71 @@ valid_ipv4() {
 local_resolver_config_valid() {
     [ -n "$EDGE_DNS_LOCAL_RESOLVER_IP" ] || return 1
     valid_ipv4 "$EDGE_DNS_LOCAL_RESOLVER_IP"
+}
+
+resolver_is_bootstrap() {
+    [ -r "$RESOLV_CONF" ] || return 1
+
+    expected_bootstrap="$(bootstrap_dns)" || return 1
+    current_resolvers="$(awk '$1 == "nameserver" {print $2}' "$RESOLV_CONF" 2>/dev/null)"
+
+    [ -n "$current_resolvers" ] || return 1
+    [ "$current_resolvers" = "$expected_bootstrap" ]
+}
+
+resolver_mode_observed() {
+    if local_resolver_config_valid && resolver_is_local; then
+        printf '%s\n' local
+        return 0
+    fi
+
+    if resolver_is_bootstrap; then
+        printf '%s\n' bootstrap
+        return 0
+    fi
+
+    printf '%s\n' unknown
+    return 1
+}
+
+record_resolver_mode() {
+    new_mode="$1"
+
+    case "$new_mode" in
+        local|bootstrap) ;;
+        *) return 1 ;;
+    esac
+
+    previous_mode="unknown"
+    [ -r "$MODE_FILE" ] && previous_mode="$(cat "$MODE_FILE" 2>/dev/null || printf '%s\n' unknown)"
+
+    now_epoch="$(date +%s 2>/dev/null)" || return 1
+    case "$now_epoch" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+
+    if [ "$previous_mode" != "$new_mode" ]; then
+        runtime_state_write "$MODE_FILE" "$new_mode" || return 1
+        runtime_state_write "$LAST_TRANSITION_FILE" "$now_epoch" || return 1
+
+        if [ "$new_mode" = "bootstrap" ]; then
+            fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0)"
+            fallback_count=$((fallback_count + 1))
+            runtime_state_write "$FALLBACK_COUNT_FILE" "$fallback_count" || return 1
+            runtime_state_write "$FALLBACK_SINCE_FILE" "$now_epoch" || return 1
+        else
+            rm -f "$FALLBACK_SINCE_FILE" 2>/dev/null || true
+        fi
+        return 0
+    fi
+
+    [ -r "$LAST_TRANSITION_FILE" ] || runtime_state_write "$LAST_TRANSITION_FILE" "$now_epoch" || return 1
+
+    if [ "$new_mode" = "bootstrap" ] && [ ! -r "$FALLBACK_SINCE_FILE" ]; then
+        runtime_state_write "$FALLBACK_SINCE_FILE" "$now_epoch" || return 1
+    fi
+
+    return 0
 }
 
 ntp_ready() {
@@ -434,11 +525,15 @@ promote_local_ready() {
 
     case "$rc" in
         0)
+            record_resolver_mode local ||
+                log "WARNING: failed to record local DNS Guard monitoring state"
             echo "PROMOTE=PASS"
             log "system resolver promoted to Pi-hole $EDGE_DNS_LOCAL_RESOLVER_IP"
             return 0
             ;;
         2)
+            record_resolver_mode local ||
+                log "WARNING: failed to record local DNS Guard monitoring state"
             echo "PROMOTE=ALREADY_LOCAL"
             return 0
             ;;
@@ -478,11 +573,15 @@ fallback_bootstrap() {
 
     case "$rc" in
         0)
+            record_resolver_mode bootstrap ||
+                log "WARNING: failed to record bootstrap DNS Guard monitoring state"
             echo "FALLBACK=PASS"
             log "system resolver restored to WAN bootstrap DNS"
             return 0
             ;;
         2)
+            record_resolver_mode bootstrap ||
+                log "WARNING: failed to record bootstrap DNS Guard monitoring state"
             echo "FALLBACK=ALREADY_BOOTSTRAP"
             return 0
             ;;
@@ -616,6 +715,49 @@ auto_policy() {
     return 0
 }
 
+show_metrics() {
+    observed_mode="$(resolver_mode_observed 2>/dev/null || true)"
+
+    case "$observed_mode" in
+        local)
+            mode_local=1
+            mode_bootstrap=0
+            state_valid=1
+            record_resolver_mode local || log "WARNING: failed to reconcile local DNS Guard monitoring state"
+            ;;
+        bootstrap)
+            mode_local=0
+            mode_bootstrap=1
+            state_valid=1
+            record_resolver_mode bootstrap || log "WARNING: failed to reconcile bootstrap DNS Guard monitoring state"
+            ;;
+        *)
+            mode_local=0
+            mode_bootstrap=0
+            state_valid=0
+            ;;
+    esac
+
+    if [ -f "$BREAKGLASS_FLAG" ]; then
+        breakglass_active=1
+    else
+        breakglass_active=0
+    fi
+
+    last_transition="$(runtime_uint_read "$LAST_TRANSITION_FILE" 0)"
+    fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0)"
+    fallback_since="$(runtime_uint_read "$FALLBACK_SINCE_FILE" 0)"
+
+    printf '%s\n' \
+        "asus_edge_dns_guard_mode_local $mode_local" \
+        "asus_edge_dns_guard_mode_bootstrap $mode_bootstrap" \
+        "asus_edge_dns_guard_state_valid $state_valid" \
+        "asus_edge_dns_guard_breakglass_active $breakglass_active" \
+        "asus_edge_dns_guard_last_transition_timestamp_seconds $last_transition" \
+        "asus_edge_dns_guard_fallback_transitions_runtime_total $fallback_count" \
+        "asus_edge_dns_guard_fallback_since_timestamp_seconds $fallback_since"
+}
+
 show_status() {
     echo "=== ASUS EDGE DNS GUARD v3.2 ==="
     echo "resolver=$RESOLV_CONF"
@@ -696,8 +838,11 @@ case "${1:-status}" in
     ready)
         local_dns_ready
         ;;
+    metrics)
+        show_metrics
+        ;;
     *)
-        echo "Usage: $0 {status|check|auto|promote|fallback|ready|breakglass-on [reason]|breakglass-off}"
+        echo "Usage: $0 {status|check|auto|promote|fallback|ready|metrics|breakglass-on [reason]|breakglass-off}"
         exit 2
         ;;
 esac

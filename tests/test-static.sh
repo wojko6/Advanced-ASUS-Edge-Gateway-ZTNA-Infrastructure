@@ -707,7 +707,10 @@ for dns_guard_runtime_guard in \
     '[ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]' \
     'dns_probe_path_ready one.one.one.one "1.1.1.1 1.0.0.1"' \
     'dns_probe_path_ready dns.google "8.8.8.8 8.8.4.4"' \
-    'dig +tcp +time=2 +tries=1 +short'
+    'dig +tcp +time=2 +tries=1 +short' \
+    'show_metrics()' \
+    'asus_edge_dns_guard_mode_bootstrap' \
+    'FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"'
 do
     grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
         echo "FAIL: DNS Guard concurrency/temp-file hardening missing: $dns_guard_runtime_guard" >&2
@@ -769,6 +772,8 @@ if grep -F 'nameserver 127.0.0.1' "$REPO_DIR/router/scripts/wan-event-handler" >
 fi
 
 sh "$REPO_DIR/tests/test-dns-guard.sh"
+sh "$REPO_DIR/tests/test-dns-guard-observability.sh"
+bash "$REPO_DIR/tests/test-dns-guard-metrics-exporter.sh"
 sh "$REPO_DIR/tests/test-dns-breakglass.sh"
 sh "$REPO_DIR/tests/test-healthcheck-dns-guard-contract.sh"
 sh "$REPO_DIR/tests/test-wan-event-handler.sh"
@@ -939,6 +944,31 @@ grep -F 'EDGE_WAN_DNS_WAIT_SECONDS="90"' \
 
 GRAFANA_ALERTS="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml"
 GRAFANA_EMAIL_CONTACT="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-email-contact.yml"
+
+for dns_guard_observability_guard in \
+    'uid: dns_guard_sustained_failopen' \
+    'asus_edge_dns_guard_mode_bootstrap' \
+    'asus_edge_dns_guard_collection_timestamp_seconds' \
+    'for: 10m' \
+    'component: dns-guard'
+do
+    grep -F "$dns_guard_observability_guard" \
+        "$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml" >/dev/null || {
+        echo "FAIL: DNS Guard sustained fail-open alert guard missing: $dns_guard_observability_guard" >&2
+        exit 1
+    }
+done
+
+for dns_guard_monitoring_file in \
+    "$REPO_DIR/scripts/dns-guard-metrics.sh" \
+    "$REPO_DIR/monitoring/systemd/dns-guard-monitoring.service" \
+    "$REPO_DIR/monitoring/systemd/dns-guard-monitoring.timer"
+do
+    [ -s "$dns_guard_monitoring_file" ] || {
+        echo "FAIL: DNS Guard monitoring integration missing: $dns_guard_monitoring_file" >&2
+        exit 1
+    }
+done
 
 for grafana_routercloud_guard in \
     'uid: routercloud_backup_bad' \
