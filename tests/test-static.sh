@@ -698,6 +698,7 @@ for dns_guard_runtime_guard in \
     'EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock' \
     'flock -x 9' \
     'secure_temp_dir()' \
+    'temp_candidate="$temp_prefix.$$.${temp_counter}"' \
     'query_output="$(' \
     'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3' \
     'RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"' \
@@ -717,6 +718,11 @@ do
         exit 1
     }
 done
+
+if grep -F 'temp_candidate="$temp_prefix.$.${temp_counter}"' "$REPO_DIR/router/scripts/dns-guard" >/dev/null; then
+    echo "FAIL: DNS Guard secure temp directory still uses predictable literal-dollar suffix" >&2
+    exit 1
+fi
 
 if grep -F '/tmp/asus-edge-dns-guard-query.log' "$REPO_DIR/router/scripts/dns-guard" >/dev/null; then
     echo "FAIL: DNS Guard still uses predictable query output file" >&2

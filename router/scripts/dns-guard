@@ -88,7 +88,7 @@ secure_temp_dir() {
     temp_counter=0
 
     while [ "$temp_counter" -lt 100 ]; do
-        temp_candidate="$temp_prefix.$.${temp_counter}"
+        temp_candidate="$temp_prefix.$$.${temp_counter}"
 
         if (umask 077 && mkdir "$temp_candidate") 2>/dev/null; then
             printf '%s\n' "$temp_candidate"
