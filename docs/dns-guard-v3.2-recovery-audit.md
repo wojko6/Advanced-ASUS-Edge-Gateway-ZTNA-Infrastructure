@@ -44,6 +44,7 @@ names.
 | DG-R09 | P2 | Loss of the Fedora DNS Guard collector can hide state changes. | Sustained fail-open alert required fresh telemetry but there was no dedicated stale-collector alert. | Added a stale DNS Guard telemetry alert. |
 | DG-R10 | P1 residual | Fixed local probe names can be answered from cached/stale data and may not prove fresh recursion. | Pi-hole/Unbound readiness uses stable names; the project Unbound config enables `serve-expired`. | Not changed automatically. Requires a separate design decision for a cache-resistant recursion oracle. |
 | DG-R11 | P2 residual | Bootstrap functional validation primarily proves a normal small DNS lookup, not every TCP/truncation case. | BusyBox `nslookup` is the mandatory low-dependency probe. | Retained as a bounded availability probe; TCP-specific bootstrap proof remains a live/design follow-up. |
+| DG-R12 | P1 residual | If the managed watchdog cron entry disappears after boot, DNS Guard cannot recreate that scheduler from inside the missing scheduler path. | `healthcheck.sh` detects exact cron drift, but there is no independent on-router supervisor for the watchdog itself. | Keep external health monitoring and treat watchdog loss as an operator-repair/reboot condition; adding a second mutation-capable supervisor is intentionally out of scope. |
 
 ## State machine
 
@@ -164,6 +165,11 @@ Resolver `UNKNOWN` remains represented by
 `asus_edge_dns_guard_state_valid 0`; a dedicated alert can be added later if
 live evidence shows that the existing healthcheck/telemetry path is not
 sufficient.
+
+The exact watchdog cron entry is still validated by `healthcheck.sh`. Loss of
+that cron entry is observable during health checks but is not self-repairable by
+DNS Guard alone, because the missing scheduler is the component that would have
+invoked the repair logic.
 
 ## Residual risk: cache-resistant recursion proof
 
