@@ -672,8 +672,11 @@ $corrupt_state_output
 EOF
 
 corrupt_metrics="$(run_guard metrics)"
+# The oversized counter is sanitized before arithmetic. Because this fixture
+# also transitions observed mode from local to bootstrap, reconciliation
+# records one real transition instead of preserving the corrupt value.
 printf '%s\n' "$corrupt_metrics" |
-    grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 0'
+    grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 1'
 
 echo "=== local failure still fails open on first unhealthy check ==="
 : >"$FAIL_LOCAL"
