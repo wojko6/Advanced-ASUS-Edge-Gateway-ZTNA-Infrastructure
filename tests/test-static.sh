@@ -870,4 +870,38 @@ grep -F 'EDGE_WAN_DNS_WAIT_SECONDS="90"' \
     exit 1
 }
 
+
+GRAFANA_ALERTS="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml"
+GRAFANA_EMAIL_CONTACT="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-email-contact.yml"
+
+for grafana_routercloud_guard in \
+    'uid: routercloud_backup_bad' \
+    'uid: routercloud_backup_stale' \
+    'uid: routercloud_maintenance_bad' \
+    'uid: routercloud_maintenance_stale' \
+    "last_over_time(routercloud_backup_last_run_success[24h])" \
+    "time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[24h])" \
+    "last_over_time(routercloud_maintenance_last_run_success[30d])" \
+    "time() - last_over_time(routercloud_maintenance_last_run_timestamp_seconds[30d])" \
+    'params: [28800]' \
+    'params: [691200]' \
+    'receiver: ASUS Edge Gateway Email'
+do
+    grep -F "$grafana_routercloud_guard" "$GRAFANA_ALERTS" >/dev/null || {
+        echo "FAIL: Grafana RouterCloud alerting guard missing: $grafana_routercloud_guard" >&2
+        exit 1
+    }
+done
+
+for grafana_contact_guard in \
+    'name: ASUS Edge Gateway Email' \
+    'uid: asus_edge_email' \
+    'disableResolveMessage: false'
+do
+    grep -F "$grafana_contact_guard" "$GRAFANA_EMAIL_CONTACT" >/dev/null || {
+        echo "FAIL: Grafana e-mail contact guard missing: $grafana_contact_guard" >&2
+        exit 1
+    }
+done
+
 printf '%s\n' "Static tests passed."
