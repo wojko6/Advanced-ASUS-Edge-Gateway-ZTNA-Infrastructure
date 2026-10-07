@@ -22,6 +22,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 - Extended validation into latency-sensitive cloud workloads: compared GeForce NOW over Gigabit Ethernet and Wi-Fi 6, and analyzed an Xbox Cloud Gaming session with browser-native WebRTC RTP, jitter, ICE RTT, frame-delivery, bitrate, and decoder telemetry.
 - Isolated a Wi-Fi 6 HE160 interoperability problem by comparing HE80/HE160 on a MediaTek MT7922, repeating the matrix across two Windows drivers, and using an independent Android 2x2 HE160 client to separate AP-wide capability from client/pair-specific behavior.
 - Shipped RouterCloud on the dedicated LAN/Tailscale-only HTTPS service with custom login/session auth, production-tested password recovery, branded Polish Metro UI, AJAX sorting and live search, recent files and persistent favorites, safe rename/delete/edit workflows, WebDAV desktop integration, server-side ZIP downloads for checkbox-selected files/folders, and independent versioned encrypted backups while keeping generic `allow-delete: false`.
+- Extended the off-router Grafana alerting baseline to nine source-controlled rules, including RouterCloud backup/maintenance failure and staleness signals; all nine route to the existing e-mail contact point, and `routercloud_backup_bad` has a controlled live `Firing -> recovery` validation.
 - Performed a multi-vantage port-exposure audit across LAN, Tailscale, Fedora and a verified LTE/5G WAN path, including positive/negative identity tests and explicit invalidation of misleading results when routing did not match the intended trust boundary.
 - Captured sanitized live evidence instead of presenting expected behavior as observed results.
 
@@ -53,6 +54,8 @@ Current-firmware validation is tied to dated evidence rather than inferred from 
 See the [network design index](docs/network-design.md), [architecture](docs/architecture.md), [swap and memory reliability](docs/swap-and-memory-reliability.md), [firewall policy](docs/firewall-policy.md), [security limitations](docs/security.md), and the [requirements and acceptance map](docs/requirements.md) for the detailed design, test methods and current validation limits.
 
 The current RouterCloud browser/service state is recorded in the [2026-10-03 production checkpoint](docs/routercloud-production-checkpoint-2026-10-03.md), with bounded UI observations in the [same-day production validation](evidence/2026-10-03/routercloud-ui-production-validation.md) and the separate [password-recovery E2E validation](evidence/2026-10-03/routercloud-password-recovery-production-validation.md). The [2026-10-02 Metro checkpoint](docs/routercloud-metro-production-checkpoint-2026-10-02.md) remains as the historical baseline for the first Metro/WebDAV phase.
+
+As of 2026-10-07, RouterCloud backup observability also includes four Grafana rules for backup failure/staleness and maintenance failure/staleness. The live `routercloud_backup_bad` path was fault-tested through `Firing` and recovery while the real backup state was restored afterward. See [monitoring](monitoring/README.md), [RouterCloud versioned backup](docs/routercloud-versioned-backup.md), and the [sanitized alerting validation](evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
 
 ## Key controls
 
