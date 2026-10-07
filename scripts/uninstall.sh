@@ -37,6 +37,8 @@ current_uid() {
 }
 
 ADDON_DIR="$JFFS_DIR/addons/asus-edge"
+DNS_GUARD="${EDGE_DNS_GUARD:-$ADDON_DIR/bin/dns-guard}"
+CRU="${EDGE_CRU:-cru}"
 
 uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }
 [ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }
@@ -64,15 +66,96 @@ executable_exists "$IPTABLES" >/dev/null 2>&1 || {
     exit 1
 }
 
+dns_guard_watchdog_entry_present() {
+    cron_listing="$("$CRU" l 2>/dev/null)" || return 2
+
+    printf '%s\n' "$cron_listing" |
+        grep -F '#AsusEdgeDNSGuard#' >/dev/null 2>&1
+}
+
+prepare_dns_guard_uninstall() {
+    if [ -x "$DNS_GUARD" ]; then
+        dns_guard_output="$("$DNS_GUARD" fallback 2>&1)"
+        dns_guard_rc=$?
+
+        if [ "$dns_guard_rc" -ne 0 ]; then
+            echo "ERROR: DNS Guard could not restore validated WAN bootstrap DNS; refusing uninstall" >&2
+            [ -n "$dns_guard_output" ] &&
+                printf '%s\n' "$dns_guard_output" >&2
+            return 1
+        fi
+
+        echo "DNS_UNINSTALL_BOOTSTRAP=PASS"
+        return 0
+    fi
+
+    if ! executable_exists "$CRU" >/dev/null 2>&1; then
+        echo "DNS_UNINSTALL_BOOTSTRAP=LEGACY_NO_GUARD"
+        return 0
+    fi
+
+    dns_guard_watchdog_entry_present
+    watchdog_rc=$?
+
+    case "$watchdog_rc" in
+        0)
+            echo "ERROR: DNS Guard watchdog exists but DNS Guard binary is unavailable; refusing uninstall" >&2
+            return 1
+            ;;
+        1)
+            echo "DNS_UNINSTALL_BOOTSTRAP=LEGACY_NO_GUARD"
+            return 0
+            ;;
+        *)
+            echo "ERROR: cannot verify DNS Guard watchdog state; refusing uninstall" >&2
+            return 1
+            ;;
+    esac
+}
+
+remove_dns_guard_watchdog() {
+    executable_exists "$CRU" >/dev/null 2>&1 || return 0
+
+    cron_listing="$("$CRU" l 2>/dev/null)" || {
+        echo "ERROR: cannot list scheduler state before DNS Guard watchdog removal" >&2
+        return 1
+    }
+
+    printf '%s\n' "$cron_listing" |
+        grep -F '#AsusEdgeDNSGuard#' >/dev/null 2>&1 || {
+        echo "DNS_GUARD_WATCHDOG=ABSENT"
+        return 0
+    }
+
+    "$CRU" d AsusEdgeDNSGuard >/dev/null 2>&1 || true
+
+    cron_listing="$("$CRU" l 2>/dev/null)" || {
+        echo "ERROR: cannot verify scheduler state after DNS Guard watchdog removal" >&2
+        return 1
+    }
+
+    if printf '%s\n' "$cron_listing" |
+       grep -F '#AsusEdgeDNSGuard#' >/dev/null 2>&1; then
+        echo "ERROR: DNS Guard watchdog remains scheduled; refusing firewall cleanup" >&2
+        return 1
+    fi
+
+    echo "DNS_GUARD_WATCHDOG=REMOVED"
+    return 0
+}
+
+# Restore a DNS path independent from Pi-hole before disabling the watchdog.
+# Complete this before firewall/runtime-hook mutation so failed DNS recovery
+# leaves the managed network policy otherwise untouched.
+prepare_dns_guard_uninstall || exit 1
+remove_dns_guard_watchdog || exit 1
+
 remove_jump_and_chain filter INPUT "$EDGE_TS_IF" EDGE_TS_INPUT
 remove_jump_and_chain filter FORWARD "$EDGE_TS_IF" EDGE_TS_FORWARD
 remove_jump_and_chain nat PREROUTING "$EDGE_TS_IF" EDGE_TS_PREROUTING
 remove_jump_and_chain filter FORWARD "$EDGE_LAN_IF" EDGE_LAN_DOT_FORWARD
 remove_jump_and_chain nat PREROUTING "$EDGE_LAN_IF" EDGE_LAN_DNS_PREROUTING
 
-if executable_exists cru >/dev/null 2>&1; then
-    cru d AsusEdgeDNSGuard >/dev/null 2>&1 || true
-fi
 
 if executable_exists "$IP6TABLES" >/dev/null 2>&1; then
     while "$IP6TABLES" -t filter -D INPUT -i "$EDGE_TS_IF" -j EDGE_TS6_INPUT 2>/dev/null; do :; done

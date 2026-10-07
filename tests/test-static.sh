@@ -392,6 +392,19 @@ grep -F '"$ADDON_DIR/bin/webui-mount" unmount' "$REPO_DIR/scripts/uninstall.sh" 
     exit 1
 }
 
+for dns_uninstall_guard in \
+    'prepare_dns_guard_uninstall()' \
+    'DNS_UNINSTALL_BOOTSTRAP=PASS' \
+    'remove_dns_guard_watchdog()' \
+    'DNS_GUARD_WATCHDOG=REMOVED' \
+    'refusing uninstall'
+do
+    grep -F "$dns_uninstall_guard" "$REPO_DIR/scripts/uninstall.sh" >/dev/null || {
+        echo "FAIL: DNS Guard uninstall safety contract missing: $dns_uninstall_guard" >&2
+        exit 1
+    }
+done
+
 grep -F 'unmount_polish_overlay || return 1' "$REPO_DIR/router/scripts/webui-mount" >/dev/null || {
     echo "FAIL: WebUI unmount does not remove the Polish overlay first" >&2
     exit 1
