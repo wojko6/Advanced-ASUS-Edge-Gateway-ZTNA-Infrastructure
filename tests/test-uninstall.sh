@@ -148,9 +148,9 @@ if run_uninstall "$FAIL_ROOT" "$TMP_DIR/fail-guard.out" "$TMP_DIR/fail-guard.err
     exit 1
 fi
 grep -F 'refusing uninstall' "$TMP_DIR/fail-guard.err" >/dev/null
-grep -F '^dns-guard fallback$' "$MOCK_LOG" >/dev/null
-! grep -F '^cru d AsusEdgeDNSGuard$' "$MOCK_LOG" >/dev/null
-! grep -F '^iptables ' "$MOCK_LOG" >/dev/null
+grep -qx 'dns-guard fallback' "$MOCK_LOG"
+! grep -qx 'cru d AsusEdgeDNSGuard' "$MOCK_LOG"
+! grep -q '^iptables ' "$MOCK_LOG"
 rm -f "$FAIL_GUARD"
 
 echo "=== watchdog removal failure aborts before firewall mutation ==="
@@ -166,7 +166,7 @@ if run_uninstall "$FAIL_CRU_ROOT" "$TMP_DIR/fail-cru.out" "$TMP_DIR/fail-cru.err
 fi
 grep -F 'watchdog remains scheduled' "$TMP_DIR/fail-cru.err" >/dev/null
 grep -F '^dns-guard fallback$' "$MOCK_LOG" >/dev/null
-grep -F '^cru d AsusEdgeDNSGuard$' "$MOCK_LOG" >/dev/null
+grep -qx 'cru d AsusEdgeDNSGuard' "$MOCK_LOG"
 ! grep -F '^iptables ' "$MOCK_LOG" >/dev/null
 rm -f "$FAIL_CRU_DELETE"
 
