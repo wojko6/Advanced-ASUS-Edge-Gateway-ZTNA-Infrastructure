@@ -976,6 +976,18 @@ do
     }
 done
 
+dns_guard_monitoring_service="$REPO_DIR/monitoring/systemd/dns-guard-monitoring.service"
+
+grep -F 'NoNewPrivileges=true' "$dns_guard_monitoring_service" >/dev/null || {
+    echo "FAIL: DNS Guard monitoring service must retain NoNewPrivileges=true" >&2
+    exit 1
+}
+
+if grep -F 'PrivateTmp=true' "$dns_guard_monitoring_service" >/dev/null; then
+    echo "FAIL: DNS Guard SSH monitoring service must not use PrivateTmp=true" >&2
+    exit 1
+fi
+
 for grafana_routercloud_guard in \
     'uid: routercloud_backup_bad' \
     'uid: routercloud_backup_stale' \
