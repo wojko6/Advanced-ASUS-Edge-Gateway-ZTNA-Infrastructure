@@ -182,7 +182,7 @@ DNS filtering remains useful but is not equivalent to request-level/browser cont
 See:
 - [the sanitized Diversion validation](evidence/2026-09-22/diversion-ad-blocking-validation.md);
 - [the Pi-hole case-study plan](docs/pi-hole-on-router-case-study-plan.md);
-- [the final Pi-hole migration case study](docs/pi-hole-on-router-case-study.md);
+- [the final Pi-hole migration case study](docs/case-studies/pi-hole-on-router-case-study.md);
 - [the 2026-09-28 sanitized Pi-hole pilot evidence](evidence/2026-09-28/pi-hole-single-client-pilot-validation.md);
 - [the 2026-09-28 sanitized main-LAN cutover evidence](evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md).
 
@@ -359,7 +359,8 @@ See [Tailscale maintenance and rollback](docs/tailscale-maintenance.md).
 
 ## Case studies
 
-- [Case study index](docs/CASE-STUDIES.md) — troubleshooting and endpoint-integration investigations with explicit evidence, remediation, validation, and limitations.
+- [Case study index](docs/CASE-STUDIES.md) — curated portfolio index with explicit evidence, remediation, validation, and limitations.
+- [Canonical case-study directory](docs/case-studies/) — all public case-study documents in one location.
 - [Port exposure and trust-boundary audit](docs/case-studies/port-exposure-trust-boundary-audit-2026-10-07.md) — sanitized multi-vantage LAN/Tailscale/WAN exposure validation with explicit route verification and claim boundaries.
 
 ## Documentation
@@ -377,12 +378,12 @@ See [Tailscale maintenance and rollback](docs/tailscale-maintenance.md).
 - [Centralized logging with mTLS](docs/centralized-logging.md)
 - [Entware SSD migration](docs/ENTWARE-SSD-MIGRATION.md)
 - [Printer hardening](docs/PRINTER-HARDENING.md)
-- [uiDivStats high-load case study](docs/uidivstats-high-load-case-study.md)
-- [Wi-Fi 6 HE160 interoperability case study](docs/wifi6-he160-mt7922-interoperability-case-study.md)
+- [uiDivStats high-load case study](docs/case-studies/uidivstats-high-load-case-study.md)
+- [Wi-Fi 6 HE160 interoperability case study](docs/case-studies/wifi6-he160-mt7922-interoperability-case-study.md)
 - [Printer setup from LAN](docs/printer-setup-lan-pl.md)
 - [Printer setup through Tailscale](docs/printer-setup-tailscale-pl.md)
 - [Operations and recovery](docs/operations.md)
-- [DNS bootstrap resilience](docs/dns-guard-cold-boot-case-study.md)
+- [DNS bootstrap resilience](docs/case-studies/dns-bootstrap-deadlock-dns-guard-v3.1.md)
 - [Roadmap](docs/roadmap.md)
 - [Engineering worklog](docs/worklog/README.md)
 - [Documentation model and source-of-truth rules](docs/documentation-model.md)
