@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Added a canonical incident-response case study for the 2026-10-06 DNS bootstrap outage, documenting the user-visible website failure, root-cause dependency cycle, DNS Guard v3.1 remediation, controlled fault tests, cold-boot acceptance and Android LTE + ASUS Exit Node DNS proof.
 - Added DNS Guard v3.1 with independent WAN bootstrap DNS, conditional Pi-hole promotion, automatic fail-open fallback, sticky break-glass recovery, a persistent one-minute watchdog, and managed installer/backup integration.
 - Added optional source-scoped Pi-hole DNS enforcement for selected Tailscale IPv4 clients, with client identity preserved for Pi-hole analytics and the generic dnsmasq redirect retained as fallback for non-matching sources.
 - Added admin-scoped RouterCloud INPUT handling, separate external/target ASUS HTTPS port configuration, dedicated Pi-hole/RouterCloud/router-HTTPS healthcheck contract tests, and an Android/Tailscale/Pi-hole troubleshooting case study for issue #152.
