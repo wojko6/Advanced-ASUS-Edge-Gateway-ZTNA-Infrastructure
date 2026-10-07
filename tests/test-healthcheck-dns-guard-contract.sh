@@ -27,10 +27,10 @@ mkdir -p "$MOCK_BIN"
 CRON_FILE="$TMP_DIR/cron"
 RESOLV="$TMP_DIR/resolv.conf"
 
-cat >"$MOCK_BIN/cru" <<EOF
+cat >"$MOCK_BIN/cru" <<'EOF'
 #!/bin/sh
 [ "${1:-}" = "l" ] || exit 1
-cat "$CRON_FILE"
+cat "${CRON_FILE:?}"
 EOF
 chmod +x "$MOCK_BIN/cru"
 
@@ -42,7 +42,7 @@ PATH="$MOCK_BIN:/usr/bin:/bin"
 DNS_GUARD_BIN="/jffs/addons/asus-edge/bin/dns-guard"
 DNS_GUARD_RESOLV_CONF="$RESOLV"
 EDGE_DNS_LOCAL_RESOLVER_IP="192.0.2.53"
-export PATH DNS_GUARD_BIN DNS_GUARD_RESOLV_CONF EDGE_DNS_LOCAL_RESOLVER_IP
+export PATH CRON_FILE DNS_GUARD_BIN DNS_GUARD_RESOLV_CONF EDGE_DNS_LOCAL_RESOLVER_IP
 
 # shellcheck disable=SC1090
 . "$FUNCS"
