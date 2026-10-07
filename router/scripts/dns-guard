@@ -257,11 +257,18 @@ bootstrap_dns_candidate_valid() {
 }
 
 bootstrap_dns() {
+    accepted=""
+    accepted_count=0
+
+    # Collect across all known Asuswrt WAN DNS keys instead of trusting the
+    # first syntactically valid source exclusively. /etc/resolv.conf-compatible
+    # resolvers commonly honor at most three nameserver entries, so retain the
+    # first three unique validated candidates across the ordered sources.
     for key in wan0_dns_r wan0_dns wan_dns_r wan_dns; do
         value="$(nvram get "$key" 2>/dev/null)"
         [ -n "$value" ] || continue
 
-        accepted=""
+        key_accepted=0
 
         for candidate in $value; do
             if ! bootstrap_dns_candidate_valid "$candidate"; then
@@ -271,24 +278,28 @@ bootstrap_dns() {
 
             case " $accepted " in
                 *" $candidate "*)
-                    ;;
-                *)
-                    accepted="$accepted $candidate"
+                    key_accepted=1
+                    continue
                     ;;
             esac
+
+            if [ "$accepted_count" -lt 3 ]; then
+                accepted="$accepted $candidate"
+                accepted_count=$((accepted_count + 1))
+                key_accepted=1
+            fi
         done
 
-        if [ -n "$accepted" ]; then
-            for candidate in $accepted; do
-                printf '%s\n' "$candidate"
-            done
-            return 0
-        fi
-
-        log "WARNING: no valid independent WAN bootstrap DNS candidates in $key"
+        [ "$key_accepted" -eq 1 ] ||
+            log "WARNING: no usable new WAN bootstrap DNS candidates in $key"
     done
 
-    return 1
+    [ -n "$accepted" ] || return 1
+
+    for candidate in $accepted; do
+        printf '%s\n' "$candidate"
+    done
+    return 0
 }
 
 valid_ipv4() {
