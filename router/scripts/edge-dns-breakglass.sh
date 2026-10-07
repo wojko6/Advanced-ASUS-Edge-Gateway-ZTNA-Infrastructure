@@ -18,6 +18,7 @@ WAN_STATE_FILE="${EDGE_DNS_BREAKGLASS_WAN_STATE:-$STATE_DIR/dns-breakglass-wan-d
 WAN_WAIT_SECONDS="${EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS:-30}"
 IP_TEST_TARGET="${EDGE_DNS_BREAKGLASS_IP_TEST_TARGET:-1.1.1.1}"
 DNS_TEST_NAME="${EDGE_DNS_BREAKGLASS_DNS_TEST_NAME:-example.com}"
+DNS_TEST_TIMEOUT_SECONDS="${EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS:-5}"
 ACTION="${1:-on}"
 
 case "$WAN_WAIT_SECONDS" in
@@ -29,6 +30,18 @@ esac
 
 [ "$WAN_WAIT_SECONDS" -gt 0 ] || {
     echo "ERROR: EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS must be greater than zero"
+    exit 1
+}
+
+case "$DNS_TEST_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*)
+        echo "ERROR: EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS must be a positive integer"
+        exit 1
+        ;;
+esac
+
+[ "$DNS_TEST_TIMEOUT_SECONDS" -gt 0 ] || {
+    echo "ERROR: EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS must be greater than zero"
     exit 1
 }
 
@@ -246,7 +259,8 @@ validate_internet_ip() {
 }
 
 validate_dns() {
-    if "$BUSYBOX" nslookup "$DNS_TEST_NAME" >/dev/null 2>&1; then
+    if "$BUSYBOX" timeout "$DNS_TEST_TIMEOUT_SECONDS" \
+        "$BUSYBOX" nslookup "$DNS_TEST_NAME" >/dev/null 2>&1; then
         echo "DNS=PASS"
         return 0
     fi
