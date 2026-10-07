@@ -694,7 +694,32 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
 }
 
 
-for dns_guard_runtime_guard in \,    'EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock' \,    'flock -xn 9' \,    'secure_temp_dir()' \,    'temp_candidate="$temp_prefix.$$.${temp_counter}"' \,    'query_output="$(' \,    'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3' \,    'EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5' \,    'EDGE_DNS_LOCK_WAIT_SECONDS:=5' \,    'bounded_exec()' \,    'bounded_nslookup()' \,    'bootstrap_dns_ready()' \,    'FALLBACK=UNHEALTHY_BOOTSTRAP' \,    'RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"' \,    'AUTO=BOOTSTRAP_RECOVERY_PENDING' \,    'bootstrap_dns_candidate_valid()' \,    '127.*|0.0.0.0' \,    '[ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]' \,    'dns_probe_path_ready one.one.one.one "1.1.1.1 1.0.0.1"' \,    'dns_probe_path_ready dns.google "8.8.8.8 8.8.4.4"' \,    'dig +tcp +time=2 +tries=1 +short' \,    'show_metrics()' \,    'asus_edge_dns_guard_mode_bootstrap' \,    'asus_edge_dns_guard_bootstrap_dns_healthy' \,    'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds' \,    'FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"'
+for dns_guard_runtime_guard in \
+    'EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock' \
+    'flock -xn 9' \
+    'secure_temp_dir()' \
+    'temp_candidate="$temp_prefix.$$.${temp_counter}"' \
+    'query_output="$(' \
+    'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3' \
+    'EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5' \
+    'EDGE_DNS_LOCK_WAIT_SECONDS:=5' \
+    'bounded_exec()' \
+    'bounded_nslookup()' \
+    'bootstrap_dns_ready()' \
+    'FALLBACK=UNHEALTHY_BOOTSTRAP' \
+    'RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"' \
+    'AUTO=BOOTSTRAP_RECOVERY_PENDING' \
+    'bootstrap_dns_candidate_valid()' \
+    '127.*|0.0.0.0' \
+    '[ "$candidate" = "$EDGE_DNS_LOCAL_RESOLVER_IP" ]' \
+    'dns_probe_path_ready one.one.one.one "1.1.1.1 1.0.0.1"' \
+    'dns_probe_path_ready dns.google "8.8.8.8 8.8.4.4"' \
+    'dig +tcp +time=2 +tries=1 +short' \
+    'show_metrics()' \
+    'asus_edge_dns_guard_mode_bootstrap' \
+    'asus_edge_dns_guard_bootstrap_dns_healthy' \
+    'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds' \
+    'FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"'
 do
     grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
         echo "FAIL: DNS Guard concurrency/temp-file hardening missing: $dns_guard_runtime_guard" >&2
@@ -736,7 +761,17 @@ do
     }
 done
 
-for dns_guard_guard in \,    'router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755' \,    'router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700' \,    'EDGE_DNS_GUARD_WATCHDOG="1"' \,    'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD="3"' \,    'EDGE_DNS_QUERY_TIMEOUT_SECONDS="5"' \,    'EDGE_DNS_LOCK_WAIT_SECONDS="5"' \,    'EDGE_DNS_BOOTSTRAP_TEST_NAME="example.com"' \,    'configure_dns_guard_watchdog()' \,    'cru a AsusEdgeDNSGuard' \,    'DNS_GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"'
+for dns_guard_guard in \
+    'router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755' \
+    'router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700' \
+    'EDGE_DNS_GUARD_WATCHDOG="1"' \
+    'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD="3"' \
+    'EDGE_DNS_QUERY_TIMEOUT_SECONDS="5"' \
+    'EDGE_DNS_LOCK_WAIT_SECONDS="5"' \
+    'EDGE_DNS_BOOTSTRAP_TEST_NAME="example.com"' \
+    'configure_dns_guard_watchdog()' \
+    'cru a AsusEdgeDNSGuard' \
+    'DNS_GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"'
 do
     grep -F "$dns_guard_guard" \
         "$REPO_DIR/scripts/install.sh" \
@@ -936,7 +971,16 @@ grep -F 'EDGE_WAN_DNS_WAIT_SECONDS="90"' \
 GRAFANA_ALERTS="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml"
 GRAFANA_EMAIL_CONTACT="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-email-contact.yml"
 
-for dns_guard_observability_guard in \,    'uid: dns_guard_sustained_failopen' \,    'uid: dns_guard_bootstrap_unhealthy' \,    'uid: dns_guard_telemetry_stale' \,    'asus_edge_dns_guard_mode_bootstrap' \,    'asus_edge_dns_guard_bootstrap_dns_healthy' \,    'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds' \,    'asus_edge_dns_guard_collection_timestamp_seconds' \,    'for: 10m' \,    'component: dns-guard'
+for dns_guard_observability_guard in \
+    'uid: dns_guard_sustained_failopen' \
+    'uid: dns_guard_bootstrap_unhealthy' \
+    'uid: dns_guard_telemetry_stale' \
+    'asus_edge_dns_guard_mode_bootstrap' \
+    'asus_edge_dns_guard_bootstrap_dns_healthy' \
+    'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds' \
+    'asus_edge_dns_guard_collection_timestamp_seconds' \
+    'for: 10m' \
+    'component: dns-guard'
 do
     grep -F "$dns_guard_observability_guard" \
         "$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml" >/dev/null || {
