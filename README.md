@@ -22,6 +22,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 - Extended validation into latency-sensitive cloud workloads: compared GeForce NOW over Gigabit Ethernet and Wi-Fi 6, and analyzed an Xbox Cloud Gaming session with browser-native WebRTC RTP, jitter, ICE RTT, frame-delivery, bitrate, and decoder telemetry.
 - Isolated a Wi-Fi 6 HE160 interoperability problem by comparing HE80/HE160 on a MediaTek MT7922, repeating the matrix across two Windows drivers, and using an independent Android 2x2 HE160 client to separate AP-wide capability from client/pair-specific behavior.
 - Shipped RouterCloud on the dedicated LAN/Tailscale-only HTTPS service with custom login/session auth, production-tested password recovery, branded Polish Metro UI, AJAX sorting and live search, recent files and persistent favorites, safe rename/delete/edit workflows, WebDAV desktop integration, server-side ZIP downloads for checkbox-selected files/folders, and independent versioned encrypted backups while keeping generic `allow-delete: false`.
+- Performed a multi-vantage port-exposure audit across LAN, Tailscale, Fedora and a verified LTE/5G WAN path, including positive/negative identity tests and explicit invalidation of misleading results when routing did not match the intended trust boundary.
 - Captured sanitized live evidence instead of presenting expected behavior as observed results.
 
 ## Architecture
@@ -359,6 +360,7 @@ See [Tailscale maintenance and rollback](docs/tailscale-maintenance.md).
 ## Case studies
 
 - [Case study index](docs/CASE-STUDIES.md) — troubleshooting and endpoint-integration investigations with explicit evidence, remediation, validation, and limitations.
+- [Port exposure and trust-boundary audit](docs/case-studies/port-exposure-trust-boundary-audit-2026-10-07.md) — sanitized multi-vantage LAN/Tailscale/WAN exposure validation with explicit route verification and claim boundaries.
 
 ## Documentation
 
