@@ -19,6 +19,7 @@ WAN0_VALUE="$TMP_DIR/wan0-dnsenable"
 FAIL_PING="$TMP_DIR/fail-ping"
 FAIL_DNS="$TMP_DIR/fail-dns"
 FAIL_READY="$TMP_DIR/fail-ready"
+HANG_DNS="$TMP_DIR/hang-dns"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR"
 printf '0\n' >"$WAN_VALUE"
@@ -124,10 +125,22 @@ EOF
 
 cat >"$MOCK_BIN/busybox" <<EOF
 #!/bin/sh
-[ "\${1:-}" = "nslookup" ] || exit 127
-[ -f "$FAIL_DNS" ] && exit 1
-echo "Address 1: 93.184.216.34"
-exit 0
+applet="\${1:-}"
+shift || true
+case "\$applet" in
+    timeout)
+        exec /usr/bin/timeout "\$@"
+        ;;
+    nslookup)
+        [ -f "$HANG_DNS" ] && sleep 30
+        [ -f "$FAIL_DNS" ] && exit 1
+        echo "Address 1: 93.184.216.34"
+        exit 0
+        ;;
+    *)
+        exit 127
+        ;;
+esac
 EOF
 
 chmod +x "$GUARD" "$MOCK_BIN/nvram" "$MOCK_BIN/service" "$MOCK_BIN/ping" \
@@ -141,11 +154,12 @@ run_helper() {
     EDGE_BUSYBOX_BIN="$MOCK_BIN/busybox" \
     EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
     EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS=1 \
+    EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS=1 \
         sh "$HELPER" "$@"
 }
 
 reset_fixture() {
-    rm -f "$WAN_STATE" "$FAIL_PING" "$FAIL_DNS" "$FAIL_READY" "$NVRAM_LOG" "$SERVICE_LOG"
+    rm -f "$WAN_STATE" "$FAIL_PING" "$FAIL_DNS" "$FAIL_READY" "$HANG_DNS" "$NVRAM_LOG" "$SERVICE_LOG"
     printf '0\n' >"$WAN_VALUE"
     printf '0\n' >"$WAN0_VALUE"
     printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
@@ -247,5 +261,35 @@ grep -F 'BREAKGLASS_RESULT=FAIL' <<EOF >/dev/null
 $dns_failure_output
 EOF
 [ -f "$WAN_STATE" ]
+
+echo "=== break-glass DNS validation is explicitly bounded ==="
+reset_fixture
+: >"$HANG_DNS"
+set +e
+bounded_output="$(
+    timeout 5 env \
+        EDGE_DNS_GUARD="$GUARD" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_WAN_STATE="$WAN_STATE" \
+        EDGE_BUSYBOX_BIN="$MOCK_BIN/busybox" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS=1 \
+        sh "$HELPER" on 2>&1
+)"
+bounded_rc=$?
+set -e
+[ "$bounded_rc" -ne 124 ] || {
+    echo "FAIL: break-glass DNS validation exceeded the outer 5-second safety bound" >&2
+    exit 1
+}
+[ "$bounded_rc" -ne 0 ] || {
+    echo "FAIL: hanging break-glass DNS validation was reported as success" >&2
+    exit 1
+}
+printf '%s\n' "$bounded_output" | grep -F 'DNS=FAIL' >/dev/null
+printf '%s\n' "$bounded_output" | grep -F 'BREAKGLASS_RESULT=FAIL' >/dev/null
+rm -f "$HANG_DNS"
 
 echo "PASS: break-glass snapshot, restore, ordering and final recovery verdict"
