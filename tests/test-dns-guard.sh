@@ -29,6 +29,8 @@ FAIL_TCP_PRIMARY="$TMP_DIR/fail-tcp-primary"
 FAIL_TCP_SECONDARY="$TMP_DIR/fail-tcp-secondary"
 FAIL_DIG_RUNTIME="$TMP_DIR/fail-dig-runtime"
 FAIL_PIHOLE_TCP_LISTENER="$TMP_DIR/fail-pihole-tcp-listener"
+FAIL_BOOTSTRAP_HEALTH="$TMP_DIR/fail-bootstrap-health"
+HANG_PROBE="$TMP_DIR/hang-probe"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR" "$RUNTIME_STATE_DIR"
 
@@ -36,6 +38,8 @@ cat >"$CONFIG" <<'EOF'
 EDGE_UNBOUND_PORT=53535
 EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
 EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=1
+EDGE_DNS_QUERY_TIMEOUT_SECONDS=1
+EDGE_DNS_LOCK_WAIT_SECONDS=2
 EOF
 
 cat >"$MOCK_BIN/nvram" <<EOF
@@ -92,9 +96,15 @@ cat >"$BUSYBOX_MOCK" <<EOF
 applet="\$1"
 shift
 case "\$applet" in
+    timeout)
+        exec /usr/bin/timeout "\$@"
+        ;;
     nslookup)
         probe_name="\${1:-}"
-        printf 'udp %s\n' "\$probe_name" >>"$PROBE_LOG"
+        probe_server="\${2:-}"
+        printf 'udp %s %s\n' "\$probe_name" "\$probe_server" >>"$PROBE_LOG"
+
+        [ -f "$HANG_PROBE" ] && sleep 30
 
         if [ -n "\${EDGE_DNS_TEST_QUERY_SERIALIZE:-}" ]; then
             [ -f "$QUERY_ACTIVE" ] && : >"$QUERY_COLLISION"
@@ -105,6 +115,12 @@ case "\$applet" in
         fi
 
         case "\$probe_name" in
+            example.com)
+                [ -f "$FAIL_BOOTSTRAP_HEALTH" ] && exit 1
+                echo "Server: \${probe_server:-9.9.9.9}"
+                echo "Name: example.com"
+                echo "Address 1: 93.184.216.34"
+                ;;
             one.one.one.one)
                 [ -f "$FAIL_PROBE_PRIMARY" ] && exit 1
                 echo "Server: 192.0.2.53"
@@ -390,6 +406,70 @@ grep -qx 'nameserver 149.112.112.112' "$RESOLV"
 
 run_guard breakglass-off >/dev/null
 [ ! -f "$FLAG" ]
+
+echo "=== syntactically valid but dead bootstrap DNS is not reported as healthy ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=1
+EDGE_DNS_QUERY_TIMEOUT_SECONDS=1
+EDGE_DNS_LOCK_WAIT_SECONDS=2
+EOF
+rm -f "$FAIL_BOOTSTRAP" "$BOOTSTRAP_PRIMARY" "$BOOTSTRAP_SECONDARY"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+: >"$FAIL_BOOTSTRAP_HEALTH"
+
+if dead_bootstrap_output="$(run_guard fallback 2>&1)"; then
+    echo "FAIL: DNS Guard reported fallback success although every bootstrap DNS probe failed" >&2
+    exit 1
+fi
+printf '%s\n' "$dead_bootstrap_output"
+grep -F 'FALLBACK=UNHEALTHY_BOOTSTRAP' <<EOF >/dev/null
+$dead_bootstrap_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+dead_metrics="$(run_guard metrics)"
+printf '%s\n' "$dead_metrics" | grep -qx 'asus_edge_dns_guard_bootstrap_dns_healthy 0'
+dead_check_epoch="$(printf '%s\n' "$dead_metrics" | awk '$1=="asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds"{print $2}')"
+[ "$dead_check_epoch" -gt 0 ]
+
+rm -f "$FAIL_BOOTSTRAP_HEALTH"
+recovered_bootstrap_output="$(run_guard fallback)"
+printf '%s\n' "$recovered_bootstrap_output"
+grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
+$recovered_bootstrap_output
+EOF
+healthy_metrics="$(run_guard metrics)"
+printf '%s\n' "$healthy_metrics" | grep -qx 'asus_edge_dns_guard_bootstrap_dns_healthy 1'
+
+echo "=== hanging UDP DNS probe is bounded ==="
+: >"$HANG_PROBE"
+set +e
+bounded_output="$(
+    timeout 5 env \
+        EDGE_CONFIG_FILE="$CONFIG" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_FLAG="$FLAG" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK" \
+        sh "$GUARD" ready 2>&1
+)"
+bounded_rc=$?
+set -e
+[ "$bounded_rc" -ne 124 ] || {
+    echo "FAIL: DNS Guard UDP probe exceeded the outer 5-second safety bound" >&2
+    exit 1
+}
+[ "$bounded_rc" -ne 0 ] || {
+    echo "FAIL: hanging DNS probe was treated as healthy" >&2
+    exit 1
+}
+printf '%s\n' "$bounded_output" | grep -F 'READY=FAIL' >/dev/null
+rm -f "$HANG_PROBE"
 
 echo "=== fail-open unhealthy path ==="
 printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
