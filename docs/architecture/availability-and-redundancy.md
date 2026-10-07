@@ -15,7 +15,7 @@ deployment is not a redundant gateway architecture.
 | --- | --- | --- | --- | --- |
 | ASUS gateway | single device | loss of routing, local gateway services and Tailscale edge role | backup/restore, health checks, documented recovery | no HA peer / FHRP |
 | WAN/ISP | single documented WAN | Internet and remote-overlay loss | WAN recovery logic, local LAN remains available | no validated dual-WAN failover |
-| Router power | single power path documented | gateway outage | boot/recovery validation | UPS/power-continuity baseline not yet documented |
+| Router power | single router power input; site backup-power state not documented | gateway outage | boot/recovery validation | UPS/power-continuity baseline not yet documented |
 | Router-attached SSD | single local persistent-storage device | Entware/services/RouterCloud/swap impact | off-router backup, recovery procedures | no live storage redundancy |
 | Fedora monitoring host | single monitoring/collector host | monitoring, dashboards and collector visibility lost | services restart automatically; gateway dataplane remains separate | no monitoring HA |
 | Pi-hole + Unbound | co-resident on router | DNS filtering/resolution degradation if router/service fails | DNS Guard fail-open for local resolver-stack failure, health checks | does not survive complete router/power loss |
