@@ -565,6 +565,27 @@ grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
 $fallback_output
 EOF
 
+echo "=== dead bootstrap is escaped immediately once local DNS is healthy ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+EDGE_DNS_QUERY_TIMEOUT_SECONDS=2
+EDGE_DNS_LOCK_WAIT_SECONDS=2
+EOF
+rm -f "$FAIL_LOCAL" "$RECOVERY_STREAK_FILE"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+: >"$FAIL_BOOTSTRAP_HEALTH"
+
+dead_escape_output="$(run_guard auto)"
+printf '%s\n' "$dead_escape_output"
+grep -F 'AUTO=LOCAL_DNS_BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$dead_escape_output
+EOF
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+rm -f "$FAIL_BOOTSTRAP_HEALTH"
+
 echo "=== failback hysteresis requires consecutive healthy checks ==="
 cat >"$CONFIG" <<'EOF'
 EDGE_UNBOUND_PORT=53535
