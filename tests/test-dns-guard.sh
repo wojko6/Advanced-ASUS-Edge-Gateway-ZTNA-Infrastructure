@@ -19,7 +19,7 @@ mkdir -p "$MOCK_BIN" "$STATE_DIR"
 
 cat >"$CONFIG" <<'EOF'
 EDGE_UNBOUND_PORT=53535
-EDGE_TS_PIHOLE_DNS_IP=192.0.2.53
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
 EOF
 
 cat >"$MOCK_BIN/nvram" <<'EOF'
@@ -136,4 +136,42 @@ grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
 $fallback_output
 EOF
 
-echo "PASS: DNS Guard healthy, fail-open, break-glass and idempotency policies"
+echo "=== missing local resolver target fails open ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EOF
+rm -f "$FAIL_LOCAL"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+missing_output="$(run_guard auto)"
+printf '%s\n' "$missing_output"
+grep -F 'AUTO=BOOTSTRAP_CONFIG_INVALID' <<EOF >/dev/null
+$missing_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+if run_guard promote >/tmp/asus-edge-dns-guard-invalid-target.out 2>&1; then
+    echo "FAIL: promotion succeeded without a configured local resolver target" >&2
+    exit 1
+fi
+grep -F 'PROMOTE=BLOCKED_INVALID_LOCAL_RESOLVER' \
+    /tmp/asus-edge-dns-guard-invalid-target.out >/dev/null
+rm -f /tmp/asus-edge-dns-guard-invalid-target.out
+
+echo "=== invalid local resolver target fails open ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=999.0.2.53
+EOF
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+
+invalid_output="$(run_guard auto)"
+printf '%s\n' "$invalid_output"
+grep -F 'AUTO=BOOTSTRAP_CONFIG_INVALID' <<EOF >/dev/null
+$invalid_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+echo "PASS: DNS Guard healthy, fail-open, explicit-target and idempotency policies"
