@@ -27,6 +27,7 @@ FAIL_PROBE_PRIMARY="$TMP_DIR/fail-probe-primary"
 FAIL_PROBE_SECONDARY="$TMP_DIR/fail-probe-secondary"
 FAIL_TCP_PRIMARY="$TMP_DIR/fail-tcp-primary"
 FAIL_TCP_SECONDARY="$TMP_DIR/fail-tcp-secondary"
+FAIL_DIG_RUNTIME="$TMP_DIR/fail-dig-runtime"
 FAIL_PIHOLE_TCP_LISTENER="$TMP_DIR/fail-pihole-tcp-listener"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR" "$RUNTIME_STATE_DIR"
@@ -131,6 +132,15 @@ EOF
 
 cat >"$MOCK_BIN/dig" <<EOF
 #!/bin/sh
+
+case " \$* " in
+    *" -v "*)
+        [ -f "$FAIL_DIG_RUNTIME" ] && exit 1
+        echo "DiG mock"
+        exit 0
+        ;;
+esac
+
 printf 'tcp %s\n' "\$*" >>"$PROBE_LOG"
 
 case " \$* " in
@@ -204,6 +214,26 @@ if grep -E 'sslip\.io|edge-health-' "$PROBE_LOG" >/dev/null; then
     echo "FAIL: DNS Guard still generated unique external probe names" >&2
     exit 1
 fi
+
+echo "=== unusable optional dig does not make local DNS unhealthy ==="
+: >"$FAIL_DIG_RUNTIME"
+rm -f "$PROBE_LOG"
+
+broken_dig_output="$(run_guard ready)"
+printf '%s\n' "$broken_dig_output"
+
+grep -F 'READY=PASS' <<EOF >/dev/null
+$broken_dig_output
+EOF
+
+grep -F 'udp one.one.one.one' "$PROBE_LOG" >/dev/null
+
+if grep -F 'tcp ' "$PROBE_LOG" >/dev/null; then
+    echo "FAIL: DNS Guard attempted active TCP query with unusable dig" >&2
+    exit 1
+fi
+
+rm -f "$FAIL_DIG_RUNTIME"
 
 echo "=== secondary provider keeps health independent from primary probe ==="
 : >"$FAIL_PROBE_PRIMARY"
