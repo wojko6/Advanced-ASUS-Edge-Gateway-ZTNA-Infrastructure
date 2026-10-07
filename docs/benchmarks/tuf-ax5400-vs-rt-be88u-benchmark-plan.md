@@ -1,7 +1,8 @@
 # ASUS router platform benchmark plan
 
-This document defines a reproducible benchmark for comparing the project's
-current ASUS TUF-AX5400 edge gateway with a future ASUS RT-BE88U.
+This document defines a reproducible benchmark for the project's current ASUS
+TUF-AX5400 edge gateway and an optional future comparison with ASUS RT-BE88U if
+that hardware becomes available. It does not assume or require a purchase.
 
 Tracking: #194
 
@@ -12,8 +13,10 @@ real Wi-Fi behavior.
 
 ## 1. Comparison principle
 
-The TUF-AX5400 result becomes the baseline. After the RT-BE88U is available,
-repeat the same matrix with the same test endpoints and equivalent configuration.
+The TUF-AX5400 result becomes the baseline. If an RT-BE88U is available in the
+future, repeat the same matrix with the same test endpoints and equivalent
+configuration. The benchmark remains useful even if no replacement router is
+purchased.
 
 A result is considered directly comparable only when these variables are
 recorded and materially equivalent:
@@ -148,7 +151,39 @@ With a controlled client using the router as Exit Node, record:
 Internet speed-test results may be kept as secondary evidence, but a controlled
 iperf3 path is preferred where possible.
 
-## 6. DNS stack
+## 6. Commercial whole-network VPN
+
+This test captures the failure mode that matters operationally: placing a
+commercial VPN client on the router and sending a broad or whole-LAN policy
+through it.
+
+Test NordVPN and/or ExpressVPN only when a valid router-side profile is available.
+Record the exact protocol actually used; do not label an OpenVPN result as
+representative of WireGuard, NordLynx or another tunnel implementation.
+
+For each provider/profile record:
+
+- provider and profile type;
+- protocol: OpenVPN UDP/TCP, WireGuard or other;
+- selected VPN endpoint region;
+- WAN baseline immediately before the VPN run;
+- downstream and upstream throughput through the VPN;
+- latency and packet loss where available;
+- router CPU/load and available memory during sustained traffic;
+- Pi-hole/Unbound query latency while the VPN is saturated;
+- RouterCloud/WebUI responsiveness while the VPN is saturated;
+- DNS Guard state before and after the run.
+
+Prefer at least three 60-second runs in each direction. If the router is clearly
+CPU-bound, add one 180-second sustained run.
+
+A commercial VPN result is only comparable between routers when the provider,
+protocol, endpoint class and client/test path are materially equivalent.
+
+This section is valuable even if only the TUF-AX5400 is ever tested: it records
+the current platform's practical limit under a real production-style workload.
+
+## 7. DNS stack
 
 The production DNS path is part of the benchmark because performance must not
 come at the cost of DNS Guard reliability.
@@ -182,7 +217,7 @@ runs. Record median and high-percentile behavior rather than only one query.
 A benchmark run is invalid if it accidentally triggers sustained DNS fail-open
 unless the test is specifically designed to measure that behavior.
 
-## 7. RouterCloud / USB storage
+## 8. RouterCloud / USB storage
 
 When the same USB SSD can be reused on both platforms, measure sequential
 read/write through the actual service path used by the project.
@@ -200,7 +235,7 @@ Record:
 
 Prefer a multi-gigabyte file to avoid measuring cache only.
 
-## 8. Wi-Fi 5 GHz
+## 9. Wi-Fi 5 GHz
 
 Use the same wireless client, same iperf3 server and fixed physical test points.
 
@@ -224,7 +259,7 @@ Run both upload and download directions.
 Do not compare a 160 MHz clean-channel result against an 80 MHz congested result
 without clearly marking the configuration difference.
 
-## 9. Normal service-load test
+## 10. Normal service-load test
 
 The project router is not an empty benchmark appliance. Repeat one sustained
 network test while the normal stack is active:
@@ -244,7 +279,7 @@ This test is especially important when comparing 512 MB-class and 2 GB-class
 platforms because headroom and service coexistence matter as much as peak
 throughput.
 
-## 10. Result template
+## 11. Result template
 
 Use median values from at least three comparable runs.
 
@@ -260,6 +295,10 @@ Use median values from at least three comparable runs.
 | Tailscale direct up | TBD | TBD | TBD | |
 | Tailscale Exit Node down | TBD | TBD | TBD | |
 | Tailscale Exit Node up | TBD | TBD | TBD | |
+| Commercial VPN OpenVPN down | TBD | TBD | TBD | provider/profile recorded |
+| Commercial VPN OpenVPN up | TBD | TBD | TBD | provider/profile recorded |
+| Commercial VPN WireGuard-class down | TBD | TBD | TBD | only if supported |
+| Commercial VPN WireGuard-class up | TBD | TBD | TBD | only if supported |
 | Pi-hole cached latency | TBD | TBD | TBD | |
 | Unbound uncached latency | TBD | TBD | TBD | |
 | RouterCloud/USB read | TBD | TBD | TBD | |
@@ -269,7 +308,7 @@ Use median values from at least three comparable runs.
 | Wi-Fi far down | TBD | TBD | TBD | |
 | MemAvailable under normal load | TBD | TBD | TBD | |
 
-## 11. Acceptance / interpretation
+## 12. Acceptance / interpretation
 
 The final comparison should identify the bottleneck for each platform instead of
 only reporting that one number is larger.
@@ -287,7 +326,7 @@ The upgrade is considered architecturally meaningful when it moves one or more
 project-relevant bottlenecks while preserving the security and reliability
 baseline.
 
-## 12. Public evidence rules
+## 13. Public evidence rules
 
 Do not commit:
 
