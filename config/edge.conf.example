@@ -90,6 +90,15 @@ EDGE_DNS_GUARD_WATCHDOG="1"
 # DNS to the local Pi-hole path. Runtime streak state lives under /tmp and is
 # intentionally reset on reboot.
 EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD="3"
+# Bound every BusyBox nslookup used by DNS Guard. This prevents a stalled DNS
+# helper from retaining the global state lock indefinitely.
+EDGE_DNS_QUERY_TIMEOUT_SECONDS="5"
+# Bound lock acquisition so overlapping cron/WAN/manual invocations cannot build
+# an unbounded waiter queue behind a stuck process.
+EDGE_DNS_LOCK_WAIT_SECONDS="5"
+# Functional probe used only to verify that at least one selected WAN bootstrap
+# resolver actually answers DNS. This is not a hard-coded resolver address.
+EDGE_DNS_BOOTSTRAP_TEST_NAME="example.com"
 # Leave empty to auto-detect amtm Unbound Manager first, then standard Entware.
 # Set an explicit path if more than one Unbound configuration is present.
 EDGE_UNBOUND_CONFIG=""
