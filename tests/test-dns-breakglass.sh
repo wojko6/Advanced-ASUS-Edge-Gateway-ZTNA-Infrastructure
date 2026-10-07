@@ -132,7 +132,7 @@ case "\$applet" in
         exec /usr/bin/timeout "\$@"
         ;;
     nslookup)
-        [ -f "$HANG_DNS" ] && sleep 30
+        [ -f "$HANG_DNS" ] && /bin/sleep 30
         [ -f "$FAIL_DNS" ] && exit 1
         echo "Address 1: 93.184.216.34"
         exit 0
