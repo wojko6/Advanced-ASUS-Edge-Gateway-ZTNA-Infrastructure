@@ -203,7 +203,10 @@ runtime_uint_read() {
             printf '%s\n' "$default_value"
             ;;
         *)
-            if [ "${#state_value}" -le 9 ]; then
+            # Unix epoch seconds are already 10 digits; keep the generic
+            # telemetry reader tolerant of current timestamps while still
+            # rejecting arbitrarily large corrupted numeric state.
+            if [ "${#state_value}" -le 10 ]; then
                 printf '%s\n' "$state_value"
             else
                 printf '%s\n' "$default_value"
