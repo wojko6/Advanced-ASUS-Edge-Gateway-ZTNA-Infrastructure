@@ -59,6 +59,8 @@ groups:
         labels:
           severity: critical
           component: ssh-exporter
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
         isPaused: false
 
       - uid: tuf_wan_down
@@ -113,6 +115,8 @@ groups:
         labels:
           severity: critical
           component: wan
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
         isPaused: false
 
       - uid: tuf_probe_failed
@@ -167,6 +171,8 @@ groups:
         labels:
           severity: warning
           component: blackbox
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
         isPaused: false
 
       - uid: tuf_telemetry_stale
@@ -221,6 +227,8 @@ groups:
         labels:
           severity: warning
           component: telemetry
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
         isPaused: false
 
       - uid: tuf_wan_speed_degraded
@@ -276,3 +284,220 @@ groups:
         notification_settings:
           receiver: ASUS Edge Gateway Email
         isPaused: false
+
+      - uid: routercloud_backup_bad
+        title: RouterCloud backup nieudany
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 86400
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'last_over_time(routercloud_backup_last_run_success[24h])'
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: Ostatni backup RouterCloud zakończył się niepowodzeniem
+          description: Najnowszy opublikowany wynik backupu RouterCloud ma stan failure. Sprawdź usługę routercloud-backup i status.env.
+        labels:
+          severity: warning
+          component: routercloud-backup
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
+        isPaused: false
+
+      - uid: routercloud_backup_stale
+        title: RouterCloud backup jest nieaktualny
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 86400
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[24h])'
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [28800]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: Alerting
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Brak świeżego backupu RouterCloud od ponad 8 godzin
+          description: Backup jest planowany co 6 godzin. Alert ma 2-godzinny margines i przechodzi w Firing po dodatkowych 5 minutach.
+        labels:
+          severity: critical
+          component: routercloud-backup
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
+        isPaused: false
+
+      - uid: routercloud_maintenance_bad
+        title: Integralność backupu RouterCloud nieprzetestowana poprawnie
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 2592000
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'last_over_time(routercloud_maintenance_last_run_success[30d])'
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: Ostatnia konserwacja lub kontrola integralności RouterCloud nie powiodła się
+          description: Cotygodniowy retention/prune albo restic check --read-data zakończył się niepowodzeniem. Sprawdź routercloud-backup-maintenance.
+        labels:
+          severity: critical
+          component: routercloud-backup-maintenance
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
+        isPaused: false
+
+      - uid: routercloud_maintenance_stale
+        title: Kontrola integralności RouterCloud jest nieaktualna
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 2592000
+              to: 0
+            datasourceUid: victoriametrics
+            model:
+              editorMode: code
+              expr: 'time() - last_over_time(routercloud_maintenance_last_run_timestamp_seconds[30d])'
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [691200]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: Alerting
+        execErrState: Error
+        for: 30m
+        annotations:
+          summary: Brak świeżej kontroli integralności RouterCloud od ponad 8 dni
+          description: Maintenance jest planowany raz w tygodniu. Alert daje jednodniowy margines przed uznaniem kontroli za nieaktualną.
+        labels:
+          severity: warning
+          component: routercloud-backup-maintenance
+        notification_settings:
+          receiver: ASUS Edge Gateway Email
+        isPaused: false
+
