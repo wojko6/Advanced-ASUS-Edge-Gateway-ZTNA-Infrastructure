@@ -1,14 +1,49 @@
 # Project status
 
-**Status date:** 2026-10-06
+**Status date:** 2026-10-07
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
-**Latest broad router checkpoint:** 2026-10-06
+**Latest broad router checkpoint:** 2026-10-07 — multi-vantage port-exposure audit
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Core hardening/recovery closeout. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177 and Android Pi-hole/Tailscale policy #152 are completed. The reference router now runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.1 is production-validated. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment and #143 trust-zone segmentation before the planned RT-BE88U migration.
+**Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152 and the 2026-10-07 multi-vantage port-exposure audit are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.1 is production-validated. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, #178 complete Grafana notification routing/mobile escalation and #143 trust-zone segmentation before the planned RT-BE88U migration.
+
+## 2026-10-07 port-exposure and network-design documentation checkpoint
+
+The port-exposure audit is complete with explicit claim boundaries. The audit
+combined local listener inventory, firewall/NAT inspection, full LAN TCP
+scanning, targeted UDP validation, authorized and unauthorized Tailscale peers,
+Fedora source-restriction checks and a final external public-IPv4 TCP probe from
+a verified mobile-Internet route.
+
+Accepted results:
+
+- the tested router/Fedora Tailscale identity boundaries behaved as intended;
+- the tested public-IPv4 TCP ports were externally filtered/time-out from the
+  verified hotspot path;
+- native WAN IPv6 was disabled, with no WAN IPv6 address/default route and a
+  top-level IPv6 INPUT policy of DROP;
+- external WAN UDP was **not** conclusively validated and remains outside the
+  closure claim;
+- LAN-visible optional/firmware services such as FTP, cfg_server, wanduck,
+  mDNS and the UPnP configuration remain review/hardening items rather than
+  being hidden by the overall PASS result.
+
+The sanitized public case study is
+[Port exposure and trust-boundary audit](docs/case-studies/port-exposure-trust-boundary-audit-2026-10-07.md).
+
+The documentation layer was also normalized so the public case-study index now
+points to 14 canonical case studies under docs/case-studies/. A separate
+[network-design index](docs/network-design.md) now connects physical topology,
+public IPAM/trust-zone ownership, logical datapaths, L2/AAA applicability,
+availability/SPOF boundaries, monitoring and disaster recovery.
+
+The new topology/addressing/availability documents describe the **current**
+single-gateway design and mark VLAN segmentation, enterprise switching controls,
+gateway HA and UPS/power continuity honestly as planned, not applicable or not
+yet validated. They do not convert those gaps into implementation claims.
 
 ## 2026-10-06 final router runtime and architecture checkpoint
 
@@ -46,7 +81,8 @@ Current material follow-up:
 - #129 — refresh clean-room/disaster recovery for the current Pi-hole-aware
   production state;
 - #68 — assess DoH/DoQ and other encrypted-DNS bypass paths;
-- #143 — design Trusted/IoT/Guest segmentation.
+- #143 — design Trusted/IoT/Guest segmentation;
+- #178 — complete severity routing, RouterCloud backup alerting and mobile escalation after the already validated e-mail contact-point/WAN-speed path.
 
 The planned router migration target is ASUS RT-BE88U on a compatible
 Asuswrt-Merlin 3006.x branch. OPNsense/x86 is not the current migration target
@@ -58,7 +94,7 @@ Evidence:
 
 ## Executive status
 
-This status document is reconciled through 2026-10-06. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
+This status document is reconciled through 2026-10-07. The earlier post-firmware validation set is complete: current-firmware classic DNS, the historical Diversion Large acceptance, clean startup/persistence, Android exit-node behavior, and the source-controlled canonical architecture diagrams all have their required evidence. On 2026-09-27, issue #100 completed the router disaster-recovery baseline with a sanitized rebuild inventory, private encrypted NVRAM/settings export, verified off-router project backup, restore dry-run, clean-room restore, Unbound ownership reconstruction proof, and final review-only handling for addon-managed `post-mount`. The external observability baseline was also implemented and reboot-validated with read-only SSH collection, Traffic Analyzer history import, VictoriaMetrics, Blackbox Exporter and Grafana kept off-router.
 
 The centralized logging path is now also live-validated: router syslog-ng forwards the Asuswrt log over Tailscale and mutually authenticated TLS to the Fedora collector, with source-restricted firewall policy and successful short-outage recovery (3/3 test messages delivered after collector restoration). Grafana 13 uses its native Polish interface option; the project dashboard remains explicitly localized in JSON because application language settings do not translate project-owned panel content.
 

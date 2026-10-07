@@ -49,6 +49,34 @@ verification, or live-router validation.
 - Remove stale devices and rotate compromised node credentials promptly.
 - Test from LAN before relying on remote access.
 
+## Network zones, DMZ and L2 applicability
+
+The current production reference still uses a trusted main LAN/WLAN plus the
+Tailscale overlay; separate Trusted/IoT/Guest VLAN-backed production zones are
+not yet deployed. Issue #143 owns that future segmentation design.
+
+The current architecture also has **no application-facing WAN DMZ**. This is a
+deliberate consequence of the exposure model rather than an omitted public
+service zone: RouterCloud, Grafana, Pi-hole and the ASUS management plane are not
+intentionally published directly to the Internet.
+
+Classic enterprise Layer-2 controls such as DHCP Snooping, Dynamic ARP
+Inspection, switch Port Security, BPDU Guard, STP/RSTP design and centralized
+RADIUS/TACACS+ are tracked by applicability rather than being implied on a
+consumer-router topology that does not currently document a managed
+access/distribution switch layer.
+
+See:
+
+- [Addressing and trust-zone plan](architecture/addressing-and-zones.md)
+- [L2 and network-access security applicability](architecture/l2-security-applicability.md)
+- [Physical topology](architecture/physical-topology.md)
+
+A physically separate out-of-band management network/console server is not part
+of the current platform. Trusted local LAN access and physical access remain the
+break-glass recovery path when Tailscale or normal remote administration is
+unavailable.
+
 ## DNS caveats
 
 The reference deployment now enforces classic LAN DNS on TCP/UDP 53 and blocks direct IPv4 LAN DoT on TCP 853 with a project-owned `br0` FORWARD policy. Those controls are live validated, but they are not a comprehensive encrypted-DNS security boundary. DoH over HTTPS/443, DoQ/QUIC, VPN-carried DNS, IPv6 resolver paths, application-specific encrypted resolvers, hard-coded proxies, and traffic entering through interfaces outside the documented LAN policy remain separate controls or assessment items. `EDGE_LAN_DOT_FORWARD` must therefore be described as a direct IPv4 LAN DoT control, not as a universal DoT block.

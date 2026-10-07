@@ -51,31 +51,35 @@ Traffic Analyzer timer imported the next completed hourly bucket.
 SNMP was not required for this baseline.
 
 See:
-- [observability case study](asus-tuf-ax5400-observability-case-study.md)
+- [observability case study](case-studies/asus-tuf-ax5400-observability-case-study.md)
 - [sanitized live validation](../evidence/2026-09-27/observability-stack-validation.md)
 - [reproducible monitoring files](../monitoring/README.md)
 
-The initial Grafana alerting baseline is also live-validated: collector loss and
+The Grafana rule-evaluation baseline is live-validated: collector loss and
 stale telemetry reached firing state in a controlled Fedora-only fault test,
 recovered after service restoration, and the WAN no-data policy was corrected
-so missing collector data does not masquerade as WAN-down evidence.
+so missing collector data does not masquerade as WAN-down evidence. A dedicated
+e-mail contact point is also provisioned and the WAN-speed rule has bounded
+end-to-end firing and resolved e-mail evidence. Issue #178 now owns the broader
+severity-routing policy, RouterCloud backup coverage, grouping/anti-flap and
+mobile escalation rather than the basic e-mail transport itself.
 
 The centralized syslog-ng path was subsequently live-validated over Tailscale
 with mutual TLS, source-restricted firewalld policy, an end-to-end unique
 message, and a short collector-outage recovery test that delivered 3/3 queued
 messages after collector restoration.
 
-**Immediate continuation:** finish the Grafana work deliberately deferred at
-the end of 2026-09-28: merged-PR visibility, recent repository activity/commits,
-dashboard layout cleanup and a separate Polystat infrastructure-health view.
+**Immediate continuation:** keep the completed Engineering/CI dashboard baseline
+stable and continue issue #178 with complete notification routing, RouterCloud
+backup alerts, anti-flap/grouping and a bounded mobile notification path.
 
 The #127 LAN-management/WAN-exposure hardening, #128 IPv6/Wi-Fi security
 parity evidence and #130 GitHub main-ruleset/required-validation work are
 completed. Issue #177 Tailscale package/live-version drift hardening is also
 completed. The current bounded hardening/recovery sequence is #176 local
 source-scoping for exit-node forwarding, #129 Pi-hole-aware disaster recovery,
-the remaining #108 DNS-visibility gaps, #68 encrypted-DNS assessment and the
-later #143 trust-zone segmentation design.
+the remaining #108 DNS-visibility gaps, #68 encrypted-DNS assessment, #178
+notification completion and the later #143 trust-zone segmentation design.
 
 ## In progress — Network DNS Visibility / Client Activity Analytics
 
@@ -350,7 +354,7 @@ After the completed unchanged-state observation:
 - Add persistence thresholds, deduplication, and per-event cooldowns so a transient failure or repeated identical log entry does not create alert storms.
 - Emit a distinct `RECOVERED` notification when a previously active incident returns to a validated healthy state.
 - Prefer alert evaluation and notification delivery on an external collector/NAS/workstation rather than adding unnecessary processing to the low-memory router.
-- Evaluate a privacy-preserving phone notification path such as self-hosted ntfy or Gotify.
+- Use Telegram as the current preferred phone notification path under #178 because it can provide immediate push without exposing Grafana publicly; self-hosted ntfy/Gotify remain optional alternatives if the design later changes.
 - Add an external heartbeat/dead-man check so complete router or WAN failure can still be detected when the router itself is unable to send an alert.
 - Validate alert severity, false-positive rate, duplicate suppression, recovery notifications, and loss-of-router scenarios before describing the feature as production-ready.
 
@@ -426,6 +430,7 @@ platform.
 - Golden configuration, reproducible restore, and quarterly recovery exercises.
 - Policy-as-code validation for Tailscale and ASUS Edge policy changes.
 - Hardware/ISP failure tests, measured RTO/RPO, and a documented incident runbook.
+- Power-continuity / UPS assessment for the gateway, ISP handoff/CPE and Fedora monitoring host; do not claim uninterrupted operation until runtime and recovery behavior are measured.
 
 The TUF-AX5400 can remain an isolated secondary lab/reference node after the
 validated gateway role moves to the RT-BE88U.

@@ -27,12 +27,18 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 
 ## Architecture
 
-The current reference architecture is documented as four focused, source-controlled Mermaid diagrams instead of one canonical raster image:
+The current reference architecture is documented as a source-controlled network-design set instead of one canonical raster image. Start with the [Network Design Documentation Index](docs/network-design.md).
 
+Core architecture documents now include:
+
+- [Physical Topology](docs/architecture/physical-topology.md)
 - [High-Level Architecture / Trust Boundaries](docs/architecture/high-level-trust-boundaries.md)
+- [Addressing and Trust-Zone Plan](docs/architecture/addressing-and-zones.md)
 - [DNS Enforcement Flow](docs/architecture/dns-enforcement-flow.md)
 - [Tailscale Management + Exit-Node Flow](docs/architecture/tailscale-management-exit-node-flow.md)
 - [Boot & Service Dependency Flow](docs/architecture/boot-service-dependency-flow.md)
+- [Availability / Redundancy / SPOF](docs/architecture/availability-and-redundancy.md)
+- [L2 and Network-Access Security Applicability](docs/architecture/l2-security-applicability.md)
 
 The previous `docs/images/Architecture.png` is retained only as a historical/illustrative artifact and is no longer the source of truth.
 
@@ -44,7 +50,7 @@ Remote access is enforced through Tailscale policy plus project-owned local fire
 
 Current-firmware validation is tied to dated evidence rather than inferred from the diagrams. AUDIT-02 exit-node forwarding/NAT ownership was revalidated on GNUton 388.11 on 2026-09-23, and AUDIT-03 classic IPv4 UDP/TCP port-53 packet correlation was revalidated on the same reference firmware on 2026-09-27. DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted DNS and IPv6 resolver paths remain outside any universal DNS-enforcement claim.
 
-See [architecture](docs/architecture.md), [swap and memory reliability](docs/swap-and-memory-reliability.md), [firewall policy](docs/firewall-policy.md), [security limitations](docs/security.md), and the [requirements and acceptance map](docs/requirements.md) for the detailed design, test methods and current validation limits.
+See the [network design index](docs/network-design.md), [architecture](docs/architecture.md), [swap and memory reliability](docs/swap-and-memory-reliability.md), [firewall policy](docs/firewall-policy.md), [security limitations](docs/security.md), and the [requirements and acceptance map](docs/requirements.md) for the detailed design, test methods and current validation limits.
 
 The current RouterCloud browser/service state is recorded in the [2026-10-03 production checkpoint](docs/routercloud-production-checkpoint-2026-10-03.md), with bounded UI observations in the [same-day production validation](evidence/2026-10-03/routercloud-ui-production-validation.md) and the separate [password-recovery E2E validation](evidence/2026-10-03/routercloud-password-recovery-production-validation.md). The [2026-10-02 Metro checkpoint](docs/routercloud-metro-production-checkpoint-2026-10-02.md) remains as the historical baseline for the first Metro/WebDAV phase.
 
@@ -61,6 +67,7 @@ The current RouterCloud browser/service state is recorded in the [2026-10-03 pro
 - Optional mutually authenticated TLS log forwarding with syslog-ng and reliable disk buffering.
 - Automated collector retention that compresses completed logs after 24 hours and expires them after 30 days.
 - Pi-hole DNS activity analytics Phase 0-3 are live-validated: bounded Fedora collection, local Alloy/Loki ingestion, Grafana dashboarding, controlled reboot persistence and two-client main-LAN distinguishability all passed within the documented Pi-hole-visible scope.
+- Availability and classic enterprise L2/AAA controls are documented explicitly as implemented, planned, not applicable or not yet validated; recoverability is not presented as high availability.
 
 ## Repository layout
 

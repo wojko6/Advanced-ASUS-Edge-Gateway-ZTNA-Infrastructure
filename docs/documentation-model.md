@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-09-29
+**Last reviewed:** 2026-10-07
 
 **Applies to:** `main`
 
@@ -12,7 +12,7 @@ This project deliberately separates current state, implementation, live evidence
 
 1. **`PROJECT-STATUS.md`** — current project phase, accepted baseline, open/closed findings and explicit deployment boundaries.
 2. **Dated `evidence/` artifacts** — proof for specific observed claims under the documented date, device, method and limitations. Evidence proves only the claim it records; it does not automatically mean the same code/configuration is still deployed.
-3. **Current operational documentation** — `docs/operations.md`, `docs/deployment-pl.md`, `docs/requirements.md`, security/firewall/testing documentation and current architecture documentation. The requirements map records test ownership and limits; it must follow current status and dated observations when deployment state changes.
+3. **Current operational/network-design documentation** — `docs/network-design.md`, `docs/hardware-inventory.md`, `docs/operations.md`, `docs/deployment-pl.md`, `docs/requirements.md`, security/firewall/testing documentation and current architecture documentation. The network-design index organizes the current L1-L7 documentation; the requirements map records test ownership and limits. Both must follow current status and dated observations when deployment state changes.
 4. **`README.md`** — public summary derived from the current status and supporting evidence.
 5. **`docs/roadmap.md`** — planned or candidate work; a roadmap item is not implemented or validated unless another current source says so.
 6. **`docs/worklog/`** — dated public engineering chronology. A worklog explains what happened; it is not a substitute for evidence.
@@ -43,13 +43,21 @@ A merged PR or green CI run does **not** prove that the same revision is install
 
 ## Architecture asset rule
 
-The canonical current architecture is the set of focused, source-controlled
-Mermaid documents under `docs/architecture/`:
+The canonical current network design is indexed by `docs/network-design.md` and
+uses focused, source-controlled documents under `docs/architecture/`:
 
-- `high-level-trust-boundaries.md`;
-- `dns-enforcement-flow.md`;
-- `tailscale-management-exit-node-flow.md`;
-- `boot-service-dependency-flow.md`.
+- `physical-topology.md` — physical roles and attachment/failure boundaries;
+- `high-level-trust-boundaries.md` — logical trust boundaries;
+- `addressing-and-zones.md` — public IPAM and current/planned zone ownership;
+- `dns-enforcement-flow.md` — DNS datapaths and enforcement scope;
+- `tailscale-management-exit-node-flow.md` — remote management/forwarding flow;
+- `boot-service-dependency-flow.md` — boot/runtime dependencies;
+- `availability-and-redundancy.md` — HA applicability and SPOF model;
+- `l2-security-applicability.md` — L2/AAA applicability matrix.
+
+Not every architecture document is a Mermaid flow diagram. Applicability and
+inventory documents are canonical when their purpose is tabular rather than
+flow-oriented.
 
 `docs/images/Architecture.png` is retained only as a historical/illustrative
 artifact and is not a source of truth for the current deployment.
