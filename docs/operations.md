@@ -156,7 +156,7 @@ From a LAN/serial recovery session:
 service restart_firewall
 ```
 
-`uninstall.sh` removes the project-owned IPv4 and IPv6 runtime chains/jumps and restores a preserved pre-project hook only when the current hook is marked as ASUS Edge managed. It intentionally leaves the project configuration and backups in place for review. It does **not** itself restart the firmware firewall, stop Pi-hole/Tailscale/Unbound/syslog-ng, remove packages, erase Tailscale state, or delete unrelated router configuration. Treat `service restart_firewall` as a separate recovery action and verify the resulting state locally.
+`uninstall.sh` first asks DNS Guard to restore a validated independent WAN bootstrap resolver and only then removes the DNS Guard watchdog. If bootstrap restoration fails, if the watchdog cannot be verified as removed, or if the watchdog exists while the Guard binary is unavailable, uninstall aborts before project firewall cleanup. After that DNS preflight it removes the project-owned IPv4 and IPv6 runtime chains/jumps and restores a preserved pre-project hook only when the current hook is marked as ASUS Edge managed. It intentionally leaves the project configuration and backups in place for review. It does **not** itself restart the firmware firewall, stop Pi-hole/Tailscale/Unbound/syslog-ng, remove packages, erase Tailscale state, or delete unrelated router configuration. Treat `service restart_firewall` as a separate recovery action and verify the resulting state locally.
 
 If hook restoration or managed-hook removal fails, `uninstall.sh` returns non-zero and reports an incomplete uninstall. Do not continue with a remote-only recovery assumption; inspect `/jffs/scripts` through local access before deciding whether to restart the firewall.
 
@@ -256,8 +256,9 @@ Entware may not retain a previous package version. Download/retain the known-goo
 
 ### Router system resolver policy
 
-DNS Guard v3.1 controls the router's own runtime resolver separately from the
-client-facing DNS listeners.
+DNS Guard v3.1 remains the production-validated rollback baseline for the router's own runtime resolver. The v3.2 candidate in PR #193 keeps the same two-phase architecture while adding explicit local-resolver configuration, stronger break-glass recovery semantics, watchdog health checks, serialized state transitions, failback hysteresis, validated WAN bootstrap resolvers, multi-provider readiness probes and coarse fail-open observability. Until the bounded live recovery test and one full cold reboot are complete, treat v3.2 as a release candidate rather than the production baseline.
+
+The router system resolver remains separate from the client-facing DNS listeners.
 
 The reference policy is:
 
@@ -277,7 +278,11 @@ dependency cycle. Resolver state changes should go through
 
 The watchdog is recreated by `services-start` and runs `dns-guard auto`
 once per minute. Sticky break-glass must be cleared explicitly before automatic
-Pi-hole promotion can resume.
+Pi-hole promotion can resume. In the v3.2 candidate, fail-open remains immediate
+while automatic failback requires the configured consecutive-success threshold
+(default: three). The runtime streak and coarse transition state are kept under
+`/tmp`, so reboot resets the counter without adding minute-by-minute JFFS writes.
+Use `dns-guard metrics` for the privacy-safe mode/break-glass/transition view.
 
 
 The current reference design has **two local resolver front ends with one
