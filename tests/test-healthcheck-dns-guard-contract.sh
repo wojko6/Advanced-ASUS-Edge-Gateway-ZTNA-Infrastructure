@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-TEST_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
+TEST_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 REPO_DIR="$(CDPATH='' cd -- "$TEST_DIR/.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
