@@ -22,7 +22,7 @@ Still open:
 
 - #176 — router-local source scoping for exit-node forwarding;
 - #129 — Pi-hole-aware disaster-recovery refresh;
-- #178 — Grafana notification delivery / bounded critical escalation;
+- #178 — Grafana grouping/anti-flap and bounded mobile/critical escalation; RouterCloud backup/maintenance alert routing is merged through PR #190;
 - #108 — remaining DNS-visibility retention/rollback/interception work;
 - #68 — DoH/DoQ/encrypted-DNS assessment;
 - #143 — Trusted/IoT/Guest segmentation design before RT-BE88U migration.
@@ -54,15 +54,19 @@ See:
 - [observability case study](case-studies/asus-tuf-ax5400-observability-case-study.md)
 - [sanitized live validation](../evidence/2026-09-27/observability-stack-validation.md)
 - [reproducible monitoring files](../monitoring/README.md)
+- [RouterCloud Grafana live alerting validation](../evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md)
 
 The Grafana rule-evaluation baseline is live-validated: collector loss and
 stale telemetry reached firing state in a controlled Fedora-only fault test,
 recovered after service restoration, and the WAN no-data policy was corrected
 so missing collector data does not masquerade as WAN-down evidence. A dedicated
 e-mail contact point is also provisioned and the WAN-speed rule has bounded
-end-to-end firing and resolved e-mail evidence. Issue #178 now owns the broader
-severity-routing policy, RouterCloud backup coverage, grouping/anti-flap and
-mobile escalation rather than the basic e-mail transport itself.
+end-to-end firing and resolved e-mail evidence. PR #190 then extended the
+baseline to nine rules, added four RouterCloud backup/maintenance failure and
+staleness rules, routed all nine current rules to the existing e-mail contact
+point, and live-tested `routercloud_backup_bad` through firing and recovery.
+Issue #178 now owns grouping/anti-flap and mobile/critical escalation rather than
+RouterCloud backup coverage itself.
 
 The centralized syslog-ng path was subsequently live-validated over Tailscale
 with mutual TLS, source-restricted firewalld policy, an end-to-end unique
@@ -70,8 +74,10 @@ message, and a short collector-outage recovery test that delivered 3/3 queued
 messages after collector restoration.
 
 **Immediate continuation:** keep the completed Engineering/CI dashboard baseline
-stable and continue issue #178 with complete notification routing, RouterCloud
-backup alerts, anti-flap/grouping and a bounded mobile notification path.
+stable and continue issue #178 with anti-flap/grouping validation and a bounded
+mobile/critical notification path. The current nine-rule e-mail routing and
+RouterCloud backup/maintenance alert baseline are already merged and validated
+within their documented boundaries.
 
 The #127 LAN-management/WAN-exposure hardening, #128 IPv6/Wi-Fi security
 parity evidence and #130 GitHub main-ruleset/required-validation work are

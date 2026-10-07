@@ -257,6 +257,40 @@ Nie są publikowane:
 Publikacja metryk jest best-effort. Awaria VictoriaMetrics nie może spowodować
 niepowodzenia właściwego backupu lub maintenance.
 
+## Alerting Grafana
+
+Stan backupu i maintenance jest oceniany poza routerem przez Grafanę na Fedorze.
+Źródłem pozostają wyłącznie powyższe metryki coarse-grained.
+
+Provisioning zawiera cztery reguły:
+
+- `routercloud_backup_bad` — ostatni wynik backupu jest nieudany; `for: 1m`;
+- `routercloud_backup_stale` — wiek ostatniego backupu przekracza 8 godzin; `for: 5m`;
+- `routercloud_maintenance_bad` — ostatni maintenance/integrity check jest nieudany; `for: 1m`;
+- `routercloud_maintenance_stale` — wiek ostatniego maintenance przekracza 8 dni; `for: 30m`.
+
+Reguły `*_bad` używają `noDataState: OK`, ponieważ brak historii jest
+obsługiwany osobno przez reguły `*_stale`. Reguły staleness używają
+`noDataState: Alerting`, ponieważ brak świeżej próbki jest sam w sobie sygnałem
+problemowym.
+
+Wszystkie cztery reguły są częścią dziewięcioregułowego baseline Grafany i
+routują do istniejącego kontaktu `ASUS Edge Gateway Email`. Dane SMTP pozostają
+poza repozytorium.
+
+2026-10-07 wykonano kontrolowany live E2E dla
+`routercloud_backup_bad`: syntetyczny stan failure doprowadził regułę do
+`Firing`, następnie przywrócono rzeczywistą zdrową metrykę z `status.env`, a
+Grafana wróciła do stanu bez aktywnej instancji. Test nie jest elementem zwykłego
+CI, ponieważ celowo modyfikuje lokalną metrykę i może uruchomić realne
+powiadomienie.
+
+Zobacz:
+- [monitoring Grafana alerting](../monitoring/README.md#grafana-alerting);
+- [sanitized live validation](../evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md);
+- `tests/test-grafana-routercloud-alerting-live.sh`.
+
+
 ## Fail-closed
 
 Backup i maintenance odmawiają działania, jeżeli:
