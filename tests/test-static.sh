@@ -681,6 +681,20 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
 }
 
 
+for dns_guard_health_guard in \
+    'EDGE_DNS_LOCAL_RESOLVER_IP:=}' \
+    'EDGE_DNS_GUARD_WATCHDOG:=1' \
+    'dns_guard_cron_entry_ok()' \
+    'DNS Guard watchdog cron entry missing or drifted' \
+    'DNS Guard break-glass is ACTIVE' \
+    'DNS Guard resolver mode: bootstrap/fail-open'
+do
+    grep -F "$dns_guard_health_guard" "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
+        echo "FAIL: DNS Guard health contract missing: $dns_guard_health_guard" >&2
+        exit 1
+    }
+done
+
 for dns_guard_guard in \
     'router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755' \
     'router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700' \
@@ -706,6 +720,7 @@ fi
 
 sh "$REPO_DIR/tests/test-dns-guard.sh"
 sh "$REPO_DIR/tests/test-dns-breakglass.sh"
+sh "$REPO_DIR/tests/test-healthcheck-dns-guard-contract.sh"
 sh "$REPO_DIR/tests/test-wan-event-handler.sh"
 
 
