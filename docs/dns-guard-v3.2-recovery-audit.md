@@ -1,7 +1,7 @@
 # DNS Guard v3.2 recovery audit
 
-**Status:** source-controlled hardening candidate for issue #196 / PR #197.  
-**Production baseline:** `main` at DNS Guard v3.2 after #193.  
+**Status:** source-controlled hardening candidate for issue #196 / PR #197.\
+**Production baseline:** `main` at DNS Guard v3.2 after #193.\
 **Live deployment:** not performed by this audit.
 
 This audit follows the historical

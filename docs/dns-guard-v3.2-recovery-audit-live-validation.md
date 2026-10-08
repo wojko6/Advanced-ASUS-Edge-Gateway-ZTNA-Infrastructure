@@ -1,6 +1,6 @@
 # DNS Guard v3.2 post-audit live validation
 
-**Scope:** bounded live validation for issue #196 / PR #197 only.  
+**Scope:** bounded live validation for issue #196 / PR #197 only.\
 **Do not run automatically.** Use a trusted LAN recovery session and a current
 project backup.
 
