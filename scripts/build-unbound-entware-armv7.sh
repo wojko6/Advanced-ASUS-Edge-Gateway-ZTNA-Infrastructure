@@ -15,7 +15,7 @@ fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 case "$MODE" in --check|--build) ;; *) fail 'Usage: sh scripts/build-unbound-entware-armv7.sh [--check|--build]' ;; esac
 
 # No secret, router mount or production daemon is accessed by this script.
-for file in Dockerfile build-in-container.sh HISTORICAL-SHA256SUMS.txt; do
+for file in Dockerfile build-in-container.sh verify-artifacts.py HISTORICAL-SHA256SUMS.txt; do
     [ -s "$RECIPE_DIR/$file" ] || fail "missing recipe: $file"
 done
 sh -n "$RECIPE_DIR/build-in-container.sh" || fail 'invalid inner build script'
