@@ -55,6 +55,37 @@ dns_block_del() {
 
 Do not leave these temporary OUTPUT rules behind.
 
+## Reference firmware compatibility gate (before installation)
+
+A real TUF-AX5400 (GNUton 3004.388.11) uses firmware BusyBox v1.25.1
+**without** `timeout`; firmware `nslookup` accepts no `-timeout`/`-retry`
+arguments. Entware `/opt/bin/timeout` works only after `/opt` mounts. The
+original candidate falsely failed `ready` on the healthy router.
+
+Before any live file replacement, fetch the updated candidate at its **exact
+approved commit SHA** into a private `/tmp` staging directory and verify its
+GitHub-sourced SHA-256 hashes and shell syntax. Invoke staged DNS Guard through
+`sh` (downloads have mode 0600):
+
+```sh
+STAGE=/tmp/your-verified-pr197-stage
+EDGE_DNS_STATE_DIR="$STAGE/test-state" \
+EDGE_DNS_RUNTIME_STATE_DIR="$STAGE/test-runtime" \
+    sh "$STAGE/dns-guard" ready
+
+EDGE_DNS_STATE_DIR="$STAGE/test-state" \
+EDGE_DNS_RUNTIME_STATE_DIR="$STAGE/test-runtime" \
+    sh "$STAGE/dns-guard" status
+```
+
+Require `READY=PASS` and PASS for NTP, Unbound, Pi-hole listener and query.
+Confirm `/bin/busybox sleep 0` and `/bin/busybox kill -0 $` work.
+Staging must not change `/tmp/resolv.conf`, NVRAM, WAN or the production
+DNS Guard executable. Do not mistake CI PASS for real-firmware validation.
+
+The portable timeout mechanism bounds direct children, not detached process
+trees. Keep WAN-restart and break-glass live tests under local supervision.
+
 ## Test 1 — local DNS failure -> functional bootstrap
 
 ### Preconditions
