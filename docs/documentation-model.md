@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-10-07
+**Last reviewed:** 2026-10-08
 
 **Applies to:** `main`
 
@@ -46,6 +46,7 @@ A merged PR or green CI run does **not** prove that the same revision is install
 The canonical current network design is indexed by `docs/network-design.md` and
 uses focused, source-controlled documents under `docs/architecture/`:
 
+- `ASUS-Edge-Gateway-Architecture-2026-10-08.md` — dated high-level technical overview, derived from current status; detailed files remain canonical.
 - `physical-topology.md` — physical roles and attachment/failure boundaries;
 - `high-level-trust-boundaries.md` — logical trust boundaries;
 - `addressing-and-zones.md` — public IPAM and current/planned zone ownership;
@@ -58,6 +59,11 @@ uses focused, source-controlled documents under `docs/architecture/`:
 Not every architecture document is a Mermaid flow diagram. Applicability and
 inventory documents are canonical when their purpose is tabular rather than
 flow-oriented.
+
+A dated exported PDF is a publication artifact, not an automatically
+updating source of truth. Publish only after a privacy review; record
+reference date and keep current Markdown status, diagrams, and evidence
+authoritative.
 
 `docs/images/Architecture.png` is retained only as a historical/illustrative
 artifact and is not a source of truth for the current deployment.

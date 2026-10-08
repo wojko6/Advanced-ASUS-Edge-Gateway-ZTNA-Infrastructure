@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Applies to:** reference ASUS TUF-AX5400 deployment  
-**Last reviewed:** 2026-10-07
+**Last reviewed:** 2026-10-08
 
 This document is the entry point for the network-design view of the project.
 It complements the repository's incident/case-study material by organizing the
@@ -22,6 +22,8 @@ N/A, PLANNED or NOT VALIDATED instead of implying that it exists.
 
 ## 2. Physical topology and hardware boundary
 
+- [Dated technical architecture overview (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — high-level portfolio-safe snapshot, not replacement of canonical per-topic files.
+- [Technical architecture PDF (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) — printable portfolio snapshot; Markdown remains the maintained source.
 - [Hardware and infrastructure inventory](hardware-inventory.md)
 - [Physical topology](architecture/physical-topology.md)
 - [High-level architecture and trust boundaries](architecture/high-level-trust-boundaries.md)
@@ -93,6 +95,13 @@ and no validated power-continuity/UPS baseline.
 
 Expected behavior, CI/static checks and live observations are separate evidence
 classes.
+
+**Recovery update (2026-10-08):** DNS Guard v3.2 PR #197 merged;
+limited live break-glass ON/OFF and a real power-cycle with available
+Entware passed. The watchdog registered before /opt readiness; the
+runtime resolver later converged to Pi-hole. Grafana's YAML now defines
+15 rules, including five new DNS Guard recovery alerts verified loaded
+in the live database. See [test scope and waivers](dns-guard-v3.2-recovery-audit-live-validation.md).
 
 ## 10. Known gaps and roadmap
 

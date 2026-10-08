@@ -1,3 +1,9 @@
+> **COMPLETED / HISTORICAL — 2026-10-06.** This case study preserves
+> the original v3.1 incident and test results. Current DNS Guard v3.2 was
+> merged in [PR #197](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/197)
+> on 2026-10-08. See [v3.2 live acceptance and remaining limitations](../dns-guard-v3.2-recovery-audit-live-validation.md).
+> Do not interpret the dated v3.1 tests as coverage of v3.2 fault branches.
+
 # Case study: DNS bootstrap deadlock on Asuswrt-Merlin and recovery with DNS Guard v3.1
 
 **Incident date:** 2026-10-06  
