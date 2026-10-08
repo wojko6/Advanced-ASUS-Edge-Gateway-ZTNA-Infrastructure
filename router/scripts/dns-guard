@@ -209,6 +209,13 @@ runtime_state_write() {
 runtime_uint_read() {
     state_file="$1"
     default_value="${2:-0}"
+    max_digits="${3:-10}"
+
+    case "$max_digits" in
+        ''|*[!0-9]*|0)
+            max_digits=10
+            ;;
+    esac
 
     [ -r "$state_file" ] || {
         printf '%s\n' "$default_value"
@@ -222,10 +229,10 @@ runtime_uint_read() {
             printf '%s\n' "$default_value"
             ;;
         *)
-            # Unix epoch seconds are already 10 digits; keep the generic
-            # telemetry reader tolerant of current timestamps while still
-            # rejecting arbitrarily large corrupted numeric state.
-            if [ "${#state_value}" -le 10 ]; then
+            # Epoch seconds legitimately require 10 digits. Runtime counters
+            # use a tighter bound at their call sites so corrupted telemetry
+            # cannot feed implausible values back into shell arithmetic.
+            if [ "${#state_value}" -le "$max_digits" ]; then
                 printf '%s\n' "$state_value"
             else
                 printf '%s\n' "$default_value"
@@ -424,7 +431,7 @@ record_resolver_mode() {
         runtime_state_write "$LAST_TRANSITION_FILE" "$now_epoch" || return 1
 
         if [ "$new_mode" = "bootstrap" ]; then
-            fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0)"
+            fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0 9)"
             fallback_count=$((fallback_count + 1))
             runtime_state_write "$FALLBACK_COUNT_FILE" "$fallback_count" || return 1
             runtime_state_write "$FALLBACK_SINCE_FILE" "$now_epoch" || return 1
@@ -914,7 +921,7 @@ show_metrics() {
     fi
 
     last_transition="$(runtime_uint_read "$LAST_TRANSITION_FILE" 0)"
-    fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0)"
+    fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0 9)"
     fallback_since="$(runtime_uint_read "$FALLBACK_SINCE_FILE" 0)"
     bootstrap_healthy="$(runtime_uint_read "$BOOTSTRAP_HEALTH_FILE" 0)"
     bootstrap_last_check="$(runtime_uint_read "$BOOTSTRAP_HEALTH_CHECK_FILE" 0)"
