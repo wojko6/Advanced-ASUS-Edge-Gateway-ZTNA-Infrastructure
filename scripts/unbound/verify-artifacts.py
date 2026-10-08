@@ -28,7 +28,7 @@ def fail(reason: str) -> None:
 
 def ipk_member(path: Path, basename: str) -> bytes:
     """Read one IPK member from either Debian ar or OpenWrt tar format."""
-    if path.read_bytes()[:8] == b"!<arch>\\n":
+    if path.read_bytes()[:8] == b"!<arch>\n":
         output = subprocess.run(
             ["ar", "p", str(path), basename], capture_output=True, check=False
         )
@@ -75,9 +75,9 @@ def verify_elf(binary: bytes) -> None:
         path.write_bytes(binary)
         header = subprocess.run(["readelf", "-h", str(path)], capture_output=True, text=True, check=True).stdout
         phdr = subprocess.run(["readelf", "-l", str(path)], capture_output=True, text=True, check=True).stdout
-        if not re.search(r"Class:\\s+ELF32", header):
+        if not re.search(r"Class:\s+ELF32", header):
             fail("unbound executable is not ELF32")
-        if not re.search(r"Machine:\\s+ARM", header):
+        if not re.search(r"Machine:\s+ARM", header):
             fail("unbound executable is not ARM")
         if "Version5 EABI" not in header or "soft-float ABI" not in header:
             fail("unbound executable has unexpected ABI")
@@ -101,7 +101,7 @@ def main() -> None:
         control = nested_tar_file(ipk_member(path, "control.tar.gz"), "control", path.name)
         fields = {}
         for line in control.decode("utf-8").splitlines():
-            if ": " in line and not line.startswith((" ", "\\t")):
+            if ": " in line and not line.startswith((" ", "\t")):
                 key, value = line.split(": ", 1)
                 fields[key] = value
         for field, expected in (("Package", name), ("Version", VERSION), ("Architecture", ARCH)):
