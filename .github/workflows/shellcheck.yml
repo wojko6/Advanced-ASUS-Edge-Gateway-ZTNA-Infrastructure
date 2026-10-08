@@ -19,6 +19,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes shellcheck
       - name: Run static, recovery and evidence-redaction tests
         run: sh tests/test-static.sh
+      - name: Run DNS supervisor native regression
+        run: timeout -k 5s 90s sh tests/test-dns-supervisor.sh
+      - name: Verify packaged ARMv7 DNS supervisor
+        run: sh tests/test-dns-supervisor-artifact.sh
       - name: Run Personal Cloud static policy test
         run: sh tests/test-personal-cloud-static.sh
       - name: Run RouterCloud login UI static test
@@ -95,11 +99,23 @@ jobs:
       - name: Run isolated install and rollback test
         run: sh tests/test-install-rollback.sh
 
+  armv7_parity:
+    name: ARMv7 supervisor reproducible build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Rebuild ARMv7 and compare packaged binary
+        env:
+          EDGE_SUPERVISOR_CONTAINER_ENGINE: docker
+        run: timeout -k 10s 720s sh scripts/build-dns-supervisor-armv7.sh
+
   validation-suite:
     name: Validation suite
     needs:
       - static-and-recovery
       - wan-and-rollback
+      - armv7_parity
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -108,9 +124,12 @@ jobs:
         env:
           STATIC_AND_RECOVERY_RESULT: ${{ needs.static-and-recovery.result }}
           WAN_AND_ROLLBACK_RESULT: ${{ needs.wan-and-rollback.result }}
+          ARMV7_PARITY_RESULT: ${{ needs.armv7_parity.result }}
         run: |
           printf 'static-and-recovery=%s\n' "$STATIC_AND_RECOVERY_RESULT"
           printf 'wan-and-rollback=%s\n' "$WAN_AND_ROLLBACK_RESULT"
 
           test "$STATIC_AND_RECOVERY_RESULT" = "success"
           test "$WAN_AND_ROLLBACK_RESULT" = "success"
+          printf 'armv7-parity=%s\n' "$ARMV7_PARITY_RESULT"
+          test "$ARMV7_PARITY_RESULT" = "success"

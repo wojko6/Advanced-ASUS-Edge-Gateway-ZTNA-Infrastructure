@@ -133,6 +133,40 @@ do
     sh -n "$file" || exit 1
 done
 
+# Fail closed before creating installer snapshots or touching live files.
+# This digest pins the ARMv7 EABI5 soft-float artifact tested for PR #197.
+SUPERVISOR_SOURCE="$REPO_DIR/router/bin/edge-dns-supervisor"
+SUPERVISOR_SHA256_EXPECTED="26f3615a99448469718f682bde6960e27e30b9466ecfc427c7e392c317103740"
+
+supervisor_sha256() {
+    if [ -x /bin/busybox ] &&
+       /bin/busybox sha256sum /dev/null >/dev/null 2>&1; then
+        /bin/busybox sha256sum "$1"
+    elif executable_exists sha256sum; then
+        sha256sum "$1"
+    else
+        return 1
+    fi
+}
+
+if [ ! -f "$SUPERVISOR_SOURCE" ] ||
+   [ -L "$SUPERVISOR_SOURCE" ] ||
+   [ ! -s "$SUPERVISOR_SOURCE" ]; then
+    echo "ERROR: required ARM supervisor artifact missing, empty or symlink" >&2
+    exit 1
+fi
+
+supervisor_hash_line="$(supervisor_sha256 "$SUPERVISOR_SOURCE")" || {
+    echo "ERROR: cannot calculate ARM supervisor SHA-256" >&2
+    exit 1
+}
+supervisor_sha256_actual="${supervisor_hash_line%% *}"
+if [ "$supervisor_sha256_actual" != "$SUPERVISOR_SHA256_EXPECTED" ]; then
+    echo "ERROR: supervisor SHA-256 mismatch" >&2
+    exit 1
+fi
+echo "SUPERVISOR_PREFLIGHT=PASS"
+
 umask 077
 mkdir -p "$ADDON_DIR/backups"
 
@@ -300,6 +334,7 @@ install_file "$REPO_DIR/config/edge.conf" "$JFFS_DIR/configs/asus-edge.conf" 060
 install_file "$REPO_DIR/router/scripts/firewall-start" "$ADDON_DIR/bin/firewall-start" 0755
 install_file "$REPO_DIR/router/scripts/services-start" "$ADDON_DIR/bin/services-start" 0755
 install_file "$REPO_DIR/router/scripts/dns-guard" "$ADDON_DIR/bin/dns-guard" 0755
+install_file "$REPO_DIR/router/bin/edge-dns-supervisor" "$ADDON_DIR/bin/edge-dns-supervisor" 0755
 install_file "$REPO_DIR/router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700
 install_file "$REPO_DIR/router/scripts/wan-event" "$ADDON_DIR/bin/wan-event" 0755
 install_file "$REPO_DIR/router/scripts/wan-event-handler" "$ADDON_DIR/bin/wan-event-handler" 0755

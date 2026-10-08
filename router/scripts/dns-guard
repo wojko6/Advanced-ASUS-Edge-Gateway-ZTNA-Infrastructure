@@ -42,9 +42,61 @@ MODE_FILE="$RUNTIME_STATE_DIR/current-mode"
 LAST_TRANSITION_FILE="$RUNTIME_STATE_DIR/last-transition-epoch"
 FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"
 FALLBACK_SINCE_FILE="$RUNTIME_STATE_DIR/fallback-since-epoch"
+BOOTSTRAP_HEALTH_FILE="$RUNTIME_STATE_DIR/bootstrap-dns-healthy"
+BOOTSTRAP_HEALTH_CHECK_FILE="$RUNTIME_STATE_DIR/bootstrap-dns-last-check-epoch"
+
+# Firmware BusyBox 1.25.1 on the reference TUF-AX5400 has sleep/kill but
+# no timeout applet. Do not depend on Entware (/opt) for DNS boot recovery.
+# Only bound directly executed commands here; do not use this for daemon trees.
+native_bounded_exec() (
+    duration="$1"
+    shift
+
+    case "$duration" in
+        ''|0|*[!0-9]*) return 2 ;;
+    esac
+    [ "$#" -gt 0 ] || return 2
+    # Guard against oversized durations before invoking firmware sleep.
+    [ "${#duration}" -le 3 ] && [ "$duration" -le 120 ] || return 2
+
+    # Fail visibly before launching a potentially blocking command if the
+    # watchdog primitive itself is unavailable.
+    "$BUSYBOX" sleep 0 >/dev/null 2>&1 || return 127
+
+    # Close the guard lock fd in both child and timer; otherwise orphaned
+    # subprocesses could accidentally retain the global lock after exit.
+    "$@" 9>&- &
+    worker_pid=$!
+
+    (
+        "$BUSYBOX" sleep "$duration" || exit 1
+        kill -KILL "$worker_pid" 2>/dev/null || :
+    ) </dev/null >/dev/null 2>&1 9>&- &
+    timer_pid=$!
+
+    if wait "$worker_pid"; then
+        worker_rc=0
+    else
+        worker_rc=$?
+    fi
+
+    kill "$timer_pid" >/dev/null 2>&1 || :
+    wait "$timer_pid" >/dev/null 2>&1 || :
+    return "$worker_rc"
+)
 
 log() {
-    logger -t asus-edge-dns "$*"
+    # Logging must never be able to stall a DNS recovery transition while the
+    # global guard lock is held. Before the project config is sourced, fall
+    # back to a small known-good timeout if an invalid environment value was
+    # supplied.
+    log_timeout="${EDGE_DNS_LOG_TIMEOUT_SECONDS:-2}"
+    case "$log_timeout" in
+        ''|*[!0-9]*|0) log_timeout=2 ;;
+    esac
+
+    native_bounded_exec "$log_timeout" logger -t asus-edge-dns "$*" \
+        >/dev/null 2>&1 || true
 }
 
 die() {
@@ -60,7 +112,13 @@ die() {
 
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_DNS_LOCAL_RESOLVER_IP:=}"
+: "${EDGE_DNS_GUARD_WATCHDOG:=1}"
+: "${EDGE_DNS_GUARD_BIN:=/jffs/addons/asus-edge/bin/dns-guard}"
 : "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
+: "${EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5}"
+: "${EDGE_DNS_LOCK_WAIT_SECONDS:=5}"
+: "${EDGE_DNS_LOG_TIMEOUT_SECONDS:=2}"
+: "${EDGE_DNS_BOOTSTRAP_TEST_NAME:=example.com}"
 
 case "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" in
     ''|*[!0-9]*)
@@ -70,6 +128,40 @@ esac
 
 [ "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" -gt 0 ] ||
     die "EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD must be greater than zero"
+
+case "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*)
+        die "EDGE_DNS_QUERY_TIMEOUT_SECONDS must be a positive integer"
+        ;;
+esac
+
+[ "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" -gt 0 ] ||
+    die "EDGE_DNS_QUERY_TIMEOUT_SECONDS must be greater than zero"
+
+case "$EDGE_DNS_LOCK_WAIT_SECONDS" in
+    ''|*[!0-9]*)
+        die "EDGE_DNS_LOCK_WAIT_SECONDS must be a positive integer"
+        ;;
+esac
+
+[ "$EDGE_DNS_LOCK_WAIT_SECONDS" -gt 0 ] ||
+    die "EDGE_DNS_LOCK_WAIT_SECONDS must be greater than zero"
+
+case "$EDGE_DNS_LOG_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*)
+        die "EDGE_DNS_LOG_TIMEOUT_SECONDS must be a positive integer"
+        ;;
+esac
+
+[ "$EDGE_DNS_LOG_TIMEOUT_SECONDS" -gt 0 ] ||
+    die "EDGE_DNS_LOG_TIMEOUT_SECONDS must be greater than zero"
+
+[ -n "$EDGE_DNS_BOOTSTRAP_TEST_NAME" ] ||
+    die "EDGE_DNS_BOOTSTRAP_TEST_NAME must not be empty"
+
+bounded_exec() {
+    native_bounded_exec "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" "$@"
+}
 
 mkdir -p "$STATE_DIR" || die "cannot create $STATE_DIR"
 chmod 700 "$STATE_DIR" 2>/dev/null || true
@@ -81,7 +173,13 @@ executable_exists flock >/dev/null 2>&1 ||
     die "flock not found; cannot serialize DNS Guard state transitions"
 
 exec 9>"$LOCK_FILE" || die "cannot open DNS Guard lock file"
-flock -x 9 || die "cannot acquire DNS Guard lock"
+lock_waited=0
+while ! flock -xn 9; do
+    [ "$lock_waited" -lt "$EDGE_DNS_LOCK_WAIT_SECONDS" ] ||
+        die "cannot acquire DNS Guard lock within ${EDGE_DNS_LOCK_WAIT_SECONDS}s"
+    lock_waited=$((lock_waited + 1))
+    sleep 1
+done
 
 secure_temp_dir() {
     temp_prefix="$1"
@@ -112,11 +210,22 @@ recovery_streak_read() {
     case "$streak" in
         ''|*[!0-9]*)
             printf '%s\n' 0
-            ;;
-        *)
-            printf '%s\n' "$streak"
+            return 0
             ;;
     esac
+
+    # Keep shell arithmetic bounded on 32-bit BusyBox targets. A corrupted
+    # runtime file with an arbitrarily long digit string must not abort auto.
+    [ "${#streak}" -le 9 ] || {
+        printf '%s\n' 0
+        return 0
+    }
+
+    if [ "$streak" -gt "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" ]; then
+        printf '%s\n' "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+    else
+        printf '%s\n' "$streak"
+    fi
 }
 
 runtime_state_write() {
@@ -143,6 +252,13 @@ runtime_state_write() {
 runtime_uint_read() {
     state_file="$1"
     default_value="${2:-0}"
+    max_digits="${3:-10}"
+
+    case "$max_digits" in
+        ''|*[!0-9]*|0)
+            max_digits=10
+            ;;
+    esac
 
     [ -r "$state_file" ] || {
         printf '%s\n' "$default_value"
@@ -152,9 +268,38 @@ runtime_uint_read() {
     state_value="$(cat "$state_file" 2>/dev/null)" || state_value="$default_value"
 
     case "$state_value" in
-        ''|*[!0-9]*) printf '%s\n' "$default_value" ;;
-        *) printf '%s\n' "$state_value" ;;
+        ''|*[!0-9]*)
+            printf '%s\n' "$default_value"
+            ;;
+        *)
+            # Epoch seconds legitimately require 10 digits. Runtime counters
+            # use a tighter bound at their call sites so corrupted telemetry
+            # cannot feed implausible values back into shell arithmetic.
+            if [ "${#state_value}" -le "$max_digits" ]; then
+                printf '%s\n' "$state_value"
+            else
+                printf '%s\n' "$default_value"
+            fi
+            ;;
     esac
+}
+
+record_bootstrap_health() {
+    health_value="$1"
+
+    case "$health_value" in
+        0|1) ;;
+        *) return 1 ;;
+    esac
+
+    now_epoch="$(date +%s 2>/dev/null)" || return 1
+    case "$now_epoch" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+
+    runtime_state_write "$BOOTSTRAP_HEALTH_FILE" "$health_value" || return 1
+    runtime_state_write "$BOOTSTRAP_HEALTH_CHECK_FILE" "$now_epoch" || return 1
+    return 0
 }
 
 recovery_streak_write() {
@@ -212,11 +357,18 @@ bootstrap_dns_candidate_valid() {
 }
 
 bootstrap_dns() {
+    accepted=""
+    accepted_count=0
+
+    # Collect across all known Asuswrt WAN DNS keys instead of trusting the
+    # first syntactically valid source exclusively. /etc/resolv.conf-compatible
+    # resolvers commonly honor at most three nameserver entries, so retain the
+    # first three unique validated candidates across the ordered sources.
     for key in wan0_dns_r wan0_dns wan_dns_r wan_dns; do
-        value="$(nvram get "$key" 2>/dev/null)"
+        value="$(bounded_exec nvram get "$key" 2>/dev/null)"
         [ -n "$value" ] || continue
 
-        accepted=""
+        key_accepted=0
 
         for candidate in $value; do
             if ! bootstrap_dns_candidate_valid "$candidate"; then
@@ -226,24 +378,28 @@ bootstrap_dns() {
 
             case " $accepted " in
                 *" $candidate "*)
-                    ;;
-                *)
-                    accepted="$accepted $candidate"
+                    key_accepted=1
+                    continue
                     ;;
             esac
+
+            if [ "$accepted_count" -lt 3 ]; then
+                accepted="$accepted $candidate"
+                accepted_count=$((accepted_count + 1))
+                key_accepted=1
+            fi
         done
 
-        if [ -n "$accepted" ]; then
-            for candidate in $accepted; do
-                printf '%s\n' "$candidate"
-            done
-            return 0
-        fi
-
-        log "WARNING: no valid independent WAN bootstrap DNS candidates in $key"
+        [ "$key_accepted" -eq 1 ] ||
+            log "WARNING: no usable new WAN bootstrap DNS candidates in $key"
     done
 
-    return 1
+    [ -n "$accepted" ] || return 1
+
+    for candidate in $accepted; do
+        printf '%s\n' "$candidate"
+    done
+    return 0
 }
 
 valid_ipv4() {
@@ -318,7 +474,7 @@ record_resolver_mode() {
         runtime_state_write "$LAST_TRANSITION_FILE" "$now_epoch" || return 1
 
         if [ "$new_mode" = "bootstrap" ]; then
-            fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0)"
+            fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0 9)"
             fallback_count=$((fallback_count + 1))
             runtime_state_write "$FALLBACK_COUNT_FILE" "$fallback_count" || return 1
             runtime_state_write "$FALLBACK_SINCE_FILE" "$now_epoch" || return 1
@@ -338,13 +494,13 @@ record_resolver_mode() {
 }
 
 ntp_ready() {
-    [ "$(nvram get ntp_ready 2>/dev/null)" = "1" ]
+    [ "$(bounded_exec nvram get ntp_ready 2>/dev/null)" = "1" ]
 }
 
 unbound_ready() {
-    pidof unbound >/dev/null 2>&1 || return 1
+    bounded_exec pidof unbound >/dev/null 2>&1 || return 1
 
-    netstat -ln 2>/dev/null |
+    bounded_exec netstat -ln 2>/dev/null |
         grep -q "127\\.0\\.0\\.1:${EDGE_UNBOUND_PORT}[[:space:]]" ||
         return 1
 
@@ -353,9 +509,9 @@ unbound_ready() {
 
 pihole_listener_ready() {
     local_resolver_config_valid || return 1
-    pidof pihole-FTL >/dev/null 2>&1 || return 1
+    bounded_exec pidof pihole-FTL >/dev/null 2>&1 || return 1
 
-    netstat -ln 2>/dev/null |
+    bounded_exec netstat -ln 2>/dev/null |
         awk -v endpoint="$EDGE_DNS_LOCAL_RESOLVER_IP:53" '
             $4 == endpoint && $1 ~ /^udp/ { udp=1 }
             $4 == endpoint && $1 ~ /^tcp/ { tcp=1 }
@@ -379,12 +535,24 @@ probe_output_has_expected_ipv4() {
     return 1
 }
 
+bounded_nslookup() {
+    query_name="$1"
+    query_server="${2:-}"
+
+    if [ -n "$query_server" ]; then
+        bounded_exec "$BUSYBOX" nslookup "$query_name" "$query_server"
+        return
+    fi
+
+    bounded_exec "$BUSYBOX" nslookup "$query_name"
+}
+
 dns_probe_udp_ready() {
     probe_name="$1"
     expected_ipv4s="$2"
 
     query_output="$(
-        "$BUSYBOX" nslookup "$probe_name" "$EDGE_DNS_LOCAL_RESOLVER_IP" 2>&1
+        bounded_nslookup "$probe_name" "$EDGE_DNS_LOCAL_RESOLVER_IP" 2>&1
     )" || return 1
 
     probe_output_has_expected_ipv4 "$query_output" "$expected_ipv4s"
@@ -399,13 +567,13 @@ dns_probe_tcp_ready() {
     # binary must not force DNS Guard into fail-open by itself.
     executable_exists dig >/dev/null 2>&1 || return 0
 
-    if ! dig -v >/dev/null 2>&1; then
+    if ! bounded_exec dig -v >/dev/null 2>&1; then
         log "WARNING: dig is installed but not runnable; skipping active TCP DNS query probe"
         return 0
     fi
 
     query_output="$(
-        dig +tcp +time=2 +tries=1 +short \
+        bounded_exec dig +tcp +time=2 +tries=1 +short \
             @"$EDGE_DNS_LOCAL_RESOLVER_IP" "$probe_name" A 2>&1
     )" || return 1
 
@@ -437,6 +605,26 @@ pihole_query_ready() {
     return 1
 }
 
+bootstrap_dns_ready() {
+    dns_list="$(bootstrap_dns)" || {
+        record_bootstrap_health 0 ||
+            log "WARNING: failed to record unavailable bootstrap DNS health"
+        return 1
+    }
+
+    for dns in $dns_list; do
+        if bounded_nslookup "$EDGE_DNS_BOOTSTRAP_TEST_NAME" "$dns" >/dev/null 2>&1; then
+            record_bootstrap_health 1 ||
+                log "WARNING: failed to record healthy bootstrap DNS state"
+            return 0
+        fi
+    done
+
+    record_bootstrap_health 0 ||
+        log "WARNING: failed to record unhealthy bootstrap DNS state"
+    return 1
+}
+
 full_local_dns_ready() {
     ntp_ready || return 1
     unbound_ready || return 1
@@ -444,6 +632,16 @@ full_local_dns_ready() {
     pihole_query_ready || return 1
 
     return 0
+}
+
+watchdog_present() {
+    [ "$EDGE_DNS_GUARD_WATCHDOG" = "1" ] || return 1
+
+    expected="* * * * * $EDGE_DNS_GUARD_BIN auto >/dev/null 2>&1 #AsusEdgeDNSGuard#"
+    watchdog_entries="$(bounded_exec cru l 2>/dev/null)" || return 1
+
+    printf '%s\n' "$watchdog_entries" |
+        grep -F -x "$expected" >/dev/null 2>&1
 }
 
 write_resolver() {
@@ -578,20 +776,27 @@ fallback_bootstrap() {
     rc=$?
 
     case "$rc" in
-        0)
+        0|2)
             record_resolver_mode bootstrap ||
                 log "WARNING: failed to record bootstrap DNS Guard monitoring state"
-            echo "FALLBACK=PASS"
-            log "system resolver restored to WAN bootstrap DNS"
-            return 0
-            ;;
-        2)
-            record_resolver_mode bootstrap ||
-                log "WARNING: failed to record bootstrap DNS Guard monitoring state"
-            echo "FALLBACK=ALREADY_BOOTSTRAP"
+
+            if ! bootstrap_dns_ready; then
+                echo "FALLBACK=UNHEALTHY_BOOTSTRAP"
+                log "ERROR: WAN bootstrap DNS was selected but no configured resolver answered the functional probe"
+                return 1
+            fi
+
+            if [ "$rc" -eq 0 ]; then
+                echo "FALLBACK=PASS"
+                log "system resolver restored to functional WAN bootstrap DNS"
+            else
+                echo "FALLBACK=ALREADY_BOOTSTRAP"
+            fi
             return 0
             ;;
         *)
+            record_bootstrap_health 0 ||
+                log "WARNING: failed to record failed bootstrap DNS state"
             echo "FALLBACK=FAILED"
             log "ERROR: failed to restore WAN bootstrap DNS"
             return 1
@@ -694,6 +899,24 @@ auto_policy() {
         return 0
     fi
 
+    # Hysteresis protects against local-path flapping only while the current
+    # bootstrap escape path is itself usable. If bootstrap DNS is known-broken
+    # and the complete local path is healthy, staying on bootstrap would create
+    # an avoidable outage, so recover to local immediately.
+    if ! bootstrap_dns_ready; then
+        recovery_streak_reset
+
+        if promote_local_ready; then
+            echo "AUTO=LOCAL_DNS_BOOTSTRAP_UNHEALTHY"
+            log "bootstrap DNS unhealthy; promoted immediately to healthy local DNS"
+            return 0
+        fi
+
+        fallback_bootstrap || return 1
+        echo "AUTO=BOOTSTRAP"
+        return 0
+    fi
+
     streak="$(recovery_streak_increment)" || {
         log "ERROR: failed to update DNS recovery hysteresis state"
         fallback_bootstrap || return 1
@@ -751,8 +974,21 @@ show_metrics() {
     fi
 
     last_transition="$(runtime_uint_read "$LAST_TRANSITION_FILE" 0)"
-    fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0)"
+    fallback_count="$(runtime_uint_read "$FALLBACK_COUNT_FILE" 0 9)"
     fallback_since="$(runtime_uint_read "$FALLBACK_SINCE_FILE" 0)"
+    bootstrap_healthy="$(runtime_uint_read "$BOOTSTRAP_HEALTH_FILE" 0)"
+    bootstrap_last_check="$(runtime_uint_read "$BOOTSTRAP_HEALTH_CHECK_FILE" 0)"
+
+    if watchdog_present; then
+        watchdog_present_metric=1
+    else
+        watchdog_present_metric=0
+    fi
+
+    case "$bootstrap_healthy" in
+        1) ;;
+        *) bootstrap_healthy=0 ;;
+    esac
 
     printf '%s\n' \
         "asus_edge_dns_guard_mode_local $mode_local" \
@@ -761,7 +997,10 @@ show_metrics() {
         "asus_edge_dns_guard_breakglass_active $breakglass_active" \
         "asus_edge_dns_guard_last_transition_timestamp_seconds $last_transition" \
         "asus_edge_dns_guard_fallback_transitions_runtime_total $fallback_count" \
-        "asus_edge_dns_guard_fallback_since_timestamp_seconds $fallback_since"
+        "asus_edge_dns_guard_fallback_since_timestamp_seconds $fallback_since" \
+        "asus_edge_dns_guard_bootstrap_dns_healthy $bootstrap_healthy" \
+        "asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds $bootstrap_last_check" \
+        "asus_edge_dns_guard_watchdog_present $watchdog_present_metric"
 }
 
 show_status() {
@@ -776,6 +1015,8 @@ show_status() {
     fi
     echo "unbound_port=$EDGE_UNBOUND_PORT"
     echo "failback_success_threshold=$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
+    echo "query_timeout_seconds=$EDGE_DNS_QUERY_TIMEOUT_SECONDS"
+    echo "lock_wait_seconds=$EDGE_DNS_LOCK_WAIT_SECONDS"
     echo "recovery_streak=$(recovery_streak_read)/$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
     echo
 
@@ -808,6 +1049,15 @@ show_status() {
     echo
     echo "=== BOOTSTRAP DNS ==="
     bootstrap_dns || echo "BOOTSTRAP_DNS=UNAVAILABLE"
+
+    bootstrap_health="$(runtime_uint_read "$BOOTSTRAP_HEALTH_FILE" 0)"
+    bootstrap_health_epoch="$(runtime_uint_read "$BOOTSTRAP_HEALTH_CHECK_FILE" 0)"
+    case "$bootstrap_health_epoch:$bootstrap_health" in
+        0:*) echo "BOOTSTRAP_DNS_HEALTH=UNKNOWN" ;;
+        *:1) echo "BOOTSTRAP_DNS_HEALTH=PASS" ;;
+        *) echo "BOOTSTRAP_DNS_HEALTH=FAIL" ;;
+    esac
+    echo "BOOTSTRAP_DNS_HEALTH_LAST_CHECK=$bootstrap_health_epoch"
 
     echo
     if [ -f "$BREAKGLASS_FLAG" ]; then

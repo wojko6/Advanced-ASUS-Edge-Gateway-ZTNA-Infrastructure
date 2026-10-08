@@ -86,10 +86,15 @@ fi
 : "${EDGE_DNS_LOCAL_RESOLVER_IP:=}"
 : "${EDGE_DNS_GUARD_WATCHDOG:=1}"
 : "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
+: "${EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5}"
+: "${EDGE_DNS_LOCK_WAIT_SECONDS:=5}"
+: "${EDGE_DNS_LOG_TIMEOUT_SECONDS:=2}"
+: "${EDGE_DNS_BOOTSTRAP_TEST_NAME:=example.com}"
 
 DNS_GUARD_BIN="${EDGE_DNS_GUARD_BIN:-/jffs/addons/asus-edge/bin/dns-guard}"
 DNS_GUARD_BREAKGLASS_FLAG="${EDGE_DNS_BREAKGLASS_FLAG:-/jffs/addons/asus-edge/state/dns-breakglass}"
 DNS_GUARD_RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
+DNS_GUARD_BUSYBOX="${EDGE_BUSYBOX_BIN:-/bin/busybox}"
 
 valid_port() {
     case "$1" in ''|*[!0-9]*) return 1 ;; esac
@@ -201,6 +206,35 @@ case "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" in
             fail "invalid EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD value: $EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD"
         ;;
 esac
+case "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*)
+        fail "invalid EDGE_DNS_QUERY_TIMEOUT_SECONDS value: $EDGE_DNS_QUERY_TIMEOUT_SECONDS"
+        ;;
+    *)
+        [ "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" -gt 0 ] 2>/dev/null ||
+            fail "invalid EDGE_DNS_QUERY_TIMEOUT_SECONDS value: $EDGE_DNS_QUERY_TIMEOUT_SECONDS"
+        ;;
+esac
+case "$EDGE_DNS_LOCK_WAIT_SECONDS" in
+    ''|*[!0-9]*)
+        fail "invalid EDGE_DNS_LOCK_WAIT_SECONDS value: $EDGE_DNS_LOCK_WAIT_SECONDS"
+        ;;
+    *)
+        [ "$EDGE_DNS_LOCK_WAIT_SECONDS" -gt 0 ] 2>/dev/null ||
+            fail "invalid EDGE_DNS_LOCK_WAIT_SECONDS value: $EDGE_DNS_LOCK_WAIT_SECONDS"
+        ;;
+esac
+case "$EDGE_DNS_LOG_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*)
+        fail "invalid EDGE_DNS_LOG_TIMEOUT_SECONDS value: $EDGE_DNS_LOG_TIMEOUT_SECONDS"
+        ;;
+    *)
+        [ "$EDGE_DNS_LOG_TIMEOUT_SECONDS" -gt 0 ] 2>/dev/null ||
+            fail "invalid EDGE_DNS_LOG_TIMEOUT_SECONDS value: $EDGE_DNS_LOG_TIMEOUT_SECONDS"
+        ;;
+esac
+valid_host "$EDGE_DNS_BOOTSTRAP_TEST_NAME" ||
+    fail "invalid EDGE_DNS_BOOTSTRAP_TEST_NAME value: $EDGE_DNS_BOOTSTRAP_TEST_NAME"
 [ -z "$EDGE_EXPECT_HTTP_AUTOLOGOUT" ] || valid_http_autologout "$EDGE_EXPECT_HTTP_AUTOLOGOUT" || fail "invalid EDGE_EXPECT_HTTP_AUTOLOGOUT value: $EDGE_EXPECT_HTTP_AUTOLOGOUT"
 valid_interface "$EDGE_TS_IF" || fail "invalid EDGE_TS_IF value: $EDGE_TS_IF"
 valid_interface "$EDGE_LAN_IF" || fail "invalid EDGE_LAN_IF value: $EDGE_LAN_IF"
@@ -279,6 +313,16 @@ if [ "$EDGE_DNS_GUARD_WATCHDOG" = "1" ]; then
         ok "DNS Guard executable available"
     else
         fail "DNS Guard executable missing: $DNS_GUARD_BIN"
+    fi
+
+    # Asuswrt GNUton's firmware BusyBox lacks the timeout applet; the
+    # early-boot native watchdog only needs the firmware sleep/kill applets.
+    if [ -x "$DNS_GUARD_BUSYBOX" ] &&
+       "$DNS_GUARD_BUSYBOX" sleep 0 >/dev/null 2>&1 &&
+       "$DNS_GUARD_BUSYBOX" kill -0 "$$" >/dev/null 2>&1; then
+        ok "DNS Guard native bounded-query primitives available (sleep/kill)"
+    else
+        fail "firmware sleep/kill unavailable; DNS Guard cannot bound queries safely"
     fi
 
     if executable_exists cru >/dev/null 2>&1; then
