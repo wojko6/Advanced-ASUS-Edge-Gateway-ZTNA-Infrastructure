@@ -330,6 +330,24 @@ grep -qx '1' "$WAN_VALUE"
 grep -qx '1' "$WAN0_VALUE"
 [ -f "$WAN_STATE" ]
 
+echo "=== failed rearm does not claim full recovery ==="
+reset_fixture
+run_helper on >/dev/null
+: >"$HANG_SERVICE"
+
+if rearm_partial_output="$(run_helper off 2>&1)"; then
+    echo "FAIL: break-glass clear succeeded despite a hung WAN restart" >&2
+    exit 1
+fi
+printf '%s\n' "$rearm_partial_output"
+printf '%s\n' "$rearm_partial_output" | grep -F 'BREAKGLASS_REARMED=PARTIAL' >/dev/null
+if printf '%s\n' "$rearm_partial_output" | grep -F 'BREAKGLASS_REARMED=YES' >/dev/null; then
+    echo "FAIL: failed recovery rearm was falsely reported as fully rearmed" >&2
+    exit 1
+fi
+[ -f "$WAN_STATE" ]
+rm -f "$HANG_SERVICE"
+
 echo "=== restart_wan hang is bounded ==="
 reset_fixture
 : >"$HANG_SERVICE"
