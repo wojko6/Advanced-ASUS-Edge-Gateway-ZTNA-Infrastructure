@@ -19,6 +19,7 @@ WAN_WAIT_SECONDS="${EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS:-30}"
 IP_TEST_TARGET="${EDGE_DNS_BREAKGLASS_IP_TEST_TARGET:-1.1.1.1}"
 DNS_TEST_NAME="${EDGE_DNS_BREAKGLASS_DNS_TEST_NAME:-example.com}"
 DNS_TEST_TIMEOUT_SECONDS="${EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS:-5}"
+SERVICE_TIMEOUT_SECONDS="${EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS:-30}"
 ACTION="${1:-on}"
 
 case "$WAN_WAIT_SECONDS" in
@@ -42,6 +43,18 @@ esac
 
 [ "$DNS_TEST_TIMEOUT_SECONDS" -gt 0 ] || {
     echo "ERROR: EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS must be greater than zero"
+    exit 1
+}
+
+case "$SERVICE_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*)
+        echo "ERROR: EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS must be a positive integer"
+        exit 1
+        ;;
+esac
+
+[ "$SERVICE_TIMEOUT_SECONDS" -gt 0 ] || {
+    echo "ERROR: EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS must be greater than zero"
     exit 1
 }
 
@@ -222,7 +235,7 @@ force_safe_wan_dns_mode() {
 }
 
 restart_wan_checked() {
-    if service restart_wan; then
+    if "$BUSYBOX" timeout "$SERVICE_TIMEOUT_SECONDS" service restart_wan; then
         echo "WAN_RESTART=PASS"
         return 0
     fi
@@ -275,7 +288,7 @@ rearm_safe_breakglass() {
 
     "$GUARD" breakglass-on restore-rollback >/dev/null 2>&1 || true
     force_safe_wan_dns_mode || true
-    service restart_wan >/dev/null 2>&1 || true
+    restart_wan_checked >/dev/null 2>&1 || true
     "$GUARD" fallback >/dev/null 2>&1 || true
 
     echo "BREAKGLASS_REARMED=YES"
