@@ -307,7 +307,8 @@ Activate:
 
 Acceptance:
 
-- WAN DNS mode snapshot exists;
+- WAN DNS mode snapshot exists and is valid before emergency WAN-DNS mutation;
+- a corrupt pre-existing snapshot is rejected before NVRAM changes or WAN restart;
 - sticky break-glass is active;
 - WAN restart, WAN/IP validation and DNS validation are bounded;
 - final result is PASS only if both IP and DNS checks succeed.
@@ -334,10 +335,11 @@ silently leaving a half-restored state. A complete rearm reports
 report `BREAKGLASS_REARMED=PARTIAL`, include a non-zero failure count and
 return non-zero; it must never claim full recovery after a partial rearm.
 
-Partial NVRAM-write/commit/unset failure, interrupted-state retry convergence,
-hung-`restart_wan` handling and partial-rearm reporting are proven by the
-source-controlled regression suite. Do **not** inject NVRAM commit/write
-failures on the production router merely to reproduce those unit-test cases.
+Partial NVRAM-write/commit/unset failure, corrupt existing snapshot rejection,
+interrupted-state retry convergence, hung-`restart_wan` handling and
+partial-rearm reporting are proven by the source-controlled regression suite.
+Do **not** inject NVRAM commit/write failures on the production router merely
+to reproduce those unit-test cases.
 
 ## Test 8 — WAN restart
 
