@@ -13,6 +13,7 @@ RESOLV="$TMP_DIR/resolv.conf"
 STATE_DIR="$TMP_DIR/state"
 RUNTIME_STATE_DIR="$TMP_DIR/runtime"
 FLAG="$STATE_DIR/dns-breakglass"
+FAIL_WATCHDOG="$TMP_DIR/fail-watchdog"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR" "$RUNTIME_STATE_DIR"
 
@@ -37,7 +38,15 @@ cat >"$MOCK_BIN/logger" <<'EOF'
 #!/bin/sh
 exit 0
 EOF
-chmod +x "$MOCK_BIN/nvram" "$MOCK_BIN/logger"
+
+cat >"$MOCK_BIN/cru" <<EOF
+#!/bin/sh
+[ "${1:-}" = "l" ] || exit 1
+[ -f "$FAIL_WATCHDOG" ] && exit 0
+printf '%s\n' '* * * * * /jffs/addons/asus-edge/bin/dns-guard auto >/dev/null 2>&1 #AsusEdgeDNSGuard#'
+EOF
+
+chmod +x "$MOCK_BIN/nvram" "$MOCK_BIN/logger" "$MOCK_BIN/cru"
 
 run_metrics() {
     EDGE_CONFIG_FILE="$CONFIG" \
@@ -59,6 +68,7 @@ printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_state_valid 1'
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_breakglass_active 0'
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_bootstrap_dns_healthy 0'
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds 1700000001'
+printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_watchdog_present 1'
 printf '%s\n' "$bootstrap_one" | grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 1'
 fallback_since="$(printf '%s\n' "$bootstrap_one" | awk '$1=="asus_edge_dns_guard_fallback_since_timestamp_seconds"{print $2}')"
 last_transition="$(printf '%s\n' "$bootstrap_one" | awk '$1=="asus_edge_dns_guard_last_transition_timestamp_seconds"{print $2}')"
@@ -67,6 +77,11 @@ last_transition="$(printf '%s\n' "$bootstrap_one" | awk '$1=="asus_edge_dns_guar
 
 bootstrap_two="$(run_metrics)"
 printf '%s\n' "$bootstrap_two" | grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 1'
+
+: >"$FAIL_WATCHDOG"
+watchdog_missing="$(run_metrics)"
+printf '%s\n' "$watchdog_missing" | grep -qx 'asus_edge_dns_guard_watchdog_present 0'
+rm -f "$FAIL_WATCHDOG"
 
 printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
 local_metrics="$(run_metrics)"
