@@ -20,6 +20,8 @@ FAIL_PING="$TMP_DIR/fail-ping"
 FAIL_DNS="$TMP_DIR/fail-dns"
 FAIL_READY="$TMP_DIR/fail-ready"
 HANG_DNS="$TMP_DIR/hang-dns"
+HANG_SERVICE="$TMP_DIR/hang-service"
+FAIL_NVRAM_SET_WAN0="$TMP_DIR/fail-nvram-set-wan0"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR"
 printf '0\n' >"$WAN_VALUE"
@@ -74,7 +76,13 @@ case "\${1:-}" in
         value="\${2#*=}"
         case "\$key" in
             wan_dnsenable_x) printf '%s\n' "\$value" >"$WAN_VALUE" ;;
-            wan0_dnsenable_x) printf '%s\n' "\$value" >"$WAN0_VALUE" ;;
+            wan0_dnsenable_x)
+                if [ -f "$FAIL_NVRAM_SET_WAN0" ]; then
+                    rm -f "$FAIL_NVRAM_SET_WAN0"
+                    exit 1
+                fi
+                printf '%s\n' "\$value" >"$WAN0_VALUE"
+                ;;
             *) exit 1 ;;
         esac
         printf 'set %s\n' "\${2:-}" >>"$NVRAM_LOG"
@@ -99,6 +107,7 @@ EOF
 cat >"$MOCK_BIN/service" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$SERVICE_LOG"
+[ -f "$HANG_SERVICE" ] && /bin/sleep 30
 exit 0
 EOF
 
@@ -155,11 +164,13 @@ run_helper() {
     EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
     EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS=1 \
     EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS=1 \
+    EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS=1 \
         sh "$HELPER" "$@"
 }
 
 reset_fixture() {
-    rm -f "$WAN_STATE" "$FAIL_PING" "$FAIL_DNS" "$FAIL_READY" "$HANG_DNS" "$NVRAM_LOG" "$SERVICE_LOG"
+    rm -f "$WAN_STATE" "$FAIL_PING" "$FAIL_DNS" "$FAIL_READY" "$HANG_DNS" "$HANG_SERVICE" \
+        "$FAIL_NVRAM_SET_WAN0" "$NVRAM_LOG" "$SERVICE_LOG"
     printf '0\n' >"$WAN_VALUE"
     printf '0\n' >"$WAN0_VALUE"
     printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
@@ -224,6 +235,53 @@ EOF
 grep -qx '1' "$WAN_VALUE"
 grep -qx '1' "$WAN0_VALUE"
 
+echo "=== partial activation NVRAM mutation is rolled back from snapshot ==="
+reset_fixture
+: >"$FAIL_NVRAM_SET_WAN0"
+
+if partial_nvram_output="$(run_helper on 2>&1)"; then
+    echo "FAIL: break-glass activation succeeded despite injected second NVRAM set failure" >&2
+    exit 1
+fi
+printf '%s\n' "$partial_nvram_output"
+grep -F 'WAN_DNS_ACTIVATION_ROLLBACK=PASS' <<EOF >/dev/null
+$partial_nvram_output
+EOF
+grep -qx '0' "$WAN_VALUE"
+grep -qx '0' "$WAN0_VALUE"
+[ -f "$WAN_STATE" ]
+
+echo "=== restart_wan hang is bounded ==="
+reset_fixture
+: >"$HANG_SERVICE"
+set +e
+service_bounded_output="$(
+    timeout 5 env \
+        EDGE_DNS_GUARD="$GUARD" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_WAN_STATE="$WAN_STATE" \
+        EDGE_BUSYBOX_BIN="$MOCK_BIN/busybox" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS=1 \
+        sh "$HELPER" on 2>&1
+)"
+service_bounded_rc=$?
+set -e
+[ "$service_bounded_rc" -ne 124 ] || {
+    echo "FAIL: break-glass restart_wan exceeded the outer 5-second safety bound" >&2
+    exit 1
+}
+[ "$service_bounded_rc" -ne 0 ] || {
+    echo "FAIL: hanging restart_wan was reported as success" >&2
+    exit 1
+}
+printf '%s\n' "$service_bounded_output" | grep -F 'WAN_RESTART=FAIL' >/dev/null
+printf '%s\n' "$service_bounded_output" | grep -F 'BREAKGLASS_RESULT=FAIL' >/dev/null
+rm -f "$HANG_SERVICE"
+
 echo "=== final activation recovery failure is non-zero ==="
 reset_fixture
 : >"$FAIL_PING"
@@ -276,6 +334,7 @@ bounded_output="$(
         EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
         EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS=1 \
         EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS=1 \
         sh "$HELPER" on 2>&1
 )"
 bounded_rc=$?
