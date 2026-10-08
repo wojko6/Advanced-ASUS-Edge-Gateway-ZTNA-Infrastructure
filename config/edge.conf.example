@@ -96,6 +96,9 @@ EDGE_DNS_QUERY_TIMEOUT_SECONDS="5"
 # Bound lock acquisition so overlapping cron/WAN/manual invocations cannot build
 # an unbounded waiter queue behind a stuck process.
 EDGE_DNS_LOCK_WAIT_SECONDS="5"
+# Logging is best-effort and must not be able to hold the DNS Guard lock if the
+# local syslog path stalls.
+EDGE_DNS_LOG_TIMEOUT_SECONDS="2"
 # Functional probe used only to verify that at least one selected WAN bootstrap
 # resolver actually answers DNS. This is not a hard-coded resolver address.
 EDGE_DNS_BOOTSTRAP_TEST_NAME="example.com"
