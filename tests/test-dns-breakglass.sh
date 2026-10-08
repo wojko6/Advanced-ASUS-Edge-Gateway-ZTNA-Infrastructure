@@ -248,6 +248,26 @@ EOF
 grep -qx '1' "$WAN_VALUE"
 grep -qx '1' "$WAN0_VALUE"
 
+echo "=== corrupt existing WAN DNS snapshot blocks activation before NVRAM mutation ==="
+reset_fixture
+cat >"$WAN_STATE" <<'EOF'
+wan_dnsenable_x=CORRUPT
+wan0_dnsenable_x=0
+EOF
+
+if corrupt_snapshot_output="$(run_helper on 2>&1)"; then
+    echo "FAIL: break-glass activation accepted a corrupt existing WAN DNS snapshot" >&2
+    exit 1
+fi
+printf '%s\n' "$corrupt_snapshot_output"
+printf '%s\n' "$corrupt_snapshot_output" | grep -F 'WAN_DNS_SNAPSHOT=INVALID' >/dev/null
+grep -qx '0' "$WAN_VALUE"
+grep -qx '0' "$WAN0_VALUE"
+if [ -s "$SERVICE_LOG" ]; then
+    echo "FAIL: WAN restart occurred despite corrupt recovery snapshot" >&2
+    exit 1
+fi
+
 echo "=== partial activation NVRAM mutation is rolled back from snapshot ==="
 reset_fixture
 : >"$FAIL_NVRAM_SET_WAN0"
