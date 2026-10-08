@@ -8,6 +8,12 @@ FAIL=0
 bad() { echo "FAIL: $1" >&2; FAIL=1; }
 sh -n "$ROOT/scripts/build-unbound-entware-armv7.sh" || bad 'orchestrator syntax'
 sh -n "$RECIPE/build-in-container.sh" || bad 'inner build syntax'
+python3 - "$RECIPE/verify-artifacts.py" <<'PY_CHECK'
+import ast, sys
+from pathlib import Path
+ast.parse(Path(sys.argv[1]).read_text())
+print('UNBOUND_IPK_VERIFIER_SYNTAX=PASS')
+PY_CHECK
 sh "$ROOT/scripts/build-unbound-entware-armv7.sh" --check || bad 'recipe static preflight'
 
 grep -Fq 'b62c0e7937551d0cc02b8fd5cb0f544f9405bafc9a54d3808ed4594812edef43' "$RECIPE/Dockerfile" || bad 'Python2 source pin'
