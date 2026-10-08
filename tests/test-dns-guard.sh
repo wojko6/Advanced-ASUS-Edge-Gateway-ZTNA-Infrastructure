@@ -91,7 +91,7 @@ EOF
 
 cat >"$MOCK_BIN/logger" <<EOF
 #!/bin/sh
-[ -f "$HANG_LOGGER" ] && /bin/sleep 30
+[ -f "$HANG_LOGGER" ] && exec /bin/sleep 30
 exit 0
 EOF
 
@@ -101,14 +101,18 @@ applet="\$1"
 shift
 case "\$applet" in
     timeout)
-        exec /usr/bin/timeout "\$@"
+        echo "timeout: applet not found" >&2
+        exit 127
+        ;;
+    sleep)
+        exec /bin/sleep "\$@"
         ;;
     nslookup)
         probe_name="\${1:-}"
         probe_server="\${2:-}"
         printf 'udp %s %s\n' "\$probe_name" "\$probe_server" >>"$PROBE_LOG"
 
-        [ -f "$HANG_PROBE" ] && sleep 30
+        [ -f "$HANG_PROBE" ] && exec /bin/sleep 30
 
         if [ -n "\${EDGE_DNS_TEST_QUERY_SERIALIZE:-}" ]; then
             [ -f "$QUERY_ACTIVE" ] && : >"$QUERY_COLLISION"
@@ -310,6 +314,15 @@ set -e
 }
 printf '%s\n' "$logger_bounded_output" | grep -F 'BREAKGLASS=ACTIVE' >/dev/null
 rm -f "$HANG_LOGGER" "$FLAG"
+
+echo "=== native firmware lacks BusyBox timeout but local DNS stays healthy ==="
+if "$BUSYBOX_MOCK" timeout 1 "$BUSYBOX_MOCK" nslookup one.one.one.one 192.0.2.53 >/dev/null 2>&1; then
+    echo "FAIL: firmware fixture unexpectedly provides BusyBox timeout" >&2
+    exit 1
+fi
+firmware_ready_output="$(run_guard ready)"
+printf '%s\n' "$firmware_ready_output"
+printf '%s\n' "$firmware_ready_output" | grep -F 'READY=PASS' >/dev/null
 
 echo "=== stable multi-provider DNS probes use UDP and TCP when dig is available ==="
 rm -f "$PROBE_LOG" "$FAIL_PROBE_PRIMARY" "$FAIL_PROBE_SECONDARY" \
