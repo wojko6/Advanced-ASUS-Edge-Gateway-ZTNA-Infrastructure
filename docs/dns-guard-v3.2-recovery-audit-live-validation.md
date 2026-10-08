@@ -31,6 +31,7 @@ Acceptance before continuing:
 - trusted LAN shell remains open;
 - break-glass is inactive;
 - watchdog entry is exact and once per minute;
+- `asus_edge_dns_guard_watchdog_present 1` is present in DNS Guard metrics;
 - local resolver configuration is valid;
 - Pi-hole and Unbound are healthy;
 - project healthcheck has no new failures;
@@ -281,8 +282,9 @@ Expected:
 
 ## Test 6 — bounded helper behavior
 
-The source-controlled regression suite injects hanging DNS helpers. Do not
-intentionally hang production BusyBox utilities.
+The source-controlled regression suite injects hanging DNS helpers, a hanging
+logger and a hanging break-glass WAN restart. Do not intentionally hang
+production BusyBox/logger/service utilities.
 
 Live acceptance is observational:
 
@@ -307,8 +309,7 @@ Acceptance:
 
 - WAN DNS mode snapshot exists;
 - sticky break-glass is active;
-- WAN/IP validation is bounded;
-- DNS validation is bounded;
+- WAN restart, WAN/IP validation and DNS validation are bounded;
 - final result is PASS only if both IP and DNS checks succeed.
 
 Clear only after local DNS is healthy:
@@ -329,6 +330,10 @@ Acceptance:
 
 If any clear step fails, the helper must re-arm safe break-glass rather than
 silently leaving a half-restored state.
+
+Partial NVRAM-write failure and hung-`restart_wan` fault injection are proven
+by the source-controlled regression suite. Do **not** inject NVRAM commit/write
+failures on the production router merely to reproduce those unit-test cases.
 
 ## Test 8 — WAN restart
 
@@ -463,6 +468,7 @@ PR #197 must remain unmerged until:
 - the current Validation suite is green;
 - Tests 1-5 and 7-10 pass live or are explicitly waived with rationale;
 - no temporary firewall fault-injection rule remains;
-- Grafana receives the new bootstrap-health metrics;
-- the new bootstrap-unhealthy and stale-telemetry alerts are provisioned;
+- Grafana receives bootstrap-health and watchdog-presence metrics;
+- bootstrap-unhealthy, stale-telemetry, UNKNOWN-state, watchdog-missing and
+  recovery-flapping alerts are provisioned;
 - final project healthcheck is clean.
