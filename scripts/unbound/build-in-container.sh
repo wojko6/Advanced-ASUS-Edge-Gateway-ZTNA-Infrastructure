@@ -82,6 +82,7 @@ for name in libunbound unbound-daemon unbound-anchor unbound-checkconf unbound-c
 done
 
 cd /work/artifacts
+python3 /recipe/verify-artifacts.py /work/artifacts
 sha256sum ./*.ipk | sed 's#  ./#  #' > SHA256SUMS.generated
 # A hash mismatch is expected when toolchain inputs/environment drift; report
 # parity honestly and leave outputs for review, never authorize deployment.
