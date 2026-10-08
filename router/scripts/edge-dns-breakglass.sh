@@ -319,6 +319,18 @@ activate_breakglass() {
 
     force_safe_wan_dns_mode || {
         echo "ERROR: failed to enable independent WAN DNS mode"
+
+        # The snapshot already exists at this point. If forcing the emergency
+        # WAN-DNS mode fails after mutating only one NVRAM key, restore the
+        # pre-break-glass values before returning. Keep the sticky break-glass
+        # flag and snapshot in place so the operator still has a recovery
+        # anchor and can retry safely.
+        if restore_wan_dns_state; then
+            echo "WAN_DNS_ACTIVATION_ROLLBACK=PASS"
+        else
+            echo "WAN_DNS_ACTIVATION_ROLLBACK=FAIL"
+        fi
+
         return 1
     }
 
