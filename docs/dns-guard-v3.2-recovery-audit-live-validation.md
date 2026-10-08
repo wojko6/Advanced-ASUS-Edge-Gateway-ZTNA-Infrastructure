@@ -509,3 +509,85 @@ PR #197 must remain unmerged until:
 - bootstrap-unhealthy, stale-telemetry, UNKNOWN-state, watchdog-missing and
   recovery-flapping alerts are provisioned;
 - final project healthcheck is clean.
+
+
+## Production verification addendum — 2026-10-08 (PR #197)
+
+The earlier sections are the **test plan**, not a claim that all scenarios were
+executed. Results below distinguish successful bounded production checks from
+intentionally deferred disruptive tests. Router service availability was
+prioritized: do not infer a cold-boot PASS from source-level order or cron presence.
+
+### Evidence verified on the actual ASUS router
+
+- PR code revision verified before review: `233cf09046e17662a1c9cf905bc031534b9af531`;
+  GitHub Validation suite run `37795542492` completed successfully with four
+  successful jobs. Later documentation-only commits require fresh CI evidence.
+- Native ARMv7 supervisor staging and bounded cleanup/lock tests passed. A
+  limited **two-file** production deployment exercised the supervisor and
+  `edge-dns-breakglass.sh`; it was not a full installer deployment.
+- Live manual break-glass **ON**: `ON_EXIT_CODE=0`,
+  `BREAKGLASS_RESULT=PASS`, sticky flag and WAN DNS snapshot present,
+  bootstrap resolver selected, WAN restart **dispatch** accepted and
+  functional WAN IP/internet IP/DNS checks passed.
+- Live manual break-glass **OFF**: `OFF_EXIT_CODE=0`,
+  `BREAKGLASS_CLEAR_RESULT=PASS`, local readiness verified before and after
+  WAN dispatch, Pi-hole resolver promoted, flag inactive, snapshot removed,
+  original WAN DNS NVRAM mode unchanged (`1/1`).
+- After OFF, a follow-up sample briefly found bootstrap DNS while break-glass
+  was inactive. Local DNS subsequently recovered automatically; six read-only
+  samples between **18:01:40 and 18:06:41 CEST** all reported `mode=local`,
+  unchanged fallback counter/transition timestamp, inactive break-glass and
+  no snapshot. Do not attribute the transient to a particular mechanism
+  without event evidence; sampled checks do not exclude sub-minute transitions.
+- Project healthcheck: **0 failures, 0 warnings**; runtime DNS Guard metrics:
+  `mode_local=1`, `state_valid=1`, `breakglass_active=0`,
+  `bootstrap_dns_healthy=1`, `watchdog_present=1`. Watchdog cron present
+  at its expected one-minute cadence; direct local Pi-hole DNS and
+  bootstrap DNS probes passed; Tailscale recovered after the WAN operations.
+- VictoriaMetrics returned actual bootstrap-health, watchdog-presence and
+  collection-timestamp series. All five new DNS Guard alert rule UIDs were
+  verified **loaded** in Grafana's read-only SQLite database, not merely
+  present in the provisioning YAML. Provisioned alert file and PR source
+  SHA-256 matched.
+- Active Merlin hook `/jffs/scripts/services-start` SHA-256 matched the PR
+  source (`026b3c18a950abd70ec86046b04c0015832289ec3ec886bcf4d25298aebf5616`).
+  Its watchdog setup executes at line 325, **before** the `/opt` readiness
+  wait at line 328; `jffs2_scripts=1`. A separate, older copy under
+  `/jffs/addons/asus-edge/bin/services-start` did **not** match the PR;
+  no overwrite was performed. Keep this split-path drift visible for future
+  installer/boot-hook maintenance. The earlier assumption that the active
+  hook simply `exec`s the add-on copy was false for this deployment.
+- A final SHA comparison also matched the production `dns-guard` and
+  `healthcheck.sh` scripts to this PR. No additional WAN restart, full
+  installation, or file changes were performed during final checks.
+
+### Runbook coverage and bounded production waivers
+
+| Test | Production outcome | Review gate disposition and residual |
+|---|---|---|
+| 1 — local DNS fault -> bootstrap | **Not injected** | Waived for this live exercise: blocking production Pi-hole on the router could disrupt household DNS. Covered by mock regression tests only; live failure injection remains unverified. |
+| 2 — dead bootstrap | **Not injected** | Waived: intentionally blocking all independent WAN DNS sources could eliminate emergency DNS. Functional bootstrap was directly probed while healthy; dead-path behavior is regression-only. |
+| 3 — simultaneous local/bootstrap failures | **Not injected** | Waived: would risk a full DNS outage. Dual-failure outcome is regression-only. |
+| 4 — dead bootstrap while local ready | **Not injected** | Waived: disruptive temporary WAN DNS blocking. Immediate escape is regression-only. |
+| 5 — watchdog automatic recovery | **Observed partial path** | Automatic convergence to local resolver and one-minute watchdog presence observed. Deliberate `fallback` forcing and isolated full hysteresis sequence were not run; full test waived for production risk. |
+| 6 — bounded helpers | **Regression + observational** | Source-controlled hanging-helper simulations passed CI. Production break-glass operations were bounded and completed; no deliberate hanging services were injected. |
+| 7 — manual ON/OFF | **PASS** | Full manual transition and reversal executed once. Partial-failure branches remain regression-only, without synthetic NVRAM failure injection. |
+| 8 — WAN restart | **Partial** | ON and OFF each dispatched `restart_wan`; subsequent IP/DNS recovery passed. No separate standalone restart or direct WAN link-state instrumentation; waived extra disruption. |
+| 9 — repeated WAN reconnect | **Partial** | Two separated WAN restart dispatches occurred during ON/OFF, with post-dispatch checks. Not a dedicated repeated-reconnect stress test; waived further restarts. |
+| 10 — cold reboot | **Not executed** | Waived for this live session to avoid disrupting all router-dependent services; **cold-boot timing, pre-Entware watchdog installation and dependency-failure behavior remain unverified** on production and should be tested in a scheduled maintenance window if required for merge confidence. |
+
+**Waiver scope:** these are engineering decisions to omit *additional
+disruptive steps from this production exercise*, not claims of passing the
+skipped cases or acceptance of their residual risks for every environment.
+The reviewer/maintainer must explicitly decide whether the outstanding cold
+boot and failure-injection risks are acceptable **before merging**. No
+synthetic NVRAM values were committed and no runbook fault-injection OUTPUT
+rules were deliberately installed as part of this exercise. A separate final
+read-only firewall rule inspection can confirm the resulting rule state.
+
+**Merge remains a separate decision:** passing CI and this bounded acceptance
+exercise is sufficient to request code review, not automatic merge permission.
+The installer's full end-to-end deployment on this specific live router has not
+been exercised, and the original WAN mode already being `1/1` limited NVRAM
+restore coverage. Related directory-permission scope is tracked in #200.
