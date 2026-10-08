@@ -45,6 +45,44 @@ FALLBACK_SINCE_FILE="$RUNTIME_STATE_DIR/fallback-since-epoch"
 BOOTSTRAP_HEALTH_FILE="$RUNTIME_STATE_DIR/bootstrap-dns-healthy"
 BOOTSTRAP_HEALTH_CHECK_FILE="$RUNTIME_STATE_DIR/bootstrap-dns-last-check-epoch"
 
+# Firmware BusyBox 1.25.1 on the reference TUF-AX5400 has sleep/kill but
+# no timeout applet. Do not depend on Entware (/opt) for DNS boot recovery.
+# Only bound directly executed commands here; do not use this for daemon trees.
+native_bounded_exec() (
+    duration="$1"
+    shift
+
+    case "$duration" in
+        ''|0|*[!0-9]*) return 2 ;;
+    esac
+    [ "$#" -gt 0 ] || return 2
+
+    # Fail visibly before launching a potentially blocking command if the
+    # watchdog primitive itself is unavailable.
+    "$BUSYBOX" sleep 0 >/dev/null 2>&1 || return 127
+
+    # Close the guard lock fd in both child and timer; otherwise orphaned
+    # subprocesses could accidentally retain the global lock after exit.
+    "$@" 9>&- &
+    worker_pid=$!
+
+    (
+        "$BUSYBOX" sleep "$duration" || exit 1
+        kill -KILL "$worker_pid" 2>/dev/null || :
+    ) </dev/null >/dev/null 2>&1 9>&- &
+    timer_pid=$!
+
+    if wait "$worker_pid"; then
+        worker_rc=0
+    else
+        worker_rc=$?
+    fi
+
+    kill "$timer_pid" >/dev/null 2>&1 || :
+    wait "$timer_pid" >/dev/null 2>&1 || :
+    return "$worker_rc"
+)
+
 log() {
     # Logging must never be able to stall a DNS recovery transition while the
     # global guard lock is held. Before the project config is sourced, fall
@@ -55,7 +93,8 @@ log() {
         ''|*[!0-9]*|0) log_timeout=2 ;;
     esac
 
-    "$BUSYBOX" timeout "$log_timeout" logger -t asus-edge-dns "$*"         >/dev/null 2>&1 || true
+    native_bounded_exec "$log_timeout" logger -t asus-edge-dns "$*" \
+        >/dev/null 2>&1 || true
 }
 
 die() {
@@ -119,7 +158,7 @@ esac
     die "EDGE_DNS_BOOTSTRAP_TEST_NAME must not be empty"
 
 bounded_exec() {
-    "$BUSYBOX" timeout "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" "$@"
+    native_bounded_exec "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" "$@"
 }
 
 mkdir -p "$STATE_DIR" || die "cannot create $STATE_DIR"
