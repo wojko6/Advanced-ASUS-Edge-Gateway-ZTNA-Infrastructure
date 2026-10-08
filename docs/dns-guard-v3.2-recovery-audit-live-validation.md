@@ -515,8 +515,9 @@ PR #197 must remain unmerged until:
 
 The earlier sections are the **test plan**, not a claim that all scenarios were
 executed. Results below distinguish successful bounded production checks from
-intentionally deferred disruptive tests. Router service availability was
-prioritized: do not infer a cold-boot PASS from source-level order or cron presence.
+intentionally deferred disruptive tests. A subsequent real power-off/power-on
+cold boot also passed with Entware storage available; that does **not** prove
+the behavior with absent or unmountable Entware.
 
 ### Evidence verified on the actual ASUS router
 
@@ -562,6 +563,58 @@ prioritized: do not infer a cold-boot PASS from source-level order or cron prese
   `healthcheck.sh` scripts to this PR. No additional WAN restart, full
   installation, or file changes were performed during final checks.
 
+
+### Production cold boot — 2026-10-08, 18:51–18:53 CEST — PASS (with Entware)
+
+Operator completed a **real power-off/power-on cold boot**, not factory
+reset, following a clean, read-only preflight at 18:43:01 CEST:
+`REBOOT_PREFLIGHT=PASS`, local resolver `192.168.50.253`,
+`READY=PASS`, break-glass inactive and no WAN snapshot; original
+start-hook SHA-256 and watchdog cron verified.
+
+**Startup evidence, before NTP synchronization (log time shown as Jan 1):**
+- `01:00:40 asus-edge: DNS Guard watchdog scheduled`
+- `01:00:44 usb: USB ext4 fs at /dev/sda1 mounted on /tmp/mnt/ENTWARE`
+- `01:00:44 asus-edge: DNS Guard policy applied during WAN initial phase`
+- Entware services then started; NTP was initially pending.
+- After NTP synchronization, Unbound and Pi-hole FTL started normally
+  (18:51:35–18:51:38 CEST), Tailscale and syslog-ng became RUNNING.
+  The unsynchronized clock explains the initial Jan 1 log date; the
+  source log sequence confirms watchdog was scheduled before USB mount.
+
+**Post-boot observation at 18:52:04 CEST (approximately one minute uptime):**
+- `ENTWARE=READY`; `unbound`, `pihole-FTL`, `tailscaled`,
+  `syslog-ng` RUNNING; internet connectivity PASS.
+- DNS Guard readiness `READY=PASS`, bootstrap mode still selected:
+  `mode_bootstrap=1`, `mode_local=0`,
+  `bootstrap_dns_healthy=1`, `watchdog_present=1`,
+  `breakglass_active=0`.
+- Router resolver still used configured ISP bootstrap DNS.
+  Project healthcheck: **0 failures, 1 warning**, specifically temporary
+  bootstrap/fail-open mode. This was an intermediate startup observation,
+  **not** a failed final validation.
+
+**Post-boot convergence at 18:53:35 CEST (approximately two minutes uptime):**
+- `DECISION=LOCAL_DNS_READY`, `READY=PASS` components:
+  `NTP=PASS`, `UNBOUND=PASS`, `PIHOLE_LISTENER=PASS`,
+  `PIHOLE_QUERY=PASS`.
+- `/tmp/resolv.conf`: `nameserver 192.168.50.253`;
+  `mode_local=1`, `mode_bootstrap=0`, `state_valid=1`,
+  `watchdog_present=1`, `recovery_streak=0/3`.
+- Sticky break-glass remained INACTIVE; project healthcheck:
+  **0 failures, 0 warnings**, exit code 0.
+- Thus the actual boot sequence demonstrated fail-open bootstrap and
+  autonomous return to local Pi-hole, with live service recovery and
+  schedule creation before Entware mounted.
+
+**Limitations:** Entware mounted successfully in this test, and a complete
+disk-unavailable or persistent Entware-failure path was **not** tested.
+These timestamps are sparse observations rather than a full trace of every
+scheduler run or packet. Runtime transition counters are volatile across
+reboots; do not compare post-boot values directly with the pre-boot value 9.
+This test did not change NVRAM, inject firewall faults, or exercise the full
+installer.
+
 ### Runbook coverage and bounded production waivers
 
 | Test | Production outcome | Review gate disposition and residual |
@@ -575,16 +628,19 @@ prioritized: do not infer a cold-boot PASS from source-level order or cron prese
 | 7 — manual ON/OFF | **PASS** | Full manual transition and reversal executed once. Partial-failure branches remain regression-only, without synthetic NVRAM failure injection. |
 | 8 — WAN restart | **Partial** | ON and OFF each dispatched `restart_wan`; subsequent IP/DNS recovery passed. No separate standalone restart or direct WAN link-state instrumentation; waived extra disruption. |
 | 9 — repeated WAN reconnect | **Partial** | Two separated WAN restart dispatches occurred during ON/OFF, with post-dispatch checks. Not a dedicated repeated-reconnect stress test; waived further restarts. |
-| 10 — cold reboot | **Not executed** | Waived for this live session to avoid disrupting all router-dependent services; **cold-boot timing, pre-Entware watchdog installation and dependency-failure behavior remain unverified** on production and should be tested in a scheduled maintenance window if required for merge confidence. |
+| 10 — cold reboot | **PASS, available Entware** | Real power-off/power-on cold boot verified watchdog scheduling before USB Entware mount, bootstrap DNS during early startup, and automated return to Pi-hole. **Not tested:** boot with missing/unmountable Entware, persistent dependency failure, or exhaustive early-start race/fault injection. |
 
 **Waiver scope:** these are engineering decisions to omit *additional
 disruptive steps from this production exercise*, not claims of passing the
 skipped cases or acceptance of their residual risks for every environment.
-The reviewer/maintainer must explicitly decide whether the outstanding cold
-boot and failure-injection risks are acceptable **before merging**. No
+The reviewer/maintainer must explicitly decide whether the outstanding
+Entware-unavailable cold-boot and failure-injection risks are acceptable
+**before merging**. No
 synthetic NVRAM values were committed and no runbook fault-injection OUTPUT
-rules were deliberately installed as part of this exercise. A separate final
-read-only firewall rule inspection can confirm the resulting rule state.
+rules were deliberately installed as part of this exercise. The final
+read-only firewall inspection found no matching direct destination-specific
+DNS REJECT/DROP test rules; firmware-style OUTPUT DNS chain/string filters
+were preserved without modification.
 
 **Merge remains a separate decision:** passing CI and this bounded acceptance
 exercise is sufficient to request code review, not automatic merge permission.
