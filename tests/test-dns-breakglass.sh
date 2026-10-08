@@ -8,6 +8,7 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
 
 MOCK_BIN="$TMP_DIR/bin"
+export EDGE_SERVICE_BIN="$MOCK_BIN/service"
 GUARD="$TMP_DIR/dns-guard"
 SUPERVISOR="$TMP_DIR/edge-dns-supervisor"
 "${CC:-cc}" -std=c11 -O2 -Wall -Wextra -Werror \
@@ -30,7 +31,11 @@ SLOW_FALLBACK="$TMP_DIR/slow-fallback"
 STALL_FALLBACK="$TMP_DIR/stall-fallback"
 STALL_LOCK="$TMP_DIR/stall-fallback.lock"
 FAIL_READY="$TMP_DIR/fail-ready"
+HOLD_BREAKGLASS_ON="$TMP_DIR/hold-breakglass-on"
+BREAKGLASS_HOLD_STARTED="$TMP_DIR/breakglass-hold-started"
 HANG_DNS="$TMP_DIR/hang-dns"
+HANG_DNS_LOCK="$TMP_DIR/hang-dns-escape.lock"
+HANG_DNS_CHILD="$TMP_DIR/hang-dns-escape.pid"
 HANG_SERVICE="$TMP_DIR/hang-service"
 FAIL_NVRAM_SET_WAN0="$TMP_DIR/fail-nvram-set-wan0"
 FAIL_NVRAM_COMMIT_ONCE="$TMP_DIR/fail-nvram-commit-once"
@@ -44,6 +49,10 @@ cat >"$GUARD" <<EOF
 #!/bin/sh
 case "\${1:-}" in
     breakglass-on)
+        if [ -f "$HOLD_BREAKGLASS_ON" ]; then
+            : >"$BREAKGLASS_HOLD_STARTED"
+            /bin/sleep 5
+        fi
         echo "BREAKGLASS=ACTIVE_FALLBACK_PENDING"
         exit 0
         ;;
@@ -180,6 +189,15 @@ cat >"$MOCK_BIN/pidof" <<'EOF'
 exit 1
 EOF
 
+cat >"$MOCK_BIN/hang-dns-worker" <<'EOF'
+#!/bin/sh
+exec 9>"$1"
+flock -x 9 || exit 1
+printf '%s\n' "$$" >"$2"
+exec /bin/sleep 30
+EOF
+chmod +x "$MOCK_BIN/hang-dns-worker"
+
 cat >"$MOCK_BIN/busybox" <<EOF
 #!/bin/sh
 applet="\${1:-}"
@@ -193,7 +211,16 @@ case "\$applet" in
         exec /bin/sleep "\$@"
         ;;
     nslookup)
-        [ -f "$HANG_DNS" ] && exec /bin/sleep 30
+        if [ -f "$HANG_DNS" ]; then
+            rm -f "$HANG_DNS_CHILD"
+            setsid "$MOCK_BIN/hang-dns-worker" "$HANG_DNS_LOCK" "$HANG_DNS_CHILD" </dev/null >/dev/null 2>&1 &
+            for unused in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+                [ -s "$HANG_DNS_CHILD" ] && break
+                /bin/sleep 0.02
+            done
+            [ -s "$HANG_DNS_CHILD" ] || exit 90
+            exec /bin/sleep 30
+        fi
         if [ -f "$FAIL_DNS_ONCE" ]; then
             rm -f "$FAIL_DNS_ONCE"
             exit 1
@@ -404,6 +431,7 @@ echo "=== failed rearm does not claim full recovery ==="
 reset_fixture
 run_helper on >/dev/null
 : >"$HANG_SERVICE"
+requests_before=$(grep -c '^restart_wan$' "$SERVICE_LOG")
 
 if rearm_partial_output="$(run_helper off 2>&1)"; then
     echo "FAIL: break-glass clear succeeded despite a hung WAN restart" >&2
@@ -416,7 +444,38 @@ if printf '%s\n' "$rearm_partial_output" | grep -F 'BREAKGLASS_REARMED=YES' >/de
     exit 1
 fi
 [ -f "$WAN_STATE" ]
+
+requests_after=$(grep -c '^restart_wan$' "$SERVICE_LOG")
+if [ "$((requests_after - requests_before))" -ne 1 ]; then
+    echo "FAIL: hung WAN dispatch was repeated during rearm" >&2
+    exit 1
+fi
+echo "WAN_TIMEOUT_SINGLE_DISPATCH=PASS"
+
 rm -f "$HANG_SERVICE"
+
+echo "=== failed WAN IP recovery must not redispatch ==="
+reset_fixture
+run_helper on >/dev/null
+requests_before=$(grep -c '^restart_wan$' "$SERVICE_LOG")
+: >"$FAIL_PING"
+
+if ip_clear_output="$(run_helper off 2>&1)"; then
+    echo "FAIL: WAN IP timeout unexpectedly cleared break-glass" >&2
+    exit 1
+fi
+
+requests_after=$(grep -c '^restart_wan$' "$SERVICE_LOG")
+
+if [ "$((requests_after - requests_before))" -ne 1 ] ||
+   [ ! -f "$WAN_STATE" ] ||
+   ! printf '%s\n' "$ip_clear_output" |
+       grep -Fq 'BREAKGLASS_REARMED=PARTIAL'; then
+    echo "FAIL: repeated WAN dispatch or unsafe recovery verdict" >&2
+    exit 1
+fi
+
+echo "WAN_IP_FAILURE_SINGLE_DISPATCH=PASS"
 
 echo "=== restart_wan hang is bounded ==="
 reset_fixture
@@ -726,7 +785,7 @@ reset_fixture
 : >"$HANG_DNS"
 set +e
 bounded_output="$(
-    timeout 5 env \
+    timeout 7 env \
         EDGE_DNS_GUARD="$GUARD" \
         EDGE_RESOLV_CONF="$RESOLV" \
         EDGE_DNS_STATE_DIR="$STATE_DIR" \
@@ -750,6 +809,116 @@ set -e
 }
 printf '%s\n' "$bounded_output" | grep -F 'DNS=FAIL' >/dev/null
 printf '%s\n' "$bounded_output" | grep -F 'BREAKGLASS_RESULT=FAIL' >/dev/null
+[ -s "$HANG_DNS_CHILD" ] || {
+    echo "FAIL: escaped DNS child fixture did not start" >&2
+    exit 1
+}
+if kill -0 "$(cat "$HANG_DNS_CHILD")" 2>/dev/null; then
+    echo "FAIL: escaped DNS child survived supervisor timeout" >&2
+    exit 1
+fi
+echo "DNS_ESCAPE_CHILD_REAP=PASS"
+
+flock -n "$HANG_DNS_LOCK" true || {
+    echo "FAIL: escaped DNS child retained flock" >&2
+    exit 1
+}
+echo "DNS_ESCAPE_FLOCK_RELEASE=PASS"
+
 rm -f "$HANG_DNS"
+
+echo "=== concurrent break-glass transactions are rejected ==="
+reset_fixture
+rm -f "$BREAKGLASS_HOLD_STARTED"
+: >"$HOLD_BREAKGLASS_ON"
+
+first_log="$TMP_DIR/concurrent-first.log"
+run_helper on >"$first_log" 2>&1 &
+first_pid=$!
+
+attempt=0
+while [ ! -f "$BREAKGLASS_HOLD_STARTED" ] &&
+      [ "$attempt" -lt 100 ]; do
+    /bin/sleep 0.05
+    attempt=$((attempt + 1))
+done
+
+if [ ! -f "$BREAKGLASS_HOLD_STARTED" ] ||
+   ! kill -0 "$first_pid" 2>/dev/null; then
+    echo "FAIL: first transaction did not enter the hold" >&2
+    cat "$first_log" >&2
+    exit 1
+fi
+
+lock_file="$STATE_DIR/dns-breakglass-operation.lock"
+
+if flock -n "$lock_file" /bin/true 2>/dev/null; then
+    echo "FAIL: transaction lock was not held" >&2
+    exit 1
+fi
+
+[ -f "$WAN_STATE" ] || {
+    echo "FAIL: first transaction did not preserve snapshot" >&2
+    exit 1
+}
+
+cp "$WAN_STATE" "$TMP_DIR/concurrent-snapshot-before"
+
+for action in off on; do
+    if busy_output="$(run_helper "$action" 2>&1)"; then
+        echo "FAIL: concurrent $action was accepted" >&2
+        exit 1
+    fi
+
+    printf '%s\n' "$busy_output" |
+        grep -Fxq 'BREAKGLASS_OPERATION_LOCK=BUSY' || {
+            echo "FAIL: concurrent $action missed busy verdict" >&2
+            exit 1
+        }
+done
+
+cmp -s "$WAN_STATE" "$TMP_DIR/concurrent-snapshot-before" || {
+    echo "FAIL: concurrent operation changed snapshot" >&2
+    exit 1
+}
+
+if [ -e "$NVRAM_LOG" ] || [ -e "$SERVICE_LOG" ]; then
+    echo "FAIL: rejected operation changed NVRAM or WAN dispatch" >&2
+    exit 1
+fi
+
+echo "CONCURRENT_ON_OFF_REJECTED=PASS"
+echo "CONCURRENT_SNAPSHOT_PRESERVED=PASS"
+echo "CONCURRENT_NO_WAN_DISPATCH=PASS"
+
+if ! wait "$first_pid"; then
+    echo "FAIL: first transaction did not complete" >&2
+    cat "$first_log" >&2
+    exit 1
+fi
+
+grep -Fq 'BREAKGLASS_RESULT=PASS' "$first_log" || {
+    echo "FAIL: first transaction verdict missing" >&2
+    exit 1
+}
+
+rm -f "$HOLD_BREAKGLASS_ON"
+
+flock -n "$lock_file" /bin/true || {
+    echo "FAIL: transaction lock remained held" >&2
+    exit 1
+}
+
+clear_output="$(run_helper off)"
+printf '%s\n' "$clear_output" |
+    grep -Fq 'BREAKGLASS_CLEAR_RESULT=PASS'
+
+[ ! -f "$WAN_STATE" ] || {
+    echo "FAIL: snapshot remained after clear" >&2
+    exit 1
+}
+
+echo "OPERATION_LOCK_RELEASE=PASS"
+echo "POST_CONTENTION_RECOVERY=PASS"
 
 echo "PASS: break-glass snapshot, restore, ordering and final recovery verdict"

@@ -12,6 +12,7 @@ export PATH
 
 GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"
 SUPERVISOR="${EDGE_DNS_SUPERVISOR:-/jffs/addons/asus-edge/bin/edge-dns-supervisor}"
+SERVICE_BIN="${EDGE_SERVICE_BIN:-/sbin/service}"
 GUARD_CALL_TIMEOUT_SECONDS="${EDGE_DNS_BREAKGLASS_GUARD_CALL_TIMEOUT_SECONDS:-30}"
 RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
 BUSYBOX="${EDGE_BUSYBOX_BIN:-/bin/busybox}"
@@ -95,39 +96,8 @@ if [ "${#GUARD_CALL_TIMEOUT_SECONDS}" -gt 3 ] ||
     exit 1
 fi
 
-# The firmware BusyBox lacks the timeout applet; /opt can be unavailable
-# during early recovery. Direct-child watchdog based on firmware sleep/kill.
-# A timeout fails non-zero; it never reports successful WAN/DNS recovery.
-native_bounded_exec() (
-    duration="$1"
-    shift
-
-    case "$duration" in
-        ''|0|*[!0-9]*) return 2 ;;
-    esac
-    [ "$#" -gt 0 ] || return 2
-
-    # Avoid overflow/unbounded waits from malformed configuration.
-    [ "${#duration}" -le 3 ] && [ "$duration" -le 120 ] || return 2
-    "$BUSYBOX" sleep 0 >/dev/null 2>&1 || return 127
-
-    "$@" &
-    worker_pid=$!
-    (
-        "$BUSYBOX" sleep "$duration" || exit 1
-        kill -KILL "$worker_pid" 2>/dev/null || :
-    ) </dev/null >/dev/null 2>&1 &
-    timer_pid=$!
-
-    if wait "$worker_pid"; then
-        worker_rc=0
-    else
-        worker_rc=$?
-    fi
-    kill "$timer_pid" >/dev/null 2>&1 || :
-    wait "$timer_pid" >/dev/null 2>&1 || :
-    return "$worker_rc"
-)
+# WAN service is an rc notification client. The supervisor only
+# bounds the request dispatcher, not PID 1 or the WAN restart itself.
 
 echo "=== ASUS EDGE DNS BREAK-GLASS ==="
 date
@@ -147,6 +117,17 @@ mkdir -p "$STATE_DIR" || {
     exit 1
 }
 chmod 700 "$STATE_DIR" 2>/dev/null || true
+
+# Serialize entire break-glass transactions, including WAN DNS snapshots.
+# The supervisor closes FD 9 before executing managed child processes.
+umask 077
+exec 9>"$STATE_DIR/dns-breakglass-operation.lock" || exit 1
+
+if ! /usr/bin/flock -xn 9; then
+    echo "BREAKGLASS_OPERATION_LOCK=BUSY"
+    echo "ERROR: another break-glass operation is running"
+    exit 1
+fi
 
 guard_checked() {
     "$SUPERVISOR" "$GUARD_CALL_TIMEOUT_SECONDS" -- "$GUARD" "$@"
@@ -333,8 +314,21 @@ force_safe_wan_dns_mode() {
     return 0
 }
 
+wan_restart_dispatch_attempted=0
+
 restart_wan_checked() {
-    if native_bounded_exec "$SERVICE_TIMEOUT_SECONDS" service restart_wan; then
+    if [ "$wan_restart_dispatch_attempted" -eq 1 ]; then
+        echo "WAN_RESTART_DISPATCH=SKIPPED_REPEAT"
+        echo "WAN_RESTART=FAIL"
+        return 1
+    fi
+
+    # A timeout does not tell us whether rc already received the event.
+    # Never dispatch an ambiguous restart twice in one recovery attempt.
+    wan_restart_dispatch_attempted=1
+
+    if "$SUPERVISOR" "$SERVICE_TIMEOUT_SECONDS" -- "$SERVICE_BIN" restart_wan; then
+        echo "WAN_RESTART_DISPATCH=SUBMITTED"
         echo "WAN_RESTART=PASS"
         return 0
     fi
@@ -391,7 +385,7 @@ validate_dns() {
     dns_attempt=1
 
     while [ "$dns_attempt" -le 2 ]; do
-        if native_bounded_exec "$DNS_TEST_TIMEOUT_SECONDS" \
+        if "$SUPERVISOR" "$DNS_TEST_TIMEOUT_SECONDS" -- \
             "$BUSYBOX" nslookup "$DNS_TEST_NAME" >/dev/null 2>&1; then
             echo "DNS=PASS"
             echo "DNS_ATTEMPTS=$dns_attempt"
