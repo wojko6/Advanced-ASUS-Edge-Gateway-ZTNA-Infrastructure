@@ -42,7 +42,7 @@ EDGE_UNBOUND_PORT=53535
 EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
 EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=1
 EDGE_DNS_QUERY_TIMEOUT_SECONDS=2
-EDGE_DNS_LOCK_WAIT_SECONDS=2
+EDGE_DNS_LOCK_WAIT_SECONDS=5
 EOF
 
 cat >"$MOCK_BIN/nvram" <<EOF
@@ -218,6 +218,12 @@ wait "$second_pid"
 }
 grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-first.out" >/dev/null
 grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-second.out" >/dev/null
+
+# The serialization test intentionally keeps the first invocation in two
+# one-second DNS probes. Give the second invocation enough margin to exercise
+# serialization rather than racing the configured lock timeout. Tighten the
+# timeout again for the dedicated bounded-lock test below.
+printf '%s\n' 'EDGE_DNS_LOCK_WAIT_SECONDS=2' >>"$CONFIG"
 
 echo "=== lock acquisition is bounded ==="
 rm -f "$LOCK_HELD"
