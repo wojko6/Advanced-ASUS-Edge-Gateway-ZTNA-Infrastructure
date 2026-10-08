@@ -19,6 +19,7 @@ asus_edge_dns_guard_fallback_transitions_runtime_total 4
 asus_edge_dns_guard_fallback_since_timestamp_seconds 1700000000
 asus_edge_dns_guard_bootstrap_dns_healthy 0
 asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds 1700000001
+asus_edge_dns_guard_watchdog_present 1
 METRICS
 EOF
 
@@ -43,6 +44,7 @@ grep -qx 'asus_edge_dns_guard_breakglass_active 0' "$PAYLOAD"
 grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 4' "$PAYLOAD"
 grep -qx 'asus_edge_dns_guard_bootstrap_dns_healthy 0' "$PAYLOAD"
 grep -qx 'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds 1700000001' "$PAYLOAD"
+grep -qx 'asus_edge_dns_guard_watchdog_present 1' "$PAYLOAD"
 grep -E '^asus_edge_dns_guard_collection_timestamp_seconds [0-9]+$' "$PAYLOAD" >/dev/null
 
 echo "PASS: DNS Guard Fedora metrics exporter validates and forwards coarse state"
