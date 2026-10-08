@@ -21,3 +21,4 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-09-29](2026-09-29.md) — Engineering/CI Grafana closure; #127/#128 security hardening; project-native Edge Gateway WebUI; final eight-resource Polish WebUI persistence; CI-fixture and documentation reconciliation.
 - [2026-10-06](2026-10-06.md) — WAN-speed email alert validation, final Polish WebUI closure, Tailscale package/live-version drift hardening, and issue #152 Android Pi-hole/Tailscale source-scoped DNS plus management-path reconciliation.
 - [2026-10-07](2026-10-07.md) — port-exposure/network-design documentation closure and RouterCloud Grafana alerting expansion with controlled live firing/recovery validation.
+- [2026-10-08](2026-10-08.md) — DNS Guard recovery hardening PR #197 production checkpoint, six live Grafana DNS Guard alerts, RouterCloud backup/metrics recovery and Fedora network-readiness hardening.
