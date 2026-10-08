@@ -46,7 +46,16 @@ BOOTSTRAP_HEALTH_FILE="$RUNTIME_STATE_DIR/bootstrap-dns-healthy"
 BOOTSTRAP_HEALTH_CHECK_FILE="$RUNTIME_STATE_DIR/bootstrap-dns-last-check-epoch"
 
 log() {
-    logger -t asus-edge-dns "$*"
+    # Logging must never be able to stall a DNS recovery transition while the
+    # global guard lock is held. Before the project config is sourced, fall
+    # back to a small known-good timeout if an invalid environment value was
+    # supplied.
+    log_timeout="${EDGE_DNS_LOG_TIMEOUT_SECONDS:-2}"
+    case "$log_timeout" in
+        ''|*[!0-9]*|0) log_timeout=2 ;;
+    esac
+
+    "$BUSYBOX" timeout "$log_timeout" logger -t asus-edge-dns "$*"         >/dev/null 2>&1 || true
 }
 
 die() {
@@ -65,6 +74,7 @@ die() {
 : "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
 : "${EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5}"
 : "${EDGE_DNS_LOCK_WAIT_SECONDS:=5}"
+: "${EDGE_DNS_LOG_TIMEOUT_SECONDS:=2}"
 : "${EDGE_DNS_BOOTSTRAP_TEST_NAME:=example.com}"
 
 case "$EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD" in
@@ -93,6 +103,15 @@ esac
 
 [ "$EDGE_DNS_LOCK_WAIT_SECONDS" -gt 0 ] ||
     die "EDGE_DNS_LOCK_WAIT_SECONDS must be greater than zero"
+
+case "$EDGE_DNS_LOG_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*)
+        die "EDGE_DNS_LOG_TIMEOUT_SECONDS must be a positive integer"
+        ;;
+esac
+
+[ "$EDGE_DNS_LOG_TIMEOUT_SECONDS" -gt 0 ] ||
+    die "EDGE_DNS_LOG_TIMEOUT_SECONDS must be greater than zero"
 
 [ -n "$EDGE_DNS_BOOTSTRAP_TEST_NAME" ] ||
     die "EDGE_DNS_BOOTSTRAP_TEST_NAME must not be empty"
