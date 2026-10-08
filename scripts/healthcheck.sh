@@ -319,7 +319,7 @@ if [ "$EDGE_DNS_GUARD_WATCHDOG" = "1" ]; then
     # early-boot native watchdog only needs the firmware sleep/kill applets.
     if [ -x "$DNS_GUARD_BUSYBOX" ] &&
        "$DNS_GUARD_BUSYBOX" sleep 0 >/dev/null 2>&1 &&
-       "$DNS_GUARD_BUSYBOX" kill -0 "$" >/dev/null 2>&1; then
+       "$DNS_GUARD_BUSYBOX" kill -0 "$$" >/dev/null 2>&1; then
         ok "DNS Guard native bounded-query primitives available (sleep/kill)"
     else
         fail "firmware sleep/kill unavailable; DNS Guard cannot bound queries safely"
