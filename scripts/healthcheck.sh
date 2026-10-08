@@ -88,6 +88,7 @@ fi
 : "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
 : "${EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5}"
 : "${EDGE_DNS_LOCK_WAIT_SECONDS:=5}"
+: "${EDGE_DNS_LOG_TIMEOUT_SECONDS:=2}"
 : "${EDGE_DNS_BOOTSTRAP_TEST_NAME:=example.com}"
 
 DNS_GUARD_BIN="${EDGE_DNS_GUARD_BIN:-/jffs/addons/asus-edge/bin/dns-guard}"
@@ -221,6 +222,15 @@ case "$EDGE_DNS_LOCK_WAIT_SECONDS" in
     *)
         [ "$EDGE_DNS_LOCK_WAIT_SECONDS" -gt 0 ] 2>/dev/null ||
             fail "invalid EDGE_DNS_LOCK_WAIT_SECONDS value: $EDGE_DNS_LOCK_WAIT_SECONDS"
+        ;;
+esac
+case "$EDGE_DNS_LOG_TIMEOUT_SECONDS" in
+    ''|*[!0-9]*)
+        fail "invalid EDGE_DNS_LOG_TIMEOUT_SECONDS value: $EDGE_DNS_LOG_TIMEOUT_SECONDS"
+        ;;
+    *)
+        [ "$EDGE_DNS_LOG_TIMEOUT_SECONDS" -gt 0 ] 2>/dev/null ||
+            fail "invalid EDGE_DNS_LOG_TIMEOUT_SECONDS value: $EDGE_DNS_LOG_TIMEOUT_SECONDS"
         ;;
 esac
 valid_host "$EDGE_DNS_BOOTSTRAP_TEST_NAME" ||
