@@ -329,10 +329,14 @@ Acceptance:
 - snapshot is removed only after the full transaction succeeds.
 
 If any clear step fails, the helper must re-arm safe break-glass rather than
-silently leaving a half-restored state.
+silently leaving a half-restored state. A complete rearm reports
+`BREAKGLASS_REARMED=YES`. If any rearm step itself fails, the helper must
+report `BREAKGLASS_REARMED=PARTIAL`, include a non-zero failure count and
+return non-zero; it must never claim full recovery after a partial rearm.
 
-Partial NVRAM-write failure and hung-`restart_wan` fault injection are proven
-by the source-controlled regression suite. Do **not** inject NVRAM commit/write
+Partial NVRAM-write/commit/unset failure, interrupted-state retry convergence,
+hung-`restart_wan` handling and partial-rearm reporting are proven by the
+source-controlled regression suite. Do **not** inject NVRAM commit/write
 failures on the production router merely to reproduce those unit-test cases.
 
 ## Test 8 — WAN restart
