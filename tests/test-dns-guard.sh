@@ -31,6 +31,7 @@ FAIL_DIG_RUNTIME="$TMP_DIR/fail-dig-runtime"
 FAIL_PIHOLE_TCP_LISTENER="$TMP_DIR/fail-pihole-tcp-listener"
 FAIL_BOOTSTRAP_HEALTH="$TMP_DIR/fail-bootstrap-health"
 HANG_PROBE="$TMP_DIR/hang-probe"
+HANG_LOGGER="$TMP_DIR/hang-logger"
 LOCK_HELD="$TMP_DIR/lock-held"
 FAIL_BOOTSTRAP_PRIMARY_SERVER="$TMP_DIR/fail-bootstrap-primary-server"
 
@@ -88,8 +89,9 @@ echo 'udp 0 0 192.0.2.53:53 0.0.0.0:*'
     echo 'tcp 0 0 192.0.2.53:53 0.0.0.0:* LISTEN'
 EOF
 
-cat >"$MOCK_BIN/logger" <<'EOF'
+cat >"$MOCK_BIN/logger" <<EOF
 #!/bin/sh
+[ -f "$HANG_LOGGER" ] && /bin/sleep 30
 exit 0
 EOF
 
@@ -273,6 +275,35 @@ printf '%s\n' "$lock_blocked_output" |
 kill "$lock_holder_pid" 2>/dev/null || true
 wait "$lock_holder_pid" 2>/dev/null || true
 rm -f "$LOCK_HELD"
+
+echo "=== logger hang cannot block DNS Guard recovery ==="
+: >"$HANG_LOGGER"
+set +e
+logger_bounded_output="$(
+    timeout 5 env \
+        EDGE_CONFIG_FILE="$CONFIG" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_FLAG="$FLAG" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK" \
+        EDGE_DNS_LOG_TIMEOUT_SECONDS=1 \
+        sh "$GUARD" breakglass-on logger-hang 2>&1
+)"
+logger_bounded_rc=$?
+set -e
+[ "$logger_bounded_rc" -ne 124 ] || {
+    echo "FAIL: DNS Guard logger blocked recovery beyond the outer 5-second safety bound" >&2
+    exit 1
+}
+[ "$logger_bounded_rc" -eq 0 ] || {
+    echo "FAIL: bounded logger failure changed break-glass semantics" >&2
+    printf '%s\n' "$logger_bounded_output" >&2
+    exit 1
+}
+printf '%s\n' "$logger_bounded_output" | grep -F 'BREAKGLASS=ACTIVE' >/dev/null
+rm -f "$HANG_LOGGER" "$FLAG"
 
 echo "=== stable multi-provider DNS probes use UDP and TCP when dig is available ==="
 rm -f "$PROBE_LOG" "$FAIL_PROBE_PRIMARY" "$FAIL_PROBE_SECONDARY" \
