@@ -9,6 +9,10 @@ trap 'rm -rf "$TMP_DIR"' EXIT HUP INT TERM
 
 MOCK_BIN="$TMP_DIR/bin"
 GUARD="$TMP_DIR/dns-guard"
+SUPERVISOR="$TMP_DIR/edge-dns-supervisor"
+"${CC:-cc}" -std=c11 -O2 -Wall -Wextra -Werror \
+    "$ROOT_DIR/router/src/edge-dns-supervisor.c" -o "$SUPERVISOR"
+export EDGE_DNS_SUPERVISOR="$SUPERVISOR"
 RESOLV="$TMP_DIR/resolv.conf"
 STATE_DIR="$TMP_DIR/state"
 WAN_STATE="$STATE_DIR/dns-breakglass-wan-dns.state"
@@ -17,7 +21,14 @@ SERVICE_LOG="$TMP_DIR/service.log"
 WAN_VALUE="$TMP_DIR/wan-dnsenable"
 WAN0_VALUE="$TMP_DIR/wan0-dnsenable"
 FAIL_PING="$TMP_DIR/fail-ping"
+FAIL_INTERNET_ONCE="$TMP_DIR/fail-internet-once"
 FAIL_DNS="$TMP_DIR/fail-dns"
+FAIL_DNS_ONCE="$TMP_DIR/fail-dns-once"
+FAIL_FALLBACK_ONCE="$TMP_DIR/fail-fallback-once"
+FAIL_FALLBACK_ALWAYS="$TMP_DIR/fail-fallback-always"
+SLOW_FALLBACK="$TMP_DIR/slow-fallback"
+STALL_FALLBACK="$TMP_DIR/stall-fallback"
+STALL_LOCK="$TMP_DIR/stall-fallback.lock"
 FAIL_READY="$TMP_DIR/fail-ready"
 HANG_DNS="$TMP_DIR/hang-dns"
 HANG_SERVICE="$TMP_DIR/hang-service"
@@ -37,6 +48,25 @@ case "\${1:-}" in
         exit 0
         ;;
     fallback)
+        if [ -f "$STALL_FALLBACK" ]; then
+            exec 9>"$STALL_LOCK"
+            flock -x 9 || exit 1
+            exec /bin/sleep 12
+        fi
+        if [ -f "$SLOW_FALLBACK" ]; then
+            /bin/sleep 3
+            echo "FALLBACK=UNHEALTHY_BOOTSTRAP"
+            exit 1
+        fi
+        if [ -f "$FAIL_FALLBACK_ALWAYS" ]; then
+            echo "FALLBACK=UNHEALTHY_BOOTSTRAP"
+            exit 1
+        fi
+        if [ -f "$FAIL_FALLBACK_ONCE" ]; then
+            rm -f "$FAIL_FALLBACK_ONCE"
+            echo "FALLBACK=UNHEALTHY_BOOTSTRAP"
+            exit 1
+        fi
         printf '%s\n' 'nameserver 9.9.9.9' >"$RESOLV"
         echo "FALLBACK=PASS"
         exit 0
@@ -126,6 +156,12 @@ EOF
 cat >"$MOCK_BIN/ping" <<EOF
 #!/bin/sh
 [ -f "$FAIL_PING" ] && exit 1
+if [ "\${1:-}" = "-c" ] &&
+   [ "\${2:-}" = "2" ] &&
+   [ -f "$FAIL_INTERNET_ONCE" ]; then
+    rm -f "$FAIL_INTERNET_ONCE"
+    exit 1
+fi
 exit 0
 EOF
 
@@ -158,6 +194,10 @@ case "\$applet" in
         ;;
     nslookup)
         [ -f "$HANG_DNS" ] && exec /bin/sleep 30
+        if [ -f "$FAIL_DNS_ONCE" ]; then
+            rm -f "$FAIL_DNS_ONCE"
+            exit 1
+        fi
         [ -f "$FAIL_DNS" ] && exit 1
         echo "Address 1: 93.184.216.34"
         exit 0
@@ -185,7 +225,7 @@ run_helper() {
 }
 
 reset_fixture() {
-    rm -f "$WAN_STATE" "$FAIL_PING" "$FAIL_DNS" "$FAIL_READY" "$HANG_DNS" "$HANG_SERVICE" \
+    rm -f "$WAN_STATE" "$FAIL_PING" "$FAIL_DNS" "$FAIL_DNS_ONCE" "$FAIL_FALLBACK_ONCE" "$FAIL_FALLBACK_ALWAYS" "$SLOW_FALLBACK" "$STALL_FALLBACK" "$FAIL_INTERNET_ONCE" "$FAIL_READY" "$HANG_DNS" "$HANG_SERVICE" \
         "$FAIL_NVRAM_SET_WAN0" "$FAIL_NVRAM_COMMIT_ONCE" "$FAIL_NVRAM_UNSET_WAN0" \
         "$NVRAM_LOG" "$SERVICE_LOG"
     printf '0\n' >"$WAN_VALUE"
@@ -430,6 +470,54 @@ $failure_output
 EOF
 [ -f "$WAN_STATE" ]
 
+echo "=== transient bootstrap failure after WAN recovery ==="
+reset_fixture
+: >"$FAIL_FALLBACK_ONCE"
+
+set +e
+transient_output="$(run_helper on 2>&1)"
+transient_rc=$?
+set -e
+
+printf '%s\n' "$transient_output" |
+    grep -E '^(FALLBACK=|FALLBACK_REASSERT=|BREAKGLASS_RESULT=)' || true
+
+if [ "$transient_rc" -ne 0 ] ||
+   ! printf '%s\n' "$transient_output" |
+       grep -Fq 'BREAKGLASS_RESULT=PASS'; then
+    echo "FAIL: transient bootstrap failure was not recovered" >&2
+    exit 1
+fi
+
+echo "TRANSIENT_BOOTSTRAP_RECOVERY=PASS"
+
+echo "=== transient Internet IP failure after WAN restart ==="
+reset_fixture
+: >"$FAIL_INTERNET_ONCE"
+
+set +e
+ip_transient_output="$(run_helper on 2>&1)"
+ip_transient_rc=$?
+set -e
+
+printf '%s\n' "$ip_transient_output" |
+    grep -E '^(WAN_RESTART|WAN_IP|INTERNET_IP|BREAKGLASS_RESULT)=' || true
+
+if [ "$ip_transient_rc" -ne 0 ] ||
+   ! printf '%s\n' "$ip_transient_output" |
+       grep -Fq 'BREAKGLASS_RESULT=PASS'; then
+    echo "FAIL: transient post-WAN Internet IP failure was not recovered" >&2
+    exit 1
+fi
+
+if ! printf '%s\\n' "$ip_transient_output" |
+    grep -Fxq 'INTERNET_IP_ATTEMPTS=2'; then
+    echo "FAIL: expected Internet IP recovery on attempt 2" >&2
+    exit 1
+fi
+
+echo "TRANSIENT_INTERNET_IP_RECOVERY=PASS"
+
 echo "=== activation DNS validation failure is non-zero ==="
 reset_fixture
 : >"$FAIL_DNS"
@@ -446,6 +534,192 @@ grep -F 'BREAKGLASS_RESULT=FAIL' <<EOF >/dev/null
 $dns_failure_output
 EOF
 [ -f "$WAN_STATE" ]
+
+echo "=== transient final DNS failure after WAN restart ==="
+reset_fixture
+: >"$FAIL_DNS_ONCE"
+
+dns_transient_rc=0
+dns_transient_output="$(run_helper on 2>&1)" ||
+    dns_transient_rc=$?
+
+printf '%s\n' "$dns_transient_output" |
+    grep -E '^(DNS=|BREAKGLASS_RESULT=)' || true
+
+if [ "$dns_transient_rc" -ne 0 ] ||
+   ! printf '%s\n' "$dns_transient_output" |
+       grep -Fxq 'BREAKGLASS_RESULT=PASS'; then
+    echo "FAIL: transient final DNS failure was not recovered" >&2
+    exit 1
+fi
+
+if ! printf '%s\\n' "$dns_transient_output" |
+    grep -Fxq 'DNS_ATTEMPTS=2'; then
+    echo "FAIL: expected final DNS recovery on attempt 2" >&2
+    exit 1
+fi
+
+echo "TRANSIENT_FINAL_DNS_RECOVERY=PASS"
+
+echo "=== transient bootstrap failure during break-glass off ==="
+reset_fixture
+
+run_helper on >/dev/null
+: >"$FAIL_FALLBACK_ONCE"
+
+off_rc=0
+off_output="$(run_helper off 2>&1)" || off_rc=$?
+
+printf '%s\n' "$off_output" |
+    grep -E '^(FALLBACK=|BOOTSTRAP_REASSERT_|FALLBACK_REASSERT=|BREAKGLASS_CLEAR_RESULT=|WAN_DNS_SNAPSHOT=)' || true
+
+if [ "$off_rc" -ne 0 ] ||
+   ! printf '%s\n' "$off_output" |
+       grep -Fxq 'BOOTSTRAP_REASSERT_ATTEMPTS=2' ||
+   ! printf '%s\n' "$off_output" |
+       grep -Fxq 'BREAKGLASS_CLEAR_RESULT=PASS'; then
+    echo "FAIL: transient bootstrap failure blocked break-glass off" >&2
+    exit 1
+fi
+
+restart_count="$(grep -c '^restart_wan$' "$SERVICE_LOG" || true)"
+
+if [ "$restart_count" -ne 2 ]; then
+    echo "FAIL: unexpected WAN restart count: $restart_count" >&2
+    exit 1
+fi
+
+if [ -f "$WAN_STATE" ] ||
+   ! grep -qx '0' "$WAN_VALUE" ||
+   ! grep -qx '0' "$WAN0_VALUE" ||
+   ! grep -qx 'nameserver 192.0.2.53' "$RESOLV"; then
+    echo "FAIL: break-glass off did not restore original state" >&2
+    exit 1
+fi
+
+echo "TRANSIENT_BREAKGLASS_OFF_RECOVERY=PASS"
+echo "WAN_RESTART_COUNT=2"
+echo "SNAPSHOT_RESTORED_AND_REMOVED=PASS"
+
+echo "=== permanent bootstrap failure is bounded ==="
+reset_fixture
+: >"$FAIL_FALLBACK_ALWAYS"
+
+permanent_rc=0
+permanent_output="$(run_helper on 2>&1)" ||
+    permanent_rc=$?
+
+printf '%s\n' "$permanent_output" |
+    grep -E '^(BOOTSTRAP_REASSERT|BREAKGLASS_RESULT=)' || true
+
+retry_count="$(printf '%s\n' "$permanent_output" |
+    grep -c '^BOOTSTRAP_REASSERT_RETRY=' || true)"
+
+restart_count="$(grep -c '^restart_wan$' "$SERVICE_LOG" || true)"
+
+if [ "$permanent_rc" -eq 0 ] ||
+   [ "$retry_count" -ne 3 ] ||
+   [ "$restart_count" -ne 1 ] ||
+   ! printf '%s\n' "$permanent_output" |
+       grep -Fxq 'BOOTSTRAP_REASSERT=FAILED_AFTER_RETRIES' ||
+   ! printf '%s\n' "$permanent_output" |
+       grep -Fxq 'BREAKGLASS_RESULT=FAIL' ||
+   [ ! -f "$WAN_STATE" ] ||
+   [ "$(cat "$WAN_VALUE")" != 1 ] ||
+   [ "$(cat "$WAN0_VALUE")" != 1 ]; then
+    echo "FAIL: permanent bootstrap failure handling is unsafe" >&2
+    exit 1
+fi
+
+echo "PERMANENT_BOOTSTRAP_FAILURE=PASS"
+echo "BOOTSTRAP_TOTAL_ATTEMPTS=4"
+echo "WAN_RESTART_COUNT=1"
+echo "RECOVERY_SNAPSHOT=PRESERVED"
+
+echo "=== slow bootstrap total time budget ==="
+reset_fixture
+: >"$SLOW_FALLBACK"
+
+slow_rc=0
+slow_output="$(
+    timeout -k 1s 9s env \
+        EDGE_DNS_GUARD="$GUARD" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_WAN_STATE="$WAN_STATE" \
+        EDGE_BUSYBOX_BIN="$MOCK_BIN/busybox" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_BOOTSTRAP_TOTAL_TIMEOUT_SECONDS=5 \
+        sh "$HELPER" on 2>&1
+)" || slow_rc=$?
+
+echo "SLOW_BOOTSTRAP_RC=$slow_rc"
+
+if [ "$slow_rc" -eq 124 ] || [ "$slow_rc" -eq 137 ]; then
+    echo "FAIL: bootstrap retries exceeded outer time bound" >&2
+    exit 1
+fi
+
+if [ "$slow_rc" -eq 0 ] ||
+   [ ! -f "$WAN_STATE" ] ||
+   ! printf '%s\n' "$slow_output" |
+       grep -Fxq 'BREAKGLASS_RESULT=FAIL'; then
+    echo "FAIL: unsafe slow bootstrap recovery verdict" >&2
+    exit 1
+fi
+
+if ! printf '%s\n' "$slow_output" |
+    grep -Fxq 'BOOTSTRAP_REASSERT=TIME_BUDGET_EXHAUSTED'; then
+    echo "FAIL: bootstrap retry budget was not enforced" >&2
+    exit 1
+fi
+
+echo "SLOW_BOOTSTRAP_BUDGET=PASS"
+
+echo "=== single stalled fallback exceeds bootstrap budget ==="
+reset_fixture
+: >"$STALL_FALLBACK"
+
+stall_rc=0
+stall_output="$(
+    timeout -k 1s 6s env \
+        EDGE_DNS_GUARD="$GUARD" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_WAN_STATE="$WAN_STATE" \
+        EDGE_BUSYBOX_BIN="$MOCK_BIN/busybox" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_DNS_BREAKGLASS_WAN_WAIT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS=1 \
+        EDGE_DNS_BREAKGLASS_BOOTSTRAP_TOTAL_TIMEOUT_SECONDS=2 \
+        sh "$HELPER" on 2>&1
+)" || stall_rc=$?
+
+echo "STALLED_FALLBACK_RC=$stall_rc"
+
+if [ "$stall_rc" -eq 124 ] || [ "$stall_rc" -eq 137 ]; then
+    echo "FAIL: one stalled fallback exceeded total bootstrap budget" >&2
+    exit 1
+fi
+
+if [ "$stall_rc" -eq 0 ] ||
+   [ ! -f "$WAN_STATE" ] ||
+   ! printf '%s\n' "$stall_output" |
+       grep -Fxq 'BREAKGLASS_RESULT=FAIL'; then
+    echo "FAIL: stalled fallback recovery verdict was unsafe" >&2
+    exit 1
+fi
+
+flock -n "$STALL_LOCK" true || {
+    echo "FAIL: stalled DNS Guard child retained flock after timeout" >&2
+    exit 1
+}
+echo "SUPERVISOR_FLOCK_RELEASE=PASS"
+echo "SINGLE_FALLBACK_BUDGET=PASS"
 
 echo "=== break-glass DNS validation is explicitly bounded ==="
 reset_fixture

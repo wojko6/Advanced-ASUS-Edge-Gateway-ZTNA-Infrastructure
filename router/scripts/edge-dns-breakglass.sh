@@ -11,6 +11,8 @@ fi
 export PATH
 
 GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"
+SUPERVISOR="${EDGE_DNS_SUPERVISOR:-/jffs/addons/asus-edge/bin/edge-dns-supervisor}"
+GUARD_CALL_TIMEOUT_SECONDS="${EDGE_DNS_BREAKGLASS_GUARD_CALL_TIMEOUT_SECONDS:-30}"
 RESOLV_CONF="${EDGE_RESOLV_CONF:-/tmp/resolv.conf}"
 BUSYBOX="${EDGE_BUSYBOX_BIN:-/bin/busybox}"
 STATE_DIR="${EDGE_DNS_STATE_DIR:-/jffs/addons/asus-edge/state}"
@@ -20,6 +22,7 @@ IP_TEST_TARGET="${EDGE_DNS_BREAKGLASS_IP_TEST_TARGET:-1.1.1.1}"
 DNS_TEST_NAME="${EDGE_DNS_BREAKGLASS_DNS_TEST_NAME:-example.com}"
 DNS_TEST_TIMEOUT_SECONDS="${EDGE_DNS_BREAKGLASS_DNS_TIMEOUT_SECONDS:-5}"
 SERVICE_TIMEOUT_SECONDS="${EDGE_DNS_BREAKGLASS_SERVICE_TIMEOUT_SECONDS:-30}"
+BOOTSTRAP_TOTAL_TIMEOUT_SECONDS="${EDGE_DNS_BREAKGLASS_BOOTSTRAP_TOTAL_TIMEOUT_SECONDS:-30}"
 ACTION="${1:-on}"
 
 case "$WAN_WAIT_SECONDS" in
@@ -67,6 +70,31 @@ case "$ACTION" in
         ;;
 esac
 
+case "$BOOTSTRAP_TOTAL_TIMEOUT_SECONDS" in
+    ''|0*|*[!0-9]*)
+        echo "ERROR: bootstrap retry budget must be a positive integer"
+        exit 1
+        ;;
+esac
+
+if [ "${#BOOTSTRAP_TOTAL_TIMEOUT_SECONDS}" -gt 3 ] ||
+   [ "$BOOTSTRAP_TOTAL_TIMEOUT_SECONDS" -gt 120 ]; then
+    echo "ERROR: bootstrap retry budget must not exceed 120 seconds"
+    exit 1
+fi
+
+case "$GUARD_CALL_TIMEOUT_SECONDS" in
+    ''|0|0*|*[!0-9]*)
+        echo "ERROR: DNS Guard operation timeout must be a positive integer"
+        exit 1
+        ;;
+esac
+if [ "${#GUARD_CALL_TIMEOUT_SECONDS}" -gt 3 ] ||
+   [ "$GUARD_CALL_TIMEOUT_SECONDS" -gt 120 ]; then
+    echo "ERROR: DNS Guard operation timeout must not exceed 120 seconds"
+    exit 1
+fi
+
 # The firmware BusyBox lacks the timeout applet; /opt can be unavailable
 # during early recovery. Direct-child watchdog based on firmware sleep/kill.
 # A timeout fails non-zero; it never reports successful WAN/DNS recovery.
@@ -109,11 +137,20 @@ if [ ! -x "$GUARD" ]; then
     exit 1
 fi
 
+if [ ! -x "$SUPERVISOR" ]; then
+    echo "ERROR: DNS supervisor unavailable: $SUPERVISOR"
+    exit 1
+fi
+
 mkdir -p "$STATE_DIR" || {
     echo "ERROR: cannot create DNS Guard state directory: $STATE_DIR"
     exit 1
 }
 chmod 700 "$STATE_DIR" 2>/dev/null || true
+
+guard_checked() {
+    "$SUPERVISOR" "$GUARD_CALL_TIMEOUT_SECONDS" -- "$GUARD" "$@"
+}
 
 encode_nvram_value() {
     value="$1"
@@ -324,23 +361,134 @@ wait_for_wan_ip() {
 }
 
 validate_internet_ip() {
-    if ping -c 2 -W 1 "$IP_TEST_TARGET" >/dev/null 2>&1; then
-        echo "INTERNET_IP=PASS"
-        return 0
-    fi
+    internet_ip_attempt=1
+
+    while [ "$internet_ip_attempt" -le 4 ]; do
+        if ping -c 2 -W 1 "$IP_TEST_TARGET" >/dev/null 2>&1; then
+            echo "INTERNET_IP=PASS"
+            echo "INTERNET_IP_ATTEMPTS=$internet_ip_attempt"
+            return 0
+        fi
+
+        if [ "$internet_ip_attempt" -ge 4 ]; then
+            break
+        fi
+
+        echo "INTERNET_IP_RETRY=$internet_ip_attempt"
+        sleep 3 || {
+            echo "INTERNET_IP=FAIL"
+            return 1
+        }
+
+        internet_ip_attempt=$((internet_ip_attempt + 1))
+    done
 
     echo "INTERNET_IP=FAIL"
     return 1
 }
 
 validate_dns() {
-    if native_bounded_exec "$DNS_TEST_TIMEOUT_SECONDS" \
-        "$BUSYBOX" nslookup "$DNS_TEST_NAME" >/dev/null 2>&1; then
-        echo "DNS=PASS"
-        return 0
-    fi
+    dns_attempt=1
+
+    while [ "$dns_attempt" -le 2 ]; do
+        if native_bounded_exec "$DNS_TEST_TIMEOUT_SECONDS" \
+            "$BUSYBOX" nslookup "$DNS_TEST_NAME" >/dev/null 2>&1; then
+            echo "DNS=PASS"
+            echo "DNS_ATTEMPTS=$dns_attempt"
+            return 0
+        fi
+
+        if [ "$dns_attempt" -ge 2 ]; then
+            break
+        fi
+
+        echo "DNS_RETRY=$dns_attempt"
+
+        sleep 1 || {
+            echo "DNS=FAIL"
+            return 1
+        }
+
+        dns_attempt=$((dns_attempt + 1))
+    done
 
     echo "DNS=FAIL"
+    return 1
+}
+
+# Retry transient DNS failures after WAN restart without restarting WAN again.
+# Each DNS Guard fallback probe is independently bounded by DNS Guard.
+monotonic_uptime_seconds() {
+    read -r uptime_value _ < /proc/uptime || return 1
+    uptime_seconds=${uptime_value%%.*}
+
+    case "$uptime_seconds" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+
+    # Keep arithmetic safe on 32-bit firmware.
+    [ "${#uptime_seconds}" -le 9 ] || return 1
+    printf '%s\n' "$uptime_seconds"
+}
+
+wait_for_bootstrap_dns() {
+    bootstrap_start="$(monotonic_uptime_seconds)" || {
+        echo "BOOTSTRAP_REASSERT=MONOTONIC_CLOCK_UNAVAILABLE"
+        return 1
+    }
+
+    bootstrap_deadline=$((bootstrap_start + BOOTSTRAP_TOTAL_TIMEOUT_SECONDS))
+    bootstrap_attempt=1
+
+    while [ "$bootstrap_attempt" -le 4 ]; do
+        bootstrap_now="$(monotonic_uptime_seconds)" || return 1
+
+        if [ "$bootstrap_now" -ge "$bootstrap_deadline" ]; then
+            echo "BOOTSTRAP_REASSERT=TIME_BUDGET_EXHAUSTED"
+            return 1
+        fi
+
+        # The child DNS Guard process is isolated and reaped by the
+        # supervisor, even if the fallback itself stalls or forks descendants.
+        # Remaining bootstrap budget is also the hard child deadline.
+        bootstrap_remaining=$((bootstrap_deadline - bootstrap_now))
+        if "$SUPERVISOR" "$bootstrap_remaining" -- "$GUARD" fallback; then
+            echo "BOOTSTRAP_REASSERT_ATTEMPTS=$bootstrap_attempt"
+            return 0
+        else
+            bootstrap_rc=$?
+            case "$bootstrap_rc" in
+                124)
+                    echo "BOOTSTRAP_REASSERT=SUPERVISOR_TIMEOUT"
+                    return 1
+                    ;;
+                125|126|127)
+                    echo "BOOTSTRAP_REASSERT=SUPERVISOR_FAILURE"
+                    return 1
+                    ;;
+            esac
+        fi
+
+        if [ "$bootstrap_attempt" -ge 4 ]; then
+            break
+        fi
+
+        bootstrap_now="$(monotonic_uptime_seconds)" || return 1
+        bootstrap_remaining=$((bootstrap_deadline - bootstrap_now))
+
+        # Do not start another attempt if its retry delay
+        # would consume the remaining budget.
+        if [ "$bootstrap_remaining" -le 3 ]; then
+            echo "BOOTSTRAP_REASSERT=TIME_BUDGET_EXHAUSTED"
+            return 1
+        fi
+
+        echo "BOOTSTRAP_REASSERT_RETRY=$bootstrap_attempt"
+        sleep 3 || return 1
+        bootstrap_attempt=$((bootstrap_attempt + 1))
+    done
+
+    echo "BOOTSTRAP_REASSERT=FAILED_AFTER_RETRIES"
     return 1
 }
 
@@ -350,13 +498,13 @@ rearm_safe_breakglass() {
 
     failures=0
 
-    "$GUARD" breakglass-on restore-rollback >/dev/null 2>&1 ||
+    guard_checked breakglass-on restore-rollback >/dev/null 2>&1 ||
         failures=$((failures + 1))
     force_safe_wan_dns_mode >/dev/null 2>&1 ||
         failures=$((failures + 1))
     restart_wan_checked >/dev/null 2>&1 ||
         failures=$((failures + 1))
-    "$GUARD" fallback >/dev/null 2>&1 ||
+    wait_for_bootstrap_dns >/dev/null 2>&1 ||
         failures=$((failures + 1))
 
     if [ "$failures" -eq 0 ]; then
@@ -387,18 +535,18 @@ show_services() {
 
 activate_breakglass() {
     echo
-    echo "=== ACTIVATE STICKY BREAK-GLASS ==="
-
-    "$GUARD" breakglass-on desktop-emergency || {
-        echo "ERROR: unable to activate sticky break-glass"
-        return 1
-    }
-
-    echo
     echo "=== SNAPSHOT WAN DNS MODE ==="
 
     save_wan_dns_state || {
         echo "ERROR: unable to snapshot current WAN DNS mode"
+        return 1
+    }
+
+    echo
+    echo "=== ACTIVATE STICKY BREAK-GLASS ==="
+
+    guard_checked breakglass-on desktop-emergency || {
+        echo "ERROR: unable to activate sticky break-glass"
         return 1
     }
 
@@ -434,7 +582,7 @@ activate_breakglass() {
 
     echo
     echo "=== REASSERT BOOTSTRAP DNS ==="
-    if "$GUARD" fallback; then
+    if wait_for_bootstrap_dns; then
         echo "FALLBACK_REASSERT=PASS"
     else
         echo "FALLBACK_REASSERT=FAIL"
@@ -457,7 +605,7 @@ activate_breakglass() {
 
     echo
     echo "=== BREAK-GLASS STATE ==="
-    "$GUARD" status || true
+    guard_checked status || true
 
     echo
     if [ "$failures" -eq 0 ]; then
@@ -475,7 +623,7 @@ deactivate_breakglass() {
     echo
     echo "=== VERIFY LOCAL DNS BEFORE RESTORE ==="
 
-    if ! "$GUARD" ready; then
+    if ! guard_checked ready; then
         echo "BREAKGLASS_CLEAR_RESULT=BLOCKED_LOCAL_DNS_UNHEALTHY"
         echo "NOTE: break-glass remains ACTIVE and WAN DNS settings are unchanged."
         return 1
@@ -509,7 +657,7 @@ deactivate_breakglass() {
     echo
     echo "=== VERIFY BOOTSTRAP PATH AFTER RESTORE ==="
 
-    if ! "$GUARD" fallback; then
+    if ! wait_for_bootstrap_dns; then
         echo "FALLBACK_REASSERT=FAIL"
         rearm_safe_breakglass
         return 1
@@ -524,7 +672,7 @@ deactivate_breakglass() {
     echo
     echo "=== RECHECK LOCAL DNS BEFORE CLEAR ==="
 
-    if ! "$GUARD" ready; then
+    if ! guard_checked ready; then
         echo "BREAKGLASS_CLEAR_RESULT=BLOCKED_LOCAL_DNS_UNHEALTHY_AFTER_WAN_RESTART"
         rearm_safe_breakglass
         return 1
@@ -533,7 +681,7 @@ deactivate_breakglass() {
     echo
     echo "=== CLEAR STICKY BREAK-GLASS ==="
 
-    if ! "$GUARD" breakglass-off; then
+    if ! guard_checked breakglass-off; then
         echo "BREAKGLASS_CLEAR=FAIL"
         rearm_safe_breakglass
         return 1
@@ -542,7 +690,7 @@ deactivate_breakglass() {
     echo
     echo "=== PROMOTE LOCAL DNS ==="
 
-    if ! "$GUARD" promote; then
+    if ! guard_checked promote; then
         echo "LOCAL_PROMOTION_AFTER_CLEAR=FAIL"
         rearm_safe_breakglass
         return 1
