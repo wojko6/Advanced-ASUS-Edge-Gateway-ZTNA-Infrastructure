@@ -45,6 +45,7 @@ names.
 | DG-R13 | P2 | Monitoring did not distinguish persistent UNKNOWN resolver state, missing watchdog scheduling, and repeated recovery flapping. | Existing metrics exposed `state_valid` and transition count, while watchdog drift was visible only to local healthcheck. | Added watchdog-presence telemetry plus dedicated Grafana conditions for UNKNOWN state, watchdog loss and repeated fail-open transitions. |
 | DG-R14 | P2 | Break-glass recovery rearm could report `BREAKGLASS_REARMED=YES` even when one or more rearm steps failed. | The helper swallowed failures from sticky re-arm, safe WAN-DNS mode, bounded WAN restart and fallback reassertion, then emitted unconditional success. | Rearm now counts failed recovery steps, reports `BREAKGLASS_REARMED=PARTIAL` plus a failure count, and returns non-zero instead of claiming full recovery. |
 | DG-R15 | P2 | A pre-existing corrupt break-glass WAN-DNS snapshot could be trusted as `EXISTING`, allowing emergency NVRAM mutation without a valid rollback source. | Snapshot reuse checked only for file existence. | Existing snapshots are now schema/token validated before any WAN-DNS mutation; corrupt snapshots return `WAN_DNS_SNAPSHOT=INVALID` and activation stops before restart or NVRAM change. |
+| DG-R16 | P1 | The exact reference Merlin/GNUton firmware lacks the BusyBox `timeout` applet; candidate readiness falsely failed for healthy NTP/Unbound/Pi-hole, risking incorrect fail-open. | 2026-10-08 read-only live preflight: production `ready=PASS`, candidate `ready=FAIL`, `/bin/busybox timeout` exits 127; firmware has `sleep` and `kill` and Entware has `/opt/bin/timeout` only after mount. Firmware BusyBox `nslookup` has no timeout flags. | Candidate now bounds direct child commands using firmware sleep/kill, with no dependency on the Entware mount; healthcheck validates those primitives; regressions simulate missing BusyBox timeout. Pending actual router staging acceptance. |
 | DG-R10 | P1 residual | Fixed local probe names can be answered from cached/stale data and may not prove fresh recursion. | Pi-hole/Unbound readiness uses stable names; the project Unbound config enables `serve-expired`. | Not changed automatically. Requires a separate design decision for a cache-resistant recursion oracle. |
 | DG-R11 | P2 residual | Bootstrap functional validation primarily proves a normal small DNS lookup, not every TCP/truncation case. | BusyBox `nslookup` is the mandatory low-dependency probe. | Retained as a bounded availability probe; TCP-specific bootstrap proof remains a live/design follow-up. |
 | DG-R12 | P1 residual | If the managed watchdog cron entry disappears after boot, DNS Guard cannot recreate that scheduler from inside the missing scheduler path. | `healthcheck.sh` detects exact cron drift, but there is no independent on-router supervisor for the watchdog itself. | DNS Guard now exports exact watchdog-presence telemetry and Grafana alerts on a missing/drifted scheduler while telemetry is fresh. Self-repair still requires an independent supervisor or operator/reboot action and remains intentionally out of scope. |
@@ -199,6 +200,26 @@ probe namespace, or a dedicated health-check zone.
 This is the main reason the audit verdict is **ROBUST WITH GAPS** rather than
 **ROBUST**.
 
+## Reference firmware compatibility checkpoint (2026-10-08)
+
+The on-device preflight identified firmware BusyBox v1.25.1 on the TUF-AX5400
+without `timeout` or adjustable `nslookup` timeouts. The project must not
+depend on `/opt/bin/timeout` for early boot because watchdog startup is
+intentionally earlier than mounting Entware.
+
+The proposed native watchdog uses firmware `sleep` plus `kill` to bound
+individual direct-child commands. Its timer and worker close the inherited
+DNS Guard flock fd. A force-killed worker returns a non-zero result rather than
+healthy readiness. This is **not process-group cancellation**: an external
+utility that forks/detaches descendants might leave such descendants alive,
+so production WAN-restart recovery remains a separately gated test. Timeout
+intervals are capped at 120 seconds.
+
+Regression fixtures deliberately make BusyBox `timeout` unavailable while
+requiring the guard and break-glass unit tests to run. This is source-level
+evidence only; the new candidate must pass the isolated `ready` / `status` /
+`metrics` check on the actual router before installation.
+
 ## Source-controlled validation
 
 Regression coverage now includes:
@@ -206,6 +227,7 @@ Regression coverage now includes:
 - concurrent invocation serialization without a lock-timeout race in the test harness;
 - bounded lock acquisition;
 - bounded UDP DNS probe execution;
+- real-firmware no-timeout BusyBox emulation and native sleep/kill watchdog operation without Entware dependency;
 - bounded logger execution while the global guard lock is held;
 - functional bootstrap validation;
 - stale higher-priority WAN DNS with a later usable source;
