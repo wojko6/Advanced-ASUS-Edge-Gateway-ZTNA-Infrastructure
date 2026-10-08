@@ -71,6 +71,8 @@ die() {
 
 : "${EDGE_UNBOUND_PORT:=53535}"
 : "${EDGE_DNS_LOCAL_RESOLVER_IP:=}"
+: "${EDGE_DNS_GUARD_WATCHDOG:=1}"
+: "${EDGE_DNS_GUARD_BIN:=/jffs/addons/asus-edge/bin/dns-guard}"
 : "${EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3}"
 : "${EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5}"
 : "${EDGE_DNS_LOCK_WAIT_SECONDS:=5}"
@@ -591,6 +593,16 @@ full_local_dns_ready() {
     return 0
 }
 
+watchdog_present() {
+    [ "$EDGE_DNS_GUARD_WATCHDOG" = "1" ] || return 1
+
+    expected="* * * * * $EDGE_DNS_GUARD_BIN auto >/dev/null 2>&1 #AsusEdgeDNSGuard#"
+    watchdog_entries="$(bounded_exec cru l 2>/dev/null)" || return 1
+
+    printf '%s\n' "$watchdog_entries" |
+        grep -F -x "$expected" >/dev/null 2>&1
+}
+
 write_resolver() {
     mode="$1"
 
@@ -926,6 +938,12 @@ show_metrics() {
     bootstrap_healthy="$(runtime_uint_read "$BOOTSTRAP_HEALTH_FILE" 0)"
     bootstrap_last_check="$(runtime_uint_read "$BOOTSTRAP_HEALTH_CHECK_FILE" 0)"
 
+    if watchdog_present; then
+        watchdog_present_metric=1
+    else
+        watchdog_present_metric=0
+    fi
+
     case "$bootstrap_healthy" in
         1) ;;
         *) bootstrap_healthy=0 ;;
@@ -940,7 +958,8 @@ show_metrics() {
         "asus_edge_dns_guard_fallback_transitions_runtime_total $fallback_count" \
         "asus_edge_dns_guard_fallback_since_timestamp_seconds $fallback_since" \
         "asus_edge_dns_guard_bootstrap_dns_healthy $bootstrap_healthy" \
-        "asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds $bootstrap_last_check"
+        "asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds $bootstrap_last_check" \
+        "asus_edge_dns_guard_watchdog_present $watchdog_present_metric"
 }
 
 show_status() {
