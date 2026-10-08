@@ -315,11 +315,14 @@ if [ "$EDGE_DNS_GUARD_WATCHDOG" = "1" ]; then
         fail "DNS Guard executable missing: $DNS_GUARD_BIN"
     fi
 
+    # Asuswrt GNUton's firmware BusyBox lacks the timeout applet; the
+    # early-boot native watchdog only needs the firmware sleep/kill applets.
     if [ -x "$DNS_GUARD_BUSYBOX" ] &&
-       "$DNS_GUARD_BUSYBOX" timeout 1 "$DNS_GUARD_BUSYBOX" true >/dev/null 2>&1; then
-        ok "DNS Guard bounded-query dependency available (BusyBox timeout)"
+       "$DNS_GUARD_BUSYBOX" sleep 0 >/dev/null 2>&1 &&
+       "$DNS_GUARD_BUSYBOX" kill -0 "$" >/dev/null 2>&1; then
+        ok "DNS Guard native bounded-query primitives available (sleep/kill)"
     else
-        fail "BusyBox timeout applet unavailable; DNS Guard probes cannot be bounded safely"
+        fail "firmware sleep/kill unavailable; DNS Guard cannot bound queries safely"
     fi
 
     if executable_exists cru >/dev/null 2>&1; then
