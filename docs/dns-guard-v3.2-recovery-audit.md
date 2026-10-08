@@ -33,18 +33,19 @@ names.
 
 | ID | Severity | Failure mode | Baseline evidence | Candidate result |
 | --- | --- | --- | --- | --- |
-| DG-R01 | P1 | A stalled DNS helper can hold the global DNS Guard lock and delay later watchdog runs. | UDP readiness used unbounded BusyBox `nslookup`; lock acquisition was unbounded. | DNS/helper execution is bounded and lock acquisition has a finite wait. |
+| DG-R01 | P1 | A stalled DNS/helper or logging call can hold the global DNS Guard lock and delay later watchdog runs. | UDP readiness used unbounded BusyBox `nslookup`; lock acquisition and `logger` execution were unbounded. | DNS/helper and logger execution are bounded; lock acquisition has a finite wait. |
 | DG-R02 | P1 | Fallback can write syntactically valid WAN DNS and report success even when no selected bootstrap resolver answers. | Baseline `fallback_bootstrap()` validated resolver addresses but not DNS function. | Fallback keeps fail-open resolver selection but returns `FALLBACK=UNHEALTHY_BOOTSTRAP` if functional bootstrap validation fails. |
 | DG-R03 | P1 | A stale but syntactically valid higher-priority WAN DNS source can hide a later valid resolver source. | Baseline `bootstrap_dns()` returned after the first key containing accepted candidates. | Valid unique candidates are aggregated across known WAN DNS keys, capped at three nameservers. |
 | DG-R04 | P1 | If bootstrap DNS is dead while the complete local path has recovered, normal failback hysteresis can unnecessarily extend the outage. | Healthy local path plus broken bootstrap still entered the normal recovery-streak path. | Broken bootstrap is escaped immediately to a healthy local resolver; hysteresis remains for healthy bootstrap -> local failback. |
 | DG-R05 | P1 | The watchdog could be scheduled only after a long/failing Entware startup path. | `services-start` configured the watchdog after `/opt` recovery. | The watchdog is scheduled before waiting for `/opt` and before Entware service recovery. |
-| DG-R06 | P1 | Break-glass DNS validation can hang even after WAN recovery. | Break-glass used an unbounded `nslookup`. | Break-glass DNS validation has an explicit timeout. |
-| DG-R07 | P2 | Corrupted oversized runtime counters can reach shell arithmetic/telemetry paths. | Runtime numeric state accepted arbitrary digit strings. | Recovery streak is clamped/reset safely; generic numeric telemetry rejects implausibly large values while preserving current 10-digit epoch timestamps. |
+| DG-R06 | P1 | Break-glass can hang during DNS/WAN recovery or leave partially changed WAN DNS NVRAM after a mid-activation failure. | DNS validation and `service restart_wan` were unbounded; failure of the second WAN-DNS NVRAM write could leave the first write applied. | DNS validation and WAN restart are bounded; activation restores the pre-break-glass WAN DNS snapshot if safe-mode NVRAM mutation fails part-way through. |
+| DG-R07 | P2 | Corrupted oversized runtime counters can reach shell arithmetic/telemetry paths. | Runtime numeric state accepted arbitrary digit strings, and the same 10-digit allowance needed for epoch timestamps could also admit an implausible transition counter. | Recovery streak is clamped/reset safely; epoch timestamps retain a 10-digit allowance while the transition counter uses a tighter bound before arithmetic/telemetry. |
 | DG-R08 | P2 | `mode_bootstrap=1` does not distinguish working bootstrap DNS from selected-but-broken bootstrap DNS. | Baseline had resolver-mode telemetry only. | Added bootstrap-health and last-check metrics plus a Grafana alert. |
 | DG-R09 | P2 | Loss of the Fedora DNS Guard collector can hide state changes. | Sustained fail-open alert required fresh telemetry but there was no dedicated stale-collector alert. | Added a stale DNS Guard telemetry alert. |
+| DG-R13 | P2 | Monitoring did not distinguish persistent UNKNOWN resolver state, missing watchdog scheduling, and repeated recovery flapping. | Existing metrics exposed `state_valid` and transition count, while watchdog drift was visible only to local healthcheck. | Added watchdog-presence telemetry plus dedicated Grafana conditions for UNKNOWN state, watchdog loss and repeated fail-open transitions. |
 | DG-R10 | P1 residual | Fixed local probe names can be answered from cached/stale data and may not prove fresh recursion. | Pi-hole/Unbound readiness uses stable names; the project Unbound config enables `serve-expired`. | Not changed automatically. Requires a separate design decision for a cache-resistant recursion oracle. |
 | DG-R11 | P2 residual | Bootstrap functional validation primarily proves a normal small DNS lookup, not every TCP/truncation case. | BusyBox `nslookup` is the mandatory low-dependency probe. | Retained as a bounded availability probe; TCP-specific bootstrap proof remains a live/design follow-up. |
-| DG-R12 | P1 residual | If the managed watchdog cron entry disappears after boot, DNS Guard cannot recreate that scheduler from inside the missing scheduler path. | `healthcheck.sh` detects exact cron drift, but there is no independent on-router supervisor for the watchdog itself. | Keep external health monitoring and treat watchdog loss as an operator-repair/reboot condition; adding a second mutation-capable supervisor is intentionally out of scope. |
+| DG-R12 | P1 residual | If the managed watchdog cron entry disappears after boot, DNS Guard cannot recreate that scheduler from inside the missing scheduler path. | `healthcheck.sh` detects exact cron drift, but there is no independent on-router supervisor for the watchdog itself. | DNS Guard now exports exact watchdog-presence telemetry and Grafana alerts on a missing/drifted scheduler while telemetry is fresh. Self-repair still requires an independent supervisor or operator/reboot action and remains intentionally out of scope. |
 
 ## State machine
 
@@ -151,25 +152,23 @@ New coarse metrics:
 ```text
 asus_edge_dns_guard_bootstrap_dns_healthy
 asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds
+asus_edge_dns_guard_watchdog_present
 ```
 
-Existing mode, transition and collection-timestamp metrics remain unchanged.
+Existing mode, transition and collection-timestamp metrics remain available.
 
-New Grafana conditions distinguish:
+Grafana conditions now distinguish:
 
 - sustained fail-open with fresh telemetry;
 - bootstrap selected but unhealthy/stale bootstrap health;
-- stale DNS Guard telemetry.
+- stale DNS Guard telemetry;
+- persistent UNKNOWN/invalid resolver state;
+- missing or drifted managed watchdog scheduling while telemetry is still fresh;
+- repeated fallback transitions consistent with recovery flapping.
 
-Resolver `UNKNOWN` remains represented by
-`asus_edge_dns_guard_state_valid 0`; a dedicated alert can be added later if
-live evidence shows that the existing healthcheck/telemetry path is not
-sufficient.
-
-The exact watchdog cron entry is still validated by `healthcheck.sh`. Loss of
-that cron entry is observable during health checks but is not self-repairable by
-DNS Guard alone, because the missing scheduler is the component that would have
-invoked the repair logic.
+The watchdog metric validates the exact managed cron entry. It improves external
+detection but does not create a second on-router supervisor; if the scheduler
+itself disappears, operator/reboot recovery is still required.
 
 ## Residual risk: cache-resistant recursion proof
 
@@ -202,19 +201,21 @@ This is the main reason the audit verdict is **ROBUST WITH GAPS** rather than
 
 Regression coverage now includes:
 
-- concurrent invocation serialization;
+- concurrent invocation serialization without a lock-timeout race in the test harness;
 - bounded lock acquisition;
 - bounded UDP DNS probe execution;
+- bounded logger execution while the global guard lock is held;
 - functional bootstrap validation;
 - stale higher-priority WAN DNS with a later usable source;
 - dead-bootstrap immediate escape to recovered local DNS;
 - three-success failback hysteresis;
 - recovery-streak reset on failure;
-- oversized/corrupt runtime state;
-- break-glass DNS timeout;
-- coarse bootstrap-health telemetry;
+- oversized/corrupt runtime state, including distinct epoch/counter bounds;
+- break-glass DNS timeout, bounded WAN restart and partial-NVRAM rollback;
+- coarse bootstrap-health and watchdog-presence telemetry;
 - Fedora exporter forwarding the new metrics;
-- static guards for early watchdog scheduling and Grafana alert definitions.
+- static guards for early watchdog scheduling and Grafana alerts for bootstrap
+  health, stale telemetry, UNKNOWN resolver state, watchdog loss and flapping.
 
 The project Validation suite must be green at the candidate head before live
 testing.
