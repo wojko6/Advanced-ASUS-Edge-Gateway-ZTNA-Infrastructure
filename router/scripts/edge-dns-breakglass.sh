@@ -286,12 +286,25 @@ rearm_safe_breakglass() {
     echo
     echo "=== REARM SAFE BREAK-GLASS ==="
 
-    "$GUARD" breakglass-on restore-rollback >/dev/null 2>&1 || true
-    force_safe_wan_dns_mode || true
-    restart_wan_checked >/dev/null 2>&1 || true
-    "$GUARD" fallback >/dev/null 2>&1 || true
+    failures=0
 
-    echo "BREAKGLASS_REARMED=YES"
+    "$GUARD" breakglass-on restore-rollback >/dev/null 2>&1 ||
+        failures=$((failures + 1))
+    force_safe_wan_dns_mode >/dev/null 2>&1 ||
+        failures=$((failures + 1))
+    restart_wan_checked >/dev/null 2>&1 ||
+        failures=$((failures + 1))
+    "$GUARD" fallback >/dev/null 2>&1 ||
+        failures=$((failures + 1))
+
+    if [ "$failures" -eq 0 ]; then
+        echo "BREAKGLASS_REARMED=YES"
+        return 0
+    fi
+
+    echo "BREAKGLASS_REARMED=PARTIAL"
+    echo "BREAKGLASS_REARM_FAILURES=$failures"
+    return 1
 }
 
 show_services() {
