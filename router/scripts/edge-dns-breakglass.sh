@@ -67,6 +67,37 @@ case "$ACTION" in
         ;;
 esac
 
+# The firmware BusyBox lacks the timeout applet; /opt can be unavailable
+# during early recovery. Direct-child watchdog based on firmware sleep/kill.
+# A timeout fails non-zero; it never reports successful WAN/DNS recovery.
+native_bounded_exec() (
+    duration="$1"
+    shift
+
+    case "$duration" in
+        ''|0|*[!0-9]*) return 2 ;;
+    esac
+    [ "$#" -gt 0 ] || return 2
+    "$BUSYBOX" sleep 0 >/dev/null 2>&1 || return 127
+
+    "$@" &
+    worker_pid=$!
+    (
+        "$BUSYBOX" sleep "$duration" || exit 1
+        kill -KILL "$worker_pid" 2>/dev/null || :
+    ) </dev/null >/dev/null 2>&1 &
+    timer_pid=$!
+
+    if wait "$worker_pid"; then
+        worker_rc=0
+    else
+        worker_rc=$?
+    fi
+    kill "$timer_pid" >/dev/null 2>&1 || :
+    wait "$timer_pid" >/dev/null 2>&1 || :
+    return "$worker_rc"
+)
+
 echo "=== ASUS EDGE DNS BREAK-GLASS ==="
 date
 
@@ -263,7 +294,7 @@ force_safe_wan_dns_mode() {
 }
 
 restart_wan_checked() {
-    if "$BUSYBOX" timeout "$SERVICE_TIMEOUT_SECONDS" service restart_wan; then
+    if native_bounded_exec "$SERVICE_TIMEOUT_SECONDS" service restart_wan; then
         echo "WAN_RESTART=PASS"
         return 0
     fi
@@ -300,7 +331,7 @@ validate_internet_ip() {
 }
 
 validate_dns() {
-    if "$BUSYBOX" timeout "$DNS_TEST_TIMEOUT_SECONDS" \
+    if native_bounded_exec "$DNS_TEST_TIMEOUT_SECONDS" \
         "$BUSYBOX" nslookup "$DNS_TEST_NAME" >/dev/null 2>&1; then
         echo "DNS=PASS"
         return 0
