@@ -23,6 +23,7 @@ N/A, PLANNED or NOT VALIDATED instead of implying that it exists.
 ## 2. Physical topology and hardware boundary
 
 - [Dated technical architecture overview (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — high-level portfolio-safe snapshot, not replacement of canonical per-topic files.
+- [Technical architecture PDF (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) — printable portfolio snapshot; Markdown remains the maintained source.
 - [Hardware and infrastructure inventory](hardware-inventory.md)
 - [Physical topology](architecture/physical-topology.md)
 - [High-level architecture and trust boundaries](architecture/high-level-trust-boundaries.md)

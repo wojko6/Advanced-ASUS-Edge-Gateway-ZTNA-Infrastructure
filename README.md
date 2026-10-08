@@ -32,6 +32,8 @@ The current reference architecture is documented as a source-controlled network-
 
 Core architecture documents now include:
 
+- [Architecture PDF — 2026-10-08](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) — dated, print-friendly portfolio snapshot; detailed Markdown files remain authoritative.
+
 - [Dated technical architecture overview — 2026-10-08](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — current snapshot; detailed architecture documents remain canonical.
 - [Physical Topology](docs/architecture/physical-topology.md)
 - [High-Level Architecture / Trust Boundaries](docs/architecture/high-level-trust-boundaries.md)

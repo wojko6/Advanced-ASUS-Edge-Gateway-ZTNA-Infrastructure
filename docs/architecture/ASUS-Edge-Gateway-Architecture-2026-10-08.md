@@ -3,7 +3,8 @@
 **Status:** DATED SNAPSHOT / PORTFOLIO-SAFE  
 **Stan referencyjny:** 2026-10-08  
 **Platforma:** ASUS TUF-AX5400 / GNUton Asuswrt-Merlin 3004.388.11_1 + Fedora 44  
-**Canonical source of truth:** [PROJECT-STATUS.md](../../PROJECT-STATUS.md) i [network-design index](../network-design.md)
+**Canonical source of truth:** [PROJECT-STATUS.md](../../PROJECT-STATUS.md) i [network-design index](../network-design.md)  
+**PDF:** [Architektura techniczna — wydanie 2026-10-08](ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) (datowany dokument do pobrania; nie zastępuje aktualizowanych plików Markdown)
 
 > Przegląd architektury w danej dacie. Szczegółowe pliki Markdown, repozytoryjne
 > testy i datowane dowody produkcyjne pozostają autorytatywne. Dokument nie jest
