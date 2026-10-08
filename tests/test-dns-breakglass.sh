@@ -119,7 +119,7 @@ EOF
 cat >"$MOCK_BIN/service" <<EOF
 #!/bin/sh
 printf '%s\n' "\$*" >>"$SERVICE_LOG"
-[ -f "$HANG_SERVICE" ] && /bin/sleep 30
+[ -f "$HANG_SERVICE" ] && exec /bin/sleep 30
 exit 0
 EOF
 
@@ -150,10 +150,14 @@ applet="\${1:-}"
 shift || true
 case "\$applet" in
     timeout)
-        exec /usr/bin/timeout "\$@"
+        echo "timeout: applet not found" >&2
+        exit 127
+        ;;
+    sleep)
+        exec /bin/sleep "\$@"
         ;;
     nslookup)
-        [ -f "$HANG_DNS" ] && /bin/sleep 30
+        [ -f "$HANG_DNS" ] && exec /bin/sleep 30
         [ -f "$FAIL_DNS" ] && exit 1
         echo "Address 1: 93.184.216.34"
         exit 0
@@ -188,6 +192,12 @@ reset_fixture() {
     printf '0\n' >"$WAN0_VALUE"
     printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
 }
+
+echo "=== break-glass fixture has no firmware BusyBox timeout applet ==="
+if "$MOCK_BIN/busybox" timeout 1 /bin/true >/dev/null 2>&1; then
+    echo "FAIL: firmware fixture unexpectedly provides BusyBox timeout" >&2
+    exit 1
+fi
 
 echo "=== break-glass activation snapshots WAN DNS mode ==="
 reset_fixture
