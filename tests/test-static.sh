@@ -703,6 +703,7 @@ for dns_guard_runtime_guard in \
     'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3' \
     'EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5' \
     'EDGE_DNS_LOCK_WAIT_SECONDS:=5' \
+    'EDGE_DNS_LOG_TIMEOUT_SECONDS:=2' \
     'bounded_exec()' \
     'bounded_nslookup()' \
     'bootstrap_dns_ready()' \
@@ -719,6 +720,7 @@ for dns_guard_runtime_guard in \
     'asus_edge_dns_guard_mode_bootstrap' \
     'asus_edge_dns_guard_bootstrap_dns_healthy' \
     'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds' \
+    'asus_edge_dns_guard_watchdog_present' \
     'FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"'
 do
     grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
@@ -768,6 +770,7 @@ for dns_guard_guard in \
     'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD="3"' \
     'EDGE_DNS_QUERY_TIMEOUT_SECONDS="5"' \
     'EDGE_DNS_LOCK_WAIT_SECONDS="5"' \
+    'EDGE_DNS_LOG_TIMEOUT_SECONDS="2"' \
     'EDGE_DNS_BOOTSTRAP_TEST_NAME="example.com"' \
     'configure_dns_guard_watchdog()' \
     'cru a AsusEdgeDNSGuard' \
@@ -975,9 +978,15 @@ for dns_guard_observability_guard in \
     'uid: dns_guard_sustained_failopen' \
     'uid: dns_guard_bootstrap_unhealthy' \
     'uid: dns_guard_telemetry_stale' \
+    'uid: dns_guard_state_unknown' \
+    'uid: dns_guard_watchdog_missing' \
+    'uid: dns_guard_recovery_flapping' \
     'asus_edge_dns_guard_mode_bootstrap' \
     'asus_edge_dns_guard_bootstrap_dns_healthy' \
     'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds' \
+    'asus_edge_dns_guard_watchdog_present' \
+    'asus_edge_dns_guard_state_valid' \
+    'asus_edge_dns_guard_fallback_transitions_runtime_total' \
     'asus_edge_dns_guard_collection_timestamp_seconds' \
     'for: 10m' \
     'component: dns-guard'
