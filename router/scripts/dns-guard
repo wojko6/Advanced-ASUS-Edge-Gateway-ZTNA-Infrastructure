@@ -56,6 +56,8 @@ native_bounded_exec() (
         ''|0|*[!0-9]*) return 2 ;;
     esac
     [ "$#" -gt 0 ] || return 2
+    # Guard against oversized durations before invoking firmware sleep.
+    [ "${#duration}" -le 3 ] && [ "$duration" -le 120 ] || return 2
 
     # Fail visibly before launching a potentially blocking command if the
     # watchdog primitive itself is unavailable.
