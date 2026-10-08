@@ -43,6 +43,7 @@ names.
 | DG-R08 | P2 | `mode_bootstrap=1` does not distinguish working bootstrap DNS from selected-but-broken bootstrap DNS. | Baseline had resolver-mode telemetry only. | Added bootstrap-health and last-check metrics plus a Grafana alert. |
 | DG-R09 | P2 | Loss of the Fedora DNS Guard collector can hide state changes. | Sustained fail-open alert required fresh telemetry but there was no dedicated stale-collector alert. | Added a stale DNS Guard telemetry alert. |
 | DG-R13 | P2 | Monitoring did not distinguish persistent UNKNOWN resolver state, missing watchdog scheduling, and repeated recovery flapping. | Existing metrics exposed `state_valid` and transition count, while watchdog drift was visible only to local healthcheck. | Added watchdog-presence telemetry plus dedicated Grafana conditions for UNKNOWN state, watchdog loss and repeated fail-open transitions. |
+| DG-R14 | P2 | Break-glass recovery rearm could report `BREAKGLASS_REARMED=YES` even when one or more rearm steps failed. | The helper swallowed failures from sticky re-arm, safe WAN-DNS mode, bounded WAN restart and fallback reassertion, then emitted unconditional success. | Rearm now counts failed recovery steps, reports `BREAKGLASS_REARMED=PARTIAL` plus a failure count, and returns non-zero instead of claiming full recovery. |
 | DG-R10 | P1 residual | Fixed local probe names can be answered from cached/stale data and may not prove fresh recursion. | Pi-hole/Unbound readiness uses stable names; the project Unbound config enables `serve-expired`. | Not changed automatically. Requires a separate design decision for a cache-resistant recursion oracle. |
 | DG-R11 | P2 residual | Bootstrap functional validation primarily proves a normal small DNS lookup, not every TCP/truncation case. | BusyBox `nslookup` is the mandatory low-dependency probe. | Retained as a bounded availability probe; TCP-specific bootstrap proof remains a live/design follow-up. |
 | DG-R12 | P1 residual | If the managed watchdog cron entry disappears after boot, DNS Guard cannot recreate that scheduler from inside the missing scheduler path. | `healthcheck.sh` detects exact cron drift, but there is no independent on-router supervisor for the watchdog itself. | DNS Guard now exports exact watchdog-presence telemetry and Grafana alerts on a missing/drifted scheduler while telemetry is fresh. Self-repair still requires an independent supervisor or operator/reboot action and remains intentionally out of scope. |
@@ -211,7 +212,7 @@ Regression coverage now includes:
 - three-success failback hysteresis;
 - recovery-streak reset on failure;
 - oversized/corrupt runtime state, including distinct epoch/counter bounds;
-- break-glass DNS timeout, bounded WAN restart and partial-NVRAM rollback;
+- break-glass DNS timeout, bounded WAN restart, partial-NVRAM rollback and explicit partial-rearm reporting;
 - coarse bootstrap-health and watchdog-presence telemetry;
 - Fedora exporter forwarding the new metrics;
 - static guards for early watchdog scheduling and Grafana alerts for bootstrap
