@@ -78,6 +78,9 @@ native_bounded_exec() (
         ''|0|*[!0-9]*) return 2 ;;
     esac
     [ "$#" -gt 0 ] || return 2
+
+    # Avoid overflow/unbounded waits from malformed configuration.
+    [ "${#duration}" -le 3 ] && [ "$duration" -le 120 ] || return 2
     "$BUSYBOX" sleep 0 >/dev/null 2>&1 || return 127
 
     "$@" &
