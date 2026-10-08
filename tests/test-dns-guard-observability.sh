@@ -41,7 +41,7 @@ EOF
 
 cat >"$MOCK_BIN/cru" <<EOF
 #!/bin/sh
-[ "${1:-}" = "l" ] || exit 1
+[ "\${1:-}" = "l" ] || exit 1
 [ -f "$FAIL_WATCHDOG" ] && exit 0
 printf '%s\n' '* * * * * /jffs/addons/asus-edge/bin/dns-guard auto >/dev/null 2>&1 #AsusEdgeDNSGuard#'
 EOF
