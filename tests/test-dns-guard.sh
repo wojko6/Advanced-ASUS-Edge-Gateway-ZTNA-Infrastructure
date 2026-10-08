@@ -709,6 +709,19 @@ corrupt_metrics="$(run_guard metrics)"
 printf '%s\n' "$corrupt_metrics" |
     grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 1'
 
+echo "=== ten-digit epoch remains valid while corrupt transition counter is rejected ==="
+rm -f "$FAIL_LOCAL" "$RECOVERY_STREAK_FILE"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+printf '%s\n' 'bootstrap' >"$RUNTIME_STATE_DIR/current-mode"
+printf '%s\n' '1760000000' >"$RUNTIME_STATE_DIR/last-transition-epoch"
+printf '%s\n' '9999999999' >"$RUNTIME_STATE_DIR/fallback-transitions"
+
+counter_sanitize_metrics="$(run_guard metrics)"
+printf '%s\n' "$counter_sanitize_metrics" |
+    grep -qx 'asus_edge_dns_guard_last_transition_timestamp_seconds 1760000000'
+printf '%s\n' "$counter_sanitize_metrics" |
+    grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 0'
+
 echo "=== local failure still fails open on first unhealthy check ==="
 : >"$FAIL_LOCAL"
 failopen_output="$(run_guard auto)"
