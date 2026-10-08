@@ -22,6 +22,8 @@ FAIL_READY="$TMP_DIR/fail-ready"
 HANG_DNS="$TMP_DIR/hang-dns"
 HANG_SERVICE="$TMP_DIR/hang-service"
 FAIL_NVRAM_SET_WAN0="$TMP_DIR/fail-nvram-set-wan0"
+FAIL_NVRAM_COMMIT_ONCE="$TMP_DIR/fail-nvram-commit-once"
+FAIL_NVRAM_UNSET_WAN0="$TMP_DIR/fail-nvram-unset-wan0"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR"
 printf '0\n' >"$WAN_VALUE"
@@ -90,13 +92,23 @@ case "\${1:-}" in
     unset)
         case "\${2:-}" in
             wan_dnsenable_x) : >"$WAN_VALUE" ;;
-            wan0_dnsenable_x) : >"$WAN0_VALUE" ;;
+            wan0_dnsenable_x)
+                if [ -f "$FAIL_NVRAM_UNSET_WAN0" ]; then
+                    rm -f "$FAIL_NVRAM_UNSET_WAN0"
+                    exit 1
+                fi
+                : >"$WAN0_VALUE"
+                ;;
             *) exit 1 ;;
         esac
         printf 'unset %s\n' "\${2:-}" >>"$NVRAM_LOG"
         ;;
     commit)
         echo commit >>"$NVRAM_LOG"
+        if [ -f "$FAIL_NVRAM_COMMIT_ONCE" ]; then
+            rm -f "$FAIL_NVRAM_COMMIT_ONCE"
+            exit 1
+        fi
         ;;
     *)
         exit 1
@@ -170,7 +182,8 @@ run_helper() {
 
 reset_fixture() {
     rm -f "$WAN_STATE" "$FAIL_PING" "$FAIL_DNS" "$FAIL_READY" "$HANG_DNS" "$HANG_SERVICE" \
-        "$FAIL_NVRAM_SET_WAN0" "$NVRAM_LOG" "$SERVICE_LOG"
+        "$FAIL_NVRAM_SET_WAN0" "$FAIL_NVRAM_COMMIT_ONCE" "$FAIL_NVRAM_UNSET_WAN0" \
+        "$NVRAM_LOG" "$SERVICE_LOG"
     printf '0\n' >"$WAN_VALUE"
     printf '0\n' >"$WAN0_VALUE"
     printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
@@ -249,6 +262,72 @@ $partial_nvram_output
 EOF
 grep -qx '0' "$WAN_VALUE"
 grep -qx '0' "$WAN0_VALUE"
+[ -f "$WAN_STATE" ]
+
+echo "=== activation commit failure rolls back to saved WAN DNS mode ==="
+reset_fixture
+: >"$FAIL_NVRAM_COMMIT_ONCE"
+
+if commit_failure_output="$(run_helper on 2>&1)"; then
+    echo "FAIL: break-glass activation succeeded despite injected NVRAM commit failure" >&2
+    exit 1
+fi
+printf '%s\n' "$commit_failure_output" | grep -F 'WAN_DNS_ACTIVATION_ROLLBACK=PASS' >/dev/null
+grep -qx '0' "$WAN_VALUE"
+grep -qx '0' "$WAN0_VALUE"
+[ -f "$WAN_STATE" ]
+
+echo "=== interrupted activation state converges on retry ==="
+reset_fixture
+cat >"$WAN_STATE" <<'EOF'
+wan_dnsenable_x=0
+wan0_dnsenable_x=0
+EOF
+printf '1\n' >"$WAN_VALUE"
+printf '0\n' >"$WAN0_VALUE"
+
+retry_activation_output="$(run_helper on)"
+printf '%s\n' "$retry_activation_output" | grep -F 'WAN_DNS_SNAPSHOT=EXISTING' >/dev/null
+printf '%s\n' "$retry_activation_output" | grep -F 'BREAKGLASS_RESULT=PASS' >/dev/null
+grep -qx '1' "$WAN_VALUE"
+grep -qx '1' "$WAN0_VALUE"
+
+retry_activation_clear="$(run_helper off)"
+printf '%s\n' "$retry_activation_clear" | grep -F 'BREAKGLASS_CLEAR_RESULT=PASS' >/dev/null
+grep -qx '0' "$WAN_VALUE"
+grep -qx '0' "$WAN0_VALUE"
+[ ! -f "$WAN_STATE" ]
+
+echo "=== interrupted clear state converges on retry ==="
+reset_fixture
+run_helper on >/dev/null
+printf '0\n' >"$WAN_VALUE"
+printf '1\n' >"$WAN0_VALUE"
+
+retry_clear_output="$(run_helper off)"
+printf '%s\n' "$retry_clear_output" | grep -F 'BREAKGLASS_CLEAR_RESULT=PASS' >/dev/null
+grep -qx '0' "$WAN_VALUE"
+grep -qx '0' "$WAN0_VALUE"
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+[ ! -f "$WAN_STATE" ]
+
+echo "=== failed EMPTY restore re-arms safe break-glass ==="
+reset_fixture
+: >"$WAN_VALUE"
+: >"$WAN0_VALUE"
+run_helper on >/dev/null
+grep -qx 'wan_dnsenable_x=EMPTY' "$WAN_STATE"
+grep -qx 'wan0_dnsenable_x=EMPTY' "$WAN_STATE"
+: >"$FAIL_NVRAM_UNSET_WAN0"
+
+if unset_failure_output="$(run_helper off 2>&1)"; then
+    echo "FAIL: break-glass clear succeeded despite injected NVRAM unset failure" >&2
+    exit 1
+fi
+printf '%s\n' "$unset_failure_output" | grep -F 'WAN_DNS_RESTORE=FAIL' >/dev/null
+printf '%s\n' "$unset_failure_output" | grep -F 'BREAKGLASS_REARMED=YES' >/dev/null
+grep -qx '1' "$WAN_VALUE"
+grep -qx '1' "$WAN0_VALUE"
 [ -f "$WAN_STATE" ]
 
 echo "=== restart_wan hang is bounded ==="
