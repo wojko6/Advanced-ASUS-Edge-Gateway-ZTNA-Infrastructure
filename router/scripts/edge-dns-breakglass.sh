@@ -97,10 +97,38 @@ encode_nvram_value() {
     esac
 }
 
+wan_dns_snapshot_valid() {
+    [ -f "$WAN_STATE_FILE" ] || return 1
+
+    awk -F= '
+        NF != 2 { exit 1 }
+        $1 == "wan_dnsenable_x" {
+            if (seen_wan++) exit 1
+            if ($2 != "0" && $2 != "1" && $2 != "EMPTY") exit 1
+            next
+        }
+        $1 == "wan0_dnsenable_x" {
+            if (seen_wan0++) exit 1
+            if ($2 != "0" && $2 != "1" && $2 != "EMPTY") exit 1
+            next
+        }
+        { exit 1 }
+        END {
+            if (seen_wan != 1 || seen_wan0 != 1) exit 1
+        }
+    ' "$WAN_STATE_FILE"
+}
+
 save_wan_dns_state() {
     if [ -f "$WAN_STATE_FILE" ]; then
-        echo "WAN_DNS_SNAPSHOT=EXISTING"
-        return 0
+        if wan_dns_snapshot_valid; then
+            echo "WAN_DNS_SNAPSHOT=EXISTING"
+            return 0
+        fi
+
+        echo "WAN_DNS_SNAPSHOT=INVALID"
+        echo "ERROR: existing WAN DNS snapshot is invalid; refusing to mutate WAN DNS mode"
+        return 1
     fi
 
     wan_value="$(nvram get wan_dnsenable_x 2>/dev/null)" || return 1
