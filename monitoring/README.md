@@ -87,7 +87,7 @@ directory.
 
 ## Grafana alerting
 
-Ten source-controlled Grafana alert rules are provisioned from
+Fifteen source-controlled Grafana alert rules are provisioned from
 [`grafana/provisioning/alerting/asus-tuf-alerts.yml`](grafana/provisioning/alerting/asus-tuf-alerts.yml):
 
 - SSH collector unavailable;
@@ -95,7 +95,12 @@ Ten source-controlled Grafana alert rules are provisioned from
 - failed HTTPS / ICMP / router-DNS blackbox probe;
 - stale router telemetry;
 - negotiated WAN link speed below 900 Mb/s for at least three minutes;
-- DNS Guard remains in validated fail-open/bootstrap mode for at least ten minutes, with fresh DNS Guard telemetry required;
+- sustained DNS Guard fail-open/bootstrap mode for at least ten minutes, with fresh telemetry (`dns_guard_sustained_failopen`);
+- unhealthy independent DNS bootstrap resolver (`dns_guard_bootstrap_unhealthy`);
+- stale DNS Guard-specific telemetry (`dns_guard_telemetry_stale`);
+- invalid or UNKNOWN DNS Guard state (`dns_guard_state_unknown`);
+- missing DNS Guard watchdog (`dns_guard_watchdog_missing`);
+- repeated DNS recovery/flapping (`dns_guard_recovery_flapping`);
 - RouterCloud backup result is failed;
 - RouterCloud backup age exceeds eight hours, with an additional five-minute `for` window;
 - RouterCloud maintenance/integrity result is failed;
@@ -110,7 +115,7 @@ masquerade as WAN-down evidence, so the WAN rule uses `noDataState: OK`.
 An e-mail contact point is provisioned from
 [`grafana/provisioning/alerting/asus-email-contact.yml`](grafana/provisioning/alerting/asus-email-contact.yml).
 SMTP credentials remain local to the Fedora host and are not stored in Git.
-All ten current rules route directly to `ASUS Edge Gateway Email`, and the
+All fifteen rules specify the `ASUS Edge Gateway Email` receiver, and the
 contact point keeps resolved notifications enabled. Actual firing/resolved inbox
 delivery is live-validated for the WAN-speed path.
 
@@ -131,9 +136,12 @@ VictoriaMetrics. It does not export DNS names, client identities or query
 history. The `dns_guard_sustained_failopen` rule warns only when bootstrap mode
 persists for ten minutes and the most recent DNS Guard collection is younger
 than three minutes, so stale pushed data cannot indefinitely masquerade as a
-current fail-open state. Source-controlled rule and mock coverage are present;
-live router/Grafana acceptance remains required before the v3.2 issue can be
-closed.
+current fail-open state. The PR #197 five additional DNS Guard UIDs were verified **loaded** in
+Grafana's database on 2026-10-08, and VictoriaMetrics returned fresh
+bootstrap-health and watchdog-presence metrics. The final router healthcheck
+passed after real power-cycle convergence. Per-rule Firing and actual inbox
+delivery for these five new alerts are **not** claimed.
+See [bounded v3.2 live acceptance](../docs/dns-guard-v3.2-recovery-audit-live-validation.md).
 
 The live test is intentionally **not** part of normal CI because it mutates the
 local metrics state and can generate real notifications:

@@ -22,7 +22,7 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 - Extended validation into latency-sensitive cloud workloads: compared GeForce NOW over Gigabit Ethernet and Wi-Fi 6, and analyzed an Xbox Cloud Gaming session with browser-native WebRTC RTP, jitter, ICE RTT, frame-delivery, bitrate, and decoder telemetry.
 - Isolated a Wi-Fi 6 HE160 interoperability problem by comparing HE80/HE160 on a MediaTek MT7922, repeating the matrix across two Windows drivers, and using an independent Android 2x2 HE160 client to separate AP-wide capability from client/pair-specific behavior.
 - Shipped RouterCloud on the dedicated LAN/Tailscale-only HTTPS service with custom login/session auth, production-tested password recovery, branded Polish Metro UI, AJAX sorting and live search, recent files and persistent favorites, safe rename/delete/edit workflows, WebDAV desktop integration, server-side ZIP downloads for checkbox-selected files/folders, and independent versioned encrypted backups while keeping generic `allow-delete: false`.
-- Extended the off-router Grafana alerting baseline to nine source-controlled rules, including RouterCloud backup/maintenance failure and staleness signals; all nine route to the existing e-mail contact point, and `routercloud_backup_bad` has a controlled live `Firing -> recovery` validation.
+- Expanded the off-router Grafana catalog to **15 source-controlled rules** (five infrastructure; one sustained DNS Guard fail-open; five new PR #197 recovery checks; four RouterCloud). All configure the existing e-mail receiver. The five new DNS Guard UIDs were verified loaded, not individually firing/e-mail-tested.
 - Performed a multi-vantage port-exposure audit across LAN, Tailscale, Fedora and a verified LTE/5G WAN path, including positive/negative identity tests and explicit invalidation of misleading results when routing did not match the intended trust boundary.
 - Captured sanitized live evidence instead of presenting expected behavior as observed results.
 
@@ -32,6 +32,7 @@ The current reference architecture is documented as a source-controlled network-
 
 Core architecture documents now include:
 
+- [Dated technical architecture overview — 2026-10-08](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — current snapshot; detailed architecture documents remain canonical.
 - [Physical Topology](docs/architecture/physical-topology.md)
 - [High-Level Architecture / Trust Boundaries](docs/architecture/high-level-trust-boundaries.md)
 - [Addressing and Trust-Zone Plan](docs/architecture/addressing-and-zones.md)
@@ -55,7 +56,9 @@ See the [network design index](docs/network-design.md), [architecture](docs/arch
 
 The current RouterCloud browser/service state is recorded in the [2026-10-03 production checkpoint](docs/routercloud-production-checkpoint-2026-10-03.md), with bounded UI observations in the [same-day production validation](evidence/2026-10-03/routercloud-ui-production-validation.md) and the separate [password-recovery E2E validation](evidence/2026-10-03/routercloud-password-recovery-production-validation.md). The [2026-10-02 Metro checkpoint](docs/routercloud-metro-production-checkpoint-2026-10-02.md) remains as the historical baseline for the first Metro/WebDAV phase.
 
-As of 2026-10-07, RouterCloud backup observability also includes four Grafana rules for backup failure/staleness and maintenance failure/staleness. The live `routercloud_backup_bad` path was fault-tested through `Firing` and recovery while the real backup state was restored afterward. See [monitoring](monitoring/README.md), [RouterCloud versioned backup](docs/routercloud-versioned-backup.md), and the [sanitized alerting validation](evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
+The 2026-10-07 RouterCloud increment introduced four Grafana rules for backup failure/staleness and maintenance failure/staleness. The live `routercloud_backup_bad` path was fault-tested through `Firing` and recovery while the real backup state was restored afterward. See [monitoring](monitoring/README.md), [RouterCloud versioned backup](docs/routercloud-versioned-backup.md), and the [sanitized alerting validation](evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
+
+**DNS Guard v3.2:** [PR #197](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/197) merged on 2026-10-08 after fresh CI 4/4 PASS. Bounded manual break-glass ON/OFF and a real power-cycle with Entware available passed; the watchdog was scheduled before Entware mounted and the router automatically returned from bootstrap WAN DNS to Pi-hole. Final healthcheck: 0 failures / 0 warnings. Cold boot **without** mountable Entware and deliberate simultaneous local/bootstrap DNS faults were not tested. See [v3.2 production validation](docs/dns-guard-v3.2-recovery-audit-live-validation.md).
 
 ## Key controls
 

@@ -1,11 +1,11 @@
 # Roadmap
 
-### Current reference router checkpoint — 2026-10-06
+### Current reference router checkpoint — 2026-10-08
 
 - Current router: ASUS TUF-AX5400 / GNUton 3004.388.11_1.
 - Current live Tailscale: **1.103.375 unstable/dev**; earlier 1.102.3 evidence
   is historical pre-upgrade state.
-- DNS Guard v3.1 cold-boot/fail-open policy is production-validated.
+- **Current DNS Guard v3.2** (PR #197 merged); bounded manual ON/OFF and power-cycle boot with Entware available passed. v3.1 remains a dated historical checkpoint.
 - Planned next router: **ASUS RT-BE88U / compatible Asuswrt-Merlin 3006.x**.
 - OPNsense/x86 is not the current migration target; keep it only as a future
   contingency if requirements exceed the ASUS platform.
@@ -16,7 +16,7 @@ Completed on 2026-10-06:
 
 - #130 — protected `main` / required Validation suite;
 - #177 — Tailscale package/live-version drift and downgrade hardening;
-- DNS Guard v3.1 — cold-boot/fail-open resolver control.
+- DNS Guard v3.1 — historical 2026-10-06 milestone; v3.2 is now current (PR #197 merged 2026-10-08).
 
 Still open:
 
@@ -26,8 +26,20 @@ Still open:
 - #108 — remaining DNS-visibility retention/rollback/interception work;
 - #68 — DoH/DoQ/encrypted-DNS assessment;
 - #143 — Trusted/IoT/Guest segmentation design before RT-BE88U migration.
+- #200 — harden remaining world-writable backup/rollback directories.
+- DNS Guard follow-up — unmountable Entware at boot and simultaneous local/bootstrap DNS faults remain untested live; maintenance window only.
 
 
+
+### 2026-10-08 documentation and observability synchronization
+
+PR #197 merged after an up-to-date 4/4 PASS Validation suite.
+Grafana's present YAML defines **15** alert rules: nine from the
+2026-10-07 RouterCloud checkpoint, one earlier sustained DNS Guard
+fail-open rule, and five additional DNS Guard recovery checks. The
+five new alerts were observed loaded in Grafana, but individual
+Firing/inbox delivery was not established. The nine-rule narrative
+below is **historical**.
 
 ## Completed and validated — observability baseline
 

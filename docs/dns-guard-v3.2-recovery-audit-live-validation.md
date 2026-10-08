@@ -498,9 +498,9 @@ cat /tmp/resolv.conf
 Do not publish WAN DNS addresses, household DNS history, credentials, private
 hostnames or Tailscale identities as public evidence.
 
-## Merge gate
+## Historical pre-merge gate — fulfilled 2026-10-08
 
-PR #197 must remain unmerged until:
+Before merging PR #197, the following criteria applied:
 
 - the current Validation suite is green;
 - Tests 1-5 and 7-10 pass live or are explicitly waived with rationale;
@@ -647,3 +647,16 @@ exercise is sufficient to request code review, not automatic merge permission.
 The installer's full end-to-end deployment on this specific live router has not
 been exercised, and the original WAN mode already being `1/1` limited NVRAM
 restore coverage. Related directory-permission scope is tracked in #200.
+
+## Post-merge record — 2026-10-08
+
+**PR #197 merged** to `main` at commit
+`01d6a7e00530ee8e9212820456047e2dee71a0a9`.
+The PR branch was updated after the unrelated documentation PR #199
+advanced `main`; final GitHub Actions run `37813461906` passed **4/4 jobs**.
+GitHub accepted the protected merge without bypass.
+
+The real cold boot **with Entware mounted successfully** is recorded above.
+The intentional fault-injection waivers, unavailable-Entware uncertainty,
+non-instrumented WAN link transitions and full-installer coverage gap remain
+valid after merge.
