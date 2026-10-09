@@ -2,7 +2,7 @@
 
 **Tracking:** #100 (historical), #129 (Pi-hole recovery)
 
-**Status:** verified private recovery archives; end-to-end router rebuild pending
+**Status (2026-10-09):** verified private recovery archives and disposable restore components; **production reboot persistence PASS** with Entware present; full end-to-end router rebuild pending
 
 ## Goal
 
@@ -65,15 +65,15 @@ No raw private Tailscale identifiers, authentication state or credential values 
 | Unbound Manager runtime config | project archive | file covered | runtime directory ownership still requires explicit validation |
 | Unbound Manager hook | project archive | `unbound.postconf` covered | manager scripts themselves are addon-owned and should be reinstalled/revalidated |
 | syslog-ng main config | project archive | covered | credentials/certificates remain separately controlled |
-| NVRAM | native ASUS/Merlin settings export | **separate required artifact** | keep an encrypted/off-router export for the same model/firmware baseline; do not publish raw values |
+| NVRAM | native ASUS/Merlin settings export | encrypted private CFG integrity verified; import untested | maintain model/firmware compatibility; do not publish raw values or assume that a verified export has been restored |
 | Tailscale state/auth | intentionally excluded | recreate | re-enroll/re-authenticate after recovery; do not restore stale node secrets from the project archive |
 | Tailscale package/runtime provenance | rebuild manifest | gap | package metadata alone is insufficient on the current reference state |
 | Entware package inventory | rebuild manifest | gap | capture versions for reconstruction; packages are reinstalled rather than copied blindly |
 | AMTM modules | reinstall/revalidate | addon-owned | restore integration points, then reinstall/validate AMTM-managed components |
-| Pi-hole / FTL package and service state | reinstall/rebuild | **current DR gap** | the project archive does not currently capture a complete Pi-hole rebuild payload; reinstall the reviewed Entware Pi-hole stack and revalidate listener/startup ownership |
-| Pi-hole filtering configuration / Gravity inputs | reconstruct and revalidate | **current DR gap** | restore only reviewed policy inputs/private settings; rebuild Gravity and validate blocking rather than copying an opaque live database |
+| Pi-hole / FTL package and service state | dedicated private Pi-hole DR archive plus package manifest | archive and isolated FTL checks PASS; complete target reinstall untested | reinstall the reviewed Entware Pi-hole stack, reconstruct account/capabilities and revalidate listener/startup ownership |
+| Pi-hole filtering configuration / Gravity inputs | allowlisted private archive with Gravity SQLite integrity verification | backup PASS; restored-target filtering acceptance untested | restore only reviewed policy input/data from verified archive; verify Gravity SQLite and validate blocking on the target |
 | Pi-hole query-history database | private operational data | intentionally not a public/project backup payload | analytics/history continuity is not required for gateway recovery; keep any private backup under a separate data/privacy policy |
-| Pi-hole dedicated LAN alias/startup integration | reconstruct/revalidate | **current DR gap** | recreate the validated listener ordering before FTL starts and verify no port-53 conflict with firmware dnsmasq |
+| Pi-hole dedicated LAN alias/startup integration | backed-up integration scripts, manual target reconstruction | current-router reboot PASS; clean rebuild untested | recreate the alias before FTL starts and verify no port-53 conflict with firmware dnsmasq |
 | Diversion / uiDivStats | historical only | removed from active reference stack | reinstall only for an intentional rollback to the pre-2026-09-28 historical design, not as part of current recovery |
 | storage labels/layout | rebuild manifest | gap | record filesystem labels, mount roles and swap topology; do not depend on a full USB image |
 | swap files | recreate | intentionally not backed up | recreate on the intended storage and validate before Tailscale recovery |
@@ -302,15 +302,25 @@ Remaining #129 acceptance work:
    versions, service identities, file ownership and capabilities.
 2. Restore and review swap-before-Entware startup ordering,
    dedicated Pi-hole LAN alias and Unbound runtime ownership.
-3. Execute a controlled post-reboot persistence and healthcheck
-   acceptance when an approved maintenance window is available.
+3. **Completed 2026-10-09:** controlled reboot on the existing reference router with verified startup ordering, Entware/Pi-hole/Unbound/Tailscale and DNS Guard recovery, correct FTL capabilities and final healthcheck 0 failures/0 warnings. This is not a fresh-device rebuild.
 4. Keep plaintext configuration, encrypted recovery archives,
    credentials and native CFG payloads out of the public repo.
 
-Therefore, describe the current state as **verified private DR
-artifacts and clean-room recovery components**, not a fully
-validated end-to-end replacement-router rebuild.
+Therefore, describe the current state as **verified private DR artifacts, isolated recovery components and successful production reboot persistence** — not a fully validated end-to-end replacement-router rebuild.
 
+
+## 2026-10-09 — current Pi-hole-aware reboot acceptance and rebuild runbook
+
+A physically supervised restart on the **existing** router succeeded without manual service repair. Production DNS Guard v3.2, its active `services-start` hook and the ARMv7 supervisor matched `main` by SHA-256. Both independent WAN bootstrap DNS candidates responded in fresh bounded probes prior to reboot. The documented reboot established new uptime; the first post-boot acceptance at 205 seconds confirmed two active swaps, correct Entware startup order, Unbound, Pi-hole FTL, exact binary capabilities, Tailscale, syslog-ng, DNS Guard local mode/watchdog and the router-local Pi-hole resolver. The project healthcheck reported **0 failures, 0 warnings**.
+
+Boot logs show watchdog registration before Entware startup, NTP synchronisation, Unbound/FTL service startup and automatic Pi-hole resolver promotion. The early WAN-policy log does not by itself prove a specific resolver address at that instant.
+
+- [Sanitized #129 production reboot evidence](../evidence/2026-10-09/issue-129-pihole-dr-reboot-persistence.md)
+- [Pi-hole-aware stepwise reconstruction runbook](pihole-dr-rebuild-runbook.md)
+- [Polish bare-router and empty-SSD emergency procedure](router-bare-metal-recovery-pl.md)
+- [2026-10-09 engineering worklog](worklog/2026-10-09.md)
+
+The clean-device recovery gate remains **OPEN**: package/account reconstruction, Unbound runtime ownership on the rebuilt target, Pi-hole FTL xattr reapplication on the target storage, restored Gravity/DHCP/DNSSEC/API/collector validation and native CFG import still require isolated execution. Do not repeat production reboots merely to replace this already successful persistence checkpoint.
 
 ## Out of scope
 
