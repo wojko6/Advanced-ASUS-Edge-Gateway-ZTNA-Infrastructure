@@ -29,6 +29,8 @@ jobs:
         run: sh tests/test-routercloud-login-ui-static.sh
       - name: Run Markdown link integrity test
         run: python3 tests/test-doc-links.py
+      - name: Validate EN/PL documentation policy and Polish guide index
+        run: python3 tests/test-doc-language-policy.py
       - name: Run Polish WebUI overlay unit tests
         run: python3 tests/test-asus-webui-pl-overlay.py
       - name: Run Python recovery integration tests
