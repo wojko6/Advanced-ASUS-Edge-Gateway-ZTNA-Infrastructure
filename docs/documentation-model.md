@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-10-08
+**Last reviewed:** 2026-10-09
 
 **Applies to:** `main`
 
@@ -29,6 +29,17 @@ Use one of these labels for documents whose lifecycle could be ambiguous:
 - **SUPERSEDED** — replaced by another named document or design.
 
 A historical document may intentionally contain old dates or open findings when it is clearly marked as historical. Do not rewrite historical records merely to make them look current.
+
+## Documentation language ownership
+
+The [documentation language policy](language-policy.md) defines repository English/Polish roles without changing the source-of-truth hierarchy above:
+
+- **EN canonical technical documents** retain the project-level design, evidence and recovery contracts.
+- **PL operator guides** are linked from the [Polish documentation index](pl/README.md), whether stored under `docs/pl/` or at compatible historical paths.
+- A localized guide may be an operator adaptation, not a literal translation. The current English contract and dated live evidence govern technical claims; safety-critical divergence requires review and reconciliation before following either guide.
+- Preserve literal commands/metrics, historical logs, stable links and dated evidence; do not auto-translate source code or rewrite history.
+
+For issue #129, the English DR baseline on `main` remains authoritative. PR #205 proposes related English/Polish reconstruction documents and must be reconciled before their publication; this policy does not merge or validate them.
 
 ## Repository vs live-deployment boundary
 
