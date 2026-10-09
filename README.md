@@ -382,6 +382,8 @@ See [Tailscale maintenance and rollback](docs/tailscale-maintenance.md).
 
 ## Documentation
 
+**Language:** canonical project, architecture, security, testing and evidence documentation is maintained in English. [Polskie instrukcje administracyjne](docs/pl/README.md) są dostępne w osobnym indeksie; see the [documentation language policy](docs/language-policy.md).
+
 - [Polski przewodnik wdrożenia](docs/deployment-pl.md)
 - [Architecture](docs/architecture.md)
 - [Requirements and acceptance](docs/requirements.md)
