@@ -25,6 +25,8 @@ Dokumenty scalono w [PR #205](https://github.com/wojko6/Advanced-ASUS-Edge-Gatew
 
 ## Inne materiały po polsku
 
+- [Końcowy audyt uprawnień katalogów #200 — wyniki i ograniczenia (EN)](../../evidence/2026-10-09/issue-200-final-permissions-acceptance.md) — 698 obiektów, jeden wyjątek Pi-hole, testy regresji PR #209, zgłoszenie zamknięte; **bez testu awaryjnego rollbacku na produkcji**.
+- [Dziennik prac 9 października (EN)](../worklog/2026-10-09.md) — bieżący stan DR #129, wdrożenia BusyBox i zamknięcia #200.
 - [Przegląd architektury — migawka z 2026-10-08](../architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — datowany opis, nie automatycznie aktualizowana dokumentacja.
 - Polska nakładka językowa ASUS WebUI i polski interfejs RouterCloud są elementami **lokalizacji produktu**, a nie polską kopią całego repozytorium.
 
