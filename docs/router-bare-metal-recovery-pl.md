@@ -87,7 +87,7 @@ END {print "SWAP_LINE=" s, "ENTWARE_LINE=" m; if (!(s>0 && m>s)) exit 1}' /jffs/
 
 **GATE 2:** oba właściwe systemy plików zamontowane do odczytu/zapisu, poprawne `/opt`, Entware `opkg`, dwa aktywne swapy i **swap-before-Entware** potwierdzony. W przypadku błędu wstrzymaj usługi zależne od RAM/swap, zwłaszcza Tailscale.
 
-## 4. Pakiety i konta — granica brakującej automatyzacji
+## 4. Pakiety i konta — zestaw offline zweryfikowany, pełna odbudowa nadal nieprzetestowana
 
 Przed odtwarzaniem skryptów odtwórz **zgodne i zaufane pakiety** z prywatnego `packages.txt` oraz manifestów wersji. Nie zakładaj, że każda wersja znajduje się nadal w publicznym feedzie Entware.
 
@@ -98,6 +98,23 @@ Wymagają osobnego potwierdzenia:
 - **syslog-ng**, GNU `patch` (instalator WebUI go wymaga) oraz zależności projektu.
 
 Pi-hole wymaga konta **uid=999/gid=999** zgodnie z prywatnym manifestem. Nie tworzyć go ślepo, gdy identyfikatory kolidują z nową instalacją.
+
+### Stan potwierdzony 2026-10-09 — Pi-hole offline (issue #129)
+
+Na Fedorze, **bez zmian na produkcyjnym ASUS-ie**, zbudowano lokalny, prywatny komplet **65 pakietów IPK**: Pi-hole `2026.09.20-1`, 37 zależności bezpośrednich, 20 zależności pośrednich pierwszego poziomu i 7 drugiego poziomu. Wszystkie 65 sum SHA-256 są zgodne z manifestami; audyt **340 grup zależności** nie znalazł braków, ograniczeń wersji ani niezgodności z wersjami pakietów referencyjnego ASUS-a.
+
+Testowano dwie różne czynności:
+
+1. **`opkg --offline-root /stage --noaction`** — symulacja instalacji offline, zakończona `PASS`.
+2. **`opkg --offline-root /stage install /packages/*.ipk`** — rzeczywista instalacja pakietów w **izolowanym kontenerze Podman ARMv7** (`armv7l` przez QEMU), z wyłączoną siecią, bazowym systemem tylko do odczytu, pakietami podłączonymi tylko do odczytu i docelowym `/stage` na `tmpfs`. `EXIT_CODE=0`, w bazie `/stage/opt/lib/opkg/status` było **65 wpisów `install user installed`**, a hash FTL zgadzał się z działającym ASUS-em.
+
+Pi-hole `postinst` i `preinst` mogą uruchamiać dodatkowe polecenia, modyfikować cron, logrotate, API/interfejs, Gravity i sterować usługą FTL. `terminfo postinst` może aktualizować profil powłoki. Test nie wymuszał `--force-postinstall`; linie `Configuring` **nie są dowodem wykonania tych skryptów**.
+
+**Ważne ograniczenia:** powyższy test nie odtworzył konta `pihole` 999:999, metadanych UID/GID, uprawnień `security.capability` FTL, prywatnego stanu Gravity, uruchomionego DNS ani firmware/JFFS/SSD. Nie potwierdza pełnej odbudowy routera. Podczas inspekcji wykryto dowiązanie `/opt/etc/ssl/cert.pem` do `/opt/etc/ssl/certs/ca-certificates.crt` — nie odczytywać takich bezwzględnych dowiązań z katalogu odtworzenia wprost na hoście Fedora.
+
+Manifesty SHA-256, IPK i logi instalacyjne zostają prywatnie poza GitHubem. Szczegółowe, pozbawione danych poufnych wyniki: [raport instalacji offline z 2026-10-09](../evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md).
+
+**Następna bezpieczna próba** ma dotyczyć odtworzenia konta/usług i siedmiu capabilities FTL na oddzielnym środowisku testowym, przywrócenia prywatnego backupu Pi-hole oraz funkcjonalnych testów Unbound → Pi-hole → DHCP/DNS Guard. Bez tego **GATE 3 nie jest jeszcze zaliczony dla pustego routera**, a #129 pozostaje OTWARTE.
 
 **GATE 3:** pakiety, binaria, zależności, użytkownicy/usługi i startup managerów zostały zweryfikowane; **STOP**, jeżeli brakuje artefaktu źródłowego lub binarium odpowiada niewłaściwej architekturze.
 
