@@ -61,6 +61,7 @@ No raw private Tailscale identifiers, authentication state or credential values 
 | `dnsmasq.postconf` | project archive | covered | restore only after ownership/conflict review |
 | reference `post-mount` swap-order fix | project archive, review-only reference | **added by #100 branch** | never auto-apply; compare with the rebuilt AMTM hook and manually preserve the validated pre-Entware swap ordering |
 | project addon binaries / preserved legacy hooks | project archive | covered | restore only as project-owned state |
+| optional custom BusyBox 1.36.1 ARMv7 under /jffs/addons/asus-edge/tools/ | **not** in CORE project archive | live optional tool PASS; clean-device reinstallation and post-install reboot untested | separately retain a hash-verified off-router ARM artifact or rebuild from reviewed source; restore only after CORE services work; do not replace /bin/busybox |
 | Unbound standard config | project archive | covered where present | do not overwrite manager-generated runtime config blindly |
 | Unbound Manager runtime config | project archive | file covered | runtime directory ownership still requires explicit validation |
 | Unbound Manager hook | project archive | `unbound.postconf` covered | manager scripts themselves are addon-owned and should be reinstalled/revalidated |
@@ -120,6 +121,31 @@ permission changes; ensure off-router backups, owner/group/mode evidence,
 write-path tests and bounded rollback before [#200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200)
 is accepted. This does not close [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)
 Pi-hole-aware disaster recovery or establish measured RTO/RPO.
+
+### 2026-10-09 — optional ARMv7 BusyBox outside the CORE archive
+
+The operator installed a standalone, statically linked BusyBox 1.36.1 at
+/jffs/addons/asus-edge/tools/busybox/1.36.1/busybox. Its recorded SHA-256 is
+08929e6cf52e8ed49ea46f1945ac51193613550099a2bbec24f90b0c1c58763a.
+The original firmware /bin/busybox (1.25.1), /bin/sh and global PATH are
+unchanged. Selected applets and a post-install project healthcheck passed;
+firmware-internal NTP/shell behavior was not replaced.
+
+**Recovery coverage gap:** scripts/backup.sh copies the project's bin/ and
+legacy/ subtrees, not tools/. Do **not** infer this binary exists in the
+existing CORE tarball or add it as an early-boot dependency. Keep a separate,
+verified off-router copy (or reproducible build inputs), then reinstall in a
+versioned directory **after** basic network/DNS/service recovery. Validate its
+architecture and checksum on the rebuilt device. Its own reboot persistence
+and a live rollback/removal test are pending.
+
+The 2026-10-09 operator-reported 41-file checksum/manifest validation of a
+current CORE backup was a **read-only stream integrity check**, not an isolated
+restore of those 41 files and not a bare-metal recovery acceptance. It should
+not be conflated with the earlier 39-file clean-room restore evidence.
+
+See [custom BusyBox deployment, rollback and rebuild contract](custom-busybox-armv7.md)
+and [sanitized BusyBox live evidence](../evidence/2026-10-09/custom-busybox-armv7-live-validation.md).
 
 ### Tailscale package/runtime drift
 
