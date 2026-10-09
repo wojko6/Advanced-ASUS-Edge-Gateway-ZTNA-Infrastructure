@@ -70,6 +70,18 @@ The **2026-10-09 production reference router** passed one operator-confirmed reb
 
 If a gate fails, **STOP** and preserve current evidence. Recover the independent bootstrap DNS/manual break-glass path **only under a reviewed local recovery plan**; do not assume break-glass repairs a failed WAN. Do not blindly import CFG, overwrite AMTM hooks, turn off filtering/network restrictions or reset the healthy production router. Prefer rollback to the last known-good snapshot or keep the replacement device isolated until corrected.
 
+## 2026-10-09 — offline ARMv7 Pi-hole package reconstruction checkpoint
+
+The operator-built off-router recovery kit now includes **65 SHA-256-verified Entware IPKs**: Pi-hole `2026.09.20-1`, **37 direct dependencies**, **20 first-level** and **7 second-level** transitive dependencies. A recursive metadata audit examined **340 dependency groups**, with **zero** missing, unresolved or virtual dependency groups, **zero** version constraints and **zero** mismatches against the reference router's installed package versions. The FTL executable inside the Pi-hole IPK matched the live binary SHA-256.
+
+Both an `opkg --offline-root /stage --noaction` simulation and an **actual** `opkg --offline-root /stage install /packages/*.ipk` completed in disposable **rootless Podman ARMv7** (`armv7l`, QEMU), with **network disabled**, verified IPKs mounted read-only, and a `tmpfs` target. The actual install exited 0; its offline status database contained **65 `install user installed` records** and staged FTL with the expected SHA-256. A separate payload-only `tmpfs` test checked **450 restored regular files**, **227 inventoried symlinks** (not created in that particular test), no collisions and no unsafe archive paths. One absolute certificate symlink was reviewed: `/opt/etc/ssl/cert.pem` points to `/opt/etc/ssl/certs/ca-certificates.crt`; never dereference staged absolute symlinks against the Fedora host.
+
+**Boundary:** this is a genuine offline package-manager install test, **not** a replacement-router recovery. The `opkg` run did not specify `--force-postinstall`; package `Configuring` lines and installed states do not establish successful execution of maintainer scripts. Pi-hole `preinst` can request packages; `postinst` can change cron, logrotate, interface/API settings, Gravity and start/restart FTL. `terminfo postinst` can modify `/opt/etc/profile`. These side effects were reviewed statically **but not executed/accepted as a router rebuild**. The test did **not** reconstruct UID/GID 999:999, ownership/capabilities xattrs, private Pi-hole state, DNS listeners, DHCP or production services.
+
+For exact sanitized checks and logs interpretation see [offline Pi-hole/Entware clean-room evidence](../evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md). The 65 Pi-hole closure IPKs are **private off-router artifacts**, not committed to Git. Unbound/Tailscale runtime artifacts are independent; they are **not** part of the count of 65.
+
+**Next safe exercise:** on a disposable rebuilt target, review maintainer-script application; recreate Pi-hole identity and exact FTL capabilities; restore the private Pi-hole DR state; validate FTL + Unbound startup ordering and DNS acceptance; then test a complete isolated router rebuild and reboot. Preserve the source archive/manifests before any test. Issue #129 remains **OPEN**.
+
 ## Explicit limitations and next exercise
 
 - Full blank-device/blank-Entware reconstruction including package identities, restored-target xattrs and all post-restore DNS/DHCP/API/collector validations: **NOT TESTED**.
