@@ -10,6 +10,7 @@ Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest
 | Temat | Dokument po polsku | Dokumentacja techniczna EN |
 |---|---|---|
 | Pierwsze wdrożenie ASUS Edge Gateway | [Wdrożenie routera](../deployment-pl.md) | [Deployment/operations reference](../operations.md) |
+| Dodatkowy BusyBox ARMv7 (bez wymiany firmware'u) | [Bezpieczne używanie BusyBox 1.36.1](busybox-armv7.md) | [Custom BusyBox deployment and recovery](../custom-busybox-armv7.md) |
 | Drukarka w sieci lokalnej | [Instrukcja LAN](../printer-setup-lan-pl.md) | [Zasady bezpieczeństwa drukarki](../PRINTER-HARDENING.md) |
 | Drukarka przez Tailscale | [Instrukcja zdalna](../printer-setup-tailscale-pl.md) | [Firewall policy](../firewall-policy.md) |
 

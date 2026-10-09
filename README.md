@@ -402,6 +402,7 @@ See [Tailscale maintenance and rollback](docs/tailscale-maintenance.md).
 - [Printer setup from LAN](docs/printer-setup-lan-pl.md)
 - [Printer setup through Tailscale](docs/printer-setup-tailscale-pl.md)
 - [Operations and recovery](docs/operations.md)
+- [Optional ARMv7 BusyBox 1.36.1 — isolated deployment, rollback and recovery](docs/custom-busybox-armv7.md)
 - [DNS bootstrap resilience](docs/case-studies/dns-bootstrap-deadlock-dns-guard-v3.1.md)
 - [Roadmap](docs/roadmap.md)
 - [Engineering worklog](docs/worklog/README.md)
