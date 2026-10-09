@@ -39,7 +39,7 @@ The [documentation language policy](language-policy.md) defines repository Engli
 - A localized guide may be an operator adaptation, not a literal translation. The current English contract and dated live evidence govern technical claims; safety-critical divergence requires review and reconciliation before following either guide.
 - Preserve literal commands/metrics, historical logs, stable links and dated evidence; do not auto-translate source code or rewrite history.
 
-For issue #129, the English DR baseline on `main` remains authoritative. PR #205 proposes related English/Polish reconstruction documents and must be reconciled before their publication; this policy does not merge or validate them.
+For issue #129, the [English DR baseline](router-disaster-recovery.md) and [staged reconstruction runbook](pihole-dr-rebuild-runbook.md), merged in PR #205, define the technical recovery contract. The [Polish bare-router operator guide](router-bare-metal-recovery-pl.md) is a step-gated adaptation, not a completed end-to-end recovery test. Review safety gates across languages before changing either document.
 
 ## Repository vs live-deployment boundary
 
