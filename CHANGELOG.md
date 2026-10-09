@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+- **2026-10-09 closeout:** documented independently installed optional static ARMv7 BusyBox 1.36.1 with SHA-256, QEMU/router tests, EN/PL guidance, unchanged firmware BusyBox and explicit DR gaps (merged PR #208).
+- **2026-10-09 permission-hardening evidence:** recorded the final 698-object #200 audit (0 group/world-writable, 0 symlinks, one retained 999:999 Pi-hole file), bounded runtime source/cron inventory and test-only 0700 installer/restore regressions from merged PR #209 (8/8 CI); issue #200 closed with no claim of production emergency rollback.
+- **2026-10-09 Pi-hole recovery:** added sanitized verified private CORE/Pi-hole/CFG evidence, one controlled existing-router reboot with DNS Guard recovery (healthcheck 0/0), the English staged Pi-hole rebuilding runbook and Polish bare-router emergency procedure (PRs #204/#205); full blank-device DR #129 stays open.
+- **2026-10-09 documentation governance:** established canonical English technical guidance and Polish operator index/policy through PR #207.
 - Documented the 2026-10-08 post-PR #197 final DNS Guard v3.2 acceptance, explicitly separating early draft/off-router stages from the later merged and bounded live power-cycle/break-glass gate.
 - Recorded the operator-reported #200 permission-manifest comparison (698 entries; 76 planned changes; zero remaining differences) as a limited local checkpoint, **not** issue closure or an independently proven restore.
 - Reconciled the current 15-rule Grafana YAML against historical nine-rule status references and updated the DNS Guard acceptance map to v3.2, preserving untested new-alert delivery and recovery waivers.
@@ -38,6 +42,7 @@
 - Added explicit documentation source-of-truth and lifecycle rules.
 
 ### Changed
+- Updated current README, project status, roadmap, DR coverage, compatibility, worklog and evidence indexes after #200 closure; retained the older 2026-10-08 698-path equality-only checkpoint as historical, rather than relabeling it a live rollback PASS.
 - Reconciled README, project status, monitoring, RouterCloud backup, roadmap, requirements, evidence and worklog documentation with the merged RouterCloud alerting baseline from PR #190.
 - Recorded the current reference-router Tailscale runtime as `1.103.375` on the unstable/dev track, with the earlier `1.102.3` evidence retained as a historical pre-upgrade checkpoint.
 - Reconciled README, project status, architecture, operations and roadmap documentation with DNS Guard v3.1, the validated Android LTE + ASUS exit-node DNS path, and the ASUS RT-BE88U / Asuswrt-Merlin 3006.x migration target.
