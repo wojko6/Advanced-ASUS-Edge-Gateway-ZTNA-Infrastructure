@@ -10,6 +10,25 @@
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
 
+## 2026-10-09 — optional BusyBox ARMv7 tool (operator-reported live acceptance)
+
+A statically linked, independently cross-compiled BusyBox 1.36.1 for ARM EABI5
+was installed at /jffs/addons/asus-edge/tools/busybox/1.36.1/busybox.
+Operator-supplied output confirms checksum
+08929e6cf52e8ed49ea46f1945ac51193613550099a2bbec24f90b0c1c58763a,
+selected FIND/TIMEOUT tests and project healthcheck 0 failures/0 warnings.
+The firmware BusyBox 1.25.1, firmware /bin/sh and global PATH remain unchanged.
+
+This optional tool is **not included in the existing CORE backup**: tools/
+was not archived by scripts/backup.sh. The recovery plan therefore retains
+an independently verified workstation artifact for later, optional reinstall.
+Post-install reboot persistence and a standalone rollback/removal exercise are
+not yet proven. The corrected #200 directory scan found zero symlinks or
+world-writable objects in the four audited trees but does not establish
+all installer/restore compatibility criteria or close #200/#129.
+See [canonical BusyBox contract](docs/custom-busybox-armv7.md) and
+[dated sanitized results](evidence/2026-10-09/custom-busybox-armv7-live-validation.md).
+
 ## 2026-10-09 — documentation reconciliation (no new deployment acceptance)
 
 The installed Unbound baseline is self-built ARMv7 `1.26.1-1` (five deployed packages), **not an outstanding Unbound version upgrade**. [PR #202](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/202) is open as an off-router reproducibility/recovery candidate. Source pins, regenerated artifact parity, isolated restore and DNSSEC acceptance remain gated there; no change to the production daemon is implied.
