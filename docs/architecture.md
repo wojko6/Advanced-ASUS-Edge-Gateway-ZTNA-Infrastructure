@@ -22,7 +22,7 @@ Start with the [Network design documentation index](network-design.md).
    Source-scoped management, default-deny behavior, selected LAN forwarding, EDGE_TS_FORWARD, WAN egress and platform-owned NAT.
 
 6. [Boot and Service Dependency Flow](architecture/boot-service-dependency-flow.md)  
-   Current reference post-mount/AMTM ordering, pre-Entware swap evidence, repository services-start recovery behavior, DNS Guard v3.1 bootstrap/steady-state resolver policy, firewall apply and WAN-triggered Tailscale restart.
+   Current reference post-mount/AMTM ordering, pre-Entware swap evidence, repository services-start recovery behavior, current DNS Guard v3.2 bootstrap/steady-state resolver policy, firewall apply and WAN-triggered Tailscale restart.
 
 7. [Availability, Redundancy and Single Points of Failure](architecture/availability-and-redundancy.md)  
    Explicit separation between recoverability and high availability, plus applicability of FHRP/LACP/redundant-WAN controls.
@@ -67,12 +67,12 @@ The project owns exit-node forwarding policy in EDGE_TS_FORWARD. It does **not**
 
 The current reference router uses split port-53 ownership. Pi-hole FTL owns a dedicated main-LAN alias and is the only DNS server advertised to main-LAN DHCP clients. Firmware dnsmasq continues to own the router LAN and Tailscale port-53 sockets for DHCP/local-name duties and the existing project classic-DNS interception path. Pi-hole and dnsmasq both use Unbound on 127.0.0.1:53535 for ordinary external resolution.
 
-The 2026-09-28 cutover did not by itself move the existing LAN/Tailscale interception redirects behind Pi-hole. Later 2026-10-06 work added source-scoped Pi-hole handling for selected classic-DNS Tailscale clients and separately validated the router-system-resolver -> Pi-hole path used by the tested Android LTE exit-node DNS flow after DNS Guard v3.1. Non-selected generic Tailscale classic-DNS interception still retains the dnsmasq -> Unbound fallback, and encrypted DNS remains outside the universal enforcement claim.
+The 2026-09-28 cutover did not by itself move the existing LAN/Tailscale interception redirects behind Pi-hole. Later 2026-10-06 work added source-scoped Pi-hole handling for selected classic-DNS Tailscale clients and separately validated the router-system-resolver -> Pi-hole path used by the tested Android LTE exit-node DNS flow after the DNS Guard v3.1 introduction (subsequently hardened to v3.2 on 2026-10-08). Non-selected generic Tailscale classic-DNS interception still retains the dnsmasq -> Unbound fallback, and encrypted DNS remains outside the universal enforcement claim.
 
 ### System-resolver DNS Guard boundary
 
 The router's own system resolver follows a two-phase policy managed by DNS
-Guard v3.1:
+Guard v3.2 (v3.1 is the historical 2026-10-06 milestone):
 
 - cold boot / local DNS failure / sticky break-glass -> independent WAN
   bootstrap DNS;
@@ -134,6 +134,7 @@ Current architecture claims are anchored to dated evidence:
 - **2026-10-06:** the reference Tailscale runtime was upgraded from the historical 1.102.3 checkpoint to checksum-verified official ARM 1.103.375 unstable/dev; controlled daemon restart and later full cold boot passed.
 - **2026-10-06:** DNS Guard v3.1 was production-validated with fail-open bootstrap DNS, conditional Pi-hole promotion, sticky break-glass, watchdog recovery and full cold boot.
 - **2026-10-06:** Android LTE with the ASUS selected as exit node resolved a fresh unique hostname through the router system resolver to the local Pi-hole alias and Unbound.
+- **2026-10-08:** PR #197 merged DNS Guard v3.2 recovery hardening. The reference router passed bounded manual break-glass ON/OFF and a real power-cycle with Entware available, progressing from WAN bootstrap DNS to Pi-hole. Absent-Entware and simultaneous local/bootstrap DNS failure remain untested.
 - **2026-10-07:** a multi-vantage port-exposure audit validated LAN/Tailscale trust boundaries, source-specific Fedora syslog access, a genuine mobile-Internet public-IPv4 TCP probe with all selected tested ports filtered/time-out, and native WAN IPv6 disabled with no WAN IPv6 address/default route. External WAN UDP remains explicitly untested.
 
 These dated results do not establish universal firmware compatibility or enforcement outside their stated protocol/interface scope. Time-sensitive project status remains governed by [PROJECT-STATUS.md](../PROJECT-STATUS.md) and the dated [evidence](../evidence/) tree.
