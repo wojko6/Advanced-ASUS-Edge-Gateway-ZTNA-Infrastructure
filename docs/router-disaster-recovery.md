@@ -317,6 +317,7 @@ Boot logs show watchdog registration before Entware startup, NTP synchronisation
 
 - [Sanitized #129 production reboot evidence](../evidence/2026-10-09/issue-129-pihole-dr-reboot-persistence.md)
 - [Pi-hole-aware stepwise reconstruction runbook](pihole-dr-rebuild-runbook.md)
+- [Polish bare-router and empty-SSD emergency procedure](router-bare-metal-recovery-pl.md)
 - [2026-10-09 engineering worklog](worklog/2026-10-09.md)
 
 The clean-device recovery gate remains **OPEN**: package/account reconstruction, Unbound runtime ownership on the rebuilt target, Pi-hole FTL xattr reapplication on the target storage, restored Gravity/DHCP/DNSSEC/API/collector validation and native CFG import still require isolated execution. Do not repeat production reboots merely to replace this already successful persistence checkpoint.
