@@ -54,6 +54,12 @@ Obowiązują [kanoniczne zasady DR (EN)](../router-disaster-recovery.md) i [pols
 
 Rollback jest opisany w [dokumencie kanonicznym](../custom-busybox-armv7.md#rollback-documented-not-live-exercised), ale **nie został jeszcze wykonany w izolowanym teście**. Przed usunięciem sprawdź brak zależnych skryptów, dowiązań i zgodność SHA-256. Usuwać wolno wyłącznie dokładnie znany plik i pusty katalog jego wersji — nigdy cały katalog tools/ ani systemowy BusyBox. Przy rozbieżności **STOP**.
 
+## Późniejsza decyzja o Issue #200 (9.10.2026)
+
+Po instalacji dodatkowego BusyBox przeprowadzono odrębny, odczytowy audyt czterech katalogów: **698 obiektów, 0 zapisywalnych dla grupy lub pozostałych użytkowników, 0 symlinków**, jeden zachowany plik Pi-hole z właścicielem 999:999 i uprawnieniami 0640 w chronionym katalogu 0700. Testy instalatora i odtwarzania w izolacji z PR #209 przeszły CI **8/8 PASS**, a [Issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) zostało zamknięte w zakresie zabezpieczenia uprawnień.
+
+Nie był to test rzeczywistego awaryjnego rollbacku na routerze. Osobny backup CORE nadal **nie zawiera** narzędzia z `tools/`, a pełna odbudowa #129 pozostaje otwarta. Szczegóły: [datowany raport #200 (EN)](../../evidence/2026-10-09/issue-200-final-permissions-acceptance.md).
+
 ## Status dowodów
 
 Potwierdzono operatorowskim wynikiem: kompilacja i QEMU PASS, uruchomienie na routerze PASS, SHA-256 PASS, nowy FIND -type/-perm PASS, TIMEOUT PASS, audyt #200 bez obiektów world-writable i symlinków w czterech kontrolowanych drzewach, healthcheck 0/0. Nie potwierdzono pełnej równoważności wszystkich appletów, restartowej trwałości nowego narzędzia ani pełnego odtworzenia po awarii.
