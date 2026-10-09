@@ -35,6 +35,10 @@ jobs:
         run: python3 tests/test-recovery.py
       - name: Run Pi-hole DNS collector unit tests
         run: python3 tests/test-pihole-dns-collector.py
+      - name: Run Pi-hole DR backup generator regression
+        env:
+          PYTHONWARNINGS: error::ResourceWarning
+        run: python3 -B tests/test_pihole_dr_backup.py
       - name: Run firewall mock policy test
         run: sh tests/test-firewall-mock.sh
       - name: Run temporary firewall guard cleanup regression
