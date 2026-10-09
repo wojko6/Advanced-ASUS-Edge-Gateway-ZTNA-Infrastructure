@@ -8,6 +8,36 @@ trap 'rm -rf "$TMPROOT"' EXIT HUP INT TERM
 mkdir -p "$TMPROOT/jffs/scripts" "$TMPROOT/jffs/configs"
 mkdir -p "$TMPROOT/jffs/addons/asus-edge"
 mkdir -p "$TMPROOT/jffs/addons/asus-edge/backups"
+
+# Issue #200: model private directories already hardened on the live router.
+# Do not rely on the installer's umask to retroactively fix existing modes.
+for private_name in backup backups legacy rollback; do
+    private_dir="$TMPROOT/jffs/addons/asus-edge/$private_name"
+    mkdir -p "$private_dir"
+    chmod 0700 "$private_dir"
+    printf 'issue200-%s\n' "$private_name" >"$private_dir/.issue200-marker"
+    chmod 0600 "$private_dir/.issue200-marker"
+done
+
+assert_issue200_private_dirs() {
+    for private_name in backup backups legacy rollback; do
+        private_dir="$TMPROOT/jffs/addons/asus-edge/$private_name"
+        if [ ! -d "$private_dir" ] || [ -L "$private_dir" ] ||
+           [ "$(stat -c %a "$private_dir")" != 700 ]; then
+            echo "FAIL: private directory mode/type drift: $private_name" >&2
+            exit 1
+        fi
+        marker="$private_dir/.issue200-marker"
+        if [ ! -f "$marker" ] || [ -L "$marker" ] ||
+           [ "$(stat -c %a "$marker")" != 600 ] ||
+           ! grep -Fxq "issue200-$private_name" "$marker"; then
+            echo "FAIL: private directory contents/mode drift: $private_name" >&2
+            exit 1
+        fi
+    done
+}
+
+assert_issue200_private_dirs
 for old_snapshot in \
     install-20260101-000001 \
     install-20260102-000001 \
@@ -81,6 +111,8 @@ managed_snapshot_count() {
 }
 
 EDGE_TEST_ROOT="$TMPROOT" EDGE_INSTALL_BACKUP_KEEP=3 EDGE_PATCH_BIN="$PATCH_STUB" sh "$TMPROOT/repo/scripts/install.sh"
+assert_issue200_private_dirs
+echo "PASS: issue #200 private 0700 directories survive isolated install"
 
 [ "$(managed_snapshot_count)" -eq 3 ] || {
     echo "FAIL: installer snapshot retention expected 3 managed directories" >&2
@@ -158,6 +190,7 @@ cmp -s "$ROOT_DIR/router/bin/edge-dns-supervisor" "$SUPERVISOR_INSTALLED" || {
     echo "FAIL: corrupted supervisor changed live installation" >&2
     exit 1
 }
+assert_issue200_private_dirs
 echo "PASS: corrupted supervisor rejected before installer state mutation"
 
 # Preserve a pre-existing supervisor as part of a deliberately failed upgrade.
@@ -186,6 +219,8 @@ cmp -s "$TMPROOT/old-supervisor" "$SUPERVISOR_INSTALLED" || {
     echo "FAIL: installer rollback did not restore previous ARM supervisor" >&2
     exit 1
 }
+assert_issue200_private_dirs
+echo "PASS: issue #200 private directory contract survives isolated rollback"
 echo "PASS: failed installer restored previous ARM supervisor"
 grep -q 'legacy' "$TMPROOT/jffs/scripts/wan-event"
 [ "$(managed_snapshot_count)" -eq 3 ] || {
