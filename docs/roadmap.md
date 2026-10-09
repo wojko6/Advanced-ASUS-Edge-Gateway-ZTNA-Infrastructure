@@ -10,6 +10,15 @@
 - OPNsense/x86 is not the current migration target; keep it only as a future
   contingency if requirements exceed the ASUS platform.
 
+### Optional utility extension (2026-10-09)
+
+A separately installed BusyBox 1.36.1 ARM EABI5 adds FIND/TIMEOUT/SHA256SUM and
+other utilities for explicitly scoped operator commands. The firmware's
+BusyBox 1.25.1 and /bin/sh remain authoritative; no global PATH or DNS Guard
+startup change is planned. See [safe usage and rollback contract](custom-busybox-armv7.md).
+The binary is not part of the current CORE backup; optional recovery follows
+basic router restoration. This does **not** close #129 or #200.
+
 ### Current CORE closeout priorities
 
 Completed on 2026-10-06:
