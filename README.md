@@ -10,6 +10,8 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 
 **Planned router migration target:** ASUS RT-BE88U on a compatible Asuswrt-Merlin 3006.x branch. OPNsense/x86 is not the current target architecture; it is retained only as a future contingency if requirements eventually exceed the ASUS platform.
 
+**Current maintenance boundaries (documentation reviewed 2026-10-09):** DNS Guard v3.2 is production-validated only within the [documented 2026-10-08 live gate](docs/dns-guard-v3.2-recovery-audit-live-validation.md). The installed self-built Unbound `1.26.1-1` is already current; [PR #202](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/202) is an **unmerged workstation-only rebuild recipe**, not an upgrade or a production rollout. [Issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) remains open despite a locally reported permission-manifest reconciliation and clean healthcheck; installer/backup/restore compatibility and independent review are not established by those checks alone. See [project status](PROJECT-STATUS.md) and the [2026-10-08 worklog](docs/worklog/2026-10-08.md).
+
 ## Portfolio highlights
 
 - Built a consumer-router security edge with Tailscale identity, project-owned default-deny firewall chains, and explicit router/LAN allowlists.
