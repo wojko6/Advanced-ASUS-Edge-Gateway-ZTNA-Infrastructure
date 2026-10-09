@@ -128,7 +128,7 @@ Current material follow-up:
   production state;
 - #68 — assess DoH/DoQ and other encrypted-DNS bypass paths;
 - #143 — design Trusted/IoT/Guest segmentation;
-- #178 — finish grouping/anti-flap behavior and bounded mobile/critical escalation; all nine current rules now route to e-mail and RouterCloud backup/maintenance alerting is merged through PR #190.
+- #178 — finish grouping/anti-flap behavior and bounded mobile/critical escalation; the **15 current rules** all specify the e-mail receiver (five newly loaded DNS Guard recovery rules are not individually firing/e-mail-tested); RouterCloud backup/maintenance alerting was merged through PR #190.
 
 The planned router migration target is ASUS RT-BE88U on a compatible
 Asuswrt-Merlin 3006.x branch. OPNsense/x86 is not the current migration target
@@ -417,7 +417,7 @@ See [the case study](docs/asus-tuf-ax5400-observability-case-study.md),
 
 Centralized logging and the initial Grafana alerting baseline are now
 live-validated. On 2026-10-07 PR #190 added four RouterCloud backup/maintenance
-rules, routed all nine current rules to the e-mail contact point, and added a
+rules, routed all nine **then-current** rules to the e-mail contact point, and added a
 controlled live `routercloud_backup_bad` firing/recovery test; see
 [evidence](evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
 
