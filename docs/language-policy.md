@@ -1,6 +1,6 @@
 # Documentation language and translation policy
 
-**Status:** CURRENT (policy proposal in issue #206; effective once merged)  
+**Status:** CURRENT (tracked in issue #206)  
 **Reviewed:** 2026-10-09  
 **Scope:** public documentation, operator guides, evidence, code comments and UI localization.
 
@@ -31,9 +31,9 @@ Do not treat an English word in Polish operational prose as an automatic error: 
 ### Current recovery example: issue #129
 
 - Existing English baseline: [router-disaster-recovery.md](router-disaster-recovery.md).
-- A new, more detailed English ordered runbook and a **Polish bare-router/empty-SSD operator procedure** are under review in [PR #205](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/205), not yet authoritative on `main`.
-- These are **related procedures with different levels of detail**, not a certified line-by-line translation. The new Polish procedure is explicitly **not an executed bare-metal restore**.
-- **Merge order:** keep links to PR #205 until its documents are merged; then update [Polish index](pl/README.md) with stable relative links and review the EN/PL acceptance gates together. Do not publish a broken local link to a document not on `main`.
+- Merged in [PR #205](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/205): [English staged reconstruction runbook](pihole-dr-rebuild-runbook.md) and [Polish bare-router/empty-SSD operator procedure](router-bare-metal-recovery-pl.md).
+- These are **related procedures with different levels of detail**, not a certified line-by-line translation. The Polish manual is a step-gated operator adaptation; a complete bare-metal restore has **NOT** been executed.
+- Shared safety contract: verified off-router sources, independent WAN DNS/NTP until local DNS is healthy, swap before AMTM Entware, reviewed `post-mount` ownership, Pi-hole UID/GID and FTL capabilities on a rebuild target, DNS Guard failback after local readiness, single controlled acceptance reboot and explicit STOP/rollback at any failed gate. Human verification is required whenever either document changes.
 
 ## Language-neutral elements
 
@@ -50,7 +50,7 @@ Prefer an **explanation alongside** a technical term (for example “tryb awaryj
 
 - [Polish documentation index](pl/README.md) is the **entry point**, not a duplicated source tree.
 - Do **not** rename existing Polish guides in a broad migration: `docs/deployment-pl.md`, `docs/printer-setup-lan-pl.md`, `docs/printer-setup-tailscale-pl.md` have existing inbound Markdown links and may be referenced outside this repository.
-- For new **standalone** Polish operator guides, prefer `docs/pl/` **after** the PR #205 compatibility discussion. If the guide must retain an established path, index it from `docs/pl/README.md` instead.
+- For new **standalone** Polish operator guides, prefer `docs/pl/`. The merged issue #129 Polish recovery guide retains its reviewed historical PR path `docs/router-bare-metal-recovery-pl.md` and is indexed from `docs/pl/README.md`.
 - If a future move is justified, retain a stub at the old path pointing to the new one; update internal links and validate them in CI. Do not delete dated historical evidence or old snapshots.
 
 ## Review and verification
