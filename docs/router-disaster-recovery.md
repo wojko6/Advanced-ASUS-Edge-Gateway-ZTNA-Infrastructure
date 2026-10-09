@@ -122,6 +122,33 @@ write-path tests and bounded rollback before [#200](https://github.com/wojko6/Ad
 is accepted. This does not close [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)
 Pi-hole-aware disaster recovery or establish measured RTO/RPO.
 
+### 2026-10-09 — #200 closed permission-hardening acceptance
+
+Later 2026-10-09 evidence supersedes the **open-issue status**, not the historical
+2026-10-08 facts above. [Issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200)
+was **closed as completed** for the original four world-writable addon trees
+after a read-only, checksum-pinned 698-entry inventory (72 `backup/`,
+544 `backups/`, 3 `legacy/`, 79 `rollback/`). Each top-level
+directory is root:root 0700; 697 objects were root:root and a single retained
+`backups/pihole-session-before-7d.toml` was UID:GID 999:999, mode 0640,
+under root-only 0700 `backups/`. There were **zero** group/world-writable
+objects, symlinks or invalid records.
+
+Live managed hook guards were confirmed, with two `EDGE_RUN_LEGACY_HOOKS=0`
+assignments and no enabled assignment. The sole filename had zero exact
+matches in the bounded active-script and cron search. [PR #209](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/209)
+added 0700-preservation regression tests for isolated install, rejected
+artifact, failed-install rollback and clean-room restore (8/8 CI PASS).
+The earlier encrypted off-router archive was integrity checked and restored
+in isolation. The specific actor who had already changed the live modes
+before the aborted 2026-10-08 preflight remains unknown.
+
+This is a **permission-hardening closure, not a production emergency rollback
+or complete replacement-device restore**. Do not alter the Pi-hole exception
+without verifying private consumer/retention requirements. The full
+Pi-hole-aware Disaster Recovery gate [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)
+remains OPEN. See [sanitized #200 closeout evidence](../evidence/2026-10-09/issue-200-final-permissions-acceptance.md).
+
 ### 2026-10-09 — optional ARMv7 BusyBox outside the CORE archive
 
 The operator installed a standalone, statically linked BusyBox 1.36.1 at
