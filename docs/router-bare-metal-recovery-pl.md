@@ -120,6 +120,8 @@ test -x /jffs/addons/asus-edge/bin/dns-guard
 test -x /jffs/addons/asus-edge/bin/healthcheck.sh
 ```
 
+**Uzupełnienie z 2026-10-09 — dodatkowy BusyBox ARMv7:** opcjonalna wersja 1.36.1 w /jffs/addons/asus-edge/tools/busybox/1.36.1/busybox **nie jest objęta obecnym archiwum CORE**. Nie jest zależnością rozruchu ani odbudowy DNS. Dopiero po ukończeniu odbudowy podstawowej infrastruktury odtwórz ją z **osobnego, zweryfikowanego artefaktu na Fedorze** albo z ponownej, sprawdzonej kompilacji. Nie zastępuj /bin/busybox, /bin/sh ani globalnego PATH. Instrukcja PL: [bezpieczne używanie BusyBox ARMv7](pl/busybox-armv7.md); kontrakt EN: [custom BusyBox ARMv7](custom-busybox-armv7.md). Weryfikacja trwałości po restarcie i osobny test rollbacku tej wersji pozostają otwarte.
+
 **GATE 4:** manifest CORE i uprawnienia zweryfikowane, hooki zgodne z aktualnym managerem, testy składni PASS, rollback możliwy. **Nie aktywować docelowego DNS Guard do Pi-hole** przed ukończeniem następnego etapu.
 
 ## 6. Pi-hole, Gravity i FTL — rekonstrukcja ze sprawdzonego archiwum
