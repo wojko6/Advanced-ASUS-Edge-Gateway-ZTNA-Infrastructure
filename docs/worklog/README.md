@@ -22,3 +22,4 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-10-06](2026-10-06.md) — WAN-speed email alert validation, final Polish WebUI closure, Tailscale package/live-version drift hardening, and issue #152 Android Pi-hole/Tailscale source-scoped DNS plus management-path reconciliation.
 - [2026-10-07](2026-10-07.md) — port-exposure/network-design documentation closure and RouterCloud Grafana alerting expansion with controlled live firing/recovery validation.
 - [2026-10-08](2026-10-08.md) — interim DNS Guard recovery hardening followed by merged PR #197, bounded live break-glass/power-cycle acceptance, 15-rule monitoring baseline, separate #200 local permissions reconciliation and unmerged Unbound rebuild PR #202.
+- [2026-10-09](2026-10-09.md) — merged Pi-hole DR generator PR #204; private recovery/FTL capability checks; verified DNS Guard source, independent WAN DNS and a controlled reboot with full post-boot health acceptance.

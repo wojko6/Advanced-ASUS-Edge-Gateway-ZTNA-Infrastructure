@@ -1,6 +1,6 @@
 # Pi-hole DR backup generator — issue #129
 
-**State:** Candidate implementation. Offline synthetic tests PASS; an operator-run production read-only capture and encrypted round-trip test are still required before this is accepted. Not a boot-level disaster-recovery test.
+**State (2026-10-09):** Generator merged in [PR #204](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/204); six offline regressions, operator-run read-only production capture, encrypted/private round-trip and independent file/manifest checks **PASS**. FTL capabilities reapplied successfully on a disposable Fedora tmpfs restored copy. A controlled reboot of the **already provisioned** router also passed; this does **not** validate a complete router or Entware rebuild. See the [reboot acceptance](../evidence/2026-10-09/issue-129-pihole-dr-reboot-persistence.md) and [rebuild runbook](pihole-dr-rebuild-runbook.md).
 
 The Fedora-side `scripts/backup-pihole-dr.py` reads allowlisted Pi-hole artifacts from the TUF-AX5400 through SSH. It does **not** write to the router. Only private Fedora tmpfs holds the unencrypted transfer and recovery archive; only the AES256 GPG encrypted `.tar.gz.gpg` and checksum sidecar are persisted off-router. Do not publish backups, logs containing private data, or NVRAM exports.
 
@@ -42,7 +42,7 @@ python3 scripts/backup-pihole-dr.py \
 
 The command reads router files without changing them. It fails closed on SSH nonzero status, changing sources, unexpected files, unexpected UID/GID/mode or capabilities, or invalid Gravity SQLite. It prompts for a GPG passphrase and writes a new uniquely timestamped private encrypted archive. Any failed transfer or processing discards the plaintext tmpfs workspace. The destination directory must be owned by the invoking user with no group/other permissions.
 
-A successful generator is **not** proof of a complete recovery. First repeat the isolated Pi-hole restore + DNS validation from issue #129 on the new archive. NVRAM must be restored separately using a compatible router/firmware; Unbound/Core archives, Entware installation, storage/swap, startup ordering, Pi-hole `setcap`, DHCP, firewall and Tailscale re-enrollment require the documented rebuild procedure.
+A successful generator is **not** proof of a complete recovery. The verified private archive and isolated Pi-hole/FTL tests establish recovery components only; a **new blank-device/Entware** rebuild and post-restore validation are still required. NVRAM must be restored separately using a compatible router/firmware; Unbound/Core archives, Entware installation, storage/swap, startup ordering, Pi-hole `setcap`, DHCP, firewall and Tailscale re-enrollment require the documented rebuild procedure.
 
 ## Production permission reapplication — recovery target only
 
