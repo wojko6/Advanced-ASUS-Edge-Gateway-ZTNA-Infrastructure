@@ -31,6 +31,17 @@ Avoid words such as `production-grade`, `enterprise-grade`, `fully secure`, `gua
 
 When a document introduces a new validation layer, keep its results separate from other layers. For example, endpoint HTTPS/content filtering must not be described as router-side filtering capability.
 
+## Language and localized operator guides
+
+Follow the [EN/PL documentation language policy](docs/language-policy.md).
+
+- Maintain canonical architecture, security, recovery-contract, project-status, case-study, public evidence and engineering-worklog prose in English.
+- Maintain practical Polish operator guides as clearly labeled localizations/adaptations, indexed in [docs/pl/README.md](docs/pl/README.md). Existing paths are kept stable; do not bulk-rename historical files.
+- A Polish procedure **does not** become an independently validated configuration by translation. Link its English source and preserve prerequisites, safety/rollback gates, scope and test-status boundaries.
+- For changes affecting an English/Polish pair, check the companion guide and record whether it was updated, remains compatible, or requires follow-up. Never silently claim translation parity if procedures differ.
+- Preserve commands, `EDGE_*` keys, test messages, metrics, API fields, file paths, original quoted logs and code comments in their technical form.
+- Use `python3 tests/test-doc-language-policy.py` and the existing Markdown link test before review. CI checks indexing and links, **not semantic equivalence**.
+
 ## Before a pull request
 
 Run the repository test suite on a Linux workstation or CI runner:
