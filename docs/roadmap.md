@@ -76,7 +76,7 @@ so missing collector data does not masquerade as WAN-down evidence. A dedicated
 e-mail contact point is also provisioned and the WAN-speed rule has bounded
 end-to-end firing and resolved e-mail evidence. PR #190 then extended the
 baseline to nine rules, added four RouterCloud backup/maintenance failure and
-staleness rules, routed all nine current rules to the existing e-mail contact
+staleness rules, routed all nine **then-current** rules to the existing e-mail contact
 point, and live-tested `routercloud_backup_bad` through firing and recovery.
 Issue #178 now owns grouping/anti-flap and mobile/critical escalation rather than
 RouterCloud backup coverage itself.
