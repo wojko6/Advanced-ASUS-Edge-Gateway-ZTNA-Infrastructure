@@ -18,6 +18,7 @@ POLISH_GUIDES = (
     "docs/deployment-pl.md",
     "docs/printer-setup-lan-pl.md",
     "docs/printer-setup-tailscale-pl.md",
+    "docs/router-bare-metal-recovery-pl.md",
 )
 
 RELATED_ENGLISH = (
@@ -25,6 +26,7 @@ RELATED_ENGLISH = (
     "docs/PRINTER-HARDENING.md",
     "docs/firewall-policy.md",
     "docs/router-disaster-recovery.md",
+    "docs/pihole-dr-rebuild-runbook.md",
 )
 
 POLICY_REFERENCES = {
@@ -34,10 +36,6 @@ POLICY_REFERENCES = {
     "docs/language-policy.md": ("docs/pl/README.md", "docs/documentation-model.md"),
 }
 
-PENDING_DR_PR = (
-    "https://github.com/wojko6/"
-    "Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/205"
-)
 
 
 def check() -> list[str]:
@@ -61,9 +59,6 @@ def check() -> list[str]:
         relative = Path(os.path.relpath(target, INDEX_PATH.parent)).as_posix()
         if f"({relative})" not in index:
             failures.append(f"Polish index missing reference to {path} ({relative})")
-
-    if PENDING_DR_PR not in index:
-        failures.append("Polish index must disclose in-review PR #205")
 
     if "not a" not in policy.lower() or "operator adaptation" not in policy.lower():
         failures.append("Language policy must distinguish translated/adapted operational scope")
