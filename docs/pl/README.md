@@ -21,7 +21,7 @@ Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest
 - [Procedura awaryjna od pustego ASUS-a i SSD (PL)](../router-bare-metal-recovery-pl.md) — opis odtworzenia etapami, z warunkami PASS/STOP. **To procedura przygotowana, ale nieprzetestowana w pełnym scenariuszu bare-metal**.
 - [Kanoniczna dokumentacja Disaster Recovery (EN)](../router-disaster-recovery.md) oraz [sekwencyjny runbook odbudowy Pi-hole (EN)](../pihole-dr-rebuild-runbook.md) — kontrakt techniczny, zależności, ograniczenia i walidacja.
 
-Dokumenty scalono w [PR #205](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/205). Polska instrukcja jest **rozszerzoną adaptacją dla operatora**, nie oficjalnym przekładem zdanie po zdaniu. Próby z 2026-10-09 potwierdziły trwałość działających usług po restarcie, **nie** pełne odtworzenie routera i pakietów od pustego urządzenia.
+Punkt startowy: [indeks Disaster Recovery](../disaster-recovery-index.md) — wskazuje, **który dokument otworzyć**, które testy przeszły i czego nadal nie udowodniono. Materiały operacyjne scalono w [PR #205](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/205). Polska instrukcja jest **rozszerzoną adaptacją dla operatora**, nie tłumaczeniem zdanie po zdaniu. Testy z 2026-10-09 potwierdziły zarówno **restart istniejącego routera**, jak i **instalację 65 pakietów Pi-hole/Entware przez opkg w odizolowanym kontenerze ARMv7** ([dowód EN](../../evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md)). **Nie** potwierdziły pełnego odtworzenia pustego routera, konfiguracji usług ani DNS/DHCP po awarii.
 
 ## Inne materiały po polsku
 

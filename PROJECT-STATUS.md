@@ -10,6 +10,14 @@
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
 
+## 2026-10-09 — Pi-hole offline package rebuild gate (#129; off-router only)
+
+The operator verified the exact Pi-hole `2026.09.20-1` installer and **64 Entware dependencies** (37 direct, 20 + 7 transitive) from privately held SHA-256 manifests: **65/65 verified IPKs**, **340 resolved dependency groups**, no package/version gaps. Pi-hole FTL from the IPK matched the reference router's binary SHA-256.
+
+An actual `opkg --offline-root` install, **not just a dry-run**, completed with exit code 0 in disposable **ARMv7 rootless Podman**, with network disabled and a `tmpfs` destination. The package status database contained **65 installed records** and FTL hash verification passed. Maintainer install scripts were **not forced or accepted**; the rebuilt ASUS service account, UID/GID, FTL capabilities, Pi-hole private config/Gravity restore and DNS/DHCP/collector functions remain **unvalidated after any full reconstruction**. The reference router was not modified by this exercise.
+
+**Acceptance boundary:** #129 stays **OPEN** pending a genuinely isolated blank-firmware/storage router rebuild. The broader Entware/Tailscale/Unbound environment is outside the 65-package Pi-hole closure. See [DR navigation](docs/disaster-recovery-index.md), [operator runbook](docs/pihole-dr-rebuild-runbook.md), and [dated offline installation evidence](evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md).
+
 ## 2026-10-09 — issue #200 permission-hardening closeout (bounded acceptance)
 
 [Issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) is **CLOSED / completed** as of 2026-10-09. The root-operated `backup/`, `backups/`, `legacy/` and `rollback/` directory modes are each 0700. A checksum-pinned, operator-run BusyBox 1.36.1 FIND/STAT inventory covered all **698** entries (72, 544, 3 and 79): **697** root:root entries, **one retained Pi-hole UID:GID 999:999 mode 0640 metadata file** under root-only `backups/`, **zero** group/world-writable objects, **zero** symlinks and **zero** invalid records.
@@ -57,7 +65,7 @@ Documentation now distinguishes the **15 current alert rules** from the earlier 
 
 **Residual risks:** Absent/unmountable Entware at boot, simultaneous failure of local and bootstrap resolvers, partial NVRAM failure, and full-installation acceptance remain untested in production. WAN-restart dispatch and later connectivity do not directly instrument physical WAN link transitions. The testing waivers remain active after merge and must not be relabeled PASS.
 
-**Current engineering priorities:** documentation sync; #200 permission hardening; #176 exit-node source restriction; #129 Pi-hole-aware DR; #108 analytics gaps; #68 encrypted DNS assessment; #178 grouping/mobile escalation; #143 zone segmentation. This overview is a dated snapshot; older dated sections below retain historical versions/counts.
+**Current engineering priorities:** documentation sync; #176 exit-node source restriction; #129 Pi-hole-aware DR; #108 analytics gaps; #68 encrypted DNS assessment; #178 grouping/mobile escalation; #143 zone segmentation. This overview is a dated snapshot; older dated sections below retain historical versions/counts.
 
 Sources: [v3.2 live validation and waiver matrix](docs/dns-guard-v3.2-recovery-audit-live-validation.md), [network architecture](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md), [Grafana YAML](monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml).
 

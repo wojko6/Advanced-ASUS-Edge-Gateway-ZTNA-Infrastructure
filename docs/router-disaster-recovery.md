@@ -23,6 +23,14 @@ Reasons:
 
 This decision can be revisited if a required recovery gap cannot be covered safely by the project-native workflow.
 
+## 2026-10-09 — verified offline Pi-hole package rebuild subset
+
+A later same-day Fedora lab extended the tested recovery scope beyond archive inspection. **65 Entware IPKs** (Pi-hole `2026.09.20-1` + 37 direct + 20 + 7 transitive dependencies) were checked against four SHA-256 manifests. Across **340 declared dependency groups**, all packages were present locally with exact router-matching versions; zero additional missing/ambiguous packages or version constraints were found.
+
+In a **network-disabled, rootless ARMv7 Podman** container, actual `opkg --offline-root` installation succeeded with exit code 0, producing a status database of **65 installed package records** and an FTL executable matching the live router SHA-256. Unlike the earlier `--noaction` dry-run, the installation truly staged package payloads and their metadata. No forced `postinst` execution, UID/GID reconstruction, capability replay, live FTL runtime or DNS functions were validated. The reference ASUS was unchanged.
+
+This proves a **Pi-hole package-level offline installation candidate**, not a full Entware inventory closure, manager integration, native ASUS CFG restore or bare-metal acceptance. See [sanitized offline Pi-hole package reconstruction evidence](../evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md) and [the step-gated runbook](pihole-dr-rebuild-runbook.md). All IPKs and detailed private logs remain off-repository; #129 stays OPEN.
+
 ## Reference-state inventory findings
 
 The original clean-room DR inventory was captured on 2026-09-27. The
@@ -69,9 +77,9 @@ No raw private Tailscale identifiers, authentication state or credential values 
 | NVRAM | native ASUS/Merlin settings export | encrypted private CFG integrity verified; import untested | maintain model/firmware compatibility; do not publish raw values or assume that a verified export has been restored |
 | Tailscale state/auth | intentionally excluded | recreate | re-enroll/re-authenticate after recovery; do not restore stale node secrets from the project archive |
 | Tailscale package/runtime provenance | rebuild manifest | gap | package metadata alone is insufficient on the current reference state |
-| Entware package inventory | rebuild manifest | gap | capture versions for reconstruction; packages are reinstalled rather than copied blindly |
+| Entware package inventory | rebuild manifest + private offline Pi-hole closure | **65/65 verified IPKs; actual isolated ARMv7 opkg install PASS** for the Pi-hole dependency subset, entire platform rebuild untested | maintain exact package/version/hash manifests; reinstall under controlled target conditions, not by copying a live `/opt` filesystem |
 | AMTM modules | reinstall/revalidate | addon-owned | restore integration points, then reinstall/validate AMTM-managed components |
-| Pi-hole / FTL package and service state | dedicated private Pi-hole DR archive plus package manifest | archive and isolated FTL checks PASS; complete target reinstall untested | reinstall the reviewed Entware Pi-hole stack, reconstruct account/capabilities and revalidate listener/startup ownership |
+| Pi-hole / FTL package and service state | dedicated private Pi-hole DR archive + 65 private SHA-256-verified IPKs | **offline opkg installation PASS** in a disposable ARMv7 container; FTL runtime, target UID/GID/capabilities and complete router rebuild untested | reinstall the reviewed package closure, reconcile maintainer scripts, reconstruct account/capabilities and revalidate listener/startup ownership |
 | Pi-hole filtering configuration / Gravity inputs | allowlisted private archive with Gravity SQLite integrity verification | backup PASS; restored-target filtering acceptance untested | restore only reviewed policy input/data from verified archive; verify Gravity SQLite and validate blocking on the target |
 | Pi-hole query-history database | private operational data | intentionally not a public/project backup payload | analytics/history continuity is not required for gateway recovery; keep any private backup under a separate data/privacy policy |
 | Pi-hole dedicated LAN alias/startup integration | backed-up integration scripts, manual target reconstruction | current-router reboot PASS; clean rebuild untested | recreate the alias before FTL starts and verify no port-53 conflict with firmware dnsmasq |
