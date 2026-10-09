@@ -1,8 +1,10 @@
 # DNS Guard v3.2 recovery audit
 
-**Status:** source-controlled hardening candidate for issue #196 / PR #197.\
-**Production baseline:** `main` at DNS Guard v3.2 after #193.\
-**Live deployment:** not performed by this audit.
+**Status:** original post-v3.2 source-audit record (historical candidate stage); [PR #197](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/197) **merged 2026-10-08**.\
+**Production baseline:** DNS Guard v3.2 with the PR #197 recovery fixes, within the bounded [live-validation and waiver record](dns-guard-v3.2-recovery-audit-live-validation.md).\
+**Evidence boundary:** original fault/repro steps below are a pre-merge engineering record; the post-merge acceptance is documented separately.
+
+The 2026-10-08 live record includes supervised break-glass ON/OFF, real power-cycle recovery to Pi-hole with Entware mounted, clean healthcheck and five newly loaded DNS Guard alert UIDs. Missing Entware, simultaneous local/bootstrap failure, full-installer deployment and individual new-alert firing/e-mail delivery are not validated. Do not read candidate-stage verbs below as today's GitHub PR state.
 
 This audit follows the historical
 [`dns-bootstrap-deadlock-dns-guard-v3.1.md`](case-studies/dns-bootstrap-deadlock-dns-guard-v3.1.md)
@@ -244,13 +246,14 @@ Regression coverage now includes:
 The project Validation suite must be green at the candidate head before live
 testing.
 
-## Live validation gate
+## Historical pre-merge live validation gate
 
-Do not merge or deploy solely from source-level evidence.
+At the original candidate stage, merging or deploying solely from source-level evidence was prohibited.
 
 Run the bounded live-validation runbook in
 [`dns-guard-v3.2-recovery-audit-live-validation.md`](dns-guard-v3.2-recovery-audit-live-validation.md)
 with a trusted LAN recovery session and an immediate rollback path.
 
-Only after the live checkpoints pass should the candidate be considered for
-merge into `main`.
+The recorded limited live checkpoints preceded the 2026-10-08 merge into `main`.
+The remaining waivers in the linked live record are still open; merge must not be
+interpreted as full-path acceptance.

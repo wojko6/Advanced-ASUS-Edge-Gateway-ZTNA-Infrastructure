@@ -105,6 +105,21 @@ The live reference `/opt/var/lib/unbound` directory is owned by the resolver run
 
 The project must not claim full resolver recovery until a safe restore test proves the required owner/mode contract or the restore procedure recreates it explicitly.
 
+### 2026-10-08 issue #200 directory-mode checkpoint
+
+A separate operator-provided manifest comparison for `/jffs/addons/asus-edge`
+covered 698 entries, found 76 differences during preflight (59 directories
+and 17 files in the planned correction), and later reported zero remaining
+differences plus a clean project healthcheck. This is a **local equality and
+health checkpoint only**: neither a complete per-path least-privilege review
+nor a successful current-state backup/restore drill was supplied. The modes
+for `backup/`, `backups/`, `legacy/` and `rollback/` must be reviewed
+against actual writers and rollback consumers. Avoid blanket recursive
+permission changes; ensure off-router backups, owner/group/mode evidence,
+write-path tests and bounded rollback before [#200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200)
+is accepted. This does not close [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)
+Pi-hole-aware disaster recovery or establish measured RTO/RPO.
+
 ### Tailscale package/runtime drift
 
 On the 2026-09-27 reference state, opkg metadata reports an older package version than the actual `/opt/bin/tailscale` and `/opt/bin/tailscaled` binaries report.
