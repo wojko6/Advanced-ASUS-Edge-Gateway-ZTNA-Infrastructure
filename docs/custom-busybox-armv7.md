@@ -108,4 +108,6 @@ A complete empty-router/empty-SSD rebuild and post-install reboot persistence of
 
 **Not proven:** all 402 applets under ASUS firmware; applet-semantic equivalence with vendor BusyBox; production rollout/rollback of new PATH links; restart persistence of the optional tool; exact clean-device reconstruction; or Bit-for-bit reproducibility across new toolchain images.
 
+**Later same-day result:** issue #200 was closed as completed for the scoped JFFS directory mode audit after a separate 698-object metadata review and PR #209 isolated install/restore regressions. That outcome **does not** upgrade this optional BusyBox binary's untested post-install reboot persistence or removal/rollback to PASS. See [final #200 evidence](../evidence/2026-10-09/issue-200-final-permissions-acceptance.md).
+
 Related: [#200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) and [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129). Both issues remain open pending their broader acceptance gates.

@@ -1,14 +1,22 @@
 # Project status
 
-**Status date:** 2026-10-09 (documentation review; latest full router boot acceptance remains 2026-10-08)
+**Status date:** 2026-10-09 (final documentation reconciliation; current-state findings include same-day BusyBox and issue #200 acceptance)
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
-**Latest broad router checkpoint:** 2026-10-08 — DNS Guard v3.2 production acceptance and real cold boot
+**Latest broad router checkpoint:** 2026-10-09 — controlled reboot of the existing router with the Pi-hole-aware DNS stack and project healthcheck 0/0; the 2026-10-08 DNS Guard v3.2 live break-glass/power-cycle gate remains a separate earlier acceptance
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
+
+## 2026-10-09 — issue #200 permission-hardening closeout (bounded acceptance)
+
+[Issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) is **CLOSED / completed** as of 2026-10-09. The root-operated `backup/`, `backups/`, `legacy/` and `rollback/` directory modes are each 0700. A checksum-pinned, operator-run BusyBox 1.36.1 FIND/STAT inventory covered all **698** entries (72, 544, 3 and 79): **697** root:root entries, **one retained Pi-hole UID:GID 999:999 mode 0640 metadata file** under root-only `backups/`, **zero** group/world-writable objects, **zero** symlinks and **zero** invalid records.
+
+Active `firewall-start` and `wan-event` legacy hook guards matched the expected managed wrappers; both observed `EDGE_RUN_LEGACY_HOOKS` assignments were 0. A bounded literal search found no exact-name active-script or cron reference to the single Pi-hole exception; its exact provenance and dynamic consumers remain unknown. [PR #209](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/209) merged isolated 0700 installer, failure rollback and clean-room restore tests with **8/8 CI checks passing**. The last reported production healthcheck was 0 failures / 0 warnings. The identity of whoever previously applied the mode corrections is unknown; **no live emergency rollback or full restoration was performed** for this closure. The separate full-rebuild [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129) stays OPEN.
+
+See [dated final permission evidence](evidence/2026-10-09/issue-200-final-permissions-acceptance.md) and the [9 October worklog](docs/worklog/2026-10-09.md).
 
 ## 2026-10-09 — optional BusyBox ARMv7 tool (operator-reported live acceptance)
 
@@ -25,7 +33,7 @@ an independently verified workstation artifact for later, optional reinstall.
 Post-install reboot persistence and a standalone rollback/removal exercise are
 not yet proven. The corrected #200 directory scan found zero symlinks or
 world-writable objects in the four audited trees but does not establish
-all installer/restore compatibility criteria or close #200/#129.
+a production emergency-rollback exercise. Later #200-specific isolated tests passed and #200 was closed within its permission-hardening scope; #129 remains open.
 See [canonical BusyBox contract](docs/custom-busybox-armv7.md) and
 [dated sanitized results](evidence/2026-10-09/custom-busybox-armv7-live-validation.md).
 
@@ -33,7 +41,7 @@ See [canonical BusyBox contract](docs/custom-busybox-armv7.md) and
 
 The installed Unbound baseline is self-built ARMv7 `1.26.1-1` (five deployed packages), **not an outstanding Unbound version upgrade**. [PR #202](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/202) is open as an off-router reproducibility/recovery candidate. Source pins, regenerated artifact parity, isolated restore and DNSSEC acceptance remain gated there; no change to the production daemon is implied.
 
-After [issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) identified world-writable backup/legacy/rollback directories, a **locally reported** 2026-10-08 mode/manifest comparison covered 698 expected and 698 actual entries (no missing/new paths). The earlier comparison found 76 mode/metadata differences; a later final comparison reported 59 planned directory changes plus 17 planned file changes, **zero remaining differences**, and `ISSUE200_EXPECTED_PERMISSIONS=PASS`. The following router healthcheck reported `HEALTHCHECK_RC=0`, 0 failures and 0 warnings. These are operator-provided terminal results, not a repository-published per-path mode inventory or independent end-to-end rollback test. Exact least-privilege ownership and write-path compatibility, backup/restore rehearsal and final issue acceptance remain open. Do not infer that every resulting mode is secure merely from equality with a stored manifest.
+After [issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) identified world-writable backup/legacy/rollback directories, a **locally reported** 2026-10-08 mode/manifest comparison covered 698 expected and 698 actual entries (no missing/new paths). The earlier comparison found 76 mode/metadata differences; a later final comparison reported 59 planned directory changes plus 17 planned file changes, **zero remaining differences**, and `ISSUE200_EXPECTED_PERMISSIONS=PASS`. The following router healthcheck reported `HEALTHCHECK_RC=0`, 0 failures and 0 warnings. These are operator-provided terminal results, not a repository-published per-path mode inventory or independent end-to-end rollback test. At the **initial** documentation checkpoint, final write-path/exception review and issue acceptance were still open; later on 2026-10-09 the full 698-object inventory, bounded source review and PR #209 CI supported issue closure. Do not infer that every resulting mode is secure merely from equality with a stored manifest, or treat the closed #200 as proof of full DR.
 
 Documentation now distinguishes the **15 current alert rules** from the earlier nine-rule 2026-10-07 checkpoint, and updates the current-state acceptance map to DNS Guard v3.2. Historical worklog/case-study milestones remain dated.
 
