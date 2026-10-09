@@ -1,11 +1,11 @@
 # Roadmap
 
-### Current reference router checkpoint — 2026-10-08
+### Current reference router checkpoint — 2026-10-09
 
 - Current router: ASUS TUF-AX5400 / GNUton 3004.388.11_1.
 - Current live Tailscale: **1.103.375 unstable/dev**; earlier 1.102.3 evidence
   is historical pre-upgrade state.
-- **Current DNS Guard v3.2** (PR #197 merged); bounded manual ON/OFF and power-cycle boot with Entware available passed. v3.1 remains a dated historical checkpoint.
+- **Current DNS Guard v3.2** (PR #197 merged): bounded manual ON/OFF and power-cycle acceptance passed on 2026-10-08. An additional controlled reboot of the **existing router** on 2026-10-09 recovered the Pi-hole-aware DNS stack with healthcheck 0/0; no blank-device restore is claimed. v3.1 remains historical.
 - Planned next router: **ASUS RT-BE88U / compatible Asuswrt-Merlin 3006.x**.
 - OPNsense/x86 is not the current migration target; keep it only as a future
   contingency if requirements exceed the ASUS platform.
@@ -17,7 +17,7 @@ other utilities for explicitly scoped operator commands. The firmware's
 BusyBox 1.25.1 and /bin/sh remain authoritative; no global PATH or DNS Guard
 startup change is planned. See [safe usage and rollback contract](custom-busybox-armv7.md).
 The binary is not part of the current CORE backup; optional recovery follows
-basic router restoration. This does **not** close #129 or #200.
+basic router restoration. #200 subsequently closed after the full protected-tree audit and isolated tests; this optional tool **does not close #129**, and its own post-install reboot persistence/removal remains untested.
 
 ### Current CORE closeout priorities
 
@@ -27,6 +27,11 @@ Completed on 2026-10-06:
 - #177 — Tailscale package/live-version drift and downgrade hardening;
 - DNS Guard v3.1 — historical 2026-10-06 milestone; v3.2 is now current (PR #197 merged 2026-10-08).
 
+Completed 2026-10-09:
+
+- [#200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) — least-privilege hardening of four JFFS backup/legacy/rollback trees accepted after a full 698-object inventory (zero group/world-writable entries or symlinks), managed hook/cron review and [PR #209](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/209) isolated installer/restore regression (8/8 CI). One private Pi-hole-owned mode 0640 file was retained. **No live emergency rollback or clean-device rebuild** was performed; see [acceptance evidence](../evidence/2026-10-09/issue-200-final-permissions-acceptance.md).
+- [PR #208](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/208) — optional ARMv7 BusyBox 1.36.1 deployment/recovery documentation merged; the firmware binary and PATH stay unchanged.
+
 Still open:
 
 - #176 — router-local source scoping for exit-node forwarding;
@@ -35,7 +40,6 @@ Still open:
 - #108 — remaining DNS-visibility retention/rollback/interception work;
 - #68 — DoH/DoQ/encrypted-DNS assessment;
 - #143 — Trusted/IoT/Guest segmentation design before RT-BE88U migration.
-- #200 — complete **separately reviewed** directory hardening. A local 698-entry expected-mode comparison and clean healthcheck were reported on 2026-10-08, but owner/mode justification and end-to-end backup/restore/installer rollback evidence still gate closure.
 - PR #202 — **open workstation-only** reproducible Unbound 1.26.1-1 ARMv7 rebuild candidate, not an Unbound upgrade or production rollout.
 - DNS Guard follow-up — unmountable Entware at boot and simultaneous local/bootstrap DNS faults remain untested live; maintenance window only.
 
