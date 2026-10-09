@@ -36,7 +36,7 @@ Using the newly available FIND -type and FIND -perm on the live router:
 - reported symlink count **0** and world-writable object count **0** inside each of the four trees;
 - after auditing, project healthcheck **0 failures, 0 warnings**.
 
-This does **not** substitute for per-path ownership/write-contract review, live installer emergency-rollback exercise or #200 closure.
+**At this earlier tool-validation checkpoint**, this four-tree scan did **not** yet establish per-path ownership, write-path compatibility or #200 closure. Later on 2026-10-09, a separate 698-entry read-only metadata audit and merged PR #209 isolated installer/restore tests supported **closing #200** for its world-writable permission scope. The #200 closure does **not** prove a production emergency rollback. See [later final #200 evidence](issue-200-final-permissions-acceptance.md).
 
 ## Boundaries and gaps
 
