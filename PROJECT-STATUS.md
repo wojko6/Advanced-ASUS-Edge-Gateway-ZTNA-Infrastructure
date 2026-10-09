@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-10-08
+**Status date:** 2026-10-09 (documentation review; latest full router boot acceptance remains 2026-10-08)
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
@@ -9,6 +9,14 @@
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
+
+## 2026-10-09 — documentation reconciliation (no new deployment acceptance)
+
+The installed Unbound baseline is self-built ARMv7 `1.26.1-1` (five deployed packages), **not an outstanding Unbound version upgrade**. [PR #202](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/202) is open as an off-router reproducibility/recovery candidate. Source pins, regenerated artifact parity, isolated restore and DNSSEC acceptance remain gated there; no change to the production daemon is implied.
+
+After [issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) identified world-writable backup/legacy/rollback directories, a **locally reported** 2026-10-08 mode/manifest comparison covered 698 expected and 698 actual entries (no missing/new paths). The earlier comparison found 76 mode/metadata differences; a later final comparison reported 59 planned directory changes plus 17 planned file changes, **zero remaining differences**, and `ISSUE200_EXPECTED_PERMISSIONS=PASS`. The following router healthcheck reported `HEALTHCHECK_RC=0`, 0 failures and 0 warnings. These are operator-provided terminal results, not a repository-published per-path mode inventory or independent end-to-end rollback test. Exact least-privilege ownership and write-path compatibility, backup/restore rehearsal and final issue acceptance remain open. Do not infer that every resulting mode is secure merely from equality with a stored manifest.
+
+Documentation now distinguishes the **15 current alert rules** from the earlier nine-rule 2026-10-07 checkpoint, and updates the current-state acceptance map to DNS Guard v3.2. Historical worklog/case-study milestones remain dated.
 
 ## 2026-10-08 — accepted baseline after PR #197
 
