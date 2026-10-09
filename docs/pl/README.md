@@ -15,11 +15,12 @@ Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest
 
 **Ważne:** kolumna EN wskazuje dokumenty technicznie powiązane, **nie** gwarantuje przekładu rozdział po rozdziale. Nie należy zakładać, że dwie procedury opisują dokładnie ten sam zakres testów.
 
-## Odtwarzanie routera od zera — dokument w przygotowaniu
+## Odtwarzanie routera od zera
 
-Polska procedura odbudowy ASUS-a po wyzerowaniu konfiguracji i SSD powstaje w [PR #205 — Disaster Recovery](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/205). Dopóki PR nie zostanie scalony, to **wersja do przeglądu**, a nie zatwierdzona instrukcja na `main`.
+- [Procedura awaryjna od pustego ASUS-a i SSD (PL)](../router-bare-metal-recovery-pl.md) — opis odtworzenia etapami, z warunkami PASS/STOP. **To procedura przygotowana, ale nieprzetestowana w pełnym scenariuszu bare-metal**.
+- [Kanoniczna dokumentacja Disaster Recovery (EN)](../router-disaster-recovery.md) oraz [sekwencyjny runbook odbudowy Pi-hole (EN)](../pihole-dr-rebuild-runbook.md) — kontrakt techniczny, zależności, ograniczenia i walidacja.
 
-Aktualna kanoniczna dokumentacja techniczna to [Router Disaster Recovery (EN)](../router-disaster-recovery.md). Próby z 2026-10-09 potwierdziły trwałość działających usług po restarcie, **nie** pełne odtworzenie routera i pakietów od pustego urządzenia.
+Dokumenty scalono w [PR #205](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/205). Polska instrukcja jest **rozszerzoną adaptacją dla operatora**, nie oficjalnym przekładem zdanie po zdaniu. Próby z 2026-10-09 potwierdziły trwałość działających usług po restarcie, **nie** pełne odtworzenie routera i pakietów od pustego urządzenia.
 
 ## Inne materiały po polsku
 
