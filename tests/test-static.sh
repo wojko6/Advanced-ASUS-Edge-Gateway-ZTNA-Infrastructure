@@ -696,11 +696,18 @@ grep -F 'EDGE_RUN_LEGACY_HOOKS="0"' "$REPO_DIR/config/edge.conf.example" >/dev/n
 
 for dns_guard_runtime_guard in \
     'EDGE_DNS_LOCK_FILE:-$STATE_DIR/dns-guard.lock' \
-    'flock -x 9' \
+    'flock -xn 9' \
     'secure_temp_dir()' \
     'temp_candidate="$temp_prefix.$$.${temp_counter}"' \
     'query_output="$(' \
     'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD:=3' \
+    'EDGE_DNS_QUERY_TIMEOUT_SECONDS:=5' \
+    'EDGE_DNS_LOCK_WAIT_SECONDS:=5' \
+    'EDGE_DNS_LOG_TIMEOUT_SECONDS:=2' \
+    'bounded_exec()' \
+    'bounded_nslookup()' \
+    'bootstrap_dns_ready()' \
+    'FALLBACK=UNHEALTHY_BOOTSTRAP' \
     'RECOVERY_STREAK_FILE="$RUNTIME_STATE_DIR/recovery-success-streak"' \
     'AUTO=BOOTSTRAP_RECOVERY_PENDING' \
     'bootstrap_dns_candidate_valid()' \
@@ -711,6 +718,9 @@ for dns_guard_runtime_guard in \
     'dig +tcp +time=2 +tries=1 +short' \
     'show_metrics()' \
     'asus_edge_dns_guard_mode_bootstrap' \
+    'asus_edge_dns_guard_bootstrap_dns_healthy' \
+    'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds' \
+    'asus_edge_dns_guard_watchdog_present' \
     'FALLBACK_COUNT_FILE="$RUNTIME_STATE_DIR/fallback-transitions"'
 do
     grep -F "$dns_guard_runtime_guard" "$REPO_DIR/router/scripts/dns-guard" >/dev/null || {
@@ -758,6 +768,10 @@ for dns_guard_guard in \
     'router/scripts/edge-dns-breakglass.sh" "$JFFS_DIR/scripts/edge-dns-breakglass.sh" 0700' \
     'EDGE_DNS_GUARD_WATCHDOG="1"' \
     'EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD="3"' \
+    'EDGE_DNS_QUERY_TIMEOUT_SECONDS="5"' \
+    'EDGE_DNS_LOCK_WAIT_SECONDS="5"' \
+    'EDGE_DNS_LOG_TIMEOUT_SECONDS="2"' \
+    'EDGE_DNS_BOOTSTRAP_TEST_NAME="example.com"' \
     'configure_dns_guard_watchdog()' \
     'cru a AsusEdgeDNSGuard' \
     'DNS_GUARD="${EDGE_DNS_GUARD:-/jffs/addons/asus-edge/bin/dns-guard}"'
@@ -938,6 +952,15 @@ do
     }
 done
 
+# DNS Guard watchdog must be scheduled before /opt/Entware waits can fail.
+dns_guard_schedule_line="$(grep -n '^configure_dns_guard_watchdog$' "$REPO_DIR/router/scripts/services-start" | head -n 1 | cut -d: -f1)"
+opt_wait_line="$(grep -n '^while ! opt_is_ready ' "$REPO_DIR/router/scripts/services-start" | head -n 1 | cut -d: -f1)"
+[ -n "$dns_guard_schedule_line" ] && [ -n "$opt_wait_line" ] &&
+    [ "$dns_guard_schedule_line" -lt "$opt_wait_line" ] || {
+        echo "FAIL: DNS Guard watchdog must be scheduled before /opt wait" >&2
+        exit 1
+    }
+
 # WAN-connected handling must allow services-start enough time to recover
 # the local Unbound path. This is a maximum wait; the handler exits early
 # as soon as DNS becomes ready.
@@ -953,7 +976,17 @@ GRAFANA_EMAIL_CONTACT="$REPO_DIR/monitoring/grafana/provisioning/alerting/asus-e
 
 for dns_guard_observability_guard in \
     'uid: dns_guard_sustained_failopen' \
+    'uid: dns_guard_bootstrap_unhealthy' \
+    'uid: dns_guard_telemetry_stale' \
+    'uid: dns_guard_state_unknown' \
+    'uid: dns_guard_watchdog_missing' \
+    'uid: dns_guard_recovery_flapping' \
     'asus_edge_dns_guard_mode_bootstrap' \
+    'asus_edge_dns_guard_bootstrap_dns_healthy' \
+    'asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds' \
+    'asus_edge_dns_guard_watchdog_present' \
+    'asus_edge_dns_guard_state_valid' \
+    'asus_edge_dns_guard_fallback_transitions_runtime_total' \
     'asus_edge_dns_guard_collection_timestamp_seconds' \
     'for: 10m' \
     'component: dns-guard'

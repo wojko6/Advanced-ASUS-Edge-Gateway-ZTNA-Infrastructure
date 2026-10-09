@@ -29,6 +29,11 @@ FAIL_TCP_PRIMARY="$TMP_DIR/fail-tcp-primary"
 FAIL_TCP_SECONDARY="$TMP_DIR/fail-tcp-secondary"
 FAIL_DIG_RUNTIME="$TMP_DIR/fail-dig-runtime"
 FAIL_PIHOLE_TCP_LISTENER="$TMP_DIR/fail-pihole-tcp-listener"
+FAIL_BOOTSTRAP_HEALTH="$TMP_DIR/fail-bootstrap-health"
+HANG_PROBE="$TMP_DIR/hang-probe"
+HANG_LOGGER="$TMP_DIR/hang-logger"
+LOCK_HELD="$TMP_DIR/lock-held"
+FAIL_BOOTSTRAP_PRIMARY_SERVER="$TMP_DIR/fail-bootstrap-primary-server"
 
 mkdir -p "$MOCK_BIN" "$STATE_DIR" "$RUNTIME_STATE_DIR"
 
@@ -36,6 +41,8 @@ cat >"$CONFIG" <<'EOF'
 EDGE_UNBOUND_PORT=53535
 EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
 EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=1
+EDGE_DNS_QUERY_TIMEOUT_SECONDS=2
+EDGE_DNS_LOCK_WAIT_SECONDS=5
 EOF
 
 cat >"$MOCK_BIN/nvram" <<EOF
@@ -82,8 +89,9 @@ echo 'udp 0 0 192.0.2.53:53 0.0.0.0:*'
     echo 'tcp 0 0 192.0.2.53:53 0.0.0.0:* LISTEN'
 EOF
 
-cat >"$MOCK_BIN/logger" <<'EOF'
+cat >"$MOCK_BIN/logger" <<EOF
 #!/bin/sh
+[ -f "$HANG_LOGGER" ] && exec /bin/sleep 30
 exit 0
 EOF
 
@@ -92,9 +100,19 @@ cat >"$BUSYBOX_MOCK" <<EOF
 applet="\$1"
 shift
 case "\$applet" in
+    timeout)
+        echo "timeout: applet not found" >&2
+        exit 127
+        ;;
+    sleep)
+        exec /bin/sleep "\$@"
+        ;;
     nslookup)
         probe_name="\${1:-}"
-        printf 'udp %s\n' "\$probe_name" >>"$PROBE_LOG"
+        probe_server="\${2:-}"
+        printf 'udp %s %s\n' "\$probe_name" "\$probe_server" >>"$PROBE_LOG"
+
+        [ -f "$HANG_PROBE" ] && exec /bin/sleep 30
 
         if [ -n "\${EDGE_DNS_TEST_QUERY_SERIALIZE:-}" ]; then
             [ -f "$QUERY_ACTIVE" ] && : >"$QUERY_COLLISION"
@@ -105,6 +123,12 @@ case "\$applet" in
         fi
 
         case "\$probe_name" in
+            example.com)
+                [ -f "$FAIL_BOOTSTRAP_HEALTH" ] && exit 1
+                echo "Server: \${probe_server:-9.9.9.9}"
+                echo "Name: example.com"
+                echo "Address 1: 93.184.216.34"
+                ;;
             one.one.one.one)
                 [ -f "$FAIL_PROBE_PRIMARY" ] && exit 1
                 echo "Server: 192.0.2.53"
@@ -198,6 +222,107 @@ wait "$second_pid"
 }
 grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-first.out" >/dev/null
 grep -F 'AUTO=LOCAL_DNS' "$TMP_DIR/lock-second.out" >/dev/null
+
+# The serialization test intentionally keeps the first invocation in two
+# one-second DNS probes. Give the second invocation enough margin to exercise
+# serialization rather than racing the configured lock timeout. Tighten the
+# timeout again for the dedicated bounded-lock test below.
+printf '%s\n' 'EDGE_DNS_LOCK_WAIT_SECONDS=2' >>"$CONFIG"
+
+echo "=== lock acquisition is bounded ==="
+rm -f "$LOCK_HELD"
+(
+    exec 8>"$STATE_DIR/dns-guard.lock"
+    flock -x 8
+    : >"$LOCK_HELD"
+    /bin/sleep 5
+) &
+lock_holder_pid=$!
+
+lock_wait=0
+while [ ! -f "$LOCK_HELD" ] && [ "$lock_wait" -lt 50 ]; do
+    lock_wait=$((lock_wait + 1))
+    /bin/sleep 0.1
+done
+
+[ -f "$LOCK_HELD" ] || {
+    echo "FAIL: test lock holder did not acquire DNS Guard lock" >&2
+    kill "$lock_holder_pid" 2>/dev/null || true
+    wait "$lock_holder_pid" 2>/dev/null || true
+    exit 1
+}
+
+set +e
+lock_blocked_output="$(
+    timeout 5 env \
+        EDGE_CONFIG_FILE="$CONFIG" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_FLAG="$FLAG" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK" \
+        sh "$GUARD" status 2>&1
+)"
+lock_blocked_rc=$?
+set -e
+
+[ "$lock_blocked_rc" -ne 124 ] || {
+    echo "FAIL: DNS Guard waited indefinitely on the global lock" >&2
+    kill "$lock_holder_pid" 2>/dev/null || true
+    wait "$lock_holder_pid" 2>/dev/null || true
+    exit 1
+}
+[ "$lock_blocked_rc" -ne 0 ] || {
+    echo "FAIL: DNS Guard unexpectedly acquired a held lock" >&2
+    kill "$lock_holder_pid" 2>/dev/null || true
+    wait "$lock_holder_pid" 2>/dev/null || true
+    exit 1
+}
+printf '%s\n' "$lock_blocked_output" |
+    grep -F 'cannot acquire DNS Guard lock within' >/dev/null
+
+kill "$lock_holder_pid" 2>/dev/null || true
+wait "$lock_holder_pid" 2>/dev/null || true
+rm -f "$LOCK_HELD"
+
+echo "=== logger hang cannot block DNS Guard recovery ==="
+: >"$HANG_LOGGER"
+set +e
+logger_bounded_output="$(
+    timeout 5 env \
+        EDGE_CONFIG_FILE="$CONFIG" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_FLAG="$FLAG" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK" \
+        EDGE_DNS_LOG_TIMEOUT_SECONDS=1 \
+        sh "$GUARD" breakglass-on logger-hang 2>&1
+)"
+logger_bounded_rc=$?
+set -e
+[ "$logger_bounded_rc" -ne 124 ] || {
+    echo "FAIL: DNS Guard logger blocked recovery beyond the outer 5-second safety bound" >&2
+    exit 1
+}
+[ "$logger_bounded_rc" -eq 0 ] || {
+    echo "FAIL: bounded logger failure changed break-glass semantics" >&2
+    printf '%s\n' "$logger_bounded_output" >&2
+    exit 1
+}
+printf '%s\n' "$logger_bounded_output" | grep -F 'BREAKGLASS=ACTIVE' >/dev/null
+rm -f "$HANG_LOGGER" "$FLAG"
+
+echo "=== native firmware lacks BusyBox timeout but local DNS stays healthy ==="
+if "$BUSYBOX_MOCK" timeout 1 "$BUSYBOX_MOCK" nslookup one.one.one.one 192.0.2.53 >/dev/null 2>&1; then
+    echo "FAIL: firmware fixture unexpectedly provides BusyBox timeout" >&2
+    exit 1
+fi
+firmware_ready_output="$(run_guard ready)"
+printf '%s\n' "$firmware_ready_output"
+printf '%s\n' "$firmware_ready_output" | grep -F 'READY=PASS' >/dev/null
 
 echo "=== stable multi-provider DNS probes use UDP and TCP when dig is available ==="
 rm -f "$PROBE_LOG" "$FAIL_PROBE_PRIMARY" "$FAIL_PROBE_SECONDARY" \
@@ -350,6 +475,22 @@ grep -qx 'nameserver 1.1.1.1' "$RESOLV"
 [ "$(grep -c '^nameserver 8\.8\.8\.8$' "$RESOLV")" -eq 1 ]
 [ "$(grep -c '^nameserver ' "$RESOLV")" -eq 2 ]
 
+echo "=== valid later WAN DNS source rescues a dead higher-priority source ==="
+printf '%s\n' '9.9.9.9' >"$BOOTSTRAP_PRIMARY"
+printf '%s\n' '8.8.8.8' >"$BOOTSTRAP_SECONDARY"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+: >"$FAIL_BOOTSTRAP_PRIMARY_SERVER"
+
+later_source_output="$(run_guard fallback)"
+printf '%s\n' "$later_source_output"
+grep -F 'FALLBACK=PASS' <<EOF >/dev/null
+$later_source_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 8.8.8.8' "$RESOLV"
+[ "$(grep -c '^nameserver ' "$RESOLV")" -eq 2 ]
+rm -f "$FAIL_BOOTSTRAP_PRIMARY_SERVER"
+
 echo "=== bootstrap DNS refuses all-local or invalid candidate sets ==="
 printf '%s\n' '127.0.0.1 192.0.2.53 0.0.0.0 999.1.1.1' >"$BOOTSTRAP_PRIMARY"
 printf '%s\n' '127.0.0.2 192.0.2.53' >"$BOOTSTRAP_SECONDARY"
@@ -391,6 +532,70 @@ grep -qx 'nameserver 149.112.112.112' "$RESOLV"
 run_guard breakglass-off >/dev/null
 [ ! -f "$FLAG" ]
 
+echo "=== syntactically valid but dead bootstrap DNS is not reported as healthy ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=1
+EDGE_DNS_QUERY_TIMEOUT_SECONDS=1
+EDGE_DNS_LOCK_WAIT_SECONDS=2
+EOF
+rm -f "$FAIL_BOOTSTRAP" "$BOOTSTRAP_PRIMARY" "$BOOTSTRAP_SECONDARY"
+printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
+: >"$FAIL_BOOTSTRAP_HEALTH"
+
+if dead_bootstrap_output="$(run_guard fallback 2>&1)"; then
+    echo "FAIL: DNS Guard reported fallback success although every bootstrap DNS probe failed" >&2
+    exit 1
+fi
+printf '%s\n' "$dead_bootstrap_output"
+grep -F 'FALLBACK=UNHEALTHY_BOOTSTRAP' <<EOF >/dev/null
+$dead_bootstrap_output
+EOF
+grep -qx 'nameserver 9.9.9.9' "$RESOLV"
+grep -qx 'nameserver 149.112.112.112' "$RESOLV"
+
+dead_metrics="$(run_guard metrics)"
+printf '%s\n' "$dead_metrics" | grep -qx 'asus_edge_dns_guard_bootstrap_dns_healthy 0'
+dead_check_epoch="$(printf '%s\n' "$dead_metrics" | awk '$1=="asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds"{print $2}')"
+[ "$dead_check_epoch" -gt 0 ]
+
+rm -f "$FAIL_BOOTSTRAP_HEALTH"
+recovered_bootstrap_output="$(run_guard fallback)"
+printf '%s\n' "$recovered_bootstrap_output"
+grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
+$recovered_bootstrap_output
+EOF
+healthy_metrics="$(run_guard metrics)"
+printf '%s\n' "$healthy_metrics" | grep -qx 'asus_edge_dns_guard_bootstrap_dns_healthy 1'
+
+echo "=== hanging UDP DNS probe is bounded ==="
+: >"$HANG_PROBE"
+set +e
+bounded_output="$(
+    timeout 5 env \
+        EDGE_CONFIG_FILE="$CONFIG" \
+        EDGE_RESOLV_CONF="$RESOLV" \
+        EDGE_DNS_STATE_DIR="$STATE_DIR" \
+        EDGE_DNS_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR" \
+        EDGE_DNS_BREAKGLASS_FLAG="$FLAG" \
+        EDGE_TEST_PATH_PREFIX="$MOCK_BIN" \
+        EDGE_BUSYBOX_BIN="$BUSYBOX_MOCK" \
+        sh "$GUARD" ready 2>&1
+)"
+bounded_rc=$?
+set -e
+[ "$bounded_rc" -ne 124 ] || {
+    echo "FAIL: DNS Guard UDP probe exceeded the outer 5-second safety bound" >&2
+    exit 1
+}
+[ "$bounded_rc" -ne 0 ] || {
+    echo "FAIL: hanging DNS probe was treated as healthy" >&2
+    exit 1
+}
+printf '%s\n' "$bounded_output" | grep -F 'READY=FAIL' >/dev/null
+rm -f "$HANG_PROBE"
+
 echo "=== fail-open unhealthy path ==="
 printf '%s\n' 'nameserver 192.0.2.53' >"$RESOLV"
 : >"$FAIL_LOCAL"
@@ -409,6 +614,27 @@ printf '%s\n' "$fallback_output"
 grep -F 'FALLBACK=ALREADY_BOOTSTRAP' <<EOF >/dev/null
 $fallback_output
 EOF
+
+echo "=== dead bootstrap is escaped immediately once local DNS is healthy ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+EDGE_DNS_QUERY_TIMEOUT_SECONDS=2
+EDGE_DNS_LOCK_WAIT_SECONDS=2
+EOF
+rm -f "$FAIL_LOCAL" "$RECOVERY_STREAK_FILE"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+: >"$FAIL_BOOTSTRAP_HEALTH"
+
+dead_escape_output="$(run_guard auto)"
+printf '%s\n' "$dead_escape_output"
+grep -F 'AUTO=LOCAL_DNS_BOOTSTRAP_UNHEALTHY' <<EOF >/dev/null
+$dead_escape_output
+EOF
+grep -qx 'nameserver 192.0.2.53' "$RESOLV"
+[ ! -f "$RECOVERY_STREAK_FILE" ]
+rm -f "$FAIL_BOOTSTRAP_HEALTH"
 
 echo "=== failback hysteresis requires consecutive healthy checks ==="
 cat >"$CONFIG" <<'EOF'
@@ -472,6 +698,48 @@ $promoted_output
 EOF
 grep -qx 'nameserver 192.0.2.53' "$RESOLV"
 [ ! -f "$RECOVERY_STREAK_FILE" ]
+
+echo "=== corrupted oversized recovery streak cannot deadlock auto recovery ==="
+cat >"$CONFIG" <<'EOF'
+EDGE_UNBOUND_PORT=53535
+EDGE_DNS_LOCAL_RESOLVER_IP=192.0.2.53
+EDGE_DNS_FAILBACK_SUCCESS_THRESHOLD=3
+EDGE_DNS_QUERY_TIMEOUT_SECONDS=2
+EDGE_DNS_LOCK_WAIT_SECONDS=2
+EOF
+rm -f "$FAIL_LOCAL"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+printf '%s\n' '999999999999999999999999999999999999999999' >"$RECOVERY_STREAK_FILE"
+printf '%s\n' '999999999999999999999999999999999999999999' >"$RUNTIME_STATE_DIR/fallback-transitions"
+
+corrupt_state_output="$(run_guard auto)"
+printf '%s\n' "$corrupt_state_output"
+grep -F 'RECOVERY_STREAK=1/3' <<EOF >/dev/null
+$corrupt_state_output
+EOF
+grep -F 'AUTO=BOOTSTRAP_RECOVERY_PENDING' <<EOF >/dev/null
+$corrupt_state_output
+EOF
+
+corrupt_metrics="$(run_guard metrics)"
+# The oversized counter is sanitized before arithmetic. Because this fixture
+# also transitions observed mode from local to bootstrap, reconciliation
+# records one real transition instead of preserving the corrupt value.
+printf '%s\n' "$corrupt_metrics" |
+    grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 1'
+
+echo "=== ten-digit epoch remains valid while corrupt transition counter is rejected ==="
+rm -f "$FAIL_LOCAL" "$RECOVERY_STREAK_FILE"
+printf '%s\n' 'nameserver 9.9.9.9' 'nameserver 149.112.112.112' >"$RESOLV"
+printf '%s\n' 'bootstrap' >"$RUNTIME_STATE_DIR/current-mode"
+printf '%s\n' '1760000000' >"$RUNTIME_STATE_DIR/last-transition-epoch"
+printf '%s\n' '9999999999' >"$RUNTIME_STATE_DIR/fallback-transitions"
+
+counter_sanitize_metrics="$(run_guard metrics)"
+printf '%s\n' "$counter_sanitize_metrics" |
+    grep -qx 'asus_edge_dns_guard_last_transition_timestamp_seconds 1760000000'
+printf '%s\n' "$counter_sanitize_metrics" |
+    grep -qx 'asus_edge_dns_guard_fallback_transitions_runtime_total 0'
 
 echo "=== local failure still fails open on first unhealthy check ==="
 : >"$FAIL_LOCAL"

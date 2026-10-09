@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+- Documented the 2026-10-08 post-PR #197 final DNS Guard v3.2 acceptance, explicitly separating early draft/off-router stages from the later merged and bounded live power-cycle/break-glass gate.
+- Recorded the operator-reported #200 permission-manifest comparison (698 entries; 76 planned changes; zero remaining differences) as a limited local checkpoint, **not** issue closure or an independently proven restore.
+- Reconciled the current 15-rule Grafana YAML against historical nine-rule status references and updated the DNS Guard acceptance map to v3.2, preserving untested new-alert delivery and recovery waivers.
+- Clarified that deployed Unbound `1.26.1-1` is already current and draft PR #202 covers an unmerged/off-router rebuild provenance workflow, not an upgrade.
 - Added four RouterCloud Grafana rules for backup/maintenance failure and staleness, static guards for the nine-rule alert baseline, and a live E2E test that injects a controlled backup failure and verifies recovery.
 - Added a canonical incident-response case study for the 2026-10-06 DNS bootstrap outage, documenting the user-visible website failure, root-cause dependency cycle, DNS Guard v3.1 remediation, controlled fault tests, cold-boot acceptance and Android LTE + ASUS Exit Node DNS proof.
 - Added DNS Guard v3.1 with independent WAN bootstrap DNS, conditional Pi-hole promotion, automatic fail-open fallback, sticky break-glass recovery, a persistent one-minute watchdog, and managed installer/backup integration.

@@ -1,14 +1,38 @@
 # Project status
 
-**Status date:** 2026-10-07
+**Status date:** 2026-10-09 (documentation review; latest full router boot acceptance remains 2026-10-08)
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
-**Latest broad router checkpoint:** 2026-10-07 — multi-vantage port-exposure audit
+**Latest broad router checkpoint:** 2026-10-08 — DNS Guard v3.2 production acceptance and real cold boot
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.1 is production-validated. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
+**Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
+
+## 2026-10-09 — documentation reconciliation (no new deployment acceptance)
+
+The installed Unbound baseline is self-built ARMv7 `1.26.1-1` (five deployed packages), **not an outstanding Unbound version upgrade**. [PR #202](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/202) is open as an off-router reproducibility/recovery candidate. Source pins, regenerated artifact parity, isolated restore and DNSSEC acceptance remain gated there; no change to the production daemon is implied.
+
+After [issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) identified world-writable backup/legacy/rollback directories, a **locally reported** 2026-10-08 mode/manifest comparison covered 698 expected and 698 actual entries (no missing/new paths). The earlier comparison found 76 mode/metadata differences; a later final comparison reported 59 planned directory changes plus 17 planned file changes, **zero remaining differences**, and `ISSUE200_EXPECTED_PERMISSIONS=PASS`. The following router healthcheck reported `HEALTHCHECK_RC=0`, 0 failures and 0 warnings. These are operator-provided terminal results, not a repository-published per-path mode inventory or independent end-to-end rollback test. Exact least-privilege ownership and write-path compatibility, backup/restore rehearsal and final issue acceptance remain open. Do not infer that every resulting mode is secure merely from equality with a stored manifest.
+
+Documentation now distinguishes the **15 current alert rules** from the earlier nine-rule 2026-10-07 checkpoint, and updates the current-state acceptance map to DNS Guard v3.2. Historical worklog/case-study milestones remain dated.
+
+## 2026-10-08 — accepted baseline after PR #197
+
+**GitHub/source:** [PR #197](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/197) was merged on 2026-10-08; merge commit `01d6a7e00530ee8e9212820456047e2dee71a0a9`. The branch was updated after PR #199 changed `main`, and its final GitHub Actions run `37813461906` passed **4/4 jobs**, without branch-protection bypass.
+
+**Live production scope:** Manual sticky break-glass **ON and OFF passed** with bounded WAN restart dispatch and successful follow-up IP/DNS checks. Only the native ARMv7 supervisor and break-glass helper were deployed in that incremental production exercise, **not** the whole 24-file PR/installer. The active `/jffs/scripts/services-start`, `dns-guard` and `healthcheck.sh` matched the PR source. A separate inactive add-on `services-start` copy remains out of sync.
+
+**Real power-cycle (Entware present):** The watchdog was scheduled at pre-NTP log time 01:00:40, before USB Entware mounted at 01:00:44. At roughly one minute uptime the router was healthy on WAN bootstrap DNS while Unbound, Pi-hole, Tailscale and syslog-ng had started. At roughly two minutes it returned automatically to Pi-hole `192.168.50.253`, with `mode_local=1`, `mode_bootstrap=0`, inactive break-glass and the final project healthcheck **0 failures / 0 warnings**.
+
+**Monitoring:** The source-controlled alert YAML has **15 rules** (five infrastructure; one sustained DNS Guard fail-open; five new DNS Guard recovery checks; four RouterCloud). All 15 specify the e-mail receiver. VictoriaMetrics live bootstrap-health/watchdog data and the five newly loaded alert UIDs were confirmed. **Individual firing and e-mail delivery of the new five alerts were not tested.**
+
+**Residual risks:** Absent/unmountable Entware at boot, simultaneous failure of local and bootstrap resolvers, partial NVRAM failure, and full-installation acceptance remain untested in production. WAN-restart dispatch and later connectivity do not directly instrument physical WAN link transitions. The testing waivers remain active after merge and must not be relabeled PASS.
+
+**Current engineering priorities:** documentation sync; #200 permission hardening; #176 exit-node source restriction; #129 Pi-hole-aware DR; #108 analytics gaps; #68 encrypted DNS assessment; #178 grouping/mobile escalation; #143 zone segmentation. This overview is a dated snapshot; older dated sections below retain historical versions/counts.
+
+Sources: [v3.2 live validation and waiver matrix](docs/dns-guard-v3.2-recovery-audit-live-validation.md), [network architecture](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md), [Grafana YAML](monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml).
 
 ## 2026-10-07 port-exposure and network-design documentation checkpoint
 
@@ -104,7 +128,7 @@ Current material follow-up:
   production state;
 - #68 — assess DoH/DoQ and other encrypted-DNS bypass paths;
 - #143 — design Trusted/IoT/Guest segmentation;
-- #178 — finish grouping/anti-flap behavior and bounded mobile/critical escalation; all nine current rules now route to e-mail and RouterCloud backup/maintenance alerting is merged through PR #190.
+- #178 — finish grouping/anti-flap behavior and bounded mobile/critical escalation; the **15 current rules** all specify the e-mail receiver (five newly loaded DNS Guard recovery rules are not individually firing/e-mail-tested); RouterCloud backup/maintenance alerting was merged through PR #190.
 
 The planned router migration target is ASUS RT-BE88U on a compatible
 Asuswrt-Merlin 3006.x branch. OPNsense/x86 is not the current migration target
@@ -393,7 +417,7 @@ See [the case study](docs/asus-tuf-ax5400-observability-case-study.md),
 
 Centralized logging and the initial Grafana alerting baseline are now
 live-validated. On 2026-10-07 PR #190 added four RouterCloud backup/maintenance
-rules, routed all nine current rules to the e-mail contact point, and added a
+rules, routed all nine **then-current** rules to the e-mail contact point, and added a
 controlled live `routercloud_backup_bad` firing/recovery test; see
 [evidence](evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
 

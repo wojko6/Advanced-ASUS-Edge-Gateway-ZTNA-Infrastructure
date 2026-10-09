@@ -117,7 +117,54 @@ test -x "$TMPROOT/jffs/scripts/wan-event"
 test -x "$TMPROOT/jffs/addons/asus-edge/bin/wan-event"
 test -x "$TMPROOT/jffs/addons/asus-edge/bin/wan-event-handler"
 
+test -x "$TMPROOT/jffs/addons/asus-edge/bin/edge-dns-supervisor" || {
+    echo "FAIL: ARM supervisor not installed as executable" >&2
+    exit 1
+}
+cmp -s "$TMPROOT/repo/router/bin/edge-dns-supervisor" \
+    "$TMPROOT/jffs/addons/asus-edge/bin/edge-dns-supervisor" || {
+    echo "FAIL: installed ARM supervisor differs from verified artifact" >&2
+    exit 1
+}
+echo "PASS: verified ARM supervisor installed in isolated root"
+
 echo "PASS: install completed in isolated root"
+
+# Corrupted packaged executable must be rejected before creating a backup
+# directory or modifying the currently installed executable.
+SUPERVISOR_INSTALLED="$TMPROOT/jffs/addons/asus-edge/bin/edge-dns-supervisor"
+BACKUPS="$TMPROOT/jffs/addons/asus-edge/backups"
+find "$BACKUPS" -mindepth 1 -maxdepth 1 -type d -print | sort \
+    >"$TMPROOT/backups-before"
+
+printf 'tamper\n' >>"$TMPROOT/repo/router/bin/edge-dns-supervisor"
+if EDGE_TEST_ROOT="$TMPROOT" EDGE_INSTALL_BACKUP_KEEP=3 \
+   EDGE_PATCH_BIN="$PATCH_STUB" \
+   sh "$TMPROOT/repo/scripts/install.sh" >"$TMPROOT/tampered-install.log" 2>&1; then
+    echo "FAIL: installer accepted corrupted ARM supervisor" >&2
+    exit 1
+fi
+grep -Fq 'ERROR: supervisor SHA-256 mismatch' "$TMPROOT/tampered-install.log" || {
+    echo "FAIL: corrupted supervisor was rejected for unexpected reason" >&2
+    exit 1
+}
+find "$BACKUPS" -mindepth 1 -maxdepth 1 -type d -print | sort \
+    >"$TMPROOT/backups-after"
+cmp -s "$TMPROOT/backups-before" "$TMPROOT/backups-after" || {
+    echo "FAIL: corrupted supervisor caused snapshot mutation" >&2
+    exit 1
+}
+cmp -s "$ROOT_DIR/router/bin/edge-dns-supervisor" "$SUPERVISOR_INSTALLED" || {
+    echo "FAIL: corrupted supervisor changed live installation" >&2
+    exit 1
+}
+echo "PASS: corrupted supervisor rejected before installer state mutation"
+
+# Preserve a pre-existing supervisor as part of a deliberately failed upgrade.
+cp "$ROOT_DIR/router/bin/edge-dns-supervisor" \
+    "$TMPROOT/repo/router/bin/edge-dns-supervisor"
+printf 'previous-supervisor\n' >"$TMPROOT/old-supervisor"
+cp "$TMPROOT/old-supervisor" "$SUPERVISOR_INSTALLED"
 
 python3 - <<'PY' "$TMPROOT/repo/scripts/install.sh"
 from pathlib import Path
@@ -135,6 +182,11 @@ if EDGE_TEST_ROOT="$TMPROOT" EDGE_INSTALL_BACKUP_KEEP=3 EDGE_PATCH_BIN="$PATCH_S
     exit 1
 fi
 
+cmp -s "$TMPROOT/old-supervisor" "$SUPERVISOR_INSTALLED" || {
+    echo "FAIL: installer rollback did not restore previous ARM supervisor" >&2
+    exit 1
+}
+echo "PASS: failed installer restored previous ARM supervisor"
 grep -q 'legacy' "$TMPROOT/jffs/scripts/wan-event"
 [ "$(managed_snapshot_count)" -eq 3 ] || {
     echo "FAIL: failed install bypassed managed snapshot retention" >&2

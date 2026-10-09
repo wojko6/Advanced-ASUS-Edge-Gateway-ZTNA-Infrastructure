@@ -43,7 +43,7 @@ flowchart TD
     subgraph SYS["VALIDATED — router system resolver / exit-node DNS"]
         EX["Android LTE client<br/>ASUS selected as exit node"] --> PE["Tailscale exit-node DNS handling<br/>router-side PeerAPI/DoH"]
         PE --> SR["ASUS system resolver"]
-        SR --> DG{"DNS Guard v3.1"}
+        SR --> DG{"DNS Guard v3.2"}
         DG -->|"healthy steady state"| SP["Pi-hole dedicated LAN alias :53"]
         SP --> PH
         DG -->|"bootstrap / unhealthy / break-glass"| WB["Independent WAN bootstrap DNS"]
@@ -84,7 +84,7 @@ flowchart TD
   claimed only after client-specific live validation.
 - **Resolver chain:** both Pi-hole and firmware dnsmasq use Unbound on
   `127.0.0.1:53535` for ordinary external resolution.
-- **Router system resolver / exit-node DNS:** DNS Guard v3.1 keeps independent
+- **Router system resolver / exit-node DNS:** DNS Guard v3.2 keeps independent
   WAN DNS for bootstrap/fail-open states and promotes the router runtime
   resolver to the dedicated Pi-hole alias only after NTP, Unbound, Pi-hole
   listener and functional-query checks pass. A 2026-10-06 Android LTE test with
@@ -121,6 +121,20 @@ separately.
 Broad dnsmasq query logging is not enabled merely to duplicate Pi-hole history.
 
 See [Network DNS Visibility / Client Activity Analytics](../network-dns-visibility-client-activity-analytics.md).
+
+## 2026-10-08 current recovery policy: DNS Guard v3.2
+
+The diagram above reflects the current v3.2 policy merged in
+[PR #197](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/197).
+Manual sticky break-glass ON/OFF passed in a bounded production
+deployment. In the 2026-10-08 physical cold boot **with Entware present**,
+the watchdog registered before the Entware mount and the router returned
+automatically from independent WAN bootstrap DNS to Pi-hole.
+
+The v3.1 dated test below remains **historical**, not v3.2 coverage.
+Missing Entware, dual local/bootstrap failure injection and complete
+installer deployment remain outside the v3.2 live acceptance.
+See [v3.2 live validation](../dns-guard-v3.2-recovery-audit-live-validation.md).
 
 ## 2026-10-06 DNS Guard and exit-node DNS validation
 

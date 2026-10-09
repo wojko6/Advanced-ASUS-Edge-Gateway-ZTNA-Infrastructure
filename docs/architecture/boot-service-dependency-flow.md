@@ -19,7 +19,8 @@ flowchart TD
     DM --> SLATE["Later Entware startup work"]
 
     MS["Merlin services-start"] --> LK["Acquire services-start lock"]
-    LK --> OP["Wait for /opt readiness<br/>bounded timeout"]
+    LK --> DG["Schedule DNS Guard watchdog<br/>BEFORE /opt readiness wait"]
+    DG --> OP["Wait for /opt readiness<br/>bounded timeout"]
     OP --> AS["If AMTM ownership detected:<br/>wait for Entware startup to settle"]
     AS --> TC{"tailscaled already stable?"}
     TC -->|"yes"| TP["Preserve current tailscaled"]
@@ -31,9 +32,8 @@ flowchart TD
     UB -->|"yes"| UK["Preserve current Unbound"]
     UB -->|"no"| UR["Validate config and recover Unbound directly"]
     UR --> RD["restart dnsmasq<br/>after successful recovery"]
-    UK --> DG["Schedule DNS Guard watchdog<br/>AsusEdgeDNSGuard"]
-    RD --> DG
-    DG --> SL["Preserve/start optional syslog-ng"]
+    UK --> SL["Preserve/start optional syslog-ng"]
+    RD --> SL
     SL --> FW["Run /jffs/scripts/firewall-start"]
     FW --> OK["services startup completed"]
     OK --> HC["healthcheck.sh available<br/>manual / validation step<br/>not auto-run by services-start"]
@@ -73,8 +73,21 @@ flowchart TD
 - firewall-start is required. Required service/firewall failures cause services-start to exit non-zero.
 - healthcheck.sh is an explicit validation tool; services-start does not automatically invoke it.
 - wan-event-handler is a separate WAN-connected recovery path. It delegates resolver selection to DNS Guard instead of hard-coding `127.0.0.1`: the initial pass fails open to WAN bootstrap DNS when the local stack is not yet healthy, a bounded wait gives dnsmasq/Unbound time to settle, and a second DNS Guard pass promotes the runtime resolver to Pi-hole only when the full local path is ready. Tailscale is restarted only after the resolver policy step.
-- services-start recreates the named `AsusEdgeDNSGuard` cron watchdog. The watchdog re-evaluates the same policy once per minute and keeps sticky break-glass priority over automatic Pi-hole promotion.
+- The active `/jffs/scripts/services-start` registers `AsusEdgeDNSGuard` before its `/opt` readiness wait. Cron re-evaluates DNS policy once per minute, preserving sticky break-glass priority. A separate, inactive add-on `services-start` copy was observed out of sync with the active hook and should be reconciled during a future controlled installer maintenance.
 - The 2026-10-06 full cold-boot validation returned NTP, Unbound, Pi-hole, Tailscale, the DNS Guard watchdog and the Pi-hole steady-state runtime resolver without reproducing the earlier DNS/NTP/Unbound dependency cycle.
+
+## Real cold boot — 2026-10-08, Entware available
+
+The operator performed a physical power-off/power-on cycle. Pre-NTP logs
+show the watchdog scheduled at 01:00:40 **before** Entware mounted at
+01:00:44. The router initially used independent WAN bootstrap DNS and
+converged to Pi-hole within the sampled first two minutes. Unbound,
+Pi-hole FTL, Tailscale and syslog-ng were running; final project
+healthcheck: **0 failures / 0 warnings**.
+
+Boot without Entware, simultaneous local/bootstrap failures and
+full-installer acceptance were not exercised. See the
+[v3.2 production runbook and waiver matrix](../dns-guard-v3.2-recovery-audit-live-validation.md).
 
 ## Traceability
 

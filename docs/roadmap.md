@@ -1,11 +1,11 @@
 # Roadmap
 
-### Current reference router checkpoint — 2026-10-06
+### Current reference router checkpoint — 2026-10-08
 
 - Current router: ASUS TUF-AX5400 / GNUton 3004.388.11_1.
 - Current live Tailscale: **1.103.375 unstable/dev**; earlier 1.102.3 evidence
   is historical pre-upgrade state.
-- DNS Guard v3.1 cold-boot/fail-open policy is production-validated.
+- **Current DNS Guard v3.2** (PR #197 merged); bounded manual ON/OFF and power-cycle boot with Entware available passed. v3.1 remains a dated historical checkpoint.
 - Planned next router: **ASUS RT-BE88U / compatible Asuswrt-Merlin 3006.x**.
 - OPNsense/x86 is not the current migration target; keep it only as a future
   contingency if requirements exceed the ASUS platform.
@@ -16,7 +16,7 @@ Completed on 2026-10-06:
 
 - #130 — protected `main` / required Validation suite;
 - #177 — Tailscale package/live-version drift and downgrade hardening;
-- DNS Guard v3.1 — cold-boot/fail-open resolver control.
+- DNS Guard v3.1 — historical 2026-10-06 milestone; v3.2 is now current (PR #197 merged 2026-10-08).
 
 Still open:
 
@@ -26,8 +26,21 @@ Still open:
 - #108 — remaining DNS-visibility retention/rollback/interception work;
 - #68 — DoH/DoQ/encrypted-DNS assessment;
 - #143 — Trusted/IoT/Guest segmentation design before RT-BE88U migration.
+- #200 — complete **separately reviewed** directory hardening. A local 698-entry expected-mode comparison and clean healthcheck were reported on 2026-10-08, but owner/mode justification and end-to-end backup/restore/installer rollback evidence still gate closure.
+- PR #202 — **open workstation-only** reproducible Unbound 1.26.1-1 ARMv7 rebuild candidate, not an Unbound upgrade or production rollout.
+- DNS Guard follow-up — unmountable Entware at boot and simultaneous local/bootstrap DNS faults remain untested live; maintenance window only.
 
 
+
+### 2026-10-08 documentation and observability synchronization
+
+PR #197 merged after an up-to-date 4/4 PASS Validation suite.
+Grafana's present YAML defines **15** alert rules: nine from the
+2026-10-07 RouterCloud checkpoint, one earlier sustained DNS Guard
+fail-open rule, and five additional DNS Guard recovery checks. The
+five new alerts were observed loaded in Grafana, but individual
+Firing/inbox delivery was not established. The nine-rule narrative
+below is **historical**.
 
 ## Completed and validated — observability baseline
 
@@ -63,7 +76,7 @@ so missing collector data does not masquerade as WAN-down evidence. A dedicated
 e-mail contact point is also provisioned and the WAN-speed rule has bounded
 end-to-end firing and resolved e-mail evidence. PR #190 then extended the
 baseline to nine rules, added four RouterCloud backup/maintenance failure and
-staleness rules, routed all nine current rules to the existing e-mail contact
+staleness rules, routed all nine **then-current** rules to the existing e-mail contact
 point, and live-tested `routercloud_backup_bad` through firing and recovery.
 Issue #178 now owns grouping/anti-flap and mobile/critical escalation rather than
 RouterCloud backup coverage itself.
@@ -75,9 +88,10 @@ messages after collector restoration.
 
 **Immediate continuation:** keep the completed Engineering/CI dashboard baseline
 stable and continue issue #178 with anti-flap/grouping validation and a bounded
-mobile/critical notification path. The current nine-rule e-mail routing and
-RouterCloud backup/maintenance alert baseline are already merged and validated
-within their documented boundaries.
+mobile/critical notification path. That **nine-rule 2026-10-07 checkpoint** and RouterCloud backup/maintenance
+alert validation remain historical facts. The **current 2026-10-08 YAML has 15**
+rules directed to the e-mail receiver; individual firing and inbox delivery of
+the five newly loaded DNS Guard recovery rules have not been proven.
 
 The #127 LAN-management/WAN-exposure hardening, #128 IPv6/Wi-Fi security
 parity evidence and #130 GitHub main-ruleset/required-validation work are
