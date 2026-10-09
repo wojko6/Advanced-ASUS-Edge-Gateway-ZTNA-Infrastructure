@@ -6,6 +6,8 @@
 
 This runbook extends the [router DR baseline](router-disaster-recovery.md). It records critical order and acceptance criteria, not a claim that restoring three archives automatically rebuilds the machine.
 
+For the **fully blank firmware/JFFS/SSD scenario**, use the detailed Polish [bare-router and blank-SSD recovery procedure](router-bare-metal-recovery-pl.md). It explicitly includes access restoration, disk reconstruction, stage gates, source provenance and stop/rollback criteria.
+
 ## Phase 0 — recovery authorization and prerequisites
 
 1. Diagnose the actual failure. Prefer read-only inspection and service-specific recovery over restoring a working device.
