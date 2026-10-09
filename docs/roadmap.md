@@ -26,7 +26,8 @@ Still open:
 - #108 — remaining DNS-visibility retention/rollback/interception work;
 - #68 — DoH/DoQ/encrypted-DNS assessment;
 - #143 — Trusted/IoT/Guest segmentation design before RT-BE88U migration.
-- #200 — harden remaining world-writable backup/rollback directories.
+- #200 — complete **separately reviewed** directory hardening. A local 698-entry expected-mode comparison and clean healthcheck were reported on 2026-10-08, but owner/mode justification and end-to-end backup/restore/installer rollback evidence still gate closure.
+- PR #202 — **open workstation-only** reproducible Unbound 1.26.1-1 ARMv7 rebuild candidate, not an Unbound upgrade or production rollout.
 - DNS Guard follow-up — unmountable Entware at boot and simultaneous local/bootstrap DNS faults remain untested live; maintenance window only.
 
 
@@ -87,9 +88,10 @@ messages after collector restoration.
 
 **Immediate continuation:** keep the completed Engineering/CI dashboard baseline
 stable and continue issue #178 with anti-flap/grouping validation and a bounded
-mobile/critical notification path. The current nine-rule e-mail routing and
-RouterCloud backup/maintenance alert baseline are already merged and validated
-within their documented boundaries.
+mobile/critical notification path. That **nine-rule 2026-10-07 checkpoint** and RouterCloud backup/maintenance
+alert validation remain historical facts. The **current 2026-10-08 YAML has 15**
+rules directed to the e-mail receiver; individual firing and inbox delivery of
+the five newly loaded DNS Guard recovery rules have not been proven.
 
 The #127 LAN-management/WAN-exposure hardening, #128 IPv6/Wi-Fi security
 parity evidence and #130 GitHub main-ruleset/required-validation work are
