@@ -1,7 +1,8 @@
 # Router disaster-recovery baseline
 
-**Tracking:** #100  
-**Status:** design / validation in progress
+**Tracking:** #100 (historical), #129 (Pi-hole recovery)
+
+**Status:** verified private recovery archives; end-to-end router rebuild pending
 
 ## Goal
 
@@ -252,17 +253,64 @@ Before #100 can close:
 - [x] post-restore validation covers storage, swap, Tailscale, DNS/Unbound, firewall and project healthcheck for the 2026-09-27 baseline;
 - [x] published evidence is sanitized.
 
-### Post-Pi-hole DR extension status
+### Post-Pi-hole DR extension status — 2026-10-09
 
-The checklist above closed issue #100 against the pre-Pi-hole reference state.
-Because Pi-hole was adopted on 2026-09-28, full current-state DR requires an
-additional controlled rebuild that proves Pi-hole package/service
-reconstruction, dedicated alias/startup ordering, filtering policy rebuild,
-DHCP-only-Pi-hole advertisement, reverse DNS and Pi-hole -> Unbound behavior.
+Issue #100 covered the earlier, pre-Pi-hole DR baseline.
+Issue #129 extends recovery validation to the current DNS stack.
 
-Until that extension is tested, describe the project as having a **validated
-project/archive DR baseline with a documented Pi-hole recovery gap**, not a
-fully revalidated clean-room rebuild of every current DNS component.
+Verified private off-router recovery artifacts:
+
+- ASUS Edge CORE: encrypted archive, checksum verification,
+  clean-room dry-run/apply, and independent comparison of
+  39 restored files.
+- Pi-hole: dedicated Fedora-side generator, six offline
+  regression tests, read-only production capture, encrypted
+  archive and independent archive acceptance.
+- Native ASUS settings CFG: encrypted private export,
+  checksum verification and decrypted-payload hash match.
+  Actual firmware import has not been tested.
+
+The current Pi-hole archive contains 15 source files and
+four manifest files. Independent validation confirmed the
+complete file set, SHA-256 manifest, SQLite Gravity integrity,
+Pi-hole UID/GID and mode contracts, and the FTL capabilities
+manifest.
+
+The earlier archive-metadata defect was corrected in the
+generator: the Pi-hole directory is archived as 999:999 0755,
+and gravity.db as 999:999 0640. The original backup and
+separately corrected archival v2 remain private.
+
+The post-mount hook is preserved as a review-only reference.
+It must not be automatically deployed over AMTM-managed
+startup integration.
+
+The FTL capability set is recorded in the private manifest;
+TAR contents do not independently establish the file
+security.capability attribute after restoration. A recovery
+operator must restore and verify that capability set on the
+appropriate FTL binary and target filesystem.
+
+Separate lab tests validated ARMv7 FTL startup, Gravity
+filtering, Pi-hole -> Unbound DNS traffic and DNSSEC behavior.
+These checks do not constitute a complete firmware and
+Entware rebuild.
+
+Remaining #129 acceptance work:
+
+1. Document and validate reconstruction of Entware, package
+   versions, service identities, file ownership and capabilities.
+2. Restore and review swap-before-Entware startup ordering,
+   dedicated Pi-hole LAN alias and Unbound runtime ownership.
+3. Execute a controlled post-reboot persistence and healthcheck
+   acceptance when an approved maintenance window is available.
+4. Keep plaintext configuration, encrypted recovery archives,
+   credentials and native CFG payloads out of the public repo.
+
+Therefore, describe the current state as **verified private DR
+artifacts and clean-room recovery components**, not a fully
+validated end-to-end replacement-router rebuild.
+
 
 ## Out of scope
 
