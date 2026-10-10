@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-10-09 (final documentation reconciliation; current-state findings include same-day BusyBox and issue #200 acceptance)
+**Status date:** 2026-10-10 (documentation reconciliation of operator-reported #212 lab and #129 read-only follow-up; no new production deployment)
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
@@ -9,6 +9,16 @@
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
+
+## 2026-10-10 — client DNS continuity lab #212 and optional BusyBox persistence
+
+**No new production client DNS failover:** the live DHCP main-LAN client path still advertises the on-router Pi-hole `192.168.50.253` and Unbound loopback remains its upstream. Existing DNS Guard v3.2 is an accepted **router-system resolver** recovery mechanism, **not** a proven failover mechanism for every LAN or Tailscale client. The last broad production reboot/healthcheck checkpoint remains **2026-10-09**; today's router #212 inspection was **read-only**.
+
+[Issue #212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212) remains **OPEN / OFF-ROUTER LAB / NOT DEPLOYED**. Operator-reported Fedora source-copy/private-kernel RC1–RC12 gates passed within their scoped tests; RC13 inspection established the actual managed firewall wrapper/target source parity and identified the GNUton firmware's dnsmasq **name-scoped stop** hazard. RC13 private renamed-process lifecycle tests and RC13b portable **x86_64** SmartDNS/dnsmasq synthetic UDP/TCP and private-name tests passed in Fedora. The RC13c cryptographic signature **fixture** accepted a signed Ed25519 record and rejected a forged one, but **full dnsmasq + SmartDNS DNSSEC resolver validation remains PENDING** and ARMv7 firmware runtime/privilege/restart behavior is NOT TESTED. No production standby listener, DNS-service restart, firewall/NAT/DHCP/conntrack mutation, #212 code merge or authorized single-client pilot occurred. A failed download-only x86_64 archive attempt on the router did not leave an archive or running SmartDNS process in read-only follow-up. See [dated lab evidence](evidence/2026-10-10/issue-212-client-dns-failover-lab.md), [worklog](docs/worklog/2026-10-10.md) and [issue technical record](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212#issuecomment-6101709148).
+
+**Separate #129 read-only update:** the previously installed optional JFFS BusyBox 1.36.1 passed explicit execution/SHA-256 checks plus the `stat -c %Z` versus `/proc/stat btime` gate: **BUSYBOX_REBOOT_PERSISTENCE=PASS** on the existing router. The stock firmware BusyBox 1.25.1 remains unchanged. Optional `tools/` is still absent from CORE backup, clean-device reinstall and removal/rollback are untested, and full Pi-hole-aware replacement-router recovery **#129 remains OPEN**. [2026-10-10 evidence](evidence/2026-10-10/issue-129-custom-busybox-reboot-persistence.md) supersedes only the older *persistence untested* finding, not the dated 9 October worklog or wider DR scope.
+
+**Planning:** #217 is an ARMv7 Tailscale **research/build candidate**, not an upgrade; #216 is optional independent-host DNS research, not deployed HA. The revised DNS Guard-first priority order is in [#82](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/82) and [roadmap](docs/roadmap.md). Production Tailscale remains documented at reference `1.103.375` unstable/dev pending a fresh live provenance check.
 
 ## 2026-10-09 — Pi-hole offline package rebuild gate (#129; off-router only)
 

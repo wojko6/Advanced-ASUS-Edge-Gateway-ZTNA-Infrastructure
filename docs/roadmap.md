@@ -1,6 +1,6 @@
 # Roadmap
 
-### Current reference router checkpoint — 2026-10-09
+### Current reference router checkpoint — 2026-10-10 (documentation review; last broad live gate 2026-10-09)
 
 - Current router: ASUS TUF-AX5400 / GNUton 3004.388.11_1.
 - Current live Tailscale: **1.103.375 unstable/dev**; earlier 1.102.3 evidence
@@ -17,7 +17,13 @@ other utilities for explicitly scoped operator commands. The firmware's
 BusyBox 1.25.1 and /bin/sh remain authoritative; no global PATH or DNS Guard
 startup change is planned. See [safe usage and rollback contract](custom-busybox-armv7.md).
 The binary is not part of the current CORE backup; optional recovery follows
-basic router restoration. #200 subsequently closed after the full protected-tree audit and isolated tests; this optional tool **does not close #129**, and its own post-install reboot persistence/removal remains untested.
+basic router restoration. #200 was closed after the full protected-tree audit and isolated tests. The optional tool's latest-reboot persistence **PASS** was recorded on 2026-10-10 after a read-only existing-router comparison; its removal/rollback and clean-device restore remain untested, and **#129 stays OPEN**. See [follow-up evidence](../evidence/2026-10-10/issue-129-custom-busybox-reboot-persistence.md).
+
+### 2026-10-10 DNS Guard-first engineering checkpoint (design/lab, not deployed)
+
+The accepted **router-system** DNS Guard v3.2 and the main-LAN Pi-hole → Unbound topology remain unchanged. [#212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212) now records selected-source **client** failover RC1–RC12 isolated Fedora tests, read-only GNUton lifecycle research, RC13 process-name risk, RC13b SmartDNS/dnsmasq parity and RC13c cryptographic fixture. **The full RC13c DNSSEC resolver run is PENDING; no new ASUS standby, fallback NAT/filter or DHCP configuration is deployed.**
+
+Execution order: #129/#196 recovery and evidence, #142 client-visible observation and #214 missing-cron detection, #213 cache-resistant fresh recursion, #212 design/firmware-matched testing, and guarded #215 validation before any separately approved single-client pilot. #217 is an isolated Tailscale ARMv7 build research item; #216 independent Pi-hole remains optional hardware research, not HA. This addendum supersedes older DNS-related ordering only. See [2026-10-10 worklog](worklog/2026-10-10.md) and [lab evidence](../evidence/2026-10-10/issue-212-client-dns-failover-lab.md).
 
 ### Current CORE closeout priorities
 

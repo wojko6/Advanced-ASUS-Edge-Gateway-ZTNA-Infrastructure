@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-10-09
+**Last reviewed:** 2026-10-10 (dated #212/#129 documentation sync; no deployment test)
 
 **Applies to:** `main`
 

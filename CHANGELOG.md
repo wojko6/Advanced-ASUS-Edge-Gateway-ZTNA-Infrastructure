@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Added
+- **2026-10-10 client DNS engineering record:** published sanitized off-router #212 RC1–RC13c worklog and lab evidence, separating Fedora kernel/SmartDNS/dnsmasq gates and **signed DNSSEC fixture PASS** from the **PENDING full resolver gate**, actual Merlin runtime and any unapproved production deployment.
+- **2026-10-10 optional BusyBox acceptance follow-up:** recorded operator-reported existing-router latest-reboot persistence plus explicit hash/invocation checks; retained open #129 blank-device recovery and optional utility removal/rollback gaps. The earlier 2026-10-09 result remains a dated historical observation.
 - **2026-10-09 closeout:** documented independently installed optional static ARMv7 BusyBox 1.36.1 with SHA-256, QEMU/router tests, EN/PL guidance, unchanged firmware BusyBox and explicit DR gaps (merged PR #208).
 - **2026-10-09 permission-hardening evidence:** recorded the final 698-object #200 audit (0 group/world-writable, 0 symlinks, one retained 999:999 Pi-hole file), bounded runtime source/cron inventory and test-only 0700 installer/restore regressions from merged PR #209 (8/8 CI); issue #200 closed with no claim of production emergency rollback.
 - **2026-10-09 Pi-hole recovery:** added sanitized verified private CORE/Pi-hole/CFG evidence, one controlled existing-router reboot with DNS Guard recovery (healthcheck 0/0), the English staged Pi-hole rebuilding runbook and Polish bare-router emergency procedure (PRs #204/#205); full blank-device DR #129 stays open.
