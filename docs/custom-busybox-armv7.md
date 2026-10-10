@@ -1,6 +1,6 @@
 # Optional BusyBox 1.36.1 for ASUS TUF-AX5400 (ARMv7)
 
-**Status (2026-10-09):** independently installed alongside firmware BusyBox; reported live checksum, selected applets and project healthcheck PASS. This is an **optional operator tool**, not a firmware replacement or a new dependency of the boot/DNS recovery path.
+**Status (2026-10-10):** separately installed optional BusyBox passed the 2026-10-09 live checksum/applet/healthcheck checks and a **later read-only latest-reboot persistence gate**. This remains an **on-demand operator tool**, not a firmware replacement or new early-boot DNS dependency.
 
 **Reference platform:** ASUS TUF-AX5400; GNUton Asuswrt-Merlin 3004.388.11_1-gnuton1_tuf; ARMv7, Linux 4.1.52. See [dated evidence](../evidence/2026-10-09/custom-busybox-armv7-live-validation.md).
 
@@ -100,14 +100,14 @@ During a clean-device rebuild:
 3. Obtain the validated ARM binary from the **separately retained trusted off-router artifact** (or rebuild from reviewed source and toolchain), verify the exact ELF/size/SHA-256 and use an isolated staging/install flow to publish the versioned location.
 4. Run the read-only verification above and record JFFS capacity, healthcheck, and any actual reboot persistence result.
 
-A complete empty-router/empty-SSD rebuild and post-install reboot persistence of this optional tool have **not** been verified. Keep these gates open in issue #129.
+A complete empty-router/empty-SSD rebuild and optional-tool removal/rollback remain **NOT TESTED**. A separate [2026-10-10 operator-reported read-only check](../evidence/2026-10-10/issue-129-custom-busybox-reboot-persistence.md) established the versioned binary's **latest-reboot persistence PASS** on the existing reference router, not on a cleanly rebuilt target. Keep #129 open.
 
 ## Tested scope and open boundaries
 
 **Operator-reported PASS (2026-10-09):** source SHA-256; ARM static build and QEMU tests; /tmp binary transfer and live hash/selected applets; versioned JFFS install and exact hash; original /bin/busybox unchanged; four issue #200 protected trees reporting zero symlinks/world-writable objects when audited using the custom FIND; full project healthcheck 0 failures and 0 warnings.
 
-**Not proven:** all 402 applets under ASUS firmware; applet-semantic equivalence with vendor BusyBox; production rollout/rollback of new PATH links; restart persistence of the optional tool; exact clean-device reconstruction; or Bit-for-bit reproducibility across new toolchain images.
+**Not proven:** all 402 applets under ASUS firmware; applet-semantic equivalence with vendor BusyBox; production rollout/rollback of new PATH links; optional-tool **removal/rollback**; exact clean-device reconstruction; or bit-for-bit reproducibility across new toolchain images. The separate 2026-10-10 latest-reboot persistence check is PASS on this existing device only.
 
-**Later same-day result:** issue #200 was closed as completed for the scoped JFFS directory mode audit after a separate 698-object metadata review and PR #209 isolated install/restore regressions. That outcome **does not** upgrade this optional BusyBox binary's untested post-install reboot persistence or removal/rollback to PASS. See [final #200 evidence](../evidence/2026-10-09/issue-200-final-permissions-acceptance.md).
+**2026-10-09 follow-up:** issue #200 was **closed** for the scoped 698-object JFFS permissions audit and PR #209 isolated regressions; see [final #200 evidence](../evidence/2026-10-09/issue-200-final-permissions-acceptance.md). **2026-10-10 follow-up:** latest-reboot persistence of this optional binary passed a separate read-only gate; **removal/rollback is still untested**. See [dated evidence](../evidence/2026-10-10/issue-129-custom-busybox-reboot-persistence.md).
 
-Related: [#200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) and [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129). Both issues remain open pending their broader acceptance gates.
+Related: [#200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) and [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129). Issue #200 is **CLOSED** within its original permissions scope; issue #129 remains **OPEN** pending full Pi-hole-aware disaster recovery.
