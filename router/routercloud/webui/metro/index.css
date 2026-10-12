@@ -2338,6 +2338,7 @@ body.routercloud-file-view .editor-page > .dashboard-aside {
   grid-area: info;
   grid-column: 2;
   grid-row: 1;
+  align-self: start;
   min-height: 0;
   padding: 16px 18px;
 }
