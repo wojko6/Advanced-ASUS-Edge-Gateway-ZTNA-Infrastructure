@@ -218,3 +218,26 @@ decision and not required to declare current image decode correct.
 Still pending: screenshot of actual ICO fixture View route, PDF layout
 verification, responsive viewport at mobile/tablet widths, and
 real backend Content-Type/Content-Disposition review. No ASUS changes.
+
+## Fedora ICO preview acceptance — 2026-10-12
+
+User screenshot confirms the localhost
+`http://127.0.0.1:8767/favicon.ico?view` **PASS**:
+
+- the genuine RouterCloud ICO decoded and rendered centered inside
+  the bounded, dark Metro image preview;
+- image was legible and naturally sized, with no excessive scaling;
+- compact Home/Download tiles retained their styles;
+- adjacent content-height file panel showed `favicon.ico`, type ICO,
+  `/favicon.ico`, and View mode;
+- the prior generic binary-file error was absent.
+
+Acceptance is **isolated Fedora browser UI only**. Together with
+the prior valid PNG and corrupt PNG screenshots, this completes
+the visual happy/error-path review for local native image preview.
+Image size/zoom refinement is optional, not a blocker.
+
+Pending: meaningful PDF browser fixture (the current PDF data is a
+placeholder and is not proof of rendering), mobile/tablet visual
+acceptance, and real backend MIME/disposition behavior before deployment.
+No ASUS files or services have been changed.
