@@ -20,10 +20,11 @@ A 2026-10-12 temporary synthetic `E2E-TEST-2026-10-12` rule achieved
 `Firing → automatic Gmail+Telegram delivery → Normal → Resolved delivery on
 both channels` (operator-confirmed; Firing delivery screenshots reviewed),
 without stopping production services. **Synthetic dual-channel E2E: PASS**.
-Before considering #178 closed, delete the temporary rule and restore the
-15-rule inventory, inspect grouping/anti-flap, reconcile live Telegram
-integration with tracked Email-only contact provisioning, and verify
-fallback-policy persistence without an uncontrolled production restart. Evidence:
+Afterwards the operator deleted the temporary rule and confirmed **15 rules
+remain (cleanup PASS, operator-reported)**. Before considering #178 closed,
+inspect grouping/anti-flap, reconcile live Telegram integration with tracked
+Email-only contact provisioning, and verify fallback-policy persistence
+without an uncontrolled production restart. Evidence:
 [2026-10-12](../evidence/2026-10-12/grafana-alerting-routing-audit.md).
 
 ### Optional utility extension (2026-10-09)
