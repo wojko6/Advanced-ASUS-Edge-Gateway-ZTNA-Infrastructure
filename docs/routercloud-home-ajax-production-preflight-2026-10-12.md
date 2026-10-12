@@ -286,3 +286,23 @@ not overwrite live frontend files or restart the service.
 SHA-256 `90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c`.
 The GitHub feature branch's `index.js` is **not** production-ready by
 itself because it lacks the 2026-10-11 storage hotfix.
+
+## Router-side rollback backup — 2026-10-12
+
+Operator's ASUS SSH output after running the backup-only gate:
+
+```text
+BACKUP_VERIFICATION=PASS
+LIVE_INDEX_UNCHANGED=YES
+ROUTERCLOUD_RESTARTED=NO
+```
+
+Rollback location: `/opt/var/backups/routercloud-home-ajax-20261012/index.js`.
+The original active external asset was not replaced. The backup creation
+and hash check succeeded. Before restoration, independently recheck the
+backup hash and ownership; backup existence alone does not validate a
+future restore or guarantee that a service restart succeeds.
+
+Next: transfer the locally reconciled and SHA-pinned candidate to a
+separate private file in that same directory. This staging operation
+must never touch the served asset or restart the service.
