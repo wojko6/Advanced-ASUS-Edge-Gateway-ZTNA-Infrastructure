@@ -559,3 +559,37 @@ validated in a Fedora isolated preview; no new router changes authorized.
 Home AJAX no-reload acceptance and TLS-verified JS hash, then decide
 on merging the still-draft PR #224. No additional production mutation
 has occurred as part of this documentation update.
+
+## Production Home AJAX navigation acceptance — 2026-10-12
+
+Operator confirmed `https://cloud.home.arpa` (authenticated browser)
+keeps in-page JavaScript state across the sequence
+**Ulubione -> Katalog główny**, while the dashboard can return to
+the recent-files context. Chrome/Brave DevTools control was:
+
+```js
+window.__rcTest = "OK";
+// After clicking Favorites -> Home:
+window.__rcTest  // "OK"
+```
+
+This is direct **browser acceptance that the Home action avoided a full
+document reload**. The operator supplied a screenshot showing the
+preserved `"OK"` variable, live RouterCloud layout and storage figures
+(`wolne`, `łącznie`, `zajęte`, `niedostępne`).
+
+Previously: the approved activation reported
+`ACTIVATION=PASS`, active JS SHA-256
+`90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c`
+and active revision `a6b8ba062e194c1e`; the operator also visually
+accepted text, PDF and binary file-view routes.
+
+Acceptance scope notes: this screenshot is evidence for retained browser
+state and rendered storage labels. A separate direct Fedora HTTPS
+download SHA-256 was **not supplied**; do not falsely report it as PASS.
+Save/discard, upload/download, session-policy tests were not repeated
+in this last browser screenshot. Production already has hash-pinned
+backup/rollback paths.
+
+Home AJAX feature is user-accepted. After final CI/checks, PR #224
+may be merged; the follow-on UI work is tracked under #225.
