@@ -254,3 +254,35 @@ Before staging: read the YAML `assets:` directory, verify active
 check disk free, current file ownership/mode and the init script path.
 Do not print YAML or any credential-bearing files. No service restart
 or file replacement until the operator approves a complete rollback plan.
+
+## Final production filesystem preflight — 2026-10-12
+
+Operator's router-side **read-only** checks establish:
+
+- Active frontend folder: `/opt/share/routercloud-password-recovery-20261003-163712`.
+- Active `index.js`: 87,783 bytes, root:root, regular file mode `0644`.
+- Active SHA-256: `d5052ea33917bad9314a49792bc555dd2e7ce2a3f2532aaff3b83c23e4c593b4` (unchanged from audit).
+- Disk-derived Dufs assets revision: `503161dd5bee21ac`.
+- Browser-observed current assets revision: `503161dd5bee21ac` — **MATCH**.
+- Filesystem: `/dev/sda1`, mounted on `/tmp/mnt/ENTWARE`, 60,955,772 KiB free (`df -k`), 2% used.
+- `PRODUCTION_MODIFIED=NO`.
+
+The live asset revision **currently agrees with the disk-derived hash**;
+the earlier suspected stale browser revision has been ruled out for
+the tested client and file set. This is a clean rollback/version
+baseline. No backend executable change is necessary for Home AJAX.
+
+### Next limited action — dedicated backup, no activation
+
+Prepare a dated, private **copy of the active `index.js` outside the
+RouterCloud served root** under the Entware SSD, verify its SHA-256
+against the exact known-good hash, preserve the original file, and
+record the resulting backup directory. Abort if the source hash has
+changed, the destination already exists, or disk/permissions are
+unexpected. This step writes only a separate rollback copy; it must
+not overwrite live frontend files or restart the service.
+
+**Important:** the reconciled candidate remains local on Fedora,
+SHA-256 `90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c`.
+The GitHub feature branch's `index.js` is **not** production-ready by
+itself because it lacks the 2026-10-11 storage hotfix.
