@@ -26,6 +26,7 @@
 | D-09 | Separate Windows 11 VivoBook has only one external physical Ethernet and no virtualization installed | Clarified VM has independent virtual NAT WAN + internal/host-only LAN; no second physical NIC needed for lab; no lab bridged into production and NAT egress is not full isolation | **RESEARCH PLAN ONLY** |
 | D-10 | Contradiction between closed alerting issue and future remaining polish | The closed status refers to the bounded validated acceptance. Provisioning drift, missing reload tests and per-rule checks are retained as gaps, not passed | **FOLLOW-UP OPEN, NOT RETESTED** |
 | D-11 | Other issue tracker descriptions still include old migration plan | Canonical issue #82, segmentation #143 and performance #194 carry 2026-10-12 supersession notices, retaining historical text for traceability | **ISSUE UPDATED** |
+| D-12 | The still-open RT-BE88U research Issue #159 could be mistaken for an active migration request | Added dated supersession notice at the top of [#159](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/159), keeping historical detail and leaving it open pending independent triage | **ISSUE NOTE UPDATED**; no hardware decision reversed |
 
 ## Current accepted reference — 2026-10-12
 
@@ -43,6 +44,15 @@ New: [platform decision](../architecture/platform-direction-2026-10-12.md), **th
 Updated: root `README.md`, `PROJECT-STATUS.md`, `CHANGELOG.md`; `docs/roadmap.md`, `architecture.md`, `compatibility.md`, `hardware-inventory.md`, `security.md`, `requirements.md`, `network-design.md`, `worklog/2026-10-12.md`; `docs/architecture/addressing-and-zones.md`, `availability-and-redundancy.md`, `physical-topology.md`, `high-level-trust-boundaries.md` and the **dated Markdown** architecture snapshot (with supersession note only).
 
 The separate **draft PR #227** contains the granular RC13J v0.26-v0.42 evidence and kernel-source research; do **not** claim it was merged or is part of the `main` source. The current architecture-documentation PR and PR #227 may overlap on `docs/roadmap.md` and `docs/worklog/2026-10-12.md`; reconcile these paths on review before any merge.
+
+## Additional independent PR review checkpoint — 2026-10-12
+
+- **PR #228 inspected directly:** head `e9a32daad473cfa57cc02ac8ec646cdf039a9f78`, base `0021ba3c0a193d74ce3baaa4db3897dfb2eec4c3` (`main`), 20 commits, **18 Markdown-only changed paths**, 270 additions / 94 deletions. GitHub compare: ahead 20 / behind 0, mergeable reported true, draft still open. This is a point-in-time GitHub snapshot, not a permanent merge approval.
+- **CI confirmation for the inspected head:** [Validation suite run 38290572011](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/runs/38290572011) finished with **success**. All four jobs passed: WAN handler/install rollback, ARMv7 reproducible supervisor build, static/recovery/evidence checks, and the final Validation suite gate. The static job explicitly passed its *Markdown link integrity* and *EN/PL documentation policy* steps. This confirms repository automation at that commit, **not** production ASUS behavior or every external URL/fragment.
+- **Reviews:** no PR discussion comments, formal reviews or unresolved inline review threads were returned at the inspection checkpoint. Independent review is still a merge gate.
+- **Issue cross-reference:** [#159](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/159) now carries a dated supersession note: RT-BE88U migration cancelled, historical research kept, Issue remains open for later triage. Do not silently treat its older body as the active roadmap.
+- **Overlapping PR #227:** both drafts change **`docs/roadmap.md` and `docs/worklog/2026-10-12.md`**. GitHub currently reports #228 mergeable against `main`, but that does not prove these two branches can be merged without content loss. After the first merge, explicitly review the second PR's hunks and reconcile the #212 RC13J facts before merging it.
+- **Validation provenance:** this follow-up audit edit itself creates a **new head commit**. The successful run above belongs to the *previous inspected head*; review the new commit's fresh CI results separately before marking #228 ready for review or merging. No router-side actions were performed.
 
 ## Outstanding checks and acceptance boundaries
 
