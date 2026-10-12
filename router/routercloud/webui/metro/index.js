@@ -714,6 +714,7 @@ async function navigateRouterCloudHome() {
 
     const res = await fetch(url, {
       credentials: "same-origin",
+      cache: "no-store",
       headers: {
         "Accept": "application/json",
       },
@@ -729,6 +730,19 @@ async function navigateRouterCloudHome() {
       (fresh.href && fresh.href !== "/")
     ) {
       throw new Error("Nieprawidłowe dane katalogu głównego.");
+    }
+
+    // An upload may have started while the root listing was loading.
+    // Do not swap directories while it or its retry is still active.
+    if (
+      Uploader.runnings > 0 ||
+      Uploader.queues.length > 0 ||
+      failUploaders.size > 0
+    ) {
+      showRouterCloudToast(
+        "Zakończ przesyłanie lub ponawianie plików przed zmianą katalogu."
+      );
+      return;
     }
 
     // A request begun for the previous directory must not replace
