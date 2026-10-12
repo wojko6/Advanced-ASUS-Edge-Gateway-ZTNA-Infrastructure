@@ -195,3 +195,26 @@ save within GET-only localhost fixture; its save route is simulated.
 **Pending:** CI result, user screenshots/acceptance, responsive widths,
 real backend Content-Type/Content-Disposition audit prior to deploy.
 No ASUS changes, cache revisions or service restart in this phase.
+
+## Fedora screenshot acceptance — valid and invalid PNG
+
+User supplied two localhost Fedora browser screenshots on 2026-10-12:
+
+- `http://127.0.0.1:8767/pixel.png?view`: **PASS**. The intentionally
+  small 24x24 test PNG rendered as a small centered blue square in the
+  native image preview. The file info side-panel displayed filename,
+  PNG type, path, and View mode. Action tiles and left/right columns
+  remained aligned.
+- `http://127.0.0.1:8767/broken.png?view`: **PASS**. Instead of a
+  broken native-image icon or empty region, the UI displayed the
+  expected Polish fallback message: 'Nie udało się wyświetlić obrazu.
+  Możesz pobrać plik.' The side-panel remained usable.
+
+This is visual acceptance of the **loopback fixture only**, not the
+real authenticated backend or production HTTPS. The PNG image is small
+by fixture design; optional zoom for small icons is a separate UX
+decision and not required to declare current image decode correct.
+
+Still pending: screenshot of actual ICO fixture View route, PDF layout
+verification, responsive viewport at mobile/tablet widths, and
+real backend Content-Type/Content-Disposition review. No ASUS changes.
