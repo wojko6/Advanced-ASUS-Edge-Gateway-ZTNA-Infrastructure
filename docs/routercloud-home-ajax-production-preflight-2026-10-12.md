@@ -176,3 +176,48 @@ PR source file alone is still not the deployable artifact: it lacks the live-onl
 3. Prepare a versioned router-side rollback copy outside the served data root; verify its hash, intended cleanup and restoration commands.
 4. If a service restart is necessary to update the asset revision, schedule that explicitly and test health before and after.
 5. Production deployment/activation still needs specific operator approval. No RouterCloud restart or production modification occurred.
+
+
+## Production cache evidence and revision model — 2026-10-12
+
+Operator's read-only Fedora HEAD request for the production Dufs index.js returned:
+
+| Response | Value |
+| --- | --- |
+| HTTP | 200 |
+| Cache-Control | `public, max-age=31536000, immutable` |
+| Last-Modified | `Sun, 11 Oct 2026 21:04:29 GMT` |
+| ETag | `"1791752669527-87783"` |
+| Content-Length | 87783 |
+| Production modified | NO |
+
+The live index.js is marked immutable for up to a year. Changed ETag/mtime
+at the same URL does not force browsers to revalidate during freshness.
+
+Code review: [project Dufs server](https://github.com/wojko6/dufs/blob/main/src/server.rs)
+shows that compute_assets_revision hashes the external HTML, CSS, JS and
+favicon contents and produces a 16-digit hexadecimal revision. Server::new
+calculates it ONCE at startup; index HTML substitutes the cached revision
+into the script URL parameter ?v=__ASSETS_REV__. Asset requests use
+immutable caching. The source explains why a ROUTERCLOUD-ONLY service
+restart is expected to be needed after a changed asset is installed;
+no router reboot, DNS, Tailscale, or firewall restart is indicated.
+
+### Rollout and rollback gates (design; not executed)
+
+1. Confirm active assets directory, currently loaded version, live SHA and free disk.
+2. Create a private dated backup of active JS outside the user data root;
+   retain ownership, permissions and original SHA.
+3. Stage ONLY the reconciled Fedora candidate with SHA-256
+   `90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c`.
+   Do not deploy the un-reconciled PR index.js (storage patch missing).
+4. After explicit approval: validate staged hash, copy via same-filesystem
+   temp file and atomic rename, then restart only S67routercloud.
+5. From Fedora, confirm HTTPS with TLS verification, login, rendered new
+   ?v revision, Home AJAX navigation, storage tile and file operations.
+6. If needed, restore the private JS backup atomically, restart RouterCloud
+   again to recover the original revision and repeat acceptance checks.
+
+Runtime binary/source parity must still be checked in acceptance.
+Changing a file without refreshing the server's revision risks clients
+retaining a stale immutable URL. Deployment has NOT been authorized or done.
