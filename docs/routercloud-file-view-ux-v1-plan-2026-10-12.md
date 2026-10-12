@@ -145,3 +145,53 @@ Added a static regression assertion to
 preview on Fedora, refresh the localhost fixture, and visually confirm
 the compact details card. PDF and ICO rendering still require
 dedicated acceptance; production ASUS is untouched.
+
+## Stage B — native image preview prototype
+
+TXT layout after the metadata-height change: user supplied screenshot
+showing compact four action tiles, editor immediately below and metadata
+card ending at its own content height (no vertical stretching).
+Accepted as the stable File View layout for image previews.
+
+Implemented on draft PR #226 (not on ASUS):
+
+- Native `<img>` preview in `View` routes for ICO, PNG, JPEG, WebP, GIF
+  and BMP. The decoder gets the same-origin direct file URL; no
+  third-party conversion or object URL and no extra API permissions.
+- Supported format extensions are explicitly allowlisted. SVG stays
+  in its pre-existing sandboxed iframe path pending separate security
+  review. PDF/video/audio retain their existing iframe handling.
+- An `error` event removes the failed image and displays a localized
+  non-empty fallback (`Nie udało się wyświetlić obrazu. Możesz pobrać plik.`).
+- Visuals use a bounded contain-sized image within Metro dark/bordered
+  viewport next to the compact file detail card; index dashboard unaffected.
+- Loopback fixture at port 8767 now provides a real 24x24 PNG, original
+  ICO favicon, corrupt PNG failure example, TXT and PDF placeholder.
+- Dedicated Node test simulates the image DOM and error callback without
+  network or browser. GitHub Actions `Validation suite` includes JS
+  syntax, prior Home AJAX, file layout and native image regressions.
+
+Post-pull Fedora commands:
+
+```sh
+cd ~/Projekty/routercloud-home-ajax-test
+git pull --ff-only
+node --check router/routercloud/webui/metro/index.js
+node --check tests/routercloud-file-view-preview.cjs
+node tests/test-routercloud-home-ajax.cjs
+node tests/test-routercloud-file-view-layout.cjs
+node tests/test-routercloud-file-image-preview.cjs
+bash router/routercloud/webui/metro/build-preview.sh
+# Restart existing localhost port 8767 fixture to load the new PNG routes.
+node tests/routercloud-file-view-preview.cjs
+```
+
+Manual browser checks: open localhost `favicon.ico?view`,
+`pixel.png?view`, `broken.png?view`, `demo.txt?view`,
+`report.pdf?view`. Confirm decoding and fallback; browser HTML preview
+success is not a production media acceptance. Do not attempt TXT
+save within GET-only localhost fixture; its save route is simulated.
+
+**Pending:** CI result, user screenshots/acceptance, responsive widths,
+real backend Content-Type/Content-Disposition audit prior to deploy.
+No ASUS changes, cache revisions or service restart in this phase.
