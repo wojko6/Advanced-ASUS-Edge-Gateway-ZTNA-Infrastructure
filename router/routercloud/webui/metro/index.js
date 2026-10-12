@@ -3675,6 +3675,16 @@ function setupRouterCloudFileViewUx() {
 
   // EditData does not contain size or mtime. Do not invent either.
   contents.appendChild(details);
+
+  // ROUTERCLOUD_FILE_VIEW_LAYOUT_V2
+  // The tall details panel must not stretch the action-tiles grid row.
+  // Move only the file-mode panel beside the actual preview/editor.
+  // Index pages keep the original dashboard/header DOM untouched.
+  const aside = document.querySelector(".dashboard-aside");
+  const editorPage = document.querySelector(".editor-page");
+  if (aside && editorPage) {
+    editorPage.appendChild(aside);
+  }
 }
 
 async function setupEditorPage() {
