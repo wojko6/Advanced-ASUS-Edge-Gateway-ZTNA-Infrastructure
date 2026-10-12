@@ -343,3 +343,45 @@ After staging, recheck hashes and permission/ownership boundaries;
 the eventual activation and rollback are separate operator-approved
 steps and require RouterCloud-only restart because of the immutable
 asset caching/versioning contract.
+
+## Staging acceptance and final read-only gate — 2026-10-12
+
+Operator Fedora terminal after pulling feature branch:
+
+```text
+STAGING_SCRIPT_SYNTAX=PASS
+LOCAL_CANDIDATE=PASS
+LIVE_AND_ROLLBACK_INTEGRITY=PASS
+STAGING_VERIFICATION=PASS
+STAGED_BYTES=92809
+LIVE_INDEX_UNCHANGED=YES
+ROUTERCLOUD_RESTARTED=NO
+STAGED_PATH=/opt/var/backups/routercloud-home-ajax-20261012/index.candidate.js
+```
+
+This verifies that the reconciled candidate has reached the private
+router-side staging directory, while active frontend remains unchanged.
+Production activation, restart, and backend E2E acceptance are PENDING.
+
+### Final read-only gate
+
+Run from Fedora after updating the feature branch:
+
+```sh
+cd ~/Projekty/routercloud-home-ajax-test
+git pull --ff-only
+sh -n scripts/routercloud-home-final-check.sh
+ssh -T -p 1122 admin1@ROUTER_HOST 'sh -s' < scripts/routercloud-home-final-check.sh
+```
+
+This final script checks the exact active YAML assets path, original,
+backup, and staged candidate hashes, required UI markers, and computes
+the expected next 16-character asset revision by hashing the same
+four assets as the project Dufs server with the candidate JS
+substituted virtually. It performs no router writes or restarts.
+Treat a STOP as a blocking failure; do not deploy around it.
+
+**Important source-control issue still open:** the live-only storage
+hotfix resides in the locally reconciled candidate, not yet in the PR
+`index.js`. Synchronize the PR source with the audited candidate and
+verify its exact SHA-256 before merging; do not deploy PR `index.js` as-is.
