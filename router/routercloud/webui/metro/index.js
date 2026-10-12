@@ -688,7 +688,12 @@ async function navigateRouterCloudHome() {
   ) {
     dashboardPanelMode = "recent";
     refreshDashboardPanel();
-    schedulePathRefresh(0);
+
+    // Local preview uses a static root snapshot, without /?json.
+    if (!isPreviewMode()) {
+      schedulePathRefresh(0);
+    }
+
     return;
   }
 
