@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-10-10 (documentation reconciliation of operator-reported #212 lab and #129 read-only follow-up; no new production deployment)
+**Status date:** 2026-10-12 (monitoring/alerting-only live audit and one Grafana UI fallback-policy edit; the latest broad ASUS router checkpoint remains 2026-10-09)
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
@@ -9,6 +9,33 @@
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
+
+## 2026-10-12 — Grafana/Loki monitoring audit (bounded)
+
+Operator-reported Fedora live checks confirmed Alloy, Loki and Grafana active,
+fresh Loki entries, all 15 Grafana rules enabled/evaluating with `health=ok`,
+15/15 direct receivers resolved, and manually received Gmail + Telegram
+**test** messages. The previous default Grafana policy pointed to `empty`;
+the operator changed it to `ASUS Edge Gateway Email`, and a subsequent API
+audit passed (`DEFAULT_RECEIVER_VALID=PASS`,
+`FINAL_ROUTING_AUDIT=PASS`). No router, DNS, Tailscale, or service restart was
+part of this session. The fallback-policy edit **was** a live Grafana
+configuration change.
+
+**New bounded acceptance:** a temporary `E2E-TEST-2026-10-12` Grafana rule
+fired on a synthetic `vector(1)` signal, generating **real automatic Firing
+notifications to both Gmail and Telegram** (screenshots). Reverting to
+`vector(0)` returned it to `Normal`; the operator confirmed **Resolved
+notifications on both channels**. Synthetic-rule E2E evaluation and delivery
+are **PASS**. **Cleanup PASS (operator-reported):** the temporary rule was
+deleted and the Grafana UI again showed exactly 15 rules; no independent final
+API snapshot was recorded. Still pending: grouping/anti-flap, persistence
+after reloading provisioning and reconciliation of live Email+Telegram contact
+integrations with the source-controlled Email-only provisioning file. The short metric sampling and
+missing Loki discard counter do not establish zero log loss. See
+[2026-10-12 sanitized evidence](evidence/2026-10-12/grafana-alerting-routing-audit.md)
+and [worklog](docs/worklog/2026-10-12.md). These monitoring results do not
+expand previously accepted router/DNS Guard or #212 client-failover scopes.
 
 ## 2026-10-10 — client DNS continuity lab #212 and optional BusyBox persistence
 

@@ -158,6 +158,43 @@ See [the original alerting validation evidence](../evidence/2026-09-27/grafana-a
 the [WAN-speed e-mail validation](../evidence/2026-10-06/grafana-wan-speed-email-alert-validation.md),
 and the [RouterCloud live alerting validation](../evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
 
+### 2026-10-12 Grafana and Loki live audit checkpoint
+
+The operator-reported Fedora audit verified Alloy/Loki availability and
+fresh log ingestion; 15/15 Grafana rules were unpaused, healthy, evaluated,
+inactive and directly bound to a valid existing receiver. The **live**
+Grafana contact contains one Email and one Telegram integration, and the
+operator received contact-point **test notifications** through Gmail and
+Telegram. The default policy initially named an unresolved `empty` receiver;
+the operator changed it through the Grafana UI to
+`ASUS Edge Gateway Email`. A subsequent authenticated read-only API audit
+confirmed the default receiver and all 15 direct routes (`FINAL_ROUTING_AUDIT=PASS`).
+The UI edit is a **real Grafana configuration change**, even though diagnostic
+commands were read-only.
+
+Source/live config drift remains unresolved: the tracked
+`grafana/provisioning/alerting/asus-email-contact.yml` currently defines only
+an Email integration, but the live API shows Email **and** Telegram. Never add
+live destination identifiers or Telegram tokens to Git without a separate
+secrets and provisioning design review. Grafana default-policy persistence
+across a provisioning reload/restart was **not tested**.
+
+Contact-point test messages alone are not full E2E evidence. A **separate
+2026-10-12 controlled synthetic Grafana alert** (`E2E-TEST-2026-10-12`)
+reached `Firing` with `vector(1)` / threshold 0.5 and automatically notified
+both Gmail and Telegram (screenshots reviewed). After switching back to
+`vector(0)`, the operator confirmed `Normal` and subsequent `Resolved`
+messages on both channels. **Automatic firing, recovery and dual-channel
+delivery: PASS within this temporary synthetic rule scope.** The temporary
+rule was **deleted by the operator**, who confirmed exactly **15 rules
+remain**. This completes the bounded synthetic E2E + cleanup acceptance
+(operator-reported inventory count, no additional final API snapshot). Do not treat this as per-rule firing acceptance for all 15 rules.
+The bounded 2026-10-07 RouterCloud test remains separate historical evidence. The Loki discard
+metric was not exposed; matching sent/received counter snapshots must not be
+reported as guaranteed zero loss. See
+[dated sanitized observations](../evidence/2026-10-12/grafana-alerting-routing-audit.md)
+and [worklog](../docs/worklog/2026-10-12.md).
+
 ## Pi-hole DNS activity collector
 
 Issue #108 Phase 0, the Fedora collector, local Alloy/Loki ingestion, the

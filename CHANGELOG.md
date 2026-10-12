@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- **2026-10-12 Grafana monitoring evidence:** recorded sanitized Alloy/Loki freshness and counters, 15/15 healthy Grafana rule evaluations/direct receivers, manual Email+Telegram contact delivery, and operator-corrected default receiver (API PASS). Synthetic rule-triggered `Firing → Email+Telegram` delivery, return to Normal and `Resolved` delivery on both channels passed; temporary-rule deletion and 15-rule baseline restoration also passed (operator-confirmed); provisioning drift reconciliation and reload persistence remain pending.
 - **2026-10-10 client DNS engineering record:** published sanitized off-router #212 RC1–RC13c worklog and lab evidence, separating Fedora kernel/SmartDNS/dnsmasq gates and **signed DNSSEC fixture PASS** from the **PENDING full resolver gate**, actual Merlin runtime and any unapproved production deployment.
 - **2026-10-10 optional BusyBox acceptance follow-up:** recorded operator-reported existing-router latest-reboot persistence plus explicit hash/invocation checks; retained open #129 blank-device recovery and optional utility removal/rollback gaps. The earlier 2026-10-09 result remains a dated historical observation.
 - **2026-10-09 closeout:** documented independently installed optional static ARMv7 BusyBox 1.36.1 with SHA-256, QEMU/router tests, EN/PL guidance, unchanged firmware BusyBox and explicit DR gaps (merged PR #208).
