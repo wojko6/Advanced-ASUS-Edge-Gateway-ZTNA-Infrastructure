@@ -22,8 +22,13 @@ audit passed (`DEFAULT_RECEIVER_VALID=PASS`,
 part of this session. The fallback-policy edit **was** a live Grafana
 configuration change.
 
-**Still pending:** rule-triggered Email/Telegram end-to-end acceptance,
-grouping/anti-flap, persistence after reloading provisioning and
+**New bounded acceptance:** a temporary `E2E-TEST-2026-10-12` Grafana rule
+fired on a synthetic `vector(1)` signal, generating **real automatic Firing
+notifications to both Gmail and Telegram** (screenshots). Reverting to
+`vector(0)` returned it to `Normal`; the operator confirmed **Resolved
+notifications on both channels**. Synthetic-rule E2E evaluation and delivery
+are **PASS**. Still pending: **delete the temporary rule and verify 15-rule
+baseline**, grouping/anti-flap, persistence after reloading provisioning and
 reconciliation of live Email+Telegram contact integrations with the
 source-controlled Email-only provisioning file. The short metric sampling and
 missing Loki discard counter do not establish zero log loss. See
