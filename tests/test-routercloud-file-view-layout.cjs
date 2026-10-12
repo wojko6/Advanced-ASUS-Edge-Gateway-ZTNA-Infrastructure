@@ -29,6 +29,7 @@ assert.match(src, /storage\.total - storage\.used - storage\.available/);
 assert.match(css, /body\.routercloud-file-view \.head\s*\{[^}]*"actions \.";/);
 assert.match(css, /body\.routercloud-file-view \.editor-page\s*\{[^}]*"preview info"/);
 assert.match(css, /body\.routercloud-file-view \.editor-page > \.dashboard-aside\s*\{[^}]*grid-area: info/);
+assert.match(css, /body\.routercloud-file-view \.editor-page > \.dashboard-aside\s*\{[^}]*align-self: start;/);
 assert.match(css, /body\.routercloud-file-view \.editor-page > iframe\s*\{[^}]*grid-area: preview/);
 assert.match(css, /@media \(max-width: 820px\)[\s\S]*body\.routercloud-file-view \.editor-page\s*\{[^}]*"preview"\s*"info"/);
 
