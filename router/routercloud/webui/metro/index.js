@@ -679,12 +679,15 @@ async function navigateRouterCloudHome() {
     return;
   }
 
-  // Re-clicking Home on the unfiltered root only refreshes the list.
+  // Re-clicking Home at the root returns to the default dashboard
+  // panel without reloading the page or touching saved favorites.
   if (
     location.pathname === "/" &&
     !location.search &&
     !location.hash
   ) {
+    dashboardPanelMode = "recent";
+    refreshDashboardPanel();
     schedulePathRefresh(0);
     return;
   }
@@ -795,6 +798,7 @@ async function navigateRouterCloudHome() {
     renderPathsTableHead();
     renderPathsTableBody();
     setupStorageInfo();
+    dashboardPanelMode = "recent";
     refreshDashboardPanel();
     updateArchiveSelectionUi();
     clearCompletedUploadRows();
