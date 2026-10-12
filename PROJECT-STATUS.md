@@ -27,10 +27,11 @@ fired on a synthetic `vector(1)` signal, generating **real automatic Firing
 notifications to both Gmail and Telegram** (screenshots). Reverting to
 `vector(0)` returned it to `Normal`; the operator confirmed **Resolved
 notifications on both channels**. Synthetic-rule E2E evaluation and delivery
-are **PASS**. Still pending: **delete the temporary rule and verify 15-rule
-baseline**, grouping/anti-flap, persistence after reloading provisioning and
-reconciliation of live Email+Telegram contact integrations with the
-source-controlled Email-only provisioning file. The short metric sampling and
+are **PASS**. **Cleanup PASS (operator-reported):** the temporary rule was
+deleted and the Grafana UI again showed exactly 15 rules; no independent final
+API snapshot was recorded. Still pending: grouping/anti-flap, persistence
+after reloading provisioning and reconciliation of live Email+Telegram contact
+integrations with the source-controlled Email-only provisioning file. The short metric sampling and
 missing Loki discard counter do not establish zero log loss. See
 [2026-10-12 sanitized evidence](evidence/2026-10-12/grafana-alerting-routing-audit.md)
 and [worklog](docs/worklog/2026-10-12.md). These monitoring results do not
