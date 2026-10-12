@@ -441,6 +441,13 @@ async function ready() {
   $pathContextMenu = document.getElementById("path-context-menu");
 
   setupPathContextMenu();
+  setupRouterCloudHomeNavigation();
+
+  // Browser Back/Forward restores the correct directory snapshot.
+  // In-page Home navigation itself does not reload the document.
+  window.addEventListener("popstate", () => {
+    location.reload();
+  });
 
   window.addEventListener('beforeunload', beforeUnloadHandler);
 
@@ -662,6 +669,185 @@ function addBreadcrumb(href, uri_prefix) {
   }
 }
 
+/**
+ * Return to the root directory without a full page navigation.
+ * Leave editor/view routes to their existing navigation safeguards:
+ * their document state is different from the directory index.
+ */
+async function navigateRouterCloudHome() {
+  if (DATA.kind !== "Index") {
+    return;
+  }
+
+  // Re-clicking Home at the root returns to the default dashboard
+  // panel without reloading the page or touching saved favorites.
+  if (
+    location.pathname === "/" &&
+    !location.search &&
+    !location.hash
+  ) {
+    dashboardPanelMode = "recent";
+    refreshDashboardPanel();
+
+    // Local preview uses a static root snapshot, without /?json.
+    if (!isPreviewMode()) {
+      schedulePathRefresh(0);
+    }
+
+    return;
+  }
+
+  // Avoid changing DATA and the current directory while an upload
+  // (including a pending retry) still references the old location.
+  if (
+    Uploader.runnings > 0 ||
+    Uploader.queues.length > 0 ||
+    failUploaders.size > 0
+  ) {
+    showRouterCloudToast(
+      "Zakończ przesyłanie lub ponawianie plików przed zmianą katalogu."
+    );
+    return;
+  }
+
+  if (routerCloudHomeNavRunning || pathSortRunning) {
+    return;
+  }
+
+  routerCloudHomeNavRunning = true;
+
+  try {
+    const url = new URL("/", location.href);
+    url.searchParams.set("json", "");
+
+    const res = await fetch(url, {
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+
+    await assertResOK(res);
+
+    const fresh = await res.json();
+
+    if (
+      !Array.isArray(fresh.paths) ||
+      (fresh.kind && fresh.kind !== "Index") ||
+      (fresh.href && fresh.href !== "/")
+    ) {
+      throw new Error("Nieprawidłowe dane katalogu głównego.");
+    }
+
+    // An upload may have started while the root listing was loading.
+    // Do not swap directories while it or its retry is still active.
+    if (
+      Uploader.runnings > 0 ||
+      Uploader.queues.length > 0 ||
+      failUploaders.size > 0
+    ) {
+      showRouterCloudToast(
+        "Zakończ przesyłanie lub ponawianie plików przed zmianą katalogu."
+      );
+      return;
+    }
+
+    // A request begun for the previous directory must not replace
+    // the root snapshot after we commit the navigation.
+    indexRouteEpoch++;
+
+    if (pathRefreshTimer) {
+      clearTimeout(pathRefreshTimer);
+      pathRefreshTimer = null;
+    }
+
+    pathRefreshPending = false;
+
+    Object.assign(DATA, fresh);
+    DATA.kind = "Index";
+    DATA.href = "/";
+    DATA.paths = fresh.paths;
+
+    for (const key of Object.keys(PARAMS)) {
+      delete PARAMS[key];
+    }
+
+    const search = document.getElementById("search");
+    if (search) {
+      search.value = "";
+    }
+
+    selectedArchivePaths.clear();
+    routerCloudRecentPaths = [...DATA.paths];
+    DIR_EMPTY_NOTE = DATA.dir_exists
+      ? "Pusty folder"
+      : "Folder zostanie utworzony po przesłaniu pliku";
+
+    // The new URL is committed only after the server has returned
+    // a valid directory listing; Back reloads its original location.
+    history.pushState(
+      { routercloudAjaxHome: true },
+      "",
+      "/"
+    );
+    document.title = "RouterCloud — /";
+
+    document.querySelector(".breadcrumb")?.replaceChildren();
+    addBreadcrumb(DATA.href, DATA.uri_prefix);
+
+    $pathsTableBody.replaceChildren();
+    $pathsTable.classList.add("hidden");
+    $emptyFolder.classList.add("hidden");
+
+    renderPathsTableHead();
+    renderPathsTableBody();
+    setupStorageInfo();
+    dashboardPanelMode = "recent";
+    refreshDashboardPanel();
+    updateArchiveSelectionUi();
+    clearCompletedUploadRows();
+  } catch (err) {
+    console.warn("RouterCloud home navigation failed:", err);
+    await metroNotice({
+      title: "Nie można otworzyć katalogu głównego",
+      message: err.message,
+    });
+  } finally {
+    routerCloudHomeNavRunning = false;
+  }
+}
+
+function setupRouterCloudHomeNavigation() {
+  document.addEventListener("click", event => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    const link = event.target?.closest?.(
+      'a.root-home, .breadcrumb a[title="Katalog główny"]'
+    );
+
+    if (
+      !link ||
+      link.origin !== location.origin ||
+      DATA.kind !== "Index"
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    void navigateRouterCloudHome();
+  });
+}
+
 function formatStorageBytes(size) {
   const [value, unit] = formatFileSize(size);
   const localizedValue = String(value).replace(".", ",");
@@ -672,6 +858,12 @@ let pathRefreshTimer = null;
 let pathRefreshRunning = false;
 let pathRefreshPending = false;
 let pathSortRunning = false;
+
+// ROUTERCLOUD_HOME_AJAX_V1
+// Incremented on a directory change so older list requests cannot
+// overwrite the directory that Home just displayed.
+let indexRouteEpoch = 0;
+let routerCloudHomeNavRunning = false;
 
 const completedUploadRows = new Set();
 
@@ -880,6 +1072,7 @@ async function refreshCurrentIndex() {
   }
 
   pathRefreshRunning = true;
+  const routeEpoch = indexRouteEpoch;
 
   try {
     const refreshUrl =
@@ -926,6 +1119,10 @@ async function refreshCurrentIndex() {
 
     const fresh =
       await res.json();
+
+    if (routeEpoch !== indexRouteEpoch) {
+      return false;
+    }
 
     DATA.paths =
       Array.isArray(fresh.paths)
@@ -1767,8 +1964,8 @@ function setupStorageInfo() {
 
   $storageInfo.innerHTML = `
     <div class="storage-card-copy">
-      <strong>${formatStorageBytes(storage.available)}</strong>
-      <span>dostępne z ${formatStorageBytes(storage.total)}</span>
+      <strong>${formatStorageBytes(storage.available)} wolne</strong>
+      <span>z ${formatStorageBytes(storage.total)} łącznie</span>
     </div>
 
     <div
@@ -1782,7 +1979,7 @@ function setupStorageInfo() {
     </div>
 
     <div class="storage-card-meta">
-      <span>${formatStorageBytes(storage.used)} zajęte</span>
+      <span>${formatStorageBytes(storage.used)} zajęte · ${formatStorageBytes(Math.max(0, storage.total - storage.used - storage.available))} niedostępne</span>
       <span>${percent}</span>
     </div>
   `;
