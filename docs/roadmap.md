@@ -16,11 +16,14 @@ The Fedora monitoring-host audit verified 15/15 enabled healthy Grafana rules
 with valid direct receiver assignments; the default fallback receiver was
 corrected from `empty` to `ASUS Edge Gateway Email` and confirmed via API.
 Email and Telegram **contact test** messages reached the operator.
-This is not yet a dual-channel `Firing → delivery → recovery` acceptance.
-Before considering #178 closed, perform a bounded reversible end-to-end test,
-inspect grouping/anti-flap, reconcile live Telegram integration with tracked
-Email-only contact provisioning, and verify fallback-policy persistence
-without an uncontrolled production restart. Evidence:
+A 2026-10-12 temporary synthetic `E2E-TEST-2026-10-12` rule achieved
+`Firing → automatic Gmail+Telegram delivery → Normal → Resolved delivery on
+both channels` (operator-confirmed; Firing delivery screenshots reviewed),
+without stopping production services. **Synthetic dual-channel E2E: PASS**.
+Before considering #178 closed, delete the temporary rule and restore the
+15-rule inventory, inspect grouping/anti-flap, reconcile live Telegram
+integration with tracked Email-only contact provisioning, and verify
+fallback-policy persistence without an uncontrolled production restart. Evidence:
 [2026-10-12](../evidence/2026-10-12/grafana-alerting-routing-audit.md).
 
 ### Optional utility extension (2026-10-09)
