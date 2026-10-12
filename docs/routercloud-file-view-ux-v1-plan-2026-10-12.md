@@ -78,3 +78,48 @@ their behavior.
 **Out of scope:** main dashboard visual redesign, API additions, metadata
 invention, changing authentication/edit policies, router changes, new storage
 services or a Dufs ARMv7 rebuild.
+
+## Stage A v2 — editor-adjacent file information
+
+User reviewed localhost TXT file-view screenshot and identified a large
+vertical dead zone between compact action tiles and the text editor.
+Root cause: the file details side-panel and action tiles occupied the same
+CSS grid row in `.head`; the taller aside dictated the row's height, pushing
+the whole `.main` editor below the aside even though tiles were short.
+
+Revision, **isolated branch only**:
+
+- `setupRouterCloudFileViewUx()` moves the existing `.dashboard-aside`
+  DOM node **only for Edit/View routes** into `.editor-page`, after
+  populating file information; Index DOM/layout remains untouched.
+- The single-file `.head` now has breadcrumb and action rows only;
+  `margin-bottom: 14px` eliminates the visual dead zone.
+- `.editor-page` is a two-column grid: left preview/editor, right
+  `Informacje o pliku`; alignment, dimensions and 16px gutter
+  mirror the existing Metro column ratio.
+- Responsive rule <=820px stacks content first, metadata second.
+- `iframe` PDF, `.editor` textarea and `.not-editable` fallback all
+  occupy the same left `preview` grid area. Existing edit permissions
+  and save/discard callbacks stay unchanged.
+- Added `tests/test-routercloud-file-view-layout.cjs` as a
+  source-level regression for route scope, node relocation, layout
+  and lack of invented size/mtime.
+
+**Local Fedora verification** from the UX branch:
+
+```sh
+cd ~/Projekty/routercloud-home-ajax-test
+git pull --ff-only
+node --check router/routercloud/webui/metro/index.js
+node tests/test-routercloud-file-view-layout.cjs
+bash router/routercloud/webui/metro/build-preview.sh
+# If the existing localhost fixture at port 8767 is still running,
+# it serves the rewritten preview files automatically.
+curl -fsS -o /dev/null -w 'FILE_VIEW_HTTP=%{http_code}\n' \\
+  'http://127.0.0.1:8767/demo.txt?view'
+```
+
+Manual browser acceptance required: TXT at 127.0.0.1:8767/demo.txt?view
+has its editor directly under actions; PDF and unsupported ICO layouts
+do not leave a header gap; information panel aligns beside preview on
+desktop and below on mobile. No production writes/restarts.
