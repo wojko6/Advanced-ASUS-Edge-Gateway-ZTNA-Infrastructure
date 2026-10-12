@@ -23,7 +23,6 @@ esac
 
 SOURCE="$HOME/Archiwa/RouterCloud-Home-AJAX-20261012/index.candidate.js"
 EXPECTED_CANDIDATE='90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c'
-EXPECTED_LIVE='d5052ea33917bad9314a49792bc555dd2e7ce2a3f2532aaff3b83c23e4c593b4'
 
 if [[ ! -f "$SOURCE" || -L "$SOURCE" ]]; then
     echo 'LOCAL_CANDIDATE_INVALID=STOP' >&2
