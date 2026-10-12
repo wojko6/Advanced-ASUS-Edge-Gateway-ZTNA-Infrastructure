@@ -62,3 +62,24 @@ Operator-supplied Fedora rootless network-namespace lab log:
 Local operator log reported: `~/Archiwa/ASUS-Edge-Issue-212/rc13j-evidence/dns-sidecar-v41-20261012-185722.log` (not committed; not independently read). The test proves neither deployment feasibility nor spoof-proof / reset-proof origin authentication on Merlin 4.1.52.
 
 **Decision:** do not promote current routed sidecar gateway to production. Next gate is read-only firmware kernel/iptables capability inventory and off-router provenance-stronger routing/proxy architecture exploration, **without changing route_localnet, dnsmasq, DNS Guard or firewall on ASUS**.
+
+## RC13J v0.42 follow-up — ASUS read-only kernel feasibility audit (2026-10-12)
+
+Operator-reported actual ASUS TUF-AX5400 output:
+
+| Feature | Observation | Confidence boundary |
+| --- | --- | --- |
+| Kernel/toolchain | `4.1.52`, `armv7l`, `iptables v1.4.15` | Confirmed live |
+| `/proc/self/ns/net` | `NETNS_HANDLE=NOT_FOUND` | Strong warning: network namespaces **not confirmed**, possible disabled `CONFIG_NET_NS` or platform-specific proc behavior; not a compile-time proof |
+| `/sys/module/veth` | `NOT_VISIBLE` | No evidence of veth loaded/built in; visibility alone cannot prove absent support |
+| `xt_TPROXY`, `xt_socket`, `nf_tproxy_core` | `NOT_VISIBLE` | TPROXY/socket match not demonstrated; neither module load nor actual support tested |
+| `/sys/module/nf_conntrack` | `PRESENT` | Existing conntrack |
+| `/proc/net/ip_tables_targets` | `DNAT`, `MARK`, `REDIRECT` reported | Listed loaded/registered targets; MARK alone is **not** TPROXY or provenance authentication |
+| `/proc/config.gz` | `KERNEL_CONFIG=UNAVAILABLE` | Kernel build options still unknown |
+| Safety markers | Read-only complete; no modules loaded, no iptables/sysctl/service changes | `ASUS_PRODUCTION=UNTOUCHED` |
+
+**Decision:** **NO-GO for deployment planning based on the v0.41 veth/netns sidecar** until firmware-matched ability to instantiate netns/veth has been established by trustworthy non-production evidence. It is inappropriate to assume Fedora netns capabilities carry to Merlin 4.1.52. Even if netns were supported, v0.41's selected-source *direct gateway* bypass remains a separate blocker. TPROXY is similarly **UNPROVEN**, not declared definitively impossible. Do not load modules, change kernel/sysctl, append firewall rules or attempt namespace creation on production to force proof.
+
+**Next design direction:** compare feasible alternatives using already-proven iptables DNAT/REDIRECT/conntrack and a separately isolated resolver **outside the ASUS network namespace / potentially on a separate always-on host**. An alternate resolver must be independent of shared Unbound for an Unbound failure case. Prove source scope, UDP/TCP, direct-host/bypass policy, normal Pi-hole filtering, synthetic faults, failback and risk during independent INPUT reset in Fedora lab; keep extra hardware and production placement as explicit choices, not foregone conclusions. An independent physical host also does *not* eliminate the ASUS single point of failure for routed client traffic.
+
+References for feature semantics: `CONFIG_NET_NS` required for netns (network_namespaces(7)); kernel TPROXY documentation requires its target/socket match and policy routing, plus transparent socket support.
