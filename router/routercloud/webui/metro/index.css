@@ -2328,10 +2328,33 @@ body.routercloud-file-view .editor-page {
 
 body.routercloud-file-view .editor-page > .editor,
 body.routercloud-file-view .editor-page > .not-editable,
-body.routercloud-file-view .editor-page > iframe {
+body.routercloud-file-view .editor-page > iframe,
+body.routercloud-file-view .editor-page > .routercloud-image-preview {
   grid-area: preview;
   min-width: 0;
   width: 100%;
+}
+
+/* ROUTERCLOUD_FILE_IMAGE_PREVIEW_V1 */
+body.routercloud-file-view .routercloud-image-preview {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  max-height: min(80vh, 820px);
+  margin: 0;
+  padding: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: #0b0e13;
+}
+
+body.routercloud-file-view .routercloud-image-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: min(72vh, 740px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 body.routercloud-file-view .editor-page > .dashboard-aside {
