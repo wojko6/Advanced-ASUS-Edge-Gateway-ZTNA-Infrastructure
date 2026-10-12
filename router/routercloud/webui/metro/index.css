@@ -2286,9 +2286,10 @@ body.routercloud-file-view .head {
   grid-template-columns: minmax(0, 2fr) minmax(260px, 0.78fr);
   grid-template-areas:
     "breadcrumb breadcrumb"
-    "actions recent";
+    "actions .";
   gap: 12px 16px;
-  align-items: stretch;
+  align-items: start;
+  margin-bottom: 14px;
 }
 
 body.routercloud-file-view .toolbox {
@@ -2315,10 +2316,28 @@ body.routercloud-file-view .toolbox .control::after {
   font-size: 13px;
 }
 
-body.routercloud-file-view .dashboard-aside {
-  grid-area: recent;
+/* File preview and file details share a row; the detail panel no
+   longer dictates the height of the action-tile header. */
+body.routercloud-file-view .editor-page {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 0.78fr);
+  grid-template-areas: "preview info";
+  gap: 16px;
+  align-items: start;
+}
+
+body.routercloud-file-view .editor-page > .editor,
+body.routercloud-file-view .editor-page > .not-editable,
+body.routercloud-file-view .editor-page > iframe {
+  grid-area: preview;
+  min-width: 0;
+  width: 100%;
+}
+
+body.routercloud-file-view .editor-page > .dashboard-aside {
+  grid-area: info;
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   min-height: 0;
   padding: 16px 18px;
 }
@@ -2367,14 +2386,20 @@ body.routercloud-file-view .dashboard-panel-header h2 {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "breadcrumb"
-      "actions"
-      "recent";
+      "actions";
   }
 
-  body.routercloud-file-view .dashboard-aside {
-    grid-area: recent;
+  body.routercloud-file-view .editor-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "preview"
+      "info";
+  }
+
+  body.routercloud-file-view .editor-page > .dashboard-aside {
+    grid-area: info;
     grid-column: 1;
-    grid-row: auto;
+    grid-row: 2;
   }
 }
 
