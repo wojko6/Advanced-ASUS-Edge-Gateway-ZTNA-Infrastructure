@@ -36,6 +36,10 @@ startup change is planned. See [safe usage and rollback contract](custom-busybox
 The binary is not part of the current CORE backup; optional recovery follows
 basic router restoration. #200 was closed after the full protected-tree audit and isolated tests. The optional tool's latest-reboot persistence **PASS** was recorded on 2026-10-10 after a read-only existing-router comparison; its removal/rollback and clean-device restore remain untested, and **#129 stays OPEN**. See [follow-up evidence](../evidence/2026-10-10/issue-129-custom-busybox-reboot-persistence.md).
 
+### Issue #212 kernel extension feasibility — 2026-10-12 (source-only)
+
+Public Broadcom/Merlin source inspection: TUF-AX5400 uses production 4.1.52/ARMv7 (operator reports no netns handle); the RT-BE88U model profile selects 4.19 on BCM6813. The **generic** ARM64 defconfig has `VETH=m`, while an optional OpenSync config generator supports VETH/TPROXY; however `BUILD_OPENSYNC` is disabled in the RT-BE88U model profile, and **the exact shipped model kernel .config and module ABI were not obtained**. **Decision:** NO-GO for any production router custom kernel and for 6.x rebase; CONDITIONAL GO for offline final-config reproduction and vendor-module/build compatibility research only. Even available netns/veth would not solve v0.41's direct-gateway bypass. See [kernel-extension source feasibility assessment](design/issue212-kernel-extension-feasibility-2026-10-12.md).
+
 ### Issue #212 RC13J engineering checkpoint — 2026-10-12 (lab only)
 
 The previously documented topology remains authoritative: **main-LAN Pi-hole -> Unbound** and **firmware dnsmasq -> the same Unbound at 127.0.0.1:53535**. Reusing current dnsmasq can at most bypass a failed Pi-hole/FTL while Unbound stays healthy; it is **not independent DNS continuity across Unbound outage**. DNS Guard v3.2 remains a separate router-system-resolver policy.
