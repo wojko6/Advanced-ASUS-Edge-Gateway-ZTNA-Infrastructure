@@ -526,3 +526,36 @@ if appropriate. Avoid sharing session cookies, credentials or user files.
 If any material acceptance test fails, use the separately verified
 `scripts/routercloud-home-rollback.sh` and report all markers.
 **PR #224 remains Draft/unmerged pending browser acceptance.**
+
+## Post-activation visual check and UX handoff — 2026-10-12
+
+Operator reported production `cloud.home.arpa` **looks OK** and provided
+screenshots from three file-view states: TXT editor/view, embedded PDF
+and binary/ICO fallback. These show the web frontend serving these
+routes after the Home AJAX asset activation.
+
+**Observed/accepted:** page and brand render, file-view action tiles,
+TXT contents, PDF viewer area, fallback message for binary file.
+**Not independently proven by these screenshots:** the actual AJAX
+Home transition without document reload, live JS payload hash over
+validated HTTPS, save/discard and upload/download regressions.
+
+GitHub Actions `Validation suite` for deployment documentation head
+`27757a1600e5592a3318fe7bfc3a218b2a2eb99d` concluded **success**
+(run 38269448848). Production activation had already reported
+`ACTIVATION=PASS` and `LIVE_ASSETS_REV=a6b8ba062e194c1e`.
+
+### UX follow-on
+
+Created [File View UX v1.0 issue #225]
+(https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/225):
+compact action tiles, suppress blank storage panel, real file metadata
+in place of empty Recent panel, optional native browser image/ICO preview.
+Main dashboard remains out of scope. UX branch must be based on a
+**merged, accepted mainline Home AJAX implementation** and first
+validated in a Fedora isolated preview; no new router changes authorized.
+
+**Remaining closure checkpoint:** receive the operator's production
+Home AJAX no-reload acceptance and TLS-verified JS hash, then decide
+on merging the still-draft PR #224. No additional production mutation
+has occurred as part of this documentation update.
