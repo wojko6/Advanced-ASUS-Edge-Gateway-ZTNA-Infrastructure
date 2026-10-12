@@ -8,7 +8,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
-const app = path.join(__dirname, "../router/routercloud/webui/metro/index.js");
+const app = process.env.ROUTERCLOUD_INDEX_JS ||
+  path.join(__dirname, "../router/routercloud/webui/metro/index.js");
 const source = fs.readFileSync(app, "utf8");
 new vm.Script(source, { filename: "routercloud-metro-index.js" });
 
