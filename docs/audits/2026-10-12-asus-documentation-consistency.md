@@ -50,3 +50,10 @@ The separate **draft PR #227** contains the granular RC13J v0.26-v0.42 evidence 
 - Current router not touched; no live hardware/OPNsense, client DNS failover, new kernel or WAN changes.
 - Existing historical plans remain findable. Their RT-BE88U claim is explicitly overridden; no rewrite of old test reports, worklogs or PDF binary.
 - No asserted universal performance of a future OPNsense or automatically resilient frontend: actual backend independence, DNSSEC, Pi-hole policy parity, DHCP, source-address visibility, PF routing and independent restore all require future VM tests.
+
+## Validation performed on the GitHub documentation branch
+
+- GitHub compare before the final audit note: `main...docs/2026-10-12-asus-core-opnsense-research-pivot` reported **18 changed files**, all Markdown documentation, zero changes to code/configuration/runtime/scripts.
+- Checked **321 local Markdown links** across those 18 changed files against the branch's recursive Git tree. **Zero unresolved file references**; the two initially unmatched raw targets (`docs/case-studies/` and `evidence/`) were links to existing **directories**, not missing files. This does not validate external HTTPS destinations or Markdown fragment/anchor IDs.
+- The GitHub `Validation suite` workflow was observed **in progress** on the branch during review. This audit makes **no CI PASS claim**; inspect the final checks before any merge.
+- Draft PR [#228](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/228) holds these documentation changes. PR #227 remains a separate draft; reconcile their common roadmap/worklog files when merging. `main` has not been changed by this branch.
