@@ -52,3 +52,26 @@ favorites -> Home panel reset, upload-in-progress behavior, network-error
 fallback and the browser Back/Forward path. The preview models the
 initial root view only; nested-path navigation requires live API or a
 mock JSON endpoint.
+
+### Full browser navigation check (isolated subfolder fixture)
+
+The regular Metro preview at port 8765 emulates **only the root directory**.
+For a real browser check of the transition from a folder back to root, first
+rebuild the static preview, then start the separate localhost-only fixture:
+
+```sh
+bash router/routercloud/webui/metro/build-preview.sh
+node --check tests/routercloud-home-browser-preview.cjs
+node tests/routercloud-home-browser-preview.cjs
+```
+
+Open `http://127.0.0.1:8766/Testowy/`. Click **Katalog główny**.
+Expected: URL becomes `/`, the table changes from the single synthetic
+`plik-testowy-z-podfolderu.txt` to the root preview list **without loading a new
+HTML document**. The **Ulubione** panel should switch to **Ostatnio dodane**
+when Home is clicked. Browser Back should return to `/Testowy/` (a reload
+on Back is intentional). Use Ctrl+C to stop the fixture server.
+
+The fixture only serves synthetic demo data and the static preview assets
+on `127.0.0.1:8766`. It never connects to or modifies the ASUS router.
+It does not replace final validation against the actual RouterCloud backend.
