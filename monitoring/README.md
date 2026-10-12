@@ -186,8 +186,9 @@ both Gmail and Telegram (screenshots reviewed). After switching back to
 `vector(0)`, the operator confirmed `Normal` and subsequent `Resolved`
 messages on both channels. **Automatic firing, recovery and dual-channel
 delivery: PASS within this temporary synthetic rule scope.** The temporary
-rule **still requires deletion and verification of the original 15-rule
-baseline**. Do not treat this as per-rule firing acceptance for all 15 rules.
+rule was **deleted by the operator**, who confirmed exactly **15 rules
+remain**. This completes the bounded synthetic E2E + cleanup acceptance
+(operator-reported inventory count, no additional final API snapshot). Do not treat this as per-rule firing acceptance for all 15 rules.
 The bounded 2026-10-07 RouterCloud test remains separate historical evidence. The Loki discard
 metric was not exposed; matching sent/received counter snapshots must not be
 reported as guaranteed zero loss. See
