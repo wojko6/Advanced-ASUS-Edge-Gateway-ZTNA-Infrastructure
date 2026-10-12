@@ -1,0 +1,47 @@
+# Issue #212 — RC13J client DNS continuity checkpoint (2026-10-12)
+
+**Status: OFF-ROUTER LABORATORY / NOT DEPLOYED / ISSUE OPEN.**
+This is a sanitized, operator-reported checkpoint. It does not represent a firmware-validated production pilot, and no experimental standby listener, client-failover DNAT, firewall patch, DNS service, or DHCP change was installed on the ASUS.
+
+## Existing production topology — already documented
+
+Do **not** rediscover or redesign this established baseline without a new reason:
+
+- Main-LAN DHCP advertises only Pi-hole FTL at the router's dedicated `192.168.50.253:53` alias; Pi-hole is the filtering endpoint.
+- Firmware dnsmasq owns `192.168.50.1:53`, loopback port 53, and router Tailscale port 53 for existing DHCP/local-name and DNS interception paths.
+- **Both Pi-hole and firmware dnsmasq forward ordinary external queries to the same Unbound at `127.0.0.1:53535`.** An existing dnsmasq bypass can serve as continuity when Pi-hole alone fails **while Unbound is healthy**, but is **not independent failover when Unbound fails**.
+- DNS Guard v3.2 is an independently accepted **router-system-resolver** bootstrap/steady-state mechanism, **not** the unfinished LAN/Tailscale client failover of issue #212.
+
+See `docs/architecture/dns-enforcement-flow.md`, `docs/architecture.md`, `config/dnsmasq.conf.add.example`, and issue #212. This dependency was documented before 2026-10-12; v0.37–v0.40 were read-only confirmations, not new architecture discoveries.
+
+## Operator-reported off-router laboratory results
+
+| Checkpoint | Scope and evidence | Outcome |
+| --- | --- | --- |
+| RC13C / RC13J v0.26 | Synthetic signed DNSSEC good/forged behavior on original ARMv7 dnsmasq under QEMU, combined with Fedora private kernel NAT/INPUT/filter reload, witness revocation and re-attestation | **PASS** within synthetic/private lab; no public DNSSEC root-to-leaf, no actual ASUS kernel |
+| v0.27–v0.28 | Read-only ASUS: Linux 4.1.52, iptables/ip6tables 1.4.15, loaded conntrack/DNAT/REDIRECT, source-managed LAN/Tailscale NAT order; INPUT has 17 rules, Tailscale at #1, LAN NEW accept at #9, loopback NEW accept at #10. IPv6 service/stack disabled at observation | **AUDIT PASS**; no router packet test |
+| v0.29 | Four private Fedora hook-order permutations with real UDP/TCP packet ACL, NAT parent ordering, intentional unguarded exposure and restored filter priority | **FINAL PASS** (corrected textual marker `UNGARDED`) |
+| v0.30 | Full observed INPUT match predicates and Tailscale chain pattern modeled; synthetic selected/unselected UDP/TCP DNAT emergency and rollback | **FINAL PASS**; ancillary ASUS jump-chain bodies and native firmware runtime not validated |
+| v0.31 | Guard-only, disabled-only `firewall-start` candidate built from pinned original; mock idempotence, stale emergency ignored, no standby DNAT, source and patch remain review-only | **MOCK PASS**; candidate not installed and not production-eligible |
+| v0.32 | Same candidate adapted *temporarily* to Fedora isolated netfilter; actual UDP/TCP client checks, direct `:55353` deny, idempotence, no emergency DNAT | **PRIVATE KERNEL PASS** |
+| v0.33 | Coordinated listener gate: listener starts only after guard verification, is quiesced before planned INPUT reset, refuses startup after guard drift/install failure and requires fresh verification | **PRIVATE KERNEL PASS**; independent firmware INPUT reset still unsafe |
+| v0.34 | Adversarial uncoordinated INPUT reset with `0.0.0.0:55353` wildcard listener: LAN reaches exposed listener on both UDP/TCP before watchdog stop | **EXPOSURE REPRODUCED; SAFETY GATE FAIL BY DESIGN**. Correct adversarial test result, unresolved blocker for wildcard model |
+| v0.35 | First loopback-only trial timed out due to guard blocking even `lo` probes | **FAILED TEST**; not a passing isolation claim |
+| v0.35b | Corrected loopback-only test separates blocked local guard probe from post-reset available local resolver; external LAN/Tailscale/WAN direct access remains blocked across private tested resets | **PRIVATE KERNEL PASS**; original guard still blocks local loopback DNS |
+| v0.36 | Scoped INPUT allow exceptions for `lo` destination `127.0.0.1:55353`, UDP/TCP, before port drop; repeated installs, missing exception repair, fully emptied INPUT policy ACCEPT and 17-rule rebuild | **FINAL PASS**. Loopback local access and external direct denial in tested private netfilter; **functional client DNS failover NOT IMPLEMENTED** |
+| v0.37–v0.40 | Read-only ASUS verification: separate pihole-FTL `192.168.50.253:53`, dnsmasq `:53`, Unbound on loopback TCP/UDP port `53535`; `route_localnet=0` on examined interfaces, IPv6 disabled, no `:55353` listener; no TPROXY loaded in examined table | **READ-ONLY AUDIT PASS**; confirms prior documented architecture |
+
+Acceptance excerpts provided by operator: `RC13J_V26_EXTERNAL_ACCEPTANCE=PASS`, `RC13J_V29_CORRECTED_ACCEPTANCE=PASS`, `RC13J_V30_EXTERNAL_ACCEPTANCE=PASS`, `RC13J_V31_EXTERNAL_ACCEPTANCE=PASS`, `RC13J_V32_EXTERNAL_ACCEPTANCE=PASS`, `RC13J_V33_EXTERNAL_ACCEPTANCE=PASS`, `RC13J_V34_EXTERNAL_ACCEPTANCE=PASS`, `RC13J_V35B_EXTERNAL_ACCEPTANCE=PASS`, `RC13J_V36_EXTERNAL_ACCEPTANCE=PASS`. These attest to the defined laboratory test scenarios; `RC13J_V34_EXPOSURE_SAFETY_GATE=FAIL_BY_DESIGN` must **not** be relabeled as a safety PASS.
+
+## Engineering decision and mandatory gates
+
+1. **Reject wildcard standby `0.0.0.0:55353` for production**, because independent INPUT reset caused immediate UDP/TCP LAN exposure. A periodic watcher does not provide zero-exposure guarantees.
+2. **Retain loopback-only, scoped-access model as an off-router isolation proof**, not a fully working client-failover design. The original DNAT-to-`:55353` approach cannot simply forward LAN/Tailscale clients to `127.0.0.1:55353` with the currently disabled `route_localnet`. Do **not** enable route_localnet or modify firmware dnsmasq to make a test green.
+3. **Independent external DNS resolution is essential for the Unbound-failure case.** Reusing the existing firmware dnsmasq with its current Unbound upstream cannot meet it. Pi-hole Gravity filtering will be bypassed in a deliberately approved emergency policy; warn and audit which clients are allowed.
+4. Next off-router design gate: compare **concrete transport candidates** from selected LAN/Tailscale `/32` DNS queries to an independent isolated resolver without a publicly reachable standby socket or global DNS policy change; prove actual UDP **and** TCP response routing, original-destination/source ACL, local-name and private PTR nonleak, DNSSEC validation, failure/rollback, forged/unauthorized access and *uncoordinated* filter reset.
+5. Follow with firmware-matched ARMv7/kernel 4.1.52 behavior, startup/service restart and process supervision, stale conntrack handling, bounded memory tests, failure injection and an explicit **separately authorized single-client pilot**. IPv6 currently disabled; re-enabling it requires a new separate gate.
+6. Keep a single managed `firewall-start` and existing `flock` semantics. Preserve existing Pi-hole, DNS Guard v3.2, Unbound, Tailscale, NAT and DHCP, with **no router changes** and **no general/global conntrack flush** in current work.
+
+### Documentation/implementation boundary
+
+The v0.26–v0.36 laboratory scripts, candidate patches and operator logs reside in off-router evidence/archive paths; they are **not deployed production source** and this checkpoint does not upload them. A passing Fedora namespace test is not proof of safety on Merlin Linux 4.1.52. Issue #212 remains OPEN.
