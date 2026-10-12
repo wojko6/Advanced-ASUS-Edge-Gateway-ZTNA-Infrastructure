@@ -20,3 +20,33 @@ Rules:
 - preserve storage information;
 - preserve Polish localization;
 - validate functionality before deployment to the router.
+
+## Home navigation (ROUTERCLOUD_HOME_AJAX_V1)
+
+- In a directory index, the Home tile and the root breadcrumb load `/?json`
+  and update the directory list without a whole-page reload.
+- Re-clicking Home on the unfiltered root refreshes its listing via AJAX.
+- The original link remains the fallback in Edit/View pages, protecting
+  the editor's unsaved document state.
+- Home waits for active/queued/failed uploads to be resolved, including
+  a second check after the JSON response.
+- In-flight older directory-list AJAX responses cannot overwrite a
+  completed Home transition (route epoch).
+- Back/Forward deliberately reloads the destination to restore the correct
+  directory snapshot (there is no general SPA router yet).
+- Favorites/Recent panel mode is retained; search, sort and archive
+  selection are cleared on return Home.
+- A failed Home fetch leaves the current view and URL unchanged.
+
+Validation on Fedora, before packaging/deploying the ASUS ARMv7 binary:
+
+```sh
+node tests/test-routercloud-home-ajax.cjs
+bash router/routercloud/webui/metro/build-preview.sh
+```
+
+Also manually verify root click (no document reload), subfolder -> Home,
+favorite panel persistence, upload-in-progress behavior, network-error
+fallback and the browser Back/Forward path. The preview models the
+initial root view only; nested-path navigation requires live API or a
+mock JSON endpoint.
