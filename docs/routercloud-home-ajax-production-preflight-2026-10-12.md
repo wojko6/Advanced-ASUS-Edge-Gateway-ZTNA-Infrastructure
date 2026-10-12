@@ -422,3 +422,64 @@ JavaScript frontend source should be tracked.
 
 **Status:** not merged, no production file replacement, no service
 restart. Explicit operator approval remains mandatory for activation.
+
+## Approved controlled activation — 2026-10-12
+
+The operator explicitly approved production activation of the frontend-only
+Home AJAX update after all candidate, rollback and revision gates passed.
+Project CI for the previous commit 7a87990 was green (Validation suite).
+
+To avoid an unreviewed manual sequence, two **operator-executed** RouterCloud-
+only scripts were added and are subject to CI/static validation:
+
+- `scripts/routercloud-home-activate.sh`: on-router pinned source, backup
+  and staged-candidate SHA-256 gates; YAML asset path and old version
+  checks; atomic same-filesystem `index.js` switch with original
+  root:root/0644 file metadata; RouterCloud-only S67routercloud restart;
+  post-restart hash/revision check; rollback attempt via `trap` on any
+  non-success after file replacement.
+- `scripts/routercloud-home-rollback.sh`: manual restore from the
+  independently checked rollback copy, same-filesystem atomic replacement
+  and RouterCloud-only restart; blocks unknown active versions.
+
+**Operator command after CI passes, from Fedora:**
+
+```sh
+cd ~/Projekty/routercloud-home-ajax-test
+git pull --ff-only
+sh -n scripts/routercloud-home-activate.sh
+sh -n scripts/routercloud-home-rollback.sh
+ssh -T -p 1122 admin1@192.168.50.1 'sh -s' < scripts/routercloud-home-activate.sh
+```
+
+The restart may interrupt RouterCloud briefly. No firmware, router reboot,
+Pi-hole, firewall, DNS Guard or Tailscale change is intended. The SSH
+transport is for the operator; this GitHub documentation update is not
+a remote deployment.
+
+**Expected activation markers:** `RECHECK_LIVE_AND_ROLLBACK=PASS`,
+`RECHECK_STAGED_CANDIDATE=PASS`,
+`EXPECTED_NEW_ASSETS_REV=a6b8ba062e194c1e`,
+`ACTIVE_INDEX_SWITCH=PASS`, `ROUTERCLOUD_RESTART_COMMAND=PASS`,
+`LIVE_ASSETS_REV=a6b8ba062e194c1e`, `ACTIVATION=PASS`.
+Basic process/HTTP health is still separate from this command. **Final
+Fedora/browser acceptance** must check genuine HTTPS certificate
+validation, login, `index.js?v=a6b8ba062e194c1e`, Home AJAX
+(Favorites -> Home -> Recent and subfolder -> Home -> Back),
+storage metrics, upload/download and relevant service logs.
+
+If the activation command returns an error after file replacement,
+its exit trap attempts automatic rollback. Read **all markers** before
+any additional operation. If production browser acceptance later fails
+(despite `ACTIVATION=PASS`), run this operator-only rollback command:
+
+```sh
+ssh -T -p 1122 admin1@192.168.50.1 'sh -s' < scripts/routercloud-home-rollback.sh
+```
+
+After rollback, expect the original live hash
+`d5052ea33917bad9314a49792bc555dd2e7ce2a3f2532aaff3b83c23e4c593b4`
+and original asset revision `503161dd5bee21ac`.
+
+**Status at document creation:** scripts prepared, not executed,
+production not changed or restarted; PR #224 still Draft and not merged.
