@@ -18,6 +18,7 @@ ASSET = "router/routercloud/webui/metro/index.js"
 STORAGE_START = "function setupStorageInfo() {"
 STORAGE_END = "\n// ROUTERCLOUD_BACKUP_TILE_V1"
 NAV_MARKER = "ROUTERCLOUD_HOME_AJAX_V1"
+EXPECTED_LIVE_SHA256 = "d5052ea33917bad9314a49792bc555dd2e7ce2a3f2532aaff3b83c23e4c593b4"
 STORAGE_MARKERS = ("wolne", "łącznie", "niedostępne")
 
 
@@ -84,6 +85,8 @@ def main() -> int:
     try:
         live_bytes = args.live.read_bytes()
         live = live_bytes.decode("utf-8")
+        if digest(live_bytes) != EXPECTED_LIVE_SHA256:
+            raise ReconcileRejected("LIVE_SHA256_CHANGED_REAUDIT_REQUIRED")
         feature = asset.read_text(encoding="utf-8")
         base_bytes = subprocess.check_output(
             ["git", "-C", str(repo), "show", f"{BASE_COMMIT}:{ASSET}"],
