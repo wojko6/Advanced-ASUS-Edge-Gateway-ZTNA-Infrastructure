@@ -92,3 +92,67 @@ echo '=== CHECK COMPLETE ==='
 - Production-only drift reconciliation: **PENDING**.
 - Rollback, asset cache/revision, live validation: **PENDING**.
 - Production activation: **NOT DONE**.
+
+## Read-only audit observed on ASUS (operator output)
+
+On 2026-10-12 the operator reported:
+
+- `ACTIVE_INDEX=READABLE`
+- `ACTIVE_INDEX_BYTES=87783`
+- `ACTIVE_INDEX_SHA256=d5052ea33917bad9314a49792bc555dd2e7ce2a3f2532aaff3b83c23e4c593b4`
+- `FEATURE_wolne=PRESENT`
+- `FEATURE_łącznie=PRESENT`
+- `FEATURE_niedostępne=PRESENT`
+- `FEATURE_ROUTERCLOUD_HOME_AJAX_V1=ABSENT`
+- `PRODUCTION_MODIFIED=NO`
+
+This proves the **presence of markers**, not complete parity with tracked
+source. No claim is made about unknown changes without a full read-only diff.
+
+## Fedora reconciliation gate (never edits the ASUS)
+
+The scripts are part of draft PR #224 and run **on Fedora**:
+
+```sh
+cd ~/Projekty/routercloud-home-ajax-test
+git pull --ff-only
+
+# Supply the same router SSH target you normally use (SSH port defaults to 1122).
+bash scripts/routercloud-home-fetch-live.sh admin1@ROUTER_HOST
+
+python3 tests/test-routercloud-home-reconcile.py
+
+python3 scripts/routercloud-home-reconcile.py \
+  "$HOME/Archiwa/RouterCloud-Home-AJAX-20261012/production-index.js" \
+  --out "$HOME/Archiwa/RouterCloud-Home-AJAX-20261012/index.candidate.js"
+```
+
+The fetch script parses the current YAML `assets:` path **on the router** but
+streams bytes to Fedora over SSH (no remote writes). The local copy must match
+the exact audited SHA-256 above; otherwise fail closed and re-audit.
+
+The reconciliation script uses the pinned feature-branch base commit
+`d68efba6c4e995408b63160893bed63a097e322c`. It permits only production
+differences inside `setupStorageInfo()`, checks all three known storage labels,
+and requires that the feature branch has not independently altered that function.
+It does not overwrite tracked source, the exported live copy, or any existing
+candidate. If it reports `REJECTED`, inspect the drift; **do not force a deploy**.
+
+After `ROUTERCLOUD_RECONCILE=PASS`:
+
+```sh
+CANDIDATE="$HOME/Archiwa/RouterCloud-Home-AJAX-20261012/index.candidate.js"
+
+node --check "$CANDIDATE"
+ROUTERCLOUD_INDEX_JS="$CANDIDATE" node tests/test-routercloud-home-ajax.cjs
+ROUTERCLOUD_PREVIEW_INDEX_JS="$CANDIDATE" \
+  bash router/routercloud/webui/metro/build-preview.sh
+```
+
+Only after that: browse the local Metro preview; verify the storage tile still
+reads `wolne`, `łącznie` and `niedostępne`, and repeat the Home behavior.
+The actual backend/auth/cache and rollback acceptance remain separate gates.
+
+Never paste the complete live JavaScript into a chat or commit it to GitHub
+without inspecting its contents. The staged candidate under `~/Archiwa`
+is **not** the deployed artifact.
