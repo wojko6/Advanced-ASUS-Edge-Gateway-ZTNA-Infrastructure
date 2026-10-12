@@ -10,6 +10,19 @@
 - OPNsense/x86 is not the current migration target; keep it only as a future
   contingency if requirements exceed the ASUS platform.
 
+### Grafana alerting acceptance checkpoint — 2026-10-12
+
+The Fedora monitoring-host audit verified 15/15 enabled healthy Grafana rules
+with valid direct receiver assignments; the default fallback receiver was
+corrected from `empty` to `ASUS Edge Gateway Email` and confirmed via API.
+Email and Telegram **contact test** messages reached the operator.
+This is not yet a dual-channel `Firing → delivery → recovery` acceptance.
+Before considering #178 closed, perform a bounded reversible end-to-end test,
+inspect grouping/anti-flap, reconcile live Telegram integration with tracked
+Email-only contact provisioning, and verify fallback-policy persistence
+without an uncontrolled production restart. Evidence:
+[2026-10-12](../evidence/2026-10-12/grafana-alerting-routing-audit.md).
+
 ### Optional utility extension (2026-10-09)
 
 A separately installed BusyBox 1.36.1 ARM EABI5 adds FIND/TIMEOUT/SHA256SUM and
