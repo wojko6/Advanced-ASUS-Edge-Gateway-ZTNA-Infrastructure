@@ -158,6 +158,36 @@ See [the original alerting validation evidence](../evidence/2026-09-27/grafana-a
 the [WAN-speed e-mail validation](../evidence/2026-10-06/grafana-wan-speed-email-alert-validation.md),
 and the [RouterCloud live alerting validation](../evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md).
 
+### 2026-10-12 Grafana and Loki live audit checkpoint
+
+The operator-reported Fedora audit verified Alloy/Loki availability and
+fresh log ingestion; 15/15 Grafana rules were unpaused, healthy, evaluated,
+inactive and directly bound to a valid existing receiver. The **live**
+Grafana contact contains one Email and one Telegram integration, and the
+operator received contact-point **test notifications** through Gmail and
+Telegram. The default policy initially named an unresolved `empty` receiver;
+the operator changed it through the Grafana UI to
+`ASUS Edge Gateway Email`. A subsequent authenticated read-only API audit
+confirmed the default receiver and all 15 direct routes (`FINAL_ROUTING_AUDIT=PASS`).
+The UI edit is a **real Grafana configuration change**, even though diagnostic
+commands were read-only.
+
+Source/live config drift remains unresolved: the tracked
+`grafana/provisioning/alerting/asus-email-contact.yml` currently defines only
+an Email integration, but the live API shows Email **and** Telegram. Never add
+live destination identifiers or Telegram tokens to Git without a separate
+secrets and provisioning design review. Grafana default-policy persistence
+across a provisioning reload/restart was **not tested**.
+
+Contact-point delivery tests are **not** proof of fully automatic
+`Firing → notification → Resolved` delivery. The bounded 2026-10-07
+RouterCloud firing/recovery test remains historical, and the new combined
+automatic Email+Telegram E2E check remains **PENDING**. The Loki discard
+metric was not exposed; matching sent/received counter snapshots must not be
+reported as guaranteed zero loss. See
+[dated sanitized observations](../evidence/2026-10-12/grafana-alerting-routing-audit.md)
+and [worklog](../docs/worklog/2026-10-12.md).
+
 ## Pi-hole DNS activity collector
 
 Issue #108 Phase 0, the Fedora collector, local Alloy/Loki ingestion, the
