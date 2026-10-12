@@ -30,7 +30,27 @@ if (baseData.kind !== "Index") {
   process.exit(1);
 }
 
+// Deterministic, locally generated 24x24 PNG fixture.
+const samplePng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAAIklEQVR42mMUadjBQA3AxEAlMGrQqEGjBo0aNGrQqEHkAwCIgwF8iotDSwAAAABJRU5ErkJggg==",
+  "base64"
+);
+
 const entries = {
+  "/pixel.png": {
+    kind: "View",
+    editable: false,
+    routercloud_allow_edit: false,
+    bytes: samplePng,
+    mime: "image/png",
+  },
+  "/broken.png": {
+    kind: "View",
+    editable: false,
+    routercloud_allow_edit: false,
+    bytes: Buffer.from("invalid image bytes", "utf8"),
+    mime: "image/png",
+  },
   "/demo.txt": {
     kind: "Edit",
     editable: true,
@@ -119,7 +139,9 @@ server.listen(PORT, HOST, () => {
   console.log("FILE_VIEW_FIXTURE=READY");
   console.log(`TEXT=http://${HOST}:${PORT}/demo.txt?view`);
   console.log(`PDF_LAYOUT=http://${HOST}:${PORT}/report.pdf?view`);
-  console.log(`ICO_FALLBACK=http://${HOST}:${PORT}/favicon.ico?view`);
+  console.log(`ICO_IMAGE=http://${HOST}:${PORT}/favicon.ico?view`);
+  console.log(`PNG_IMAGE=http://${HOST}:${PORT}/pixel.png?view`);
+  console.log(`IMAGE_ERROR_FALLBACK=http://${HOST}:${PORT}/broken.png?view`);
   console.log("PDF_BYTES=PLACEHOLDER_NOT_FOR_VIEWER_ACCEPTANCE");
   console.log("PRODUCTION_CHANGED=NO");
 });
