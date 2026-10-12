@@ -385,3 +385,40 @@ Treat a STOP as a blocking failure; do not deploy around it.
 hotfix resides in the locally reconciled candidate, not yet in the PR
 `index.js`. Synchronize the PR source with the audited candidate and
 verify its exact SHA-256 before merging; do not deploy PR `index.js` as-is.
+
+## Final activation preflight acceptance — 2026-10-12
+
+The operator reported the following **read-only** verification, run
+after staging the exact reconciled candidate on ASUS:
+
+```text
+FINAL_CHECK_SYNTAX=PASS
+ASSET_SOURCE=PINNED
+LIVE_INDEX_INTEGRITY=PASS
+ROLLBACK_INTEGRITY=PASS
+STAGED_CANDIDATE_INTEGRITY=PASS
+STAGED_FEATURE_MARKERS=PASS
+LIVE_ASSETS_REV=503161dd5bee21ac
+EXPECTED_CANDIDATE_ASSETS_REV=a6b8ba062e194c1e
+ROUTERCLOUD_INIT=FOUND
+ACTIVE_FILES_MODIFIED=NO
+ROUTERCLOUD_RESTARTED=NO
+FINAL_PREFLIGHT=PASS
+```
+
+This confirms the current live/rollback/staged file hashes and
+predicts a different cache-busting revision after a RouterCloud-only
+restart. The predicted revision is **not yet observed in production**.
+
+**Remaining source parity requirement:** the currently tracked PR
+`router/routercloud/webui/metro/index.js` does not yet include the
+production-only storage tile patch. Copy the *local, reconciled*
+`index.candidate.js` to that tracked path only after verifying SHA-256
+`90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c`
+and a clean feature branch, then rerun syntax, regression and diff
+checks before committing/pushing. The private production dump itself
+should not be committed to GitHub; only the reviewed, reconciled,
+JavaScript frontend source should be tracked.
+
+**Status:** not merged, no production file replacement, no service
+restart. Explicit operator approval remains mandatory for activation.
