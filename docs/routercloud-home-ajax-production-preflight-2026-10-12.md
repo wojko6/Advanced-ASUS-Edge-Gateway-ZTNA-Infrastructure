@@ -483,3 +483,46 @@ and original asset revision `503161dd5bee21ac`.
 
 **Status at document creation:** scripts prepared, not executed,
 production not changed or restarted; PR #224 still Draft and not merged.
+
+## Production activation result — 2026-10-12
+
+Operator executed the explicitly approved UI-only activation from Fedora
+over SSH to ASUS. Reported output:
+
+```text
+RECHECK_LIVE_AND_ROLLBACK=PASS
+RECHECK_STAGED_CANDIDATE=PASS
+EXPECTED_NEW_ASSETS_REV=a6b8ba062e194c1e
+ACTIVE_INDEX_SWITCH=PASS
+RESTARTING_ROUTERCLOUD=YES
+stopped
+started: pid=24888 https://192.168.50.254:443
+ROUTERCLOUD_RESTART_COMMAND=PASS
+LIVE_INDEX_SHA256=90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c
+LIVE_ASSETS_REV=a6b8ba062e194c1e
+ACTIVATION=PASS
+FEDORA_HTTPS_BROWSER_ACCEPTANCE=PENDING
+```
+
+Interpretation: staged 92,809-byte reconciled JavaScript is activated;
+the **RouterCloud service only** successfully restarted and the asset
+revision changed to the predicted value. This is an operator-observed
+deployment result, not independent evidence of browser E2E.
+
+### Pending post-activation acceptance
+
+From Fedora, with normal TLS validation (never use `-k`): check
+`https://cloud.home.arpa/` and the versioned
+`/__dufs_v0.46.0__/index.js?v=a6b8ba062e194c1e`.
+Verify the latter's payload SHA-256 equals
+`90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c`.
+Then, after normal authenticated login, inspect browser DevTools
+`ROUTERCLOUD_ASSETS_REV=a6b8ba062e194c1e`, confirm
+Favorites -> Home -> Recent without document reload, subfolder ->
+Home -> Back, and storage labels `wolne`, `łącznie`, `zajęte`,
+`niedostępne`. Confirm normal file browsing and authorized upload/download
+if appropriate. Avoid sharing session cookies, credentials or user files.
+
+If any material acceptance test fails, use the separately verified
+`scripts/routercloud-home-rollback.sh` and report all markers.
+**PR #224 remains Draft/unmerged pending browser acceptance.**
