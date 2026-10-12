@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-10-09 (optional tool and recovery documentation review, not universal hardware/toolchain certification)
+**Last reviewed:** 2026-10-12 (planning/compatibility documentation; no new router runtime validation; previous hardware/toolchain checks retain their dated scope)
 
 **Reference evidence:** 2026-09-11 storage baseline, 2026-09-22/23 exit-node and DNS datapath validation, 2026-09-27 startup/current-firmware checks, the [2026-09-28 Pi-hole cutover validation](../evidence/2026-09-28/pi-hole-main-lan-cutover-validation.md), the [2026-10-06 Tailscale 1.103.375 runtime validation](../evidence/2026-10-06/tailscale-1.103.375-router-upgrade-validation.md), the [DNS Guard v3.2 bounded live validation](dns-guard-v3.2-recovery-audit-live-validation.md), the [2026-10-09 Pi-hole-aware production reboot](../evidence/2026-10-09/issue-129-pihole-dr-reboot-persistence.md), and the [optional BusyBox 1.36.1 live validation](../evidence/2026-10-09/custom-busybox-armv7-live-validation.md)
 
@@ -22,19 +22,22 @@ The project is validated against a specific reference deployment. It does not cl
 | syslog-ng | optional unless remote logging is configured; configured TLS path must validate on both peers | package, TLS or collector change |
 | WAN NAT | platform-owned Asuswrt-Merlin `MASQUERADE`/SNAT is a runtime dependency for the validated exit-node architecture | firmware, firewall or WAN-interface policy change |
 
-## Planned platform migration
+## Platform continuity and optional future OPNsense
 
-The current reference device remains the ASUS TUF-AX5400. The planned next
-router platform is **ASUS RT-BE88U** on a compatible Asuswrt-Merlin 3006.x
-branch.
+**2026-10-12 decision:** continue on **ASUS TUF-AX5400**. The previously
+planned ASUS RT-BE88U is **not** a migration/purchase target. OPNsense/x86
+is possible in an **unscheduled future**; the first research setup is an
+isolated Windows 11 virtual laboratory, not a deployed router.
 
-The RT-BE88U migration is a **full revalidation trigger**, not an assumption of
-drop-in compatibility. Interface names, WAN/NAT ownership, hook ordering,
-Entware startup, storage/swap behavior, DNS listeners, firewall contracts,
-Tailscale routing and WebUI integration must be re-proved on the new platform.
+No ABI/feature compatibility is transferable by assumption between ASUS
+GNUton Linux 4.1.52/iptables/Entware/JFFS and FreeBSD/PF/OPNsense.
+If migration is ever approved, require new interface/WAN/DHCP/IPv4/IPv6,
+DNSSEC/Pi-hole/Unbound, firewall/NAT, Tailscale, RouterCloud, mTLS logs,
+backup/restore, reboot, trust-zone and physical recovery evidence.
+The old RT-BE88U benchmark plan is historical optional comparison work
+and must not be used to imply approval.
 
-OPNsense/x86 is not the current target architecture; it is retained only as a
-possible future contingency if requirements exceed the RT-BE88U platform.
+See [platform decision](architecture/platform-direction-2026-10-12.md).
 
 ## Version evidence policy
 
