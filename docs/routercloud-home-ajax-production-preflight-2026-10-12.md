@@ -306,3 +306,40 @@ future restore or guarantee that a service restart succeeds.
 Next: transfer the locally reconciled and SHA-pinned candidate to a
 separate private file in that same directory. This staging operation
 must never touch the served asset or restart the service.
+
+## Candidate staging — production remains inactive
+
+After `BACKUP_VERIFICATION=PASS`, `LIVE_INDEX_UNCHANGED=YES`,
+`ROUTERCLOUD_RESTARTED=NO`, use the separate Fedora staging script:
+
+```sh
+cd ~/Projekty/routercloud-home-ajax-test
+git pull --ff-only
+bash -n scripts/routercloud-home-stage.sh
+read -r -p 'ASUS SSH IP/alias: ' ROUTER_HOST
+bash scripts/routercloud-home-stage.sh "admin1@$ROUTER_HOST" 1122
+```
+
+The script checks the local file
+`~/Archiwa/RouterCloud-Home-AJAX-20261012/index.candidate.js`
+against the **pinned candidate SHA-256**
+`90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c`
+and 92809 bytes, verifies that both the router's live asset and private
+rollback copy still match the **pinned original SHA-256**
+`d5052ea33917bad9314a49792bc555dd2e7ce2a3f2532aaff3b83c23e4c593b4`,
+streams the candidate via SSH, checks the transfer hash/size, and
+promotes it to the **private staging filename only**:
+
+`/opt/var/backups/routercloud-home-ajax-20261012/index.candidate.js`
+
+It refuses to overwrite an existing staged file. It does NOT replace
+the served `index.js`, restart RouterCloud, deploy the feature, or
+perform a PR merge. Failure should be investigated, not bypassed.
+Expected success markers: `LOCAL_CANDIDATE=PASS`,
+`LIVE_AND_ROLLBACK_INTEGRITY=PASS`, `STAGING_VERIFICATION=PASS`,
+`LIVE_INDEX_UNCHANGED=YES`, `ROUTERCLOUD_RESTARTED=NO`.
+
+After staging, recheck hashes and permission/ownership boundaries;
+the eventual activation and rollback are separate operator-approved
+steps and require RouterCloud-only restart because of the immutable
+asset caching/versioning contract.
