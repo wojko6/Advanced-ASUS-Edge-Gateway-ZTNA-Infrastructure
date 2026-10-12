@@ -123,3 +123,25 @@ Manual browser acceptance required: TXT at 127.0.0.1:8767/demo.txt?view
 has its editor directly under actions; PDF and unsupported ICO layouts
 do not leave a header gap; information panel aligns beside preview on
 desktop and below on mobile. No production writes/restarts.
+
+## Desktop visual review — details card height
+
+The user supplied a Fedora localhost screenshot of
+`http://127.0.0.1:8767/demo.txt?view` after the no-gap v2 layout.
+**Visual result:** text editor starts immediately under compact
+four-tile actions; desktop file info panel aligns beside the editor.
+The previous blank vertical track between actions and textarea has
+been eliminated.
+
+Follow-up issue: the existing global `.dashboard-aside` styling
+specified `align-self: stretch`, making the file info card as tall
+as the editor. File-mode scoped override
+`body.routercloud-file-view .editor-page > .dashboard-aside`
+now sets `align-self: start` to keep the card's content height.
+Added a static regression assertion to
+`tests/test-routercloud-file-view-layout.cjs`.
+
+**Next:** run the updated static test, rebuild the isolated Metro
+preview on Fedora, refresh the localhost fixture, and visually confirm
+the compact details card. PDF and ICO rendering still require
+dedicated acceptance; production ASUS is untouched.
