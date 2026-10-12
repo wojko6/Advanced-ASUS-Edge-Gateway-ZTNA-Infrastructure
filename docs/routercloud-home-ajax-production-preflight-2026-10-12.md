@@ -221,3 +221,36 @@ no router reboot, DNS, Tailscale, or firewall restart is indicated.
 Runtime binary/source parity must still be checked in acceptance.
 Changing a file without refreshing the server's revision risks clients
 retaining a stale immutable URL. Deployment has NOT been authorized or done.
+
+## Active browser asset revision — 2026-10-12
+
+Fedora Chrome DevTools, on the authenticated production RouterCloud page,
+reported:
+
+- `ROUTERCLOUD_ASSETS_REV=503161dd5bee21ac`
+- 16 lowercase hexadecimal characters: matches the project's hash revision format.
+- Browser read-only inspection; no router file or service changes.
+
+This is the *currently rendered* asset version, not proof that the
+version matches every current on-disk asset byte. The previous
+2026-10-11 storage hotfix changed external JS in place without a
+service restart; the running Dufs instance calculates `assets_revision`
+only at startup. Treat this token as the **before** baseline.
+
+After an explicitly approved, UI-only deployment, verify the next
+fresh HTML page advertises a DIFFERENT `?v=` token and that browser
+fetches the JS from that new URL. A successful rollback should recover
+the original JS bytes/hash and, following a RouterCloud-only restart,
+the corresponding previous revision if the other hashed assets stay
+unchanged. Because of the possible stale starting revision, do not
+assume the post-rollback token must equal this observed value unless
+startup-content hashes independently confirm it.
+
+### Remaining no-change gate
+
+Before staging: read the YAML `assets:` directory, verify active
+`index.js` SHA256 is still
+`d5052ea33917bad9314a49792bc555dd2e7ce2a3f2532aaff3b83c23e4c593b4`,
+check disk free, current file ownership/mode and the init script path.
+Do not print YAML or any credential-bearing files. No service restart
+or file replacement until the operator approves a complete rollback plan.
