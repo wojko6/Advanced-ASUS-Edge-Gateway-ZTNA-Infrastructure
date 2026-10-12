@@ -3,7 +3,7 @@
 **Evidence class:** sanitized operator-reported Fedora monitoring-host checks and UI confirmation.  
 **Scope:** ASUS Edge Gateway observability stack; current Grafana notification configuration.  
 **Environment:** Fedora-hosted Alloy, Loki, Grafana, VictoriaMetrics; ASUS reference router not modified.  
-**Verdict:** **STATIC ROUTING PASS**, basic ingest/runtime checks PASS, **E2E FIRING AND AUTOMATIC EMAIL + TELEGRAM DELIVERY PASS**; recovery/cleanup still pending.
+**Verdict:** **STATIC ROUTING PASS**, basic ingest/runtime checks PASS, **E2E FIRING AND AUTOMATIC EMAIL + TELEGRAM DELIVERY PASS; OPERATOR-REPORTED RETURN TO NORMAL PASS**; resolved transport notifications and cleanup pending.
 
 ## Observations
 
@@ -31,7 +31,7 @@
 | Controlled E2E preflight | VictoriaMetrics `vector(0)` and `vector(1)` query PASS; Grafana health PASS | Synthetic query-only preflight, no metric injection |
 | Controlled E2E rule firing | Temporary `E2E-TEST-2026-10-12` under `Network`, `vector(1)` above 0.5; screenshot displays `FIRING`, `A=1`, `C=1` | **PASS**: real Grafana-managed temporary test rule fired, no simulated router/DNS failure |
 | E2E automatic delivery | Operator-supplied Gmail notification screenshot and Telegram bot screenshot both explicitly reference `E2E-TEST-2026-10-12` and firing event | **PASS for automatic Firing delivery on both channels**, distinct from manual contact test |
-| E2E recovery/cleanup | Not yet reported; planned edit back to `vector(0)`, verify normal/resolved, then remove temporary rule | **PENDING**. Do not claim resolved, final deletion, or closure |
+| E2E recovery/cleanup | Operator reports temporary rule returned to `Normal` after restoring `vector(0)` | **Normal recovery PASS (operator-reported)**; email/Telegram `Resolved` delivery not yet confirmed; temporary rule deletion and 15-rule baseline recheck pending |
 | Provisioning inventory | 3 local alerting files: `asus-email-contact.yml`, `asus-tuf-alerts.yml`, `sample.yaml`; all readable with appropriate account; no `policies` or `resetPolicies` declaration observed | No default-policy source in inspected files; external configuration management still not conclusively excluded |
 
 ## State and drift boundary
@@ -53,10 +53,10 @@ tested**. The direct receiver assignment of all 15 rules is unchanged.
 - Read-only service/API/metric/provisioning tests did not restart services or change router state.
 - The **one intentional configuration change** during the session was the operator's Grafana UI change to the **default notification policy receiver**; therefore a global "zero production changes" claim for the *whole session* would be inaccurate.
 - Operator confirmed delivery of the Email and Telegram **test** messages; no mail payloads, destination addresses, chat IDs, API tokens, or credentials are included here.
-- Controlled `E2E-TEST-2026-10-12` rule **Firing** and automatic Email + Telegram delivery are observed **PASS** in operator screenshots. Return to `Normal`, resolved delivery, and deletion of the temporary rule remain **PENDING**. Historical WAN-speed Email and RouterCloud firing/recovery validation remain separate earlier evidence.
+- Controlled `E2E-TEST-2026-10-12` rule **Firing** and automatic Email + Telegram delivery are observed **PASS** in operator screenshots. Return to `Normal` has now been reported by the operator (**PASS**). `Resolved` delivery to Email and Telegram, deletion of the temporary rule and return to 15-rule baseline remain **PENDING**. Historical WAN-speed Email and RouterCloud firing/recovery validation remain separate earlier evidence.
 - Alert grouping, anti-flap behavior, repeated delivery, persistence after reload and all service-failure modes are not accepted by this audit.
 - No screenshots containing private destination identifiers, raw logs, labels or credentials are published.
 
 ## Next gate
 
-The synthetic `vector(0)` / `vector(1)` and Grafana-health preflight passed. The temporary rule fired and both automatic Firing notifications arrived. **Next:** operator must return its query to `vector(0)`, confirm Grafana Normal/recovery and optional resolved notifications, then delete the rule and verify baseline remains 15. No router, DNS Guard, Pi-hole, Tailscale, or WAN failure was caused. Follow up on #178 and verify live/declared Telegram provisioning parity without exposing secrets.
+The synthetic `vector(0)` / `vector(1)` and Grafana-health preflight passed. The temporary rule fired and both automatic Firing notifications arrived. **Next:** Grafana Normal/recovery has been operator-confirmed; check both channels for `Resolved` messages, then delete the temporary rule and verify baseline remains 15. No router, DNS Guard, Pi-hole, Tailscale, or WAN failure was caused. Follow up on #178 and verify live/declared Telegram provisioning parity without exposing secrets.
