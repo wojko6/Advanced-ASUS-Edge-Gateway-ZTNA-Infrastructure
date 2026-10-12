@@ -12,7 +12,17 @@ mkdir -p "$PREVIEW"
 
 cp "$HERE/index.html" "$PREVIEW/index.html"
 cp "$HERE/index.css" "$PREVIEW/index.css"
-cp "$HERE/index.js" "$PREVIEW/index.js"
+# Optional local candidate; isolated preview only (never a deployment).
+if [ -n "${ROUTERCLOUD_PREVIEW_INDEX_JS:-}" ]; then
+    if [ ! -f "$ROUTERCLOUD_PREVIEW_INDEX_JS" ]; then
+        echo "ERROR: brak pliku ROUTERCLOUD_PREVIEW_INDEX_JS" >&2
+        exit 2
+    fi
+    cp "$ROUTERCLOUD_PREVIEW_INDEX_JS" "$PREVIEW/index.js"
+    echo "PREVIEW_CANDIDATE_JS=YES"
+else
+    cp "$HERE/index.js" "$PREVIEW/index.js"
+fi
 cp "$HERE/favicon.ico" "$PREVIEW/favicon.ico"
 cp "$HERE/login.html" "$PREVIEW/login.html"
 cp "$HERE/login.css" "$PREVIEW/login.css"
