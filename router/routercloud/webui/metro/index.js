@@ -3630,6 +3630,53 @@ function setupNewFile() {
   });
 }
 
+// ROUTERCLOUD_FILE_VIEW_UX_V1
+// Single-file pages reuse the dashboard shell, but not its empty panels.
+function setupRouterCloudFileViewUx() {
+  if (DATA.kind !== "Edit" && DATA.kind !== "View") {
+    return;
+  }
+
+  document.body.classList.add("routercloud-file-view");
+  document.querySelector(".dashboard-storage")?.classList.add("hidden");
+
+  const heading = document.getElementById("recent-files-title");
+  const count = document.querySelector(".recent-files-count");
+  const contents = document.querySelector(".recent-files");
+
+  if (!heading || !contents) {
+    return;
+  }
+
+  heading.textContent = "Informacje o pliku";
+  count?.classList.add("hidden");
+  contents.replaceChildren();
+
+  const name = baseName(DATA.href || "") || "Plik";
+  const ext = extName(name);
+  const details = document.createElement("dl");
+  details.className = "routercloud-file-details";
+
+  function appendDetail(label, value) {
+    const item = document.createElement("div");
+    item.className = "routercloud-file-detail";
+    const key = document.createElement("dt");
+    const val = document.createElement("dd");
+    key.textContent = label;
+    val.textContent = value;
+    item.append(key, val);
+    details.appendChild(item);
+  }
+
+  appendDetail("Nazwa", name);
+  appendDetail("Typ", ext ? ext.slice(1).toUpperCase() : "Bez rozszerzenia");
+  appendDetail("Lokalizacja", String(DATA.href || "/"));
+  appendDetail("Tryb", DATA.kind === "Edit" ? "Edycja" : "Podgląd");
+
+  // EditData does not contain size or mtime. Do not invent either.
+  contents.appendChild(details);
+}
+
 async function setupEditorPage() {
   // ROUTERCLOUD_FILE_VIEW_CONTEXTUAL_SHORTCUTS_V1
   // Dashboard navigation shortcuts belong to directory views.
@@ -3641,6 +3688,8 @@ async function setupEditorPage() {
     .forEach(tile => {
       tile.classList.add("hidden");
     });
+
+  setupRouterCloudFileViewUx();
 
   const url = baseUrl();
 
