@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin GNUton  
-**Last reviewed:** 2026-10-07
+**Last reviewed:** 2026-10-12 (topology/strategy documentation; no physical connections changed)
 
 ## Purpose
 
@@ -34,6 +34,13 @@ flowchart TB
 | Fedora workstation | Administration, monitoring, logging/analytics and recovery tooling | Monitoring depends on this host being available; gateway forwarding does not |
 | LAN/WLAN clients | Trusted reference clients and controlled test clients | Current main LAN is not yet segmented into Trusted/IoT/Guest production zones |
 | Remote Tailscale clients | Remote administration / selected service access / exit-node use according to policy | Overlay availability depends on Tailscale and Internet reachability |
+
+## Undated future platform research (NOT part of current topology)
+
+The previously proposed ASUS RT-BE88U migration has been cancelled. OPNsense
+remains an unscheduled future possibility with, at most, an isolated VM lab on
+a separate Windows 11 laptop. No OPNsense instance or extra gateway/switch/AP
+has joined the present reference network. See [platform decision](platform-direction-2026-10-12.md).
 
 ## What is not part of the documented reference topology
 
