@@ -13,7 +13,7 @@ const source = fs.readFileSync(app, "utf8");
 new vm.Script(source, { filename: "routercloud-metro-index.js" });
 
 function harness(startPath = "/folder/") {
-  const log = { fetches: [], notices: [], toasts: [], renders: 0, refreshes: 0, history: [] };
+  const log = { fetches: [], notices: [], toasts: [], renders: 0, refreshes: 0, history: [], dashboardModes: [] };
   const location = {
     origin: "https://cloud.home.arpa",
     pathname: startPath,
@@ -76,7 +76,10 @@ function harness(startPath = "/folder/") {
     renderPathsTableHead = () => { testLog.renders++; };
     renderPathsTableBody = () => { testLog.renders++; };
     setupStorageInfo = () => { testLog.renders++; };
-    refreshDashboardPanel = () => { testLog.renders++; };
+    refreshDashboardPanel = () => {
+      testLog.renders++;
+      testLog.dashboardModes.push(dashboardPanelMode);
+    };
     updateArchiveSelectionUi = () => { testLog.renders++; };
     clearCompletedUploadRows = () => {};
     showRouterCloudToast = message => { testLog.toasts.push(message); };
@@ -99,16 +102,22 @@ async function main() {
   // Clicking Home when already at root is AJAX-only, with no navigation.
   {
     const h = harness("/");
+    h.eval('dashboardPanelMode = "favorites"');
     await h.navigate();
     assert.equal(h.log.fetches.length, 0);
     assert.equal(h.log.refreshes, 1);
     assert.equal(h.log.history.length, 0);
+    assert.equal(h.log.dashboardModes.at(-1), "recent");
+    assert.equal(h.eval("dashboardPanelMode"), "recent");
   }
 
   // Switching from a subfolder commits root data after a successful JSON fetch.
   {
     const h = harness("/folder/");
+    h.eval('dashboardPanelMode = "favorites"');
     await h.navigate();
+    assert.equal(h.log.dashboardModes.at(-1), "recent");
+    assert.equal(h.eval("dashboardPanelMode"), "recent");
     assert.equal(h.log.fetches.length, 1);
     assert.equal(h.log.fetches[0].pathname, "/");
     assert.equal(h.log.fetches[0].searchParams.has("json"), true);
@@ -133,8 +142,10 @@ async function main() {
   // A rejected response leaves URL and directory data unchanged.
   {
     const h = harness("/folder/");
+    h.eval('dashboardPanelMode = "favorites"');
     h.setResponse(async () => { throw Error("offline"); });
     await h.navigate();
+    assert.equal(h.eval("dashboardPanelMode"), "favorites");
     assert.equal(h.location.pathname, "/folder/");
     assert.equal(h.sandbox.DATA.paths[0].name, "old.txt");
     assert.equal(h.log.notices.length, 1);
