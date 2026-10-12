@@ -179,10 +179,16 @@ live destination identifiers or Telegram tokens to Git without a separate
 secrets and provisioning design review. Grafana default-policy persistence
 across a provisioning reload/restart was **not tested**.
 
-Contact-point delivery tests are **not** proof of fully automatic
-`Firing → notification → Resolved` delivery. The bounded 2026-10-07
-RouterCloud firing/recovery test remains historical, and the new combined
-automatic Email+Telegram E2E check remains **PENDING**. The Loki discard
+Contact-point test messages alone are not full E2E evidence. A **separate
+2026-10-12 controlled synthetic Grafana alert** (`E2E-TEST-2026-10-12`)
+reached `Firing` with `vector(1)` / threshold 0.5 and automatically notified
+both Gmail and Telegram (screenshots reviewed). After switching back to
+`vector(0)`, the operator confirmed `Normal` and subsequent `Resolved`
+messages on both channels. **Automatic firing, recovery and dual-channel
+delivery: PASS within this temporary synthetic rule scope.** The temporary
+rule **still requires deletion and verification of the original 15-rule
+baseline**. Do not treat this as per-rule firing acceptance for all 15 rules.
+The bounded 2026-10-07 RouterCloud test remains separate historical evidence. The Loki discard
 metric was not exposed; matching sent/received counter snapshots must not be
 reported as guaranteed zero loss. See
 [dated sanitized observations](../evidence/2026-10-12/grafana-alerting-routing-audit.md)
