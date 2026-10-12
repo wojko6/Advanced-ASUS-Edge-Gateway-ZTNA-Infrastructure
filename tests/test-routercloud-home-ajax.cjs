@@ -111,6 +111,18 @@ async function main() {
     assert.equal(h.eval("dashboardPanelMode"), "recent");
   }
 
+  // Static preview has no /?json endpoint. Home still resets the panel.
+  {
+    const h = harness("/");
+    h.sandbox.window.ROUTERCLOUD_PREVIEW = true;
+    h.eval('dashboardPanelMode = "favorites"');
+    await h.navigate();
+    assert.equal(h.log.fetches.length, 0);
+    assert.equal(h.log.refreshes, 0);
+    assert.equal(h.eval("dashboardPanelMode"), "recent");
+    assert.equal(h.log.dashboardModes.at(-1), "recent");
+  }
+
   // Switching from a subfolder commits root data after a successful JSON fetch.
   {
     const h = harness("/folder/");
