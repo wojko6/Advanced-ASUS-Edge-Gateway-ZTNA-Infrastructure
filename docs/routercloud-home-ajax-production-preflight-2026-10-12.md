@@ -156,3 +156,23 @@ The actual backend/auth/cache and rollback acceptance remain separate gates.
 Never paste the complete live JavaScript into a chat or commit it to GitHub
 without inspecting its contents. The staged candidate under `~/Archiwa`
 is **not** the deployed artifact.
+
+## Candidate verification — 2026-10-12
+
+Operator confirmed the reconciled **local Fedora** candidate:
+
+- Candidate SHA-256 checked against `90171cdb676cb39de41a8e74384ac509294c617ae31a0b06735f5f7f527bcb0c`: **PASS**.
+- `node --check` on the candidate: **JS_SYNTAX=PASS**.
+- `ROUTERCLOUD_INDEX_JS=... node tests/test-routercloud-home-ajax.cjs`: **ROUTERCLOUD_HOME_AJAX_TEST=PASS**.
+- Screenshots of the candidate preview show the old storage hotfix intact (`wolne`, `łącznie`, `zajęte`, `niedostępne`), and Favorites -> Home resets to Recent: **VISUAL PASS**.
+
+**This is not evidence of production rollout.** The reconciled candidate is held off-router.
+PR source file alone is still not the deployable artifact: it lacks the live-only storage change.
+
+### Next gates
+
+1. From Fedora, check the real RouterCloud asset response `Cache-Control`, `ETag` or other revision metadata, and observe the `index.js?v=...` URL in authenticated browser DevTools. Avoid sharing cookies/session headers.
+2. Confirm the current external `assets:` path and that the active file SHA matches the audited value immediately before staging.
+3. Prepare a versioned router-side rollback copy outside the served data root; verify its hash, intended cleanup and restoration commands.
+4. If a service restart is necessary to update the asset revision, schedule that explicitly and test health before and after.
+5. Production deployment/activation still needs specific operator approval. No RouterCloud restart or production modification occurred.
