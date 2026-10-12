@@ -45,3 +45,20 @@ Acceptance excerpts provided by operator: `RC13J_V26_EXTERNAL_ACCEPTANCE=PASS`, 
 ### Documentation/implementation boundary
 
 The v0.26–v0.36 laboratory scripts, candidate patches and operator logs reside in off-router evidence/archive paths; they are **not deployed production source** and this checkpoint does not upload them. A passing Fedora namespace test is not proof of safety on Merlin Linux 4.1.52. Issue #212 remains OPEN.
+
+## RC13J v0.41 follow-up — private DNS sidecar transport (2026-10-12)
+
+Operator-supplied Fedora rootless network-namespace lab log:
+
+- `RC13J_V41_ROOTLESS_PRIVATE_ROUTER_NETFILTER=PASS`, `RC13J_V41_NO_EXTERNAL_DEFAULT_ROUTES=PASS`.
+- `RC13J_V41_SIDECAR_PRIVATE_INDEPENDENT_INPUT_ACL=PASS` and `RC13J_V41_SCOPED_LAN_TAILNET_DNAT=PASS`.
+- `RC13J_V41_BEFORE_UNCOORDINATED_RESET_TCP_UDP=PASS` and `RC13J_V41_AFTER_UNCOORDINATED_RESET_TCP_UDP=PASS`: selected LAN/Tailnet synthetic DNS-like UDP/TCP probes are routed to sidecar while unselected remain on primary within a private model.
+- `RC13J_V41_HOST_FILTER_RESET_INNER_ACL_UNCHANGED=PASS`; this checks ONLY the sidecar's separate INPUT ACL survives a flush of the parent/private-router INPUT/FORWARD tables.
+- **Blocking counterexample:** `RC13J_V41_SELECTED_DIRECT_SIDECAR_GATE_REACHABLE=YES` and `RC13J_V41_SELECTED_DIRECT_GATE_EXCLUSION_PROVED=NO`. Even a selected client can contact `10.212.41.2:1053` directly and circumvent normal selected-client DNS/53 ingress semantics. The inner ACL accepts source IP but has no strong proof of *how* the packet reached it. Therefore this is a **security design blocker**, not merely a missing rule in production.
+- `RC13J_V41_CORE_LOOPBACK_REACHABLE_ONLY_INSIDE_SIDECAR=PASS`. Actual core resolver on 127.0.0.1:55353 remains namespace-private; gateway itself is network-facing on the private routed veth.
+- `RC13J_V41_DNS_WIRE_FORMAT=NOT_TESTED_SYNTHETIC_ECHO`, `RC13J_V41_DNSSEC=NOT_TESTED`, `RC13J_V41_ASUS_KERNEL_4_1=NOT_TESTED`, `RC13J_V41_UNCONTROLLED_ROUTER_RESET_SAFETY=LIMITED_INNER_ACL_ONLY`, `RC13J_V41_PRODUCTION_ELIGIBLE=NO`.
+- `RC13J_V41_TRANSPORT_EXPERIMENT=PASS_WITH_OPEN_DIRECT_GATE_BLOCKER`, `RC13J_V41_EXTERNAL_ACCEPTANCE=PASS`, `ASUS_PRODUCTION=UNTOUCHED`.
+
+Local operator log reported: `~/Archiwa/ASUS-Edge-Issue-212/rc13j-evidence/dns-sidecar-v41-20261012-185722.log` (not committed; not independently read). The test proves neither deployment feasibility nor spoof-proof / reset-proof origin authentication on Merlin 4.1.52.
+
+**Decision:** do not promote current routed sidecar gateway to production. Next gate is read-only firmware kernel/iptables capability inventory and off-router provenance-stronger routing/proxy architecture exploration, **without changing route_localnet, dnsmasq, DNS Guard or firewall on ASUS**.
