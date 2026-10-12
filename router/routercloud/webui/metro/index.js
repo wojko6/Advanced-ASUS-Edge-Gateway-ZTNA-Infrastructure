@@ -1964,8 +1964,8 @@ function setupStorageInfo() {
 
   $storageInfo.innerHTML = `
     <div class="storage-card-copy">
-      <strong>${formatStorageBytes(storage.available)}</strong>
-      <span>dostępne z ${formatStorageBytes(storage.total)}</span>
+      <strong>${formatStorageBytes(storage.available)} wolne</strong>
+      <span>z ${formatStorageBytes(storage.total)} łącznie</span>
     </div>
 
     <div
@@ -1979,7 +1979,7 @@ function setupStorageInfo() {
     </div>
 
     <div class="storage-card-meta">
-      <span>${formatStorageBytes(storage.used)} zajęte</span>
+      <span>${formatStorageBytes(storage.used)} zajęte · ${formatStorageBytes(Math.max(0, storage.total - storage.used - storage.available))} niedostępne</span>
       <span>${percent}</span>
     </div>
   `;
