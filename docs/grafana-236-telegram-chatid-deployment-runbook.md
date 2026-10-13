@@ -117,6 +117,16 @@ Operator output for a SHA-verified `grafana236_stage2.py` invocation:
 6. Immediately inspect `ActiveState`, process liveness and `/api/health`; verify 15 non-paused rules, matching receiver UID/type/count, expected policy tree/grouping and that the **Telegram Chat ID is present and unchanged** via a boolean comparison performed locally without printing either value. Never expose contact API raw JSON in logs.
 7. Require an operator-confirmed, scoped synthetic test of **Email + Telegram Firing and Resolved** notifications only with its own authorization. Restore normal state/remove any temporary rule. Do not claim all 15 rule-specific E2E paths from one shared synthetic alert.
 
+### Post-rollback evidence and planned corrected attempt (V3)
+
+Independent operator readback after the failed phase-2 attempt returned **`POST_ROLLBACK_AUDIT=PASS`**: Grafana active, systemd metadata synchronized, four original EnvironmentFiles restored, migration drop-in/env file absent, contact YAML byte-identical to the private original, 15 non-paused rules, and the retained private SQLite backup root `0600` plus `quick_check=ok`.
+
+There are **five existing drop-ins**, and **two sort after** the proposed migration `90-grafana236-telegram-chatid.conf`. The old Stage 2 script demanded that the newly inserted fifth `EnvironmentFile` always occupy the last position. That positional requirement is invalid for sorted systemd drop-ins; it likely explains the failure, though the failed script did not print the then-current list.
+
+The revised downloaded helper `grafana236_stage2_v3.py` has SHA-256 **`355fbc847e350fea6f3d463ca98c6dd6fc5a718a7e8fc540cad8893dc07d28f6`**, passed `py_compile`, and ran a pure-function fixture of five legal insertion positions and five invalid source sets. It verifies **exactly five effective EnvironmentFiles**, the new source appearing **once** and the original four surviving as an **ordered subsequence**; does not require fifth-place insertion. It additionally confirms the old backup `grafana-pre-stage2.db` remains `0600` and SQLite `quick_check=ok`, and creates a **new** non-overwriting `grafana-pre-stage2-v3.db` backup. If the new backup already exists, it fails closed.
+
+**Retry sequence:** first re-run Stage 1 (previous rollback removed the two installed files) and inspect `PRODUCTION_STAGE1=PASS`. Only then run SHA-verified Stage 2 V3 under the existing operator-approved single restart. **Never** rerun original `grafana236_stage2.py`, overwrite/delete the existing backup, or bypass any failing preflight. Do not claim V3 PASS until the operator provides its result; separately authorize real Email/Telegram notification test messages.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
