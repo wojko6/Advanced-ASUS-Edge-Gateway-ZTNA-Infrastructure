@@ -168,6 +168,14 @@ The operator's read-only metadata/journal summary found two V3 command records a
 
 **STOP further attempts:** first retrieve the earliest V3 output if available and run a **read-only sanitized** service-lifecycle/contact/health check for the 21:04:30–21:05:15 interval. Determine which first-run acceptance gate failed and whether its rollback succeeded before planning any new script or deployment.
 
+### Confirmed service chronology and post-rollback health
+
+The operator's filtered `journalctl -u grafana-server.service` query confirms two **distinct restarts**: service stopped/started `21:04:38–21:04:40`, then stopped/started `21:04:40–21:04:42` on 2026-10-13 (CEST). With V3 first invocation `21:04:37` and two prior backups created as documented, this supports **first V3 production restart followed by its rollback restart**. Second V3 invocation `21:05:14` failed during initial missing-directory preflight and did not restart the service. The first V3's failing assertion remains **unproven** without the terminal output.
+
+Current operator-reported status: Grafana 13.2.3 active, HTTP health/database OK, 15 non-paused alert rules, matching single Contact Point containing one Email and one Telegram integration, daemon reload clean. Independently, post-rollback source checks confirm original YAML, four environment files and removal of Stage 1 resources. This establishes infrastructure recovery but does **not** prove post-restart actual notification delivery.
+
+**No further attempt is permitted before identifying the first V3 `FAILED_GATE`.** Prefer retrieving that first command's output (no secrets). If unavailable, a limited journal error-category audit can narrow hypotheses but cannot substitute for the exact failed assertion. Preserve both root-owned private SQLite backups.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
