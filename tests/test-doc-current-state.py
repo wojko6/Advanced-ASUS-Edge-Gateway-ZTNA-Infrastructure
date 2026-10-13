@@ -40,7 +40,7 @@ def check() -> list[str]:
         failures.append("monitoring README must show bounded #178 closure")
     if "grouping/anti-flap" not in monitoring or "unverified follow-ups" not in monitoring:
         failures.append("monitoring README must preserve outstanding notification risks")
-    if not re.search(r"^\s*-\s*#178\s*[—-]", roadmap, re.M) is None:
+    if re.search(r"^\s*-\s*#178\s*[—-]", roadmap, re.M):
         failures.append("roadmap must not list closed #178 as an open bullet")
     if "Closed with bounded acceptance" not in roadmap or "[#178]" not in roadmap:
         failures.append("roadmap must separate #178 closure from residual work")
@@ -57,9 +57,9 @@ def check() -> list[str]:
     if "source-versus-live provisioning parity" not in monitoring:
         failures.append("source/live Email+Telegram drift must not be documented as fixed")
 
-    if "ASUS CORE v1.0" not in model or "2.1.4-dev" not in contents("VERSION") and "2.1.4-dev" in model:
+    if "ASUS CORE v1.0" not in model or "`VERSION`" not in model:
         failures.append("documentation model must distinguish milestone from software release")
-    if "not" not in architecture.lower() or "## Client DNS continuity boundary" not in architecture:
+    if "## Client DNS continuity boundary" not in architecture or "No second" not in architecture:
         failures.append("DNS architecture must preserve the client failover non-deployment boundary")
     return failures
 
