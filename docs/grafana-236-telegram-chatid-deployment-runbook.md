@@ -81,6 +81,16 @@ PRODUCTION_STAGE1=PASS
 
 **Interpretation:** The protected Chat ID environment source and additive unit drop-in are **installed on Fedora** and new-file SELinux labels were verified. Active contact YAML remains the original. No `daemon-reload` or restart has occurred, so the loaded Grafana process has **not** received the new env assignment. Phase 2 must recheck file modes, labels, binary freshness and the byte-identical original against live, then perform **one** approved restart, after validating five effective EnvironmentFile references. If preflight fails, leave the original running and do not touch its YAML. Real alert Firing/Resolved notifications remain separately gated.
 
+### Phase 2 script prepared — awaiting Fedora execution
+
+The prepared downloadable helper `grafana236_stage2.py` (SHA-256 `c7aff81a2aab215deec702328580dfe327f3e74f85356a1c42e42fcba674571d`) is a **host-local deployment command** supplied to the operator; this note is **not evidence of execution**. The helper is guarded by stage1 private-file, labels, original-live byte identity, existing four source ordering, no name collision, SQLite 15-rule/direct receiver and Alertmanager contact/policy baseline checks.
+
+It creates a **root-only sensitive** `/root/grafana-236-staging/grafana-pre-stage2.db` SQLite hot backup before touching active files. It then performs systemd `daemon-reload` and requires **five additive** EnvironmentFile entries (four original plus the migration file) *before* atomically replacing the active contact YAML, preserving original owner/mode/SELinux context. It requests **one** authorized Grafana restart. Postchecks include active service, 15 permanent rules, unchanged policy and contact receiver UIDs/types, new variable present in the Grafana MainPID process environment, and an opportunistic Grafana HTTP health check only if the baseline on localhost port 3000 was verifiable.
+
+If any post-change gate fails, it attempts to restore the original YAML and remove only the migration drop-in/env file; after restart attempt it may require **one additional rollback restart**. If no restart was attempted, no rollback restart should be issued. `ROLLBACK=FAILED_NEEDS_OPERATOR` is an emergency condition requiring manual review; do not run automated repair repeatedly. The script **does not send test notifications**. Natural alert notifications might nevertheless occur across a service restart; operator confirmation is still needed for real delivery.
+
+**Caution:** no systemd or container tool in this chat can execute on the user's Fedora host; only the operator can execute and inspect its output. Do not claim Stage 2 PASS until the operator has run it. The private SQLite backup contains sensitive application configuration and must remain outside Git and any shared logs. The script's approval covers the one planned restart and necessary failure recovery, not a standalone synthetic Firing/Resolved delivery test.
+
 ## Stage 1 — planned single production switch (PHASE 1 PASS; PHASE 2 PENDING)
 
 1. Re-validate private original against live source; fail closed if changed since backup.
