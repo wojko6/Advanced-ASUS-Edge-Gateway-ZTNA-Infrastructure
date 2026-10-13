@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Applies to:** reference ASUS TUF-AX5400 deployment  
-**Last reviewed:** 2026-10-12 (current platform strategy and monitoring acceptance; earlier live network evidence retains dated scope)
+**Last reviewed:** 2026-10-13 (architecture PDF v1.1 publication/navigation only; prior live validation dates and scopes are unchanged)
 
 This document is the entry point for the network-design view of the project.
 It complements the repository's incident/case-study material by organizing the
@@ -23,8 +23,9 @@ N/A, PLANNED or NOT VALIDATED instead of implying that it exists.
 
 ## 2. Physical topology and hardware boundary
 
-- [Dated technical architecture overview (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — high-level portfolio-safe snapshot, not replacement of canonical per-topic files.
-- [Technical architecture PDF (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) — printable portfolio snapshot; Markdown remains the maintained source.
+- [Latest technical architecture PDF (2026-10-13, v1.1)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf) — current dated portfolio publication; authoritative state and per-topic diagrams remain in maintained Markdown and dated evidence.
+- [Historical architecture overview (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — original dated snapshot, not current project status.
+- [Historical architecture PDF (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) — retained unmodified for provenance.
 - [Hardware and infrastructure inventory](hardware-inventory.md)
 - [Physical topology](architecture/physical-topology.md)
 - [High-level architecture and trust boundaries](architecture/high-level-trust-boundaries.md)
