@@ -58,12 +58,14 @@ Still open:
 
 - #176 — router-local source scoping for exit-node forwarding;
 - #129 — Pi-hole-aware disaster-recovery refresh;
-- #178 — **CLOSED** after bounded 2026-10-12 Gmail/Telegram synthetic `Firing/Resolved` acceptance; grouping/anti-flap, reload persistence and provisioning parity remain **explicit follow-up gaps**;
 - #108 — remaining DNS-visibility retention/rollback/interception work;
 - #68 — DoH/DoQ/encrypted-DNS assessment;
 - #143 — platform-neutral Trusted/IoT/Guest segmentation **design only**, usable in a future OPNsense comparison but not activated now.
 - PR #202 — **open workstation-only** reproducible Unbound 1.26.1-1 ARMv7 rebuild candidate, not an Unbound upgrade or production rollout.
 - DNS Guard follow-up — unmountable Entware at boot and simultaneous local/bootstrap DNS faults remain untested live; maintenance window only.
+
+**Closed with bounded acceptance, residual follow-up not closed:**
+- [#178](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/178) — closed after synthetic Gmail+Telegram `Firing/Resolved` acceptance on 2026-10-12. Grouping/anti-flap, provisioning/live contact divergence, reload persistence and per-rule failure injection are **still unverified**; track explicitly before claiming full monitoring continuity.
 
 
 

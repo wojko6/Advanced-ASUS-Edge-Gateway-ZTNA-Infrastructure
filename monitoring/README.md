@@ -150,9 +150,16 @@ local metrics state and can generate real notifications:
 ./tests/test-grafana-routercloud-alerting-live.sh
 ```
 
-Issue #178 still owns grouping/anti-flap validation and bounded
-Telegram/mobile critical escalation. The four RouterCloud rules and direct
-e-mail routing are no longer open items.
+**Issue #178 is CLOSED** after the 2026-10-12 bounded synthetic
+`Firing → Normal → Resolved` notification test delivered to **Gmail and
+Telegram**. The tested temporary rule was removed; the operator reported the
+normal baseline of 15 rules. This is **not** proof of individual
+`Firing/Resolved` delivery for every DNS Guard/RouterCloud rule.
+Grouping/anti-flap behavior, safe source-versus-live provisioning parity for
+Email+Telegram and default-policy persistence after reload remain **explicit
+unverified follow-ups**. Do not store Telegram credentials or destination
+identifiers in the repository to paper over provisioning drift.
+See the [2026-10-12 alerting audit](../evidence/2026-10-12/grafana-alerting-routing-audit.md).
 
 See [the original alerting validation evidence](../evidence/2026-09-27/grafana-alerting-validation.md),
 the [WAN-speed e-mail validation](../evidence/2026-10-06/grafana-wan-speed-email-alert-validation.md),

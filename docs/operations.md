@@ -256,7 +256,7 @@ Entware may not retain a previous package version. Download/retain the known-goo
 
 ### Router system resolver policy
 
-DNS Guard v3.1 remains the production-validated rollback baseline for the router's own runtime resolver. The v3.2 candidate in PR #193 keeps the same two-phase architecture while adding explicit local-resolver configuration, stronger break-glass recovery semantics, watchdog health checks, serialized state transitions, failback hysteresis, validated WAN bootstrap resolvers, multi-provider readiness probes and coarse fail-open observability. Until the bounded live recovery test and one full cold reboot are complete, treat v3.2 as a release candidate rather than the production baseline.
+**Current validated router-system resolver baseline: DNS Guard v3.2.** The recovery hardening was merged in [PR #197](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/197) on 2026-10-08 after the earlier [PR #193](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/193) development and [Issue #192](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/192) closeout. The 2026-10-08 bounded manual sticky break-glass ON/OFF test, supervised WAN dispatch and physical power-cycle (with mounted Entware) passed; the existing router's 2026-10-09 reboot also recovered its Pi-hole-aware services. This is **not** a blank-device Disaster Recovery pass and does not cover simultaneous bootstrap/local DNS faults or failed Entware mounts. v3.1 is the *historical* 2026-10-06 milestone, **not** the current deployed reference. See the [accepted v3.2 production evidence](dns-guard-v3.2-recovery-audit-live-validation.md), [startup dependency diagram](architecture/boot-service-dependency-flow.md) and [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129).
 
 The router system resolver remains separate from the client-facing DNS listeners.
 
@@ -278,7 +278,7 @@ dependency cycle. Resolver state changes should go through
 
 The watchdog is recreated by `services-start` and runs `dns-guard auto`
 once per minute. Sticky break-glass must be cleared explicitly before automatic
-Pi-hole promotion can resume. In the v3.2 candidate, fail-open remains immediate
+Pi-hole promotion can resume. In the current v3.2 design, fail-open remains immediate
 while automatic failback requires the configured consecutive-success threshold
 (default: three). The runtime streak and coarse transition state are kept under
 `/tmp`, so reboot resets the counter without adding minute-by-minute JFFS writes.
