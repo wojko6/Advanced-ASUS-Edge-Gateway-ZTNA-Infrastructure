@@ -328,6 +328,29 @@ Reported final fields: `STAGING_INTEGRITY=PASS`, `GRAFANA_FILES_MODIFIED=NO`, `S
 
 **Next bounded step:** collect **read-only Grafana version, installed binary, systemd run-as user/group, homepath and isolation prerequisites** without printing environment content. Then build a fully isolated local scratch Grafana experiment using **synthetic** Email and Telegram credentials, synthetic Chat ID, a separate database, no alert rules and no network notification transport, so interpolation/receiver-schema behavior can be tested independently of production. Avoid running production Grafana against the staged real-contact YAML, switching live EnvironmentFiles or reloading live provisioning without separate operator approval.
 
+## Installed Grafana and isolated-test preflight — 2026-10-13
+
+The operator ran read-only Fedora preflight checks and reported:
+
+| Check | Result |
+|---|---|
+| `GRAFANA_BINARY_FOUND` | `True` |
+| `GRAFANA_VERSION` | `13.2.3` |
+| `VERSION_CHECK_RC` / `SYSTEMD_QUERY_RC` | `0` / `0` |
+| `SERVICE_ACTIVE` / `SERVICE_RUNNING_PID` | `True` / `True` |
+| `SERVICE_USER_GRAFANA` / `SERVICE_GROUP_GRAFANA` | `True` / `True` |
+| `GRAFANA_DEFAULTS_PRESENT` / `GRAFANA_CONFIG_PRESENT` | `True` / `True` |
+| `PODMAN_AVAILABLE` / `DOCKER_AVAILABLE` | `True` / `True` |
+| `PRODUCTION_CONFIG_MODIFIED` / `SERVICES_STARTED_OR_STOPPED` / `FILES_CREATED` / `NOTIFICATIONS_SENT` | All `NO` |
+
+**Interpretation:** prerequisites exist for testing a separate Grafana instance, but a matching cached container image and working container daemon/user permissions have **not** been verified. Installed Grafana v13.2.3 is the host version; it does not imply any local container image at that version. Avoid downloading a different image without review.
+
+**Safest next sequence:** read-only `podman images`/`docker images` inventory (report only Grafana image counts and a matching-version boolean; do not output unrelated image names), choose an already local compatible image, then construct test-only data and environment artifacts in a separate disposable scratch volume. Start isolated runtime with `--network none`, **no host-published port**, no host Grafana SQLite, service configuration, live contact YAML or real Telegram secrets mounted. Use placeholder Email/token/chat ID, no alert rules, and no outbound notification attempt. Explicitly validate parsed receiver types, correct Chat ID expansion, and non-empty value in the **test** service; no live reload/restart.
+
+**Upstream caution:** [Grafana issue #69950](https://github.com/grafana/grafana/issues/69950) reports a prior YAML numeric coercion failure with negative Telegram Chat IDs (reported for an older Grafana version); this remains a reason to test the actual runtime separately and does not prove that v13.2.3 is affected. The operator-reported real Chat ID is nonnegative, but it must still not be echoed or sent. The official [alerting file provisioning docs](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/) explain variables can be interpolated from the environment and must be checked after provisioning.
+
+`ISOLATED_TEST_PREFLIGHT=PASS`; `GRAFANA_HOST_VERSION=13.2.3`; `CACHED_MATCHING_IMAGE=UNKNOWN`; `ISOLATED_GRAFANA_RUNTIME=NOT_STARTED`; `PRODUCTION_UNTOUCHED=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -351,6 +374,7 @@ Reported final fields: `STAGING_INTEGRITY=PASS`, `GRAFANA_FILES_MODIFIED=NO`, `S
 - `EXISTING_TELEGRAM_CHATID_ENV_NAME_CANDIDATES=0_OF_4_FILES`; `GRAFANA_TELEGRAM_CHAT_ID=PROPOSED_NOT_DEPLOYED`.
 - `TELEGRAM_CHATID_YAML_IN_MEMORY_DRY_RUN=PASS`; `DRAFT_YAML_VALID=TRUE`; `ONLY_CHATID_CHANGED=TRUE`; `LIVE_INTERPOLATION=NOT_TESTED`.
 - `HOST_SECURE_STAGING_V2=PASS`; `STAGING_ROOT_MODE=0700`; `STAGING_FILE_MODES=0600`; `STAGED_CHATID_NONNEGATIVE=TRUE`; `STAGED_ENV_SOURCE=NOT_ACTIVE`; `STAGING_INTEGRITY=12_CHECKS_PASS`; `BACKUP_MATCHES_LIVE=PASS`; `LIVE_GRAFANA_INTERPOLATION=NOT_TESTED`.
+- `ISOLATED_TEST_PREFLIGHT=PASS`; `GRAFANA_INSTALLED=13.2.3`; `PODMAN_AVAILABLE=TRUE`; `DOCKER_AVAILABLE=TRUE`; `CONTAINER_IMAGE_CACHE_STATUS=UNKNOWN`; `ISOLATED_RUNTIME_PROVISIONING=NOT_TESTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
