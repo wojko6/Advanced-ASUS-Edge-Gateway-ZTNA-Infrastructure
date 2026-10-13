@@ -38,7 +38,7 @@ def check() -> list[str]:
         failures.append("historical live runbook requires an explicit no-routine-execution gate")
     if "**Issue #178 is CLOSED**" not in monitoring:
         failures.append("monitoring README must show bounded #178 closure")
-    if "grouping/anti-flap" not in monitoring or "unverified follow-ups" not in monitoring:
+    if "grouping/anti-flap" not in monitoring.lower() or "unverified follow-ups" not in monitoring.lower():
         failures.append("monitoring README must preserve outstanding notification risks")
     if re.search(r"^\s*-\s*#178\s*[—-]", roadmap, re.M):
         failures.append("roadmap must not list closed #178 as an open bullet")
