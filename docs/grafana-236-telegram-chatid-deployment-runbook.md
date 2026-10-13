@@ -190,6 +190,14 @@ Offline source inspection shows V3's `check_service_ready()` can return as soon 
 
 Until the first-run output is found (or a reviewed offline fix is devised and tested), **do not re-run production scripts or restart Grafana**. Next script design must explicitly poll both process environment and HTTP readiness with a bounded deadline before interpreting early startup as failure. Such a proposal needs separate review before use.
 
+### V4 readiness design — source weakness fixed offline, no production deployment
+
+Code review confirmed a V3 defect: its `check_service_ready()` considers systemd `active` plus a SQLite baseline snapshot sufficient; Grafana HTTP readiness is checked only once **after** that assertion, with a two-second timeout. A premature post-start rollback is therefore plausible (but the first V3's actual `FAILED_GATE` is still unknown).
+
+A **standalone read-only** V4 stable-readiness probe is prepared for the operator (`grafana236_readiness_v4.py`; SHA-256 `3c14a10674d9d852299acf3a8fb149c00025e8c9c31ada8784d86f6c9435d93f`). It requires three consecutive fully passing samples from the same PID for systemd, existing Email/Telegram env names, 15 non-paused rules, matching DB contact and Grafana 13.2.3 HTTP health, without printing names/values. Its pure polling helper passed **11 offline isolated fixture tests** (`test_grafana236_readiness_v4.py`, SHA-256 `1fac8ec17e46b7a131905451aafe60c9fc342c0ea830df3987289a7c89a07e50`).
+
+**Next action: read-only Fedora host validation of the probe.** No production V4 switch helper has yet been created or run, and no restart is part of this probe. Keep Stage 1/V3 off, preserve root-only SQLite backups and require another reviewed change decision before a restart.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
