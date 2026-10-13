@@ -857,6 +857,22 @@ The operator ran the checksum-verified, approved `grafana236_stage2_v4_candidate
 
 `PRODUCTION_V4_CHATID_MIGRATION=PASS`; `GRAFANA_POST_RESTART_STABLE_READY=PASS`; `POST_RESTART_ENV_CHATID_PRESENT=PASS`; `PERMANENT_RULES=15`; `CONTACT_EMAIL_TELEGRAM=PASS`; `ROLLBACK_REQUIRED=NO`; `SCOPED_DELIVERY=NOT_TESTED`.
 
+## Operator authorization — scoped post-V4 Email + Telegram Firing/Resolved test / 2026-10-13
+
+After production `PRODUCTION_STAGE2_V4=PASS`, the operator expressly authorized **real test notifications** to the already-configured Gmail and Telegram destinations. This is authorization only; **no new notification or test alert execution has yet been reported**.
+
+**Approved test plan, based on previously proven 2026-10-12 E2E method** (see [the historical routing audit](../2026-10-12/grafana-alerting-routing-audit.md)):
+
+1. In the Grafana UI verify exactly **15** unpaused permanent rules and the unique existing contact point **`ASUS Edge Gateway Email`** with Email and Telegram integrations. Do **not** change the production 15, systemd, router, VictoriaMetrics real series, policy tree, or local provisioning YAML.
+2. Create **one temporary** Grafana-managed rule named `E2E-TEST-2026-10-13` in existing `Network` folder using the already-working **VictoriaMetrics** PromQL source. Start with `vector(0)`, condition `last > 0.5`, pending period none, keep-firing period none, evaluation using existing suitable group and **direct contact point** `ASUS Edge Gateway Email`; no mute timing. Verify state `Normal`, count becomes **16** (15 permanent + 1 transient).
+3. Edit **only this temporary rule's query** from `vector(0)` to `vector(1)`; save and wait for real rule `Firing` and actual message arrival on **both Gmail and Telegram**. Record only booleans/timestamps; do not upload personally identifying destinations, tokens or message contents to public Git.
+4. Switch **only temporary rule** to `vector(0)`, verify `Normal`/resolved transition and **both** Gmail and Telegram `Resolved` messages. Respect group/notification delays; never represent state transition alone as proof of transport.
+5. Delete **only the temporary rule** once resolved; ensure exactly **15** permanent non-paused rules remain, no test rule or persistent firing, unchanged Contact Point and both integrations. If any phase fails or a destination does not deliver, first set the synthetic signal to `vector(0)` and investigate without touching infrastructure. If the synthetic alert cannot be restored or safely removed, STOP with a preserved diagnostic.
+
+**Scope caution:** The 2026-10-12 pre-migration synthetic test already established automatic Email+Telegram Firing/Resolved for one temporary alert, but **does not replace** fresh post-V4 transport verification. Passing this test would establish the scoped shared Contact Point route **only**, not delivery of all 15 production alert types or grouping/anti-flap/clean-room acceptance.
+
+`POST_V4_SCOPED_TEST_APPROVED=YES`; `TEST_RULE_CREATED=NOT_REPORTED`; `POST_V4_FIRING_DELIVERED=NOT_TESTED`; `POST_V4_RESOLVED_DELIVERED=NOT_TESTED`; `PRODUCTION_15_RULES=UNCHANGED_AS_LAST_REPORTED`; `ISSUE236=OPEN`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
