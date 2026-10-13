@@ -73,13 +73,14 @@ The operator ran two **read-only** `sqlite3 mode=ro` checks on the live Fedora G
 - The first script returned `RECEIVER=OTHER_OR_MISSING` for all 15, **but that result is not a proven routing failure**: it attempted `.get("receiver")` on a decoded JSON value without verifying object shape.
 - The follow-up script verified `STORAGE=str`, `STRUCTURE=list` for **all 15** `alert_rule.notification_settings` values. Hence the earlier direct receiver check was **invalid for the observed representation**; the exact contents and interpretation of these arrays remain unknown.
 - No raw JSON, recipient names other than the static source name, destination IDs, secrets, full labels, private paths or credentials were published in the result.
-- **Acceptance gate:** inspect array length, nested key schema and `receiver` match status **without revealing values**; cross-check read-only sanitized Grafana provisioning API when necessary. Do not assume the underlying routing is missing, and do not mark it PASS just because previous Email/Telegram E2E delivery worked.
+- The subsequent sanitized nested JSON scanner observed **all 15** rule settings as one-item lists (`ITEMS=1`), with **one** nested `receiver` field (`RECEIVER_KEYS=1`), exactly matching the configured source receiver `ASUS Edge Gateway Email` (`STATUS=MATCH`). Summary: `MATCH=15`, `TOTAL_RULES=15`, `DATABASE_MODIFIED=NO`.
+- The initial `OTHER_OR_MISSING` finding is therefore **a script parsing false-positive**, not evidence of routing drift. **Configuration-level direct receiver name equality: PASS (15/15, operator-reported read-only SQLite).** Actual integration configuration, policy routing/overrides, contact-point persistence and individual end-to-end delivery remain separate gates.
 
-**Live/source UID and group match: PASS (operator-reported).** Direct notification routing: **UNVERIFIED**, until list shape and API effective config are checked. This is a partial DB snapshot, not a fresh per-rule evaluation health audit.
+**Live/source UID, group, pause state and nested direct receiver match: PASS (operator-reported).** This is a partial DB snapshot, not a fresh per-rule evaluation health or end-to-end notification audit.
 
 ## Next acceptance gates — safe sequence
 
-1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause already PASS) with loaded title, folder, thresholds, `for`, `noDataState`, runtime health/state and effective notification receiver. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
+1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
 2. Read-only inspect actual per-rule direct routing vs notification-policy fallback; inventory integration **types and counts only** (Email/Telegram). Determine configuration owner for contact point, default policy and secret storage without printing tokens.
 3. Mark each path `NOT_TESTED`, `PARTIAL`, `PASS`, or `WAIVED` with timestamp and operator-confirmed delivery channel in a per-rule evidence ledger.
 4. Design isolated/bounded negative fixtures for **stale telemetry**, **DNS Guard critical recovery route**, **grouping/repeat/anti-flap**, and receiver failure. **Explicit operator approval required** before live notification tests.
@@ -89,7 +90,7 @@ The operator ran two **read-only** `sqlite3 mode=ro` checks on the live Fedora G
 ## Acceptance / non-claims
 
 - `SOURCE_RULE_COUNT=15`; `SOURCE_PAUSED=0`; `SOURCE_DIRECT_RECEIVER_RESOLVED=15`.
-- `FRESH_LIVE_2026_10_13=PARTIAL_UID_GROUP_PAUSE_PASS`; `LIVE_NOTIFICATION_SETTINGS_JSON_TYPE=list`; `LIVE_RECEIVER_MATCH=UNVERIFIED`.
+- `FRESH_LIVE_2026_10_13=PARTIAL_UID_GROUP_PAUSE_RECEIVER_PASS`; `LIVE_NOTIFICATION_SETTINGS_JSON_TYPE=list`; `LIVE_RECEIVER_MATCH=15/15_PASS`; `PER_RULE_E2E_DELIVERY=UNVERIFIED`.
 - `LIVE_EMAIL_TELEGRAM_PARITY=UNRESOLVED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
