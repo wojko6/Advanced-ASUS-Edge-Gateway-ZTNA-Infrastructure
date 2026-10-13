@@ -788,6 +788,16 @@ An additional assistant-side review briefly hypothesized that `ENV_RE.findall` r
 
 `FEDORA_V4_OFFLINE_TESTS=27_OF_27_PASS`; `V4_ENV_RE_CAPTURE_GROUPS=1`; `V4_ENV_ORDER_FIXTURES=5_OF_5_PASS`; `V4_ENV_INVALID_FIXTURES=4_OF_4_REJECTED`; `V4_PRODUCTION_MIGRATION=NOT_EXECUTED`.
 
+## Operator authorizes separate V4 production retry — 2026-10-13
+
+The operator explicitly approved **a new** deployment attempt of the Grafana #236 V4 migration, including **one planned Grafana restart** and, only if the switch fails, a **recovery/rollback restart**. This is an independent authorization following the two V3 restarts (21:04:38 and 21:04:40 CEST) and the verified healthy rollback state.
+
+**Safe staged execution:** run the previously checksum-verified `grafana236_stage1.py` **alone first** to recreate a private `0600` Chat ID environment source, `0700` directory and additive unit drop-in with SELinux type checks, **no `daemon-reload` and no restart**. Require an operator-reported `PRODUCTION_STAGE1=PASS` before proceeding. If it fails, investigate and do not run Phase 2. Then run only the current reviewed V4 candidate under the separately agreed maintenance window, not the retired V3 script, re-checking all safety gates and protecting both old SQLite backups. If V4 itself fails, follow its output and never blindly rerun. Test Email/Telegram Firing/Resolved sends remain **separately unapproved**.
+
+The downloadable Stage 1 script checked in the working environment has SHA-256 `c2801d688a8a419e05e02fde3e594c6d118e8575871841cc1d3d942f2d3554c1`. The previously vetted offline V4 candidate has SHA-256 `7fa3866015893c34d44edef46b04d2cb20e266f277288f9fed211f5f8b931697`; its Fedora test suite returned `27/27 PASS`. Neither a new Stage 1 PASS nor a V4 production result has yet been reported for this approval.
+
+`V4_RETRY_APPROVED=YES`; `PLANNED_RESTART_APPROVED=YES`; `ROLLBACK_RESTART_IF_NEEDED_APPROVED=YES`; `STAGE1_REINSTALL=NOT_YET_REPORTED`; `V4_SWITCH=NOT_EXECUTED`; `NOTIFIER_SEND_TEST=NOT_AUTHORIZED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
