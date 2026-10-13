@@ -528,6 +528,12 @@ The operator approved the **production Telegram Chat ID migration and one planne
 
 `PRODUCTION_MIGRATION_AUTHORIZED=YES`; `PHASE1=NOT_YET_REPORTED`; `PHASE2=NOT_EXECUTED`; `SYNTHETIC_NOTIFICATIONS=NOT_AUTHORIZED`.
 
+## Operator-reported production Phase 1 result — 2026-10-13
+
+Stage 1 installation returned `PREINSTALL_VALIDATION=PASS`, `ROOT_ONLY_ENV_FILE=PASS`, `DROPIN_CREATED=PASS`, `SELINUX_NEW_OBJECTS=PASS`, `ORIGINAL_LIVE_YAML_UNCHANGED=PASS`, `PRODUCTION_STAGE1=PASS`. `SYSTEMD_DAEMON_RELOAD=NO`, `GRAFANA_RESTARTED=NO`, `NOTIFICATIONS_SENT=NO`, `VALUES_PRINTED=NO`.
+
+**Phase 1 is complete**; private root-only Chat ID env file and additive systemd drop-in exist on Fedora, with current service still running on original config. Phase 2 (apply new env at daemon reload + atomic YAML candidate + single restart) **not yet reported**. Post-restart health and delivery unverified. Refer to [migration runbook](../../docs/grafana-236-telegram-chatid-deployment-runbook.md).
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
