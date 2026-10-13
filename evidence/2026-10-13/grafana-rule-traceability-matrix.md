@@ -351,6 +351,25 @@ The operator ran read-only Fedora preflight checks and reported:
 
 `ISOLATED_TEST_PREFLIGHT=PASS`; `GRAFANA_HOST_VERSION=13.2.3`; `CACHED_MATCHING_IMAGE=UNKNOWN`; `ISOLATED_GRAFANA_RUNTIME=NOT_STARTED`; `PRODUCTION_UNTOUCHED=YES`.
 
+## Local Grafana OCI image availability — operator-reported / 2026-10-13
+
+The operator checked cached Grafana image tags on Fedora without pulling images or starting containers:
+
+| Engine | Read-only query | Grafana images | Exact `13.2.3` |
+|---|---|---:|---:|
+| Podman | `IMAGE_QUERY=PASS` | `0` | `0` |
+| Docker | `IMAGE_QUERY=FAILED` | unknown | unknown |
+
+Reported safety: `IMAGES_DOWNLOADED=NO`, `CONTAINERS_STARTED=NO`, `PRODUCTION_CHANGES=NO`.
+
+**Interpretation:** No cached Grafana image was found in the queried Podman image store. Docker query failure is **not** proof that Docker lacks an image; no assumption about its daemon/permissions should be made from this result. An exact-version Podman container test is not immediately available without acquiring or building an image; avoid silently switching to a different Grafana version and attributing test results to host `13.2.3`.
+
+**Next proposed route without image download:** Use the **already installed Grafana 13.2.3 binary**, but only in a separate transient systemd unit with a verified `PrivateNetwork=yes` network namespace and restricted filesystem access (`ProtectSystem=strict`, explicit private writable scratch paths, no production `/etc/grafana/grafana.ini` or `/etc/grafana/provisioning` access). First run an innocuous *non-Grafana* transient sandbox preflight to verify OS support for these restrictions. Then prepare a synthetic contact-only provisioning fixture and an empty SQLite DB in isolated directories, with SMTP disabled, no real alert rules/credentials/chat IDs, no published host port, and explicit shutdown/cleanup. Do not proceed to Grafana runtime with any failed preflight or missing control. 
+
+Grafana documents independent provisioning/data paths and config controls ([Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)); systemd documents isolated network namespace and restricted host filesystem ([systemd.exec](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html)).
+
+`LOCAL_PODMAN_GRAFANA_IMAGE=ABSENT`; `DOCKER_IMAGE_INVENTORY=UNVERIFIED`; `ISOLATED_HOST_BINARY_TEST=NOT_STARTED`; `PRODUCTION_UNTOUCHED=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -375,6 +394,7 @@ The operator ran read-only Fedora preflight checks and reported:
 - `TELEGRAM_CHATID_YAML_IN_MEMORY_DRY_RUN=PASS`; `DRAFT_YAML_VALID=TRUE`; `ONLY_CHATID_CHANGED=TRUE`; `LIVE_INTERPOLATION=NOT_TESTED`.
 - `HOST_SECURE_STAGING_V2=PASS`; `STAGING_ROOT_MODE=0700`; `STAGING_FILE_MODES=0600`; `STAGED_CHATID_NONNEGATIVE=TRUE`; `STAGED_ENV_SOURCE=NOT_ACTIVE`; `STAGING_INTEGRITY=12_CHECKS_PASS`; `BACKUP_MATCHES_LIVE=PASS`; `LIVE_GRAFANA_INTERPOLATION=NOT_TESTED`.
 - `ISOLATED_TEST_PREFLIGHT=PASS`; `GRAFANA_INSTALLED=13.2.3`; `PODMAN_AVAILABLE=TRUE`; `DOCKER_AVAILABLE=TRUE`; `CONTAINER_IMAGE_CACHE_STATUS=UNKNOWN`; `ISOLATED_RUNTIME_PROVISIONING=NOT_TESTED`.
+- `PODMAN_GRAFANA_IMAGE_CACHE=0`; `PODMAN_VERSION_MATCH_IMAGES=0`; `DOCKER_IMAGE_QUERY=FAILED`; `ISOLATED_HOST_BINARY_TEST=NOT_STARTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
