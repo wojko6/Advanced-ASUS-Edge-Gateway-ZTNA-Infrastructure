@@ -23,21 +23,17 @@ The checked-in `monitoring/grafana/provisioning/alerting/asus-email-contact.yml`
 
 ## Resolved audit anomaly (2026-10-13): systemd EnvironmentFiles
 
-**STOP / no production migration.** After the earlier 10/10 deployment preflight, an operator-run read-only path check showed `EXISTING_ENVIRONMENT_FILES=1` despite an earlier same-host read reporting **four** effective `EnvironmentFile` sources (modes 0644/0600/0600/0640). Other observations: five effective drop-ins, Grafana loaded/active, no target path collision, SELinux `Enforcing`, `restorecon` installed, intended private env parent not yet created. Path audit final verdict: **`DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED`**.
+An initial operator-read path preflight reported only one EnvironmentFile, conflicting with four previously observed sources. The follow-up identified two **assistant-authored diagnostic script defects**: repeated `EnvironmentFiles=` properties were overwritten when parsed into a dictionary, and a one-group regex return was incorrectly unpacked as two values. The corrected **V2** read-only test definitively reported:
 
-Do **not** trust the earlier assumption that four environment files will remain present. Audit unit/drop-in `EnvironmentFile=` directives and resets, compare single-property vs multi-property `systemctl show` and check effective sources via *names-only* variable lookup. Do not expose raw `Environment`, `EnvironmentFiles`, unit files or token values in output. If the discrepancy is real, stop to assess impact on existing Email/Telegram credentials **before** adding a new drop-in. Add SELinux context validation and appropriate restoration to the implementation plan. All production changes and Grafana service restarts remain **not authorized**.
+- `SINGLE_SOURCES=4`; `MULTI_PROPERTY_LINES=4`; `MULTI_SOURCES_TOTAL=4`; `SOURCE_ORDER_MATCH=True`.
+- `ENVFILE_DIRECTIVES=4`; `ENVFILE_RESETS=0`.
+- All four files read successfully, root-owned, modes `0644/0600/0600/0640`.
+- Both Email destination and Telegram bot-token references resolved to world-inaccessible files.
+- **`ENV_RECONCILIATION=PASS`**; no changes, daemon reload, Grafana restart, or sent messages.
 
-### Reconciliation follow-up
+**Disposition:** The `4 vs 1` blocker is **CLOSED — script parsing false positive**. The earlier `DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED` is a historical invalidated source-count snapshot.
 
-The latest operator output reports **four** EnvironmentFiles in the single-property query and **four** nonempty `EnvironmentFile=` directives with **zero** resets, despite `MULTI_QUERY_SOURCES=1`. The multi-property parser stores each `EnvironmentFiles=` line into one dictionary key, possibly discarding earlier occurrences. The subsequent path loop crashed due to a one-group regex return incorrectly unpacked as a two-item tuple. Thus the count of one is **not reliable as evidence of lost sources**, and the effective path audit is incomplete.
-
-The block remains until a fixed, read-only diagnostic gathers **all** repeated property occurrences, confirms source ordering and validates name-only references for Email and Telegram. No production writes, service restart or provisioning reload authorized.
-
-### Resolution update — environment count gate PASS
-
-The corrected V2 read-only reconciliation reports `SINGLE_SOURCES=4`, `MULTI_PROPERTY_LINES=4`, `MULTI_SOURCES_TOTAL=4`, `SOURCE_ORDER_MATCH=True`, `ENVFILE_DIRECTIVES=4`, `ENVFILE_RESETS=0`, and `ENV_RECONCILIATION=PASS`. All four files were readable and root-owned with previously observed permissions, and Email/Telegram token names were each resolved in a private source. The apparent `4 vs 1` issue arose from **overwriting repeated `EnvironmentFiles` properties in a dictionary**, compounded by a separate regex-unpacking script error. Thus **only the source-count blocker is cleared**. Existing read-only `DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED` remains a historical snapshot, not evidence of current source loss.
-
-**Current hold:** SELinux mode is `Enforcing`; the prospective `/etc/grafana/private` directory is not yet created. Verify file-context expectations, effective unit/drop-in interactions and rollback/health checks before changing anything. Grafana restart, installation of any environment file, and notifier tests remain subject to explicit operator authorization.
+**Current hold remains:** the server runs SELinux in `Enforcing`, the proposed private environment directory does not yet exist, and live changes/restart/testing have not been authorized. Next perform a **read-only file-context policy lookup** (`matchpathcon -n -m dir|file`) and inspect current private EnvironmentFile context *types* without logging file paths/values; the policy's default label prediction by itself does **not** demonstrate actual service read access. Review systemd unit ordering, maintain all four existing EnvironmentFile entries, and plan label restoration and rollback before a single operator-approved Grafana restart. A synthetic isolated Grafana test already passed; it does not replace production post-change acceptance.
 
 ## Stage 0 — immediately before implementation (read-only; STOP on failure)
 
