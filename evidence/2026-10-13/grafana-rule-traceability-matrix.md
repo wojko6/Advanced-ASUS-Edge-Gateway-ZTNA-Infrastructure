@@ -440,6 +440,31 @@ A separate **review-only** guide has been committed: [`docs/grafana-236-telegram
 
 `DEPLOYMENT_PREFLIGHT=10/10_PASS`; `DEPLOYMENT_RUNBOOK=PREPARED`; `LIVE_RESTART_AUTHORIZATION=PENDING`; `PRODUCTION_MIGRATION=NOT_STARTED`.
 
+## SELinux and systemd deployment-path audit — operator report / 2026-10-13
+
+The operator checked loaded unit state and migration target paths in read-only mode:
+
+| Check | Observation |
+|---|---|
+| `SYSTEMD_QUERY` | `PASS` |
+| `UNIT_LOADED` / `SERVICE_ACTIVE` / `UNIT_FILE_PRESENT` | all `True` |
+| `EXISTING_DROPINS` | `5` |
+| `EXISTING_ENVIRONMENT_FILES` | **`1`** |
+| `TARGET_DROPIN_EXISTS` / `TARGET_SECRET_EXISTS` | both `False` |
+| `DROPIN_PARENT_EXISTS` / `SECRET_PARENT_EXISTS` | `True` / `False` |
+| `DROPIN_NAME_COLLISIONS` | `0` |
+| `SELINUX_MODE` / `RESTORECON_AVAILABLE` | `Enforcing` / `True` |
+| **`DEPLOYMENT_PATH_PREFLIGHT`** | **`REVIEW_REQUIRED`** |
+| Files created, systemd modified, Grafana restarted, notifications sent | all `NO` |
+
+**Blocking discrepancy:** An earlier `systemctl show ... EnvironmentFiles` audit reported **four** sources and their modes, whereas this check reports **one** source from another query of the same unit. This is **not reconciled**; do not assume that all four remain effective, that three were removed or that it is merely a parsing quirk. The presence of five systemd drop-ins also requires checking ordering, additive vs reset `EnvironmentFile=` assignments and effective source references. Do not log raw systemd environment properties, file contents or secret-bearing paths.
+
+**Additional deployment caveat:** SELinux `Enforcing` is active, and the prospective private directory does not exist. Before deploying any new env file, determine systemd's effective access and expected SELinux context and validate a private path. The currently missing target directory is not a failure: no production writes are authorized.
+
+**Action:** suspend production migration, collect a **sanitized read-only comparison** of the effective `EnvironmentFiles` list from `systemctl show` and the unit/drop-in `EnvironmentFile` directives from `systemctl cat` (counts, resets and per-file booleans; never raw lines or paths). Check whether variables referenced by the live YAML occur in the newly reported effective sources and verify whether the Grafana service has been reloaded/changed externally. Reassess staging integrity before deployment. No restart, reload or notification until discrepancy is resolved.
+
+`PATH_PREFLIGHT=REVIEW_REQUIRED`; `SYSTEMD_ENVFILE_COUNT_DISCREPANCY=4_VS_1_OPEN`; `SELINUX=ENFORCING`; `PRODUCTION_UNTOUCHED=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -468,6 +493,7 @@ A separate **review-only** guide has been committed: [`docs/grafana-236-telegram
 - `SYSTEMD_DYNAMICUSER_PRIVATE_NETWORK_SANDBOX=6_6_PASS`; `SANDBOX_GRAFANA_RUNTIME=NOT_STARTED`.
 - `SYNTHETIC_GRAFANA_13_2_3_PROVISIONING=PASS`; `SYNTHETIC_API_CONTACT_READ=PASS`; `SYNTHETIC_EMAIL_AND_TELEGRAM=PASS`; `SYNTHETIC_CHATID_INTERPOLATION=PASS`; `PRODUCTION_MIGRATION=NOT_STARTED`.
 - `DEPLOYMENT_PREFLIGHT=10_10_PASS`; `ONE_RESTART_RUNBOOK=PREPARED_NOT_EXECUTED`; `SYSTEMD_DROPIN_AND_SELINUX_PREFLIGHT=PENDING`.
+- `DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED`; `ENVFILES_COUNT_PRIOR=4`; `ENVFILES_COUNT_LATEST=1`; `DISCREPANCY=OPEN`; `EXISTING_DROPINS=5`; `SELINUX=ENFORCING`; `NO_PRODUCTION_WRITES=TRUE`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
