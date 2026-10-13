@@ -370,6 +370,26 @@ Grafana documents independent provisioning/data paths and config controls ([Conf
 
 `LOCAL_PODMAN_GRAFANA_IMAGE=ABSENT`; `DOCKER_IMAGE_INVENTORY=UNVERIFIED`; `ISOLATED_HOST_BINARY_TEST=NOT_STARTED`; `PRODUCTION_UNTOUCHED=YES`.
 
+## systemd isolated-host smoke preflight — operator-reported / 2026-10-13
+
+A transient systemd unit ran a **non-Grafana** Python isolation test. The first attempt stopped due to an assistant-authored Python quoting error in a status `f`-string (`PASS` was interpreted as a symbol); this was **a test-script failure, not evidence of a sandbox policy failure**. The corrected `--pipe` + heredoc V2 test reported:
+
+| Assertion | V2 |
+|---|---|
+| `DYNAMIC_USER` | `PASS` |
+| `NETWORK_LOOPBACK_ONLY` | `PASS` |
+| `ROOT_FILESYSTEM_READONLY` | `PASS` |
+| `PRODUCTION_CONFIG_HIDDEN` | `PASS` |
+| `PRODUCTION_DATABASE_HIDDEN` | `PASS` |
+| `PRIVATE_STAGING_HIDDEN` | `PASS` |
+| `ISOLATION_PREFLIGHT` | **`PASS`** |
+
+The V2 test used `DynamicUser=yes`, `PrivateNetwork=yes`, `ProtectSystem=strict`, `ProtectHome=yes`, `PrivateTmp=yes`, `PrivateDevices=yes`, `NoNewPrivileges=yes`, and `InaccessiblePaths=/etc/grafana /var/lib/grafana`, in a transient `systemd-run --pipe --wait --collect` unit. The operator explicitly reported `PRODUCTION_GRAFANA_STARTED_OR_STOPPED=NO`, `PRODUCTION_CONFIG_MODIFIED=NO`, `NOTIFICATIONS_SENT=NO`, `SECRETS_READ=NO`.
+
+**Evidence boundary:** This proves isolation primitives were effective in the corrected test process; it does not prove the Grafana runtime will start correctly, that provisioning will parse its test-only fixture, or that a production restart/reload is safe. Next test may start a **separate sandboxed host-binary Grafana** in a transient unit, with `RuntimeDirectory` scratch-only configuration/SQLite DB, synthetic Email/Telegram credentials and chat ID, no alert rules, `PrivateNetwork=yes`, no host port publish, and no production paths available.
+
+`SYSTEMD_ISOLATION_V2=PASS`; `GRAFANA_SANDBOX_RUNTIME=NOT_STARTED`; `PRODUCTION_UNTOUCHED=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -395,6 +415,7 @@ Grafana documents independent provisioning/data paths and config controls ([Conf
 - `HOST_SECURE_STAGING_V2=PASS`; `STAGING_ROOT_MODE=0700`; `STAGING_FILE_MODES=0600`; `STAGED_CHATID_NONNEGATIVE=TRUE`; `STAGED_ENV_SOURCE=NOT_ACTIVE`; `STAGING_INTEGRITY=12_CHECKS_PASS`; `BACKUP_MATCHES_LIVE=PASS`; `LIVE_GRAFANA_INTERPOLATION=NOT_TESTED`.
 - `ISOLATED_TEST_PREFLIGHT=PASS`; `GRAFANA_INSTALLED=13.2.3`; `PODMAN_AVAILABLE=TRUE`; `DOCKER_AVAILABLE=TRUE`; `CONTAINER_IMAGE_CACHE_STATUS=UNKNOWN`; `ISOLATED_RUNTIME_PROVISIONING=NOT_TESTED`.
 - `PODMAN_GRAFANA_IMAGE_CACHE=0`; `PODMAN_VERSION_MATCH_IMAGES=0`; `DOCKER_IMAGE_QUERY=FAILED`; `ISOLATED_HOST_BINARY_TEST=NOT_STARTED`.
+- `SYSTEMD_DYNAMICUSER_PRIVATE_NETWORK_SANDBOX=6_6_PASS`; `SANDBOX_GRAFANA_RUNTIME=NOT_STARTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
