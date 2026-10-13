@@ -873,6 +873,16 @@ After production `PRODUCTION_STAGE2_V4=PASS`, the operator expressly authorized 
 
 `POST_V4_SCOPED_TEST_APPROVED=YES`; `TEST_RULE_CREATED=NOT_REPORTED`; `POST_V4_FIRING_DELIVERED=NOT_TESTED`; `POST_V4_RESOLVED_DELIVERED=NOT_TESTED`; `PRODUCTION_15_RULES=UNCHANGED_AS_LAST_REPORTED`; `ISSUE236=OPEN`.
 
+## Post-V4 scoped Firing delivery confirmed — 2026-10-13 (operator and screenshot)
+
+The operator created one temporary Grafana-managed rule `E2E-TEST-2026-10-13` in `Network` with isolated evaluation group, default `vector(0)` initial Normal state, and then changed the synthetic query to `vector(1)`. A screenshot of the **received Gmail message** shows one `Firing` instance with alert name `E2E-TEST-2026-10-13`, `A=1`, `C=1`, folder `Network`, Grafana 13.2.3 footer, and a rendered delivery time **2026-10-13 22:17 CEST**. The operator separately confirms that **Telegram also received the corresponding Firing message** (no separate Telegram screenshot in this step).
+
+**Accepted bounded finding:** a real rule-triggered Firing notification was successfully delivered to both existing Email and Telegram channels after the V4 Chat ID migration. This is stronger evidence than contact-point configuration or a manual notifier test, but applies only to the controlled temporary rule. Do not claim Resolved delivery, removal of the temporary rule, unchanged final 15-rule count or all per-rule delivery until observed.
+
+**NEXT:** change only temporary rule query from `vector(1)` back to `vector(0)`; wait for rule Normal and confirmed **Resolved inbox/Telegram messages** (allow grouping delay). Then delete only that temporary rule and verify 15 permanent nonpaused rules; optionally remove empty temporary evaluation group after verifying it is unused. Do not restart Grafana, modify router/infrastructure, or print private destination values.
+
+`POST_V4_SYNTHETIC_FIRING_EMAIL=PASS_SCREENSHOT`; `POST_V4_SYNTHETIC_FIRING_TELEGRAM=PASS_OPERATOR`; `POST_V4_SYNTHETIC_RESOLVED=NOT_YET_TESTED`; `TEMPORARY_RULE_CLEANUP=PENDING`; `ISSUE236=OPEN`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
