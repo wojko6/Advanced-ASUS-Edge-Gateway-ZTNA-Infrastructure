@@ -76,6 +76,32 @@ flowchart TD
 - The active `/jffs/scripts/services-start` registers `AsusEdgeDNSGuard` before its `/opt` readiness wait. Cron re-evaluates DNS policy once per minute, preserving sticky break-glass priority. A separate, inactive add-on `services-start` copy was observed out of sync with the active hook and should be reconciled during a future controlled installer maintenance.
 - The 2026-10-06 full cold-boot validation returned NTP, Unbound, Pi-hole, Tailscale, the DNS Guard watchdog and the Pi-hole steady-state runtime resolver without reproducing the earlier DNS/NTP/Unbound dependency cycle.
 
+## Watchdog and DR scope checkpoint — 2026-10-13
+
+- **Validated ordering is not a blanket disaster-recovery claim.**
+  The 2026-10-08 physical cold boot **with mounted Entware** established
+  `AsusEdgeDNSGuard` scheduling before `/opt` readiness and convergence
+  to the Pi-hole system resolver. A further controlled 2026-10-09 reboot
+  reported 0 failures and 0 warnings, with the then-installed Pi-hole-aware
+  DNS stack. Neither event reconstructs a blank router or proves a boot
+  without available Entware. Full replacement-device restoration remains
+  [Issue #129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129).
+- **Lost scheduler is a separate failure domain.** The cron job
+  `AsusEdgeDNSGuard` runs `dns-guard auto` each minute when present.
+  If the cron registration disappears or the scheduler stops, the watchdog
+  cannot guarantee its *own* recovery or alert. Independent, off-router
+  dead-man detection is [Issue #214](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/214),
+  **not a currently proven watchdog self-healing feature**.
+- **Resolver state:** this watchdog sets only the **router-system** runtime
+  DNS policy. It does not implement automatic client DNS failover for
+  Pi-hole-advertised DHCP resolvers ([Issue #212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212));
+  cached answers can mask failing fresh upstream recursion
+  ([Issue #213](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/213)).
+- **Acceptance boundary:** start-order claims here are based on earlier
+  operator-provided evidence, not a new 2026-10-13 on-router inspection.
+  No changes to production scripts, cron, DNS, firewall, storage or
+  monitoring were made for this documentation update.
+
 ## Real cold boot — 2026-10-08, Entware available
 
 The operator performed a physical power-off/power-on cycle. Pre-NTP logs
