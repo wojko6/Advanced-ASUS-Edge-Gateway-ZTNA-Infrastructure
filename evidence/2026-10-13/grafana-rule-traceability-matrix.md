@@ -230,6 +230,266 @@ Check result: `EMAIL_ENV_REFERENCE=True`, `EMAIL_DEFINED_IN_FILES=True`, `EMAIL_
 
 **Planned remediation gate:** first check whether any existing private env file contains a usable chat-ID variable **by key name only**, then stage a fresh environment-reference version of Telegram `settings.chatid`. Ensure the referenced variable will be non-empty in the service launch environment; Grafana [replaces absent interpolation values with an empty string](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/). Keep all staged backups private, retain the current receiver UID and both integrations, and do not restart/reload production until separately approved with rollback and test notifications. A clean-room reprovisioning approach should also address the UI-edited policy.
 
+## Telegram Chat ID variable-name preflight — 2026-10-13
+
+Operator checked **all four** current Grafana `EnvironmentFile` entries for variable *names* containing `TELEGRAM`, `CHAT` and `ID`, without printing values:
+
+| File index | Matching variable-name count |
+|---|---:|
+| ENV 1 | 0 |
+| ENV 2 | 0 |
+| ENV 3 | 0 |
+| ENV 4 | 0 |
+| **Total** | **0** |
+
+Reported `EXISTING_CHATID_VARIABLE_CANDIDATES=0`, `VALUES_PRINTED=NO`, `FILES_MODIFIED=NO`, `SERVICES_RESTARTED=NO`.
+
+**Scope:** A naming heuristic found no apparent Chat ID variable in these `EnvironmentFile` assignments. It does not rule out a differently named variable or values sourced via a service `Environment=`, manager environment or another mechanism. The already-reviewed local YAML explicitly stores Telegram `settings.chatid` inline.
+
+**Staged remediation proposal (not applied):**
+
+1. Adopt `GRAFANA_TELEGRAM_CHAT_ID` as a **new exact variable name**, after checking name collision, and retain the current working Telegram receiver UID/settings and current email receiver configuration.
+2. Store the existing destination ID only in a protected, root-managed `EnvironmentFile` (typically `0600`), supplied to the Grafana service through a reviewed systemd drop-in or carefully reviewed existing file. Keep actual value, private destination and backups outside public Git/logs.
+3. In the reviewed/local contact YAML, replace just Telegram `settings.chatid` literal with `$GRAFANA_TELEGRAM_CHAT_ID` and preserve existing Telegram bot-token reference, receiver UID and optional settings. Validate YAML syntax and variable availability using **sanitized** checks.
+4. Publish a *sanitized* Email+Telegram provisioning specification in Git only after comparing all source-required nonsecret receiver fields and validating schema; never copy the live YAML verbatim. Keep the default-policy recreation/clean-room restore plan separately reviewed.
+5. Have a backup+rollback, validate a safe staging load, and obtain **explicit operator authorization** before changing production files or reloading/restarting Grafana. Avoid any test notification without its own approval.
+
+Grafana documentation confirms `contactPoints[].receivers[].settings.chatid` is the Telegram Chat ID and supports `$VARIABLE` interpolation; **missing variables are replaced with an empty string** ([provisioning documentation](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/)), so uncoordinated changes can silently break Telegram delivery. `ENV_VAR` expansion details also caution against unescaped `# Grafana alert traceability — source baseline / 2026-10-13
+
+**Tracking:** [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) (P2, open)  
+**Evidence classification:** repository-source inventory + previously accepted dated evidence + 2026-10-13 operator-reported **read-only SQLite** inventory (UID/group/pause and field structure only; not a fresh API receiver/delivery acceptance).  
+**No changes to production**, no test notifications sent, no DNS/RouterCloud/WAN failure injection, no Grafana service or provisioning reload.
+
+## Source baseline and ownership
+
+- Rule source: [`monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml`](../../monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml) (Git blob `8b683acbb0425cf1c53a6d39b0e8d1ad1ba31df8`).
+- Exactly **15** source-controlled rules, one Grafana group `ASUS TUF-AX5400`, folder `Network`, evaluation interval `1m`, **0** source-paused rules.
+- All 15 source rules use datasource UID `victoriametrics` with a per-rule direct receiver `ASUS Edge Gateway Email`; runtime state and runtime configuration must be checked separately.
+- Source contact-point file: [`asus-email-contact.yml`](../../monitoring/grafana/provisioning/alerting/asus-email-contact.yml) — one Email integration, secrets externalized through `GF_SMTP_USER`. This does **not** reproduce the Email+Telegram integrations observed in the live Grafana API on 2026-10-12.
+- Last documented **live** inventory (2026-10-12): 15 loaded/unpaused, 15 healthy/inactive at snapshot; 15 direct receivers; contact API displayed one logical contact point with Email and Telegram; UI-edited default policy pointed to the named receiver. See [audit](../2026-10-12/grafana-alerting-routing-audit.md). **2026-10-13 SQLite checks cover UID/group/pause but not these runtime health and contact-point/API routing claims.**
+- Source YAML is not a statement that the live policy or integrations will persist after a provisioning reload/restart.
+
+## Per-rule source and historic evidence matrix
+
+All rules route in **source** to `ASUS Edge Gateway Email`. Notification policy overrides and live receiver contents require a fresh sanitized runtime audit. Threshold comparison is the Grafana threshold evaluator, not a claim about a live event.
+
+| Rule UID / signal | Severity | Source comparator / pending `for` | Missing data | Per-rule status | Historic evidence / qualification |
+|---|---|---|---|---|---|
+| `tuf_collector_down` | critical | `lt 1`, `2m` | `Alerting` | PARTIAL | [Evidence](../../evidence/2026-09-27/grafana-alerting-validation.md) — Rule `Firing` and return to normal, 2026-09-27; notifications not tested |
+| `tuf_wan_down` | critical | `lt 1`, `2m` | `OK` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `tuf_probe_failed` | warning | `lt 1`, `2m` | `Alerting` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `tuf_telemetry_stale` | warning | `gt 90`, `2m` | `Alerting` | PARTIAL | [Evidence](../../evidence/2026-09-27/grafana-alerting-validation.md) — Rule `Firing` and return to normal, 2026-09-27; notifications not tested |
+| `tuf_wan_speed_degraded` | warning | `lt 900000000`, `3m` | `OK` | PARTIAL | [Evidence](../../evidence/2026-10-06/grafana-wan-speed-email-alert-validation.md) — Email `Firing` and `Resolved` PASS, 2026-10-06; Telegram on this rule untested |
+| `dns_guard_sustained_failopen` | warning | `gt 0.5`, `10m` | `OK` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `dns_guard_bootstrap_unhealthy` | critical | `gt 0.5`, `2m` | `OK` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `dns_guard_telemetry_stale` | warning | `gt 180`, `5m` | `Alerting` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `dns_guard_state_unknown` | critical | `gt 0.5`, `2m` | `OK` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `dns_guard_watchdog_missing` | critical | `gt 0.5`, `2m` | `OK` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `dns_guard_recovery_flapping` | warning | `gt 0.5`, `2m` | `OK` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `routercloud_backup_bad` | warning | `lt 1`, `1m` | `OK` | PARTIAL | [Evidence](../../evidence/2026-10-07/grafana-routercloud-alerting-live-validation.md) — Rule `Firing` and recovered state PASS, 2026-10-07; per-rule inbox delivery not demonstrated |
+| `routercloud_backup_stale` | critical | `gt 28800`, `5m` | `Alerting` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `routercloud_maintenance_bad` | critical | `lt 1`, `1m` | `OK` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+| `routercloud_maintenance_stale` | warning | `gt 691200`, `30m` | `Alerting` | NOT_TESTED | No per-rule `Firing`/`Resolved` delivery evidence located |
+
+**Status semantics:** `NOT_TESTED` means no individual managed rule firing/resolved proof available in the consulted evidence. `PARTIAL` denotes a proven subset: evaluation and/or one transport but not both Email and Telegram automatic `Firing` and `Resolved` for that rule. `PASS` is reserved for the complete explicitly scoped evidence chain; `WAIVED` requires recorded rationale. A healthy/inactive runtime snapshot is **not** equivalent to per-rule notification testing.
+
+## Exact metric/probe expressions in source
+
+| UID | VictoriaMetrics / PromQL signal |
+|---|---|
+| `tuf_collector_down` | `asus_wifi_exporter_up{job="asus_wifi_clients"}` |
+| `tuf_wan_down` | `asus_router_wan_link_up{job="asus_wifi_clients"}` |
+| `tuf_probe_failed` | `probe_success{job=~"internet_https&#124;internet_icmp&#124;internet_dns"}` |
+| `tuf_telemetry_stale` | `time() - asus_wifi_exporter_last_success_unixtime_seconds{job="asus_wifi_clients"}` |
+| `tuf_wan_speed_degraded` | `max(asus_router_wan_speed_bps{job="asus_wifi_clients"})` |
+| `dns_guard_sustained_failopen` | `asus_edge_dns_guard_mode_bootstrap * (time() - asus_edge_dns_guard_collection_timestamp_seconds < bool 180)` |
+| `dns_guard_bootstrap_unhealthy` | `asus_edge_dns_guard_mode_bootstrap * ((asus_edge_dns_guard_bootstrap_dns_healthy == bool 0) + (time() - asus_edge_dns_guard_bootstrap_dns_last_check_timestamp_seconds > bool 180)) * (time() - asus_edge_dns_guard_collection_timestamp_seconds < bool 180)` |
+| `dns_guard_telemetry_stale` | `time() - asus_edge_dns_guard_collection_timestamp_seconds` |
+| `dns_guard_state_unknown` | `(asus_edge_dns_guard_state_valid == bool 0) * (time() - asus_edge_dns_guard_collection_timestamp_seconds < bool 180)` |
+| `dns_guard_watchdog_missing` | `(asus_edge_dns_guard_watchdog_present == bool 0) * (time() - asus_edge_dns_guard_collection_timestamp_seconds < bool 180)` |
+| `dns_guard_recovery_flapping` | `(increase(asus_edge_dns_guard_fallback_transitions_runtime_total[15m]) > bool 2) * (time() - asus_edge_dns_guard_collection_timestamp_seconds < bool 180)` |
+| `routercloud_backup_bad` | `last_over_time(routercloud_backup_last_run_success[24h])` |
+| `routercloud_backup_stale` | `time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[24h])` |
+| `routercloud_maintenance_bad` | `last_over_time(routercloud_maintenance_last_run_success[30d])` |
+| `routercloud_maintenance_stale` | `time() - last_over_time(routercloud_maintenance_last_run_timestamp_seconds[30d])` |
+
+## Proven shared transport vs unproven individual routes
+
+- On **2026-10-12**, a temporary independent `E2E-TEST-2026-10-12` rule triggered real Grafana `Firing` and automatic Gmail+Telegram delivery. Recovery to `Normal` and `Resolved` delivery on both channels were operator-confirmed; temporary rule removed, 15-rule baseline restored. See [routing audit](../2026-10-12/grafana-alerting-routing-audit.md).
+- This proves **one temporary synthetic route**, not the 15 individual production rule paths. Do not upgrade the above statuses based on that shared test.
+- Old WAN-speed Email `Firing/Resolved` and RouterCloud Backup BAD `Firing/recovery` findings are independently documented; they are not evidence of all channels.
+- Source Email-only provisioning and 2026-10-12 live Email+Telegram are **not reconciled**. Treat controlled reload/restart persistence as `NOT_TESTED`.
+
+## Operator-run read-only SQLite checks — 2026-10-13
+
+The operator ran two **read-only** `sqlite3 mode=ro` checks on the live Fedora Grafana database, without service reload or notification tests:
+
+- `LIVE_RULES=15`; `EXPECTED_RULES=15`; `MISSING_UID_COUNT=0`; `EXTRA_UID_COUNT=0`; `PAUSED_RULES=0`.
+- All 15 expected UIDs reported `GROUP=MATCH`.
+- The first script returned `RECEIVER=OTHER_OR_MISSING` for all 15, **but that result is not a proven routing failure**: it attempted `.get("receiver")` on a decoded JSON value without verifying object shape.
+- The follow-up script verified `STORAGE=str`, `STRUCTURE=list` for **all 15** `alert_rule.notification_settings` values. Hence the earlier direct receiver check was **invalid for the observed representation**; the exact contents and interpretation of these arrays remain unknown.
+- No raw JSON, recipient names other than the static source name, destination IDs, secrets, full labels, private paths or credentials were published in the result.
+- The subsequent sanitized nested JSON scanner observed **all 15** rule settings as one-item lists (`ITEMS=1`), with **one** nested `receiver` field (`RECEIVER_KEYS=1`), exactly matching the configured source receiver `ASUS Edge Gateway Email` (`STATUS=MATCH`). Summary: `MATCH=15`, `TOTAL_RULES=15`, `DATABASE_MODIFIED=NO`.
+- The initial `OTHER_OR_MISSING` finding is therefore **a script parsing false-positive**, not evidence of routing drift. **Configuration-level direct receiver name equality: PASS (15/15, operator-reported read-only SQLite).** Actual integration configuration, policy routing/overrides, contact-point persistence and individual end-to-end delivery remain separate gates.
+
+**Live/source UID, group, pause state and nested direct receiver match: PASS (operator-reported).** This is a partial DB snapshot, not a fresh per-rule evaluation health or end-to-end notification audit.
+
+## Operator-run read-only Contact Point / default policy snapshot — 2026-10-13
+
+A follow-up operator-run SQLite audit read `alert_configuration` in `mode=ro` with `query_only=ON`, parsed the latest selected Alertmanager configuration and reported **only sanitized counts and boolean matches**:
+
+| Check | Operator-reported result |
+|---|---|
+| `RECEIVERS_TOTAL` (named receiver entries in parsed config) | `2` |
+| `EXPECTED_CONTACT_FOUND` (`ASUS Edge Gateway Email`) | `True` |
+| `EMAIL_INTEGRATIONS` within the matching receiver | `1` |
+| `TELEGRAM_INTEGRATIONS` within the matching receiver | `1` |
+| `OTHER_INTEGRATIONS` within the matching receiver | `0` |
+| `DEFAULT_RECEIVER_MATCH` | `True` |
+| `CONFIG_PARSE` | `PASS` |
+| `DATABASE_MODIFIED` | `NO` |
+
+**Interpretation:** The current database snapshot contains the expected receiver, one Email and one Telegram integration under that receiver, and a matching default-route receiver. Together with `LIVE_RECEIVER_MATCH=15/15_PASS` this establishes **read-only configuration-level routing parity for all rules and both integration types**. The count `RECEIVERS_TOTAL=2` reflects named receiver entries in that config snapshot; it must not be misreported as two integrations or two separately validated delivery routes. The other receiver entry was not investigated in this sanitized snapshot.
+
+**Limits:** A database snapshot does **not** establish actual ongoing transport health, the ability to deliver all production alerts, exact effective routing with every policy override, file-provisioning ownership, or persistence after a reload/restart. The existing 2026-10-12 synthetic test supports delivery for one specific temporary route only. Source `asus-email-contact.yml` still provisions Email only, so source-versus-live **durability/parity gap remains OPEN**. No production change, contact test, notification send, or service restart was performed.
+
+## Operator-run read-only grouping/default-route snapshot — 2026-10-13
+
+An additional operator-run SQLite `alert_configuration` read (no write/reload) reported the following sanitized values:
+
+| Parameter | Observed |
+|---|---|
+| `DEFAULT_ROUTE_PRESENT` | `True` |
+| `GROUP_BY_COUNT` | `2` |
+| `GROUP_BY_ALERTNAME` | `True` |
+| `GROUP_BY_FOLDER` | `True` |
+| `GROUP_WAIT` | `30s` |
+| `GROUP_INTERVAL` | `5m` |
+| `REPEAT_INTERVAL` | `4h` |
+| `ROUTES_TOTAL` | `1` |
+| `CHILD_ROUTES` / `CHILD_RECEIVER_OVERRIDES` | `0` / `0` |
+| `AUDIT` / `DATABASE_MODIFIED` | `PASS` / `NO` |
+
+**Interpretation:** The **default notification policy** has standard grouping by `alertname` and `grafana_folder`, a 30-second initial group wait, a 5-minute group update interval and a 4-hour reminder interval. This is **configuration evidence, not an anti-flapping runtime test**. Grouping by alert name/folder does **not** merge unrelated rules into a single group.
+
+**Important routing boundary:** Per the [Grafana rule configuration documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/), alert rules selecting a contact point **directly** do not use the notification-policy tree. The 15 production rules configure direct `notification_settings.receiver`; therefore the root-policy timing values cannot automatically be claimed as the **effective** per-rule timings. Each rule's own nested notification settings (keys such as `group_by`, `group_wait`, `group_interval`, `repeat_interval`) need a sanitized read-only inventory; no implicit inheritance is asserted.
+
+**Next gate:** read only the types, timing values and group label *names* of the direct per-rule settings; never dump raw notification JSON or recipient details. Verify behaviour with an operator-approved bounded fixture later, without changing router/DNS production or flooding Email/Telegram.
+
+## Direct rule notification settings — operator read-only SQLite check / 2026-10-13
+
+A subsequent sanitized operator read of all fifteen `alert_rule.notification_settings` JSON arrays reports:
+
+- `RECEIVER_MATCH=15`, `RULES_TOTAL=15`.
+- `NO_EXPLICIT_OVERRIDES=15`: all fifteen matching receiver objects report `GROUP_BY=NOT_EXPLICIT`, `WAIT=NOT_EXPLICIT`, `INTERVAL=NOT_EXPLICIT`, `REPEAT=NOT_EXPLICIT`.
+- `DATABASE_MODIFIED=NO`.
+
+**Meaning:** the observed SQLite list items explicitly select the matching receiver but do not explicitly define their own grouping or timing values. **It does not mean notifications are ungrouped, disabled, or misrouted.** Nor does this observation alone prove effective timing/anti-flap behavior.
+
+Grafana's [rule-level notification documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/) states direct contact-point selection does not route through the notification-policy tree. Grafana's [upstream example provisioning file](https://github.com/grafana/grafana/blob/main/conf/provisioning/alerting/sample.yaml) also documents that unspecified direct rule notification timing fields use the corresponding **default policy setting** as their fallback. This is an important distinction: **fallback timing defaults are not proof that the alert routes through the default policy tree.** Local default-policy snapshot: group by `alertname` and `grafana_folder`, 30s/5m/4h. A live effective-config or controlled synthetic behavioral test is still required before marking anti-flap/grouping runtime delivery `PASS`.
+
+**Recommended next work:** prioritize source-vs-live provisioning ownership and reboot/reload persistence risk (Email-only checked-in YAML vs Email+Telegram live) using only read-only, redacted file inventory. No live reload/restart or outbound message without explicit operator approval.
+
+## Fedora local provisioning inventory — 2026-10-13 (structural-only)
+
+The operator executed a read-only scan of files under `/etc/grafana/provisioning/alerting`. Reported results:
+
+| Check | Observed |
+|---|---|
+| `YAML_FILES` | `3` |
+| File 1: `contactPoints` / type markers | `True`; `EMAIL_TYPE_DECLARED=True`, `TELEGRAM_TYPE_DECLARED=True` |
+| File 2: `groups` | `True`, no contact-point type markers |
+| File 3: `contactPoints` / `groups` / `policies` | None found |
+| `policies` / `resetPolicies` in all three | Not found |
+| `FILES_MODIFIED` / `VALUES_OR_SECRETS_PRINTED` | `NO` / `NO` |
+
+**Evidence boundary:** This was a **textual regex-based inventory**, not YAML parsing, runtime provenance verification, or proof the file was loaded. The live contact record separately contains one Email and one Telegram integration and a matching default receiver in Grafana SQLite, but that does not establish this local file as their source. The checked-in GitHub `monitoring/grafana/provisioning/alerting/asus-email-contact.yml` still declares **Email only**. Therefore the more precise finding is **repository file versus observed Fedora local file declaration drift**, not **Fedora local versus live Email/Telegram inconsistency**.
+
+Neither a `policies` nor a `resetPolicies` declaration was found by the restricted textual scan. The UI-edited root policy is evidenced in Grafana DB, but its reproducibility in the repository remains unverified. Do not assume a Grafana restart necessarily resets this SQLite-backed policy; do not claim a clean-room restore could rebuild it, either.
+
+Per [Grafana file provisioning documentation](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/), a provisioning reload/startup can modify resources, and provisioning a policy tree overwrites the whole policy tree; any solution requires a reviewed source-of-truth, secret-redaction and rollback. **No reload, restart or file copy was performed.**
+
+**Next safe gate:** parse the local contact-point YAML (or mark parser missing); verify that Email and Telegram are receivers of the expected *same* named contact point, and assess secret handling and file permissions by boolean checks **without outputting token, chat ID, email address, file contents, or local paths**.
+
+## Fedora local YAML parse, contact identity and permission audit — 2026-10-13
+
+Operator executed PyYAML `safe_load` in read-only mode on the three locally present alerting YAML files:
+
+| Observation | Reported |
+|---|---|
+| `YAML_FILES` and parsability | 3; `YAML_PARSE=PASS` for each |
+| Expected contact-point name | `EXPECTED_CONTACT=MATCH`; `EXPECTED_CONTACT_DEFINITIONS=1` |
+| Receiver types in that contact | `EMAIL_RECEIVERS=1`, `TELEGRAM_RECEIVERS=1` |
+| Telegram token representation | `TELEGRAM_TOKEN_MODE=ENV_REFERENCE` |
+| Contact YAML group-readable / other-readable | `True` / `True` |
+| `POLICIES_DEFINED` across the three files | `False` |
+| `FILES_MODIFIED` / `SECRETS_PRINTED` | `NO` / `NO` |
+
+**Accepted limited finding:** Locally installed alerting YAML parses and contains exactly one contact definition with both Email and Telegram receivers under the expected name. The checked Telegram bot token is written as an environment-variable reference (not an inline literal in the tested key). A 2026-10-13 live database snapshot separately shows this logical contact and both types, consistent with—but not conclusive proof of—these particular file resources having been loaded. No file-reload/startup reapplication test occurred.
+
+**Security caveat:** The contact YAML is readable by the filesystem group and other users. That alone is not proof of a token leak because the examined token uses an environment reference, but **other fields** (Telegram chat ID, email destination, API URLs/keys, variables expansion behavior) and the referenced variable's actual storage/perms are **not yet audited**. Do not publish the local YAML or apply permission changes blindly; assess only presence/modes and secret *reference-vs-inline* classification without disclosing contents. File-provisioning environment expansion is [documented by Grafana](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/).
+
+**Remaining drift:** The public GitHub contact provisioning file remains Email-only. The observed Fedora local file includes Telegram; source-of-truth consistency and local secret/environment persistence remain open. UI-edited default-policy routing is stored in Grafana database but no YAML `policies` declaration was found: clean-room restoration of that policy is also unproven. Keep `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`, `ANTI_FLAP_DELIVERY=NOT_TESTED` and `ALL_15_PER_RULE_E2E=NOT_TESTED`.
+
+## Fedora secret-reference check — operator-reported read-only / 2026-10-13
+
+A narrowly scoped operator-run PyYAML audit of the matching local Contact Point reported:
+
+| Key or file property | Result |
+|---|---|
+| `EXPECTED_CONTACT` | `FOUND` |
+| `EMAIL_ADDRESSES` | `ENV_REFERENCE` |
+| `TELEGRAM_BOTTOKEN` | `ENV_REFERENCE` |
+| `TELEGRAM_CHATID` | `INLINE_VALUE` |
+| `FILE_OTHER_READABLE` | `True` |
+| `SECRET_VALUES_PRINTED` / `FILES_MODIFIED` | `NO` / `NO` |
+
+**Finding GRAFANA-236-P1 (privacy/configuration hardening, not a confirmed exploit):** the Telegram chat identifier is a literal in a locally world-readable YAML file. A chat ID is a destination identifier, **not** equivalent to the Telegram bot token or an authentication credential; this is still unnecessary disclosure to local accounts and incompatible with publishing an otherwise portable sanitized source configuration. The bot token and e-mail addresses are stored as environment references in the inspected YAML fields, but the backing variables, actual runtime value injection and their storage permissions **have not yet been checked**. No exfiltration or unauthorized access was observed.
+
+**Desired state:** preserve one Email and one Telegram receiver under the current Contact Point name; represent `settings.chatid` as a dedicated environment reference (e.g. `$GRAFANA_TELEGRAM_CHAT_ID`), store the actual chat ID in a private host-managed environment source with least-privilege file ownership/mode, and keep all destination IDs and tokens out of Git and logs. Grafana officially supports [environment interpolation in alerting provisioning properties](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/), including receiver settings. An undefined variable can become an empty value, so **do not modify the live YAML, restart or reload Grafana until the variable source, backup, rollback and stage tests are verified**. Review the necessity of world-readable YAML only after establishing Grafana service read permissions; do not blindly `chmod` a provisioned file.
+
+**Status:** `LOCAL_YAML_PRIVACY_GAP=OPEN`; `CONTACT_CHAT_ID_INLINE=TRUE`; `CONTACT_YAML_OTHER_READABLE=TRUE`; `BOT_TOKEN_INLINE=FALSE` (in checked field only); `SECURE_ENV_SOURCE_PERMISSIONS=UNVERIFIED`; `SOURCE_RECONCILIATION=PENDING`; `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
+
+## systemd EnvironmentFile ownership and mode audit — operator-reported / 2026-10-13
+
+The operator corrected an audit-script unpacking error and ran a sanitized **read-only** `systemctl show grafana-server --property=EnvironmentFiles` plus `os.stat` inspection. Four files were present, all owned by root; none was group-/other-writable:
+
+| Ordered env file | Mode | Root-owned | Group-readable | Other-readable | Group-/other-writable |
+|---|---|---|---|---|---|
+| 1 | `0644` | yes | yes | yes | no |
+| 2 | `0600` | yes | no | no | no |
+| 3 | `0600` | yes | no | no | no |
+| 4 | `0640` | yes | yes | no | no |
+
+Reported: `SYSTEMD_QUERY=PASS`; `ENVIRONMENT_FILES=4`; `ENV_VALUES_READ=NO`; `ENV_VALUES_PRINTED=NO`; `CONFIG_MODIFIED=NO`.
+
+**Risk interpretation:** File 1 is readable by other local accounts; whether this represents sensitive exposure **depends on the assignments inside it** and remains `PENDING_KEY_ONLY_AUDIT`. It must not be labeled a confirmed credential leak. The exact owning group of File 4 and its members have not yet been audited. Root-only `0600` and root-owned `0640` with a suitably narrow group are typical restricted-file postures; no `chmod`, move or service restart is approved by this evidence.
+
+**systemd semantics:** `EnvironmentFile` data is loaded by the service manager at service execution and multiple files are processed in order; later assignments override earlier assignments. File read permissions alone are not proof of what the already-running Grafana process received. Per [systemd.exec](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html), environment variables should not be considered a full secret-isolation mechanism; review the effective service/exposure boundary separately without revealing values.
+
+**Next safe gate:** key-name-only inventory (never emit values) of all four files, distinguish ordinary distro defaults from sensitive-looking assignments in world-readable File 1, check which source defines the variable names referenced in Grafana YAML and its *last effective definition*, and check File 4 group access. Preserve all four files, ensure no unrelated services are modified and avoid printing tokens, chat IDs or recipient addresses.
+
+## systemd environment name-source mapping — operator-reported / 2026-10-13
+
+The read-only operator check scanned **variable names only** (the variable values were read locally but not printed; no environment data was sent in the output), correlating Grafana Contact Point references to ordered systemd `EnvironmentFile` entries:
+
+| Source | Mode | Variables | Sensitive-looking *names* | World-readable | Notes |
+|---|---|---:|---:|---|---|
+| ENV 1 | `0644` | 12 | 0 | yes | No matching names found by heuristic; **not proof content is non-sensitive** |
+| ENV 2 | `0600` | 8 | 8 | no | Referenced email destination last defined here |
+| ENV 3 | `0600` | 1 | 1 | no | Referenced Telegram bot token last defined here |
+| ENV 4 | `0640` | 1 | 1 | no | File's owner group matches `grafana`; the specific variable/consumer remains unidentified |
+
+Check result: `EMAIL_ENV_REFERENCE=True`, `EMAIL_DEFINED_IN_FILES=True`, `EMAIL_LAST_FILE_INDEX=2`, `EMAIL_LAST_SOURCE_WORLD_READABLE=False`; likewise `TELEGRAM_TOKEN_ENV_REFERENCE=True`, `TELEGRAM_TOKEN_DEFINED_IN_FILES=True`, `TELEGRAM_TOKEN_LAST_FILE_INDEX=3`, `TELEGRAM_TOKEN_LAST_SOURCE_WORLD_READABLE=False`. `VALUES_PRINTED=NO`, `FILES_MODIFIED=NO`, `SERVICES_RESTARTED=NO`.
+
+**Risk conclusion:** no world-readable source is reported for the two referenced Email/Telegram bot token variables, and ENV 4 is readable by the `grafana` group but not by other users. The world-readable ENV 1 still merits a limited content/meaning review rather than automatic `chmod`: heuristic checking of variable **names** cannot prove its **values** harmless. The currently deployed YAML remains world-readable with an **inline Telegram chat ID**, which is a destination identifier (not a bot authentication token); this is the immediate privacy-hardening candidate.
+
+**Planned remediation gate:** first check whether any existing private env file contains a usable chat-ID variable **by key name only**, then stage a fresh environment-reference version of Telegram `settings.chatid`. Ensure the referenced variable will be non-empty in the service launch environment; Grafana [replaces absent interpolation values with an empty string](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/). Keep all staged backups private, retain the current receiver UID and both integrations, and do not restart/reload production until separately approved with rollback and test notifications. A clean-room reprovisioning approach should also address the UI-edited policy.
+
+ in values; for a numeric Telegram Chat ID, this is normally irrelevant but should be validated.
+
+`CHAT_ID_ENV_PREFLIGHT=NO_MATCHING_NAME`; `PROPOSED_NAME=GRAFANA_TELEGRAM_CHAT_ID`; `REMEDIATION=DESIGN_ONLY`; `PRODUCTION_MODIFIED=NO`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -250,6 +510,7 @@ Check result: `EMAIL_ENV_REFERENCE=True`, `EMAIL_DEFINED_IN_FILES=True`, `EMAIL_
 - `DEFAULT_POLICY_GROUPING_CONFIG=PASS` (30s / 5m / 4h, grouped by alertname+grafana_folder); `DIRECT_RULE_NO_EXPLICIT_OVERRIDE=15/15_PASS`; `DIRECT_RULE_EFFECTIVE_GROUPING=NOT_LIVE_VALIDATED`; `ANTI_FLAP_DELIVERY=NOT_TESTED`.
 - `EMAIL_ADDRESSES=ENV_REFERENCE`; `TELEGRAM_BOTTOKEN=ENV_REFERENCE`; `TELEGRAM_CHATID=INLINE_VALUE`; `CONTACT_YAML_OTHER_READABLE=TRUE`; `CHATID_PRIVACY_REMEDIATION=PENDING`.
 - `SYSTEMD_ENVFILE_COUNT=4`; `ENVFILE_ROOT_OWNED=4/4`; `ENVFILE_0644=1`; `ENVFILE_0600=2`; `ENVFILE_0640=1`; `EMAIL_LAST_ENV_SOURCE=ENV2_PRIVATE`; `TELEGRAM_BOTTOKEN_LAST_ENV_SOURCE=ENV3_PRIVATE`; `ENV4_GROUP=GRAFANA`; `WORLD_READABLE_ENV_CONTENTS=NOT_AUDITED`.
+- `EXISTING_TELEGRAM_CHATID_ENV_NAME_CANDIDATES=0_OF_4_FILES`; `GRAFANA_TELEGRAM_CHAT_ID=PROPOSED_NOT_DEPLOYED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
