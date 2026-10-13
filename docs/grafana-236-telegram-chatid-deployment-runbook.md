@@ -1,6 +1,6 @@
 # Grafana #236 — Telegram Chat ID provisioning migration (deployment & rollback plan)
 
-**Status:** REVIEW ONLY — production switch **not authorized or executed**  
+**Status:** OPERATOR AUTHORIZED migration with one planned Grafana restart; **NOT YET EXECUTED**  
 **Prepared:** 2026-10-13  
 **Tracking:** [Issue #236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236), [draft PR #237](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/237)  
 **Target:** Fedora Grafana 13.2.3, `grafana-server.service`; production ASUS TUF router is **out of scope**.
@@ -40,6 +40,18 @@ An initial operator-read path preflight reported only one EnvironmentFile, confl
 The operator verified that proposed private directory and environment file paths have predicted type `etc_t`, matching the **actual** SELinux type of each of the four existing `EnvironmentFile` sources. The proposed systemd unit drop-in has predicted type `systemd_unit_file_t`. `TARGET_POLICY_LOOKUP=PASS`, `EXISTING_LABELS_READ=PASS`, with SELinux `Enforcing`; no paths created, contexts changed, service restarts or messages sent.
 
 This clears the **predicted-label policy lookup**, not actual post-install labels or service access. A reviewed deployment should create only the chosen root-owned private environment path, apply `restorecon` to newly created objects and check actual labels and ownership/mode *before* the single approved restart; revert immediately on any mismatch. Do not assume a future label is correct merely because `matchpathcon` predicted it.
+
+### Operator approval and controlled two-phase implementation — 2026-10-13
+
+The operator explicitly approved production deployment **including one Grafana service restart**. This is authorization, **not** evidence of deployment success. Earlier preflights confirmed 4 effective EnvironmentFile sources, zero reset directives, SELinux label-policy lookups PASS, same-type `etc_t` for all four current env files, `systemd_unit_file_t` expected for a new drop-in, and 15 permanent rules.
+
+**Execution is split into safety gates:**
+
+- **Phase 1 (first):** create only an additive protected `/etc/grafana/private/telegram-chatid.env` (root 0600), private dir (0700) and uniquely named systemd drop-in (root 0644) referencing that env file; `restorecon` and verify labels; preserve live YAML, do **not** run `daemon-reload` or restart. If any check fails, clean up only newly created files and STOP. Existing Grafana process is unaffected.
+- **Phase 2 (after operator reports Phase 1 PASS):** revalidate the backup, candidate, all four original sources, new labels and projected five-file additive ordering, atomically replace the **single existing live contact YAML**, `daemon-reload`, verify systemd effective five env sources, execute the **one approved restart**, and check service/rules/contact and matching Chat ID without printing values. On start failure, restore original YAML/remove only newly added files and drop-in, `daemon-reload`, restart for rollback (extra restart only when failure recovery requires it). Never replace using the Email-only repository source.
+- Sending Firing/Resolved test notifications **not covered by the restart approval**; request a separate authorization for the notifier exercise.
+
+No live service change has yet been reported.
 
 ## Stage 0 — immediately before implementation (read-only; STOP on failure)
 
