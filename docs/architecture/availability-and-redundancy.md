@@ -1,7 +1,7 @@
 # Availability, redundancy and single points of failure
 
 **Status:** CURRENT  
-**Last reviewed:** 2026-10-07
+**Last reviewed:** 2026-10-12 (strategy update; failure domains unchanged)
 
 ## Purpose
 
@@ -55,8 +55,10 @@ The project already includes:
 2. Document power dependencies for router, ISP CPE/ONT and Fedora.
 3. Decide whether a UPS is required; if adopted, record capacity, expected
    runtime, monitored status and shutdown/restart behavior.
-4. During RT-BE88U migration planning, assess whether dual-WAN or standby-gateway
-   capability is justified by the service objectives.
+4. Preserve the present single-gateway baseline. If OPNsense is revisited in an
+   unscheduled future, compare dual-WAN, standby gateway, separate DNS power/
+   network failure domains and physical recovery needs before any purchase.
+   No ASUS RT-BE88U migration is currently planned.
 5. Keep monitoring availability separate from gateway availability.
 
 ## Service-level claim boundary

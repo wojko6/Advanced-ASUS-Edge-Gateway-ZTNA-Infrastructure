@@ -1,5 +1,9 @@
 # High-Level Architecture and Trust Boundaries
 
+**Reviewed 2026-10-12:** Current reference ASUS remains unchanged; any
+OPNsense/PF design is a future, non-deployed research alternative. The former
+RT-BE88U migration plan has been cancelled; see [platform decision](platform-direction-2026-10-12.md).
+
 ## Purpose
 
 This diagram is the canonical high-level view of the current ASUS Edge Gateway reference design. It separates Tailscale identity/policy from the project-owned local firewall and shows the three intended traffic classes without merging their detailed datapaths.

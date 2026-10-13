@@ -6,9 +6,7 @@
 - Current live Tailscale: **1.103.375 unstable/dev**; earlier 1.102.3 evidence
   is historical pre-upgrade state.
 - **Current DNS Guard v3.2** (PR #197 merged): bounded manual ON/OFF and power-cycle acceptance passed on 2026-10-08. An additional controlled reboot of the **existing router** on 2026-10-09 recovered the Pi-hole-aware DNS stack with healthcheck 0/0; no blank-device restore is claimed. v3.1 remains historical.
-- Planned next router: **ASUS RT-BE88U / compatible Asuswrt-Merlin 3006.x**.
-- OPNsense/x86 is not the current migration target; keep it only as a future
-  contingency if requirements exceed the ASUS platform.
+- **2026-10-12 superseding decision:** there is **NO planned RT-BE88U migration**. Maintain current TUF-AX5400 in production while completing CORE v1.0. OPNsense/x86 is an **optional future replacement**, with no date, purchase or production approval; explore only as an isolated Windows 11 VM lab when ready. See [platform decision](architecture/platform-direction-2026-10-12.md).
 
 ### Grafana alerting acceptance checkpoint — 2026-10-12
 
@@ -21,10 +19,11 @@ A 2026-10-12 temporary synthetic `E2E-TEST-2026-10-12` rule achieved
 both channels` (operator-confirmed; Firing delivery screenshots reviewed),
 without stopping production services. **Synthetic dual-channel E2E: PASS**.
 Afterwards the operator deleted the temporary rule and confirmed **15 rules
-remain (cleanup PASS, operator-reported)**. Before considering #178 closed,
-inspect grouping/anti-flap, reconcile live Telegram integration with tracked
-Email-only contact provisioning, and verify fallback-policy persistence
-without an uncontrolled production restart. Evidence:
+remain (cleanup PASS, operator-reported)**. **Issue #178 is CLOSED**;
+this bounded dual-channel test does not settle grouping/anti-flap, drift
+between live Telegram and Email-only provisioning, or fallback-policy
+persistence. Track those as explicit open acceptance gaps before claiming
+complete notification lifecycle validation; do not force a live restart. Evidence:
 [2026-10-12](../evidence/2026-10-12/grafana-alerting-routing-audit.md).
 
 ### Optional utility extension (2026-10-09)
@@ -59,10 +58,10 @@ Still open:
 
 - #176 — router-local source scoping for exit-node forwarding;
 - #129 — Pi-hole-aware disaster-recovery refresh;
-- #178 — Grafana grouping/anti-flap and bounded mobile/critical escalation; RouterCloud backup/maintenance alert routing is merged through PR #190;
+- #178 — **CLOSED** after bounded 2026-10-12 Gmail/Telegram synthetic `Firing/Resolved` acceptance; grouping/anti-flap, reload persistence and provisioning parity remain **explicit follow-up gaps**;
 - #108 — remaining DNS-visibility retention/rollback/interception work;
 - #68 — DoH/DoQ/encrypted-DNS assessment;
-- #143 — Trusted/IoT/Guest segmentation design before RT-BE88U migration.
+- #143 — platform-neutral Trusted/IoT/Guest segmentation **design only**, usable in a future OPNsense comparison but not activated now.
 - PR #202 — **open workstation-only** reproducible Unbound 1.26.1-1 ARMv7 rebuild candidate, not an Unbound upgrade or production rollout.
 - DNS Guard follow-up — unmountable Entware at boot and simultaneous local/bootstrap DNS faults remain untested live; maintenance window only.
 
@@ -114,17 +113,21 @@ end-to-end firing and resolved e-mail evidence. PR #190 then extended the
 baseline to nine rules, added four RouterCloud backup/maintenance failure and
 staleness rules, routed all nine **then-current** rules to the existing e-mail contact
 point, and live-tested `routercloud_backup_bad` through firing and recovery.
-Issue #178 now owns grouping/anti-flap and mobile/critical escalation rather than
-RouterCloud backup coverage itself.
+**Historical 2026-10-07 status:** #178 then tracked grouping/anti-flap and
+mobile/critical escalation rather than RouterCloud backup coverage itself.
+**Current 2026-10-12 status:** #178 is CLOSED after controlled Gmail+Telegram
+synthetic Firing/Resolved proof; grouping/anti-flap and provisioning parity
+remain evidence gaps.
 
 The centralized syslog-ng path was subsequently live-validated over Tailscale
 with mutual TLS, source-restricted firewalld policy, an end-to-end unique
 message, and a short collector-outage recovery test that delivered 3/3 queued
 messages after collector restoration.
 
-**Immediate continuation:** keep the completed Engineering/CI dashboard baseline
-stable and continue issue #178 with anti-flap/grouping validation and a bounded
-mobile/critical notification path. That **nine-rule 2026-10-07 checkpoint** and RouterCloud backup/maintenance
+**Immediate continuation (updated 2026-10-12):** keep the completed Engineering/CI
+dashboard baseline stable; review the remaining grouping/anti-flap and
+live Email+Telegram provisioning gaps as follow-up work, even though #178
+is now closed. That **nine-rule 2026-10-07 checkpoint** and RouterCloud backup/maintenance
 alert validation remain historical facts. The **current 2026-10-08 YAML has 15**
 rules directed to the e-mail receiver; individual firing and inbox delivery of
 the five newly loaded DNS Guard recovery rules have not been proven.
@@ -134,8 +137,9 @@ parity evidence and #130 GitHub main-ruleset/required-validation work are
 completed. Issue #177 Tailscale package/live-version drift hardening is also
 completed. The current bounded hardening/recovery sequence is #176 local
 source-scoping for exit-node forwarding, #129 Pi-hole-aware disaster recovery,
-the remaining #108 DNS-visibility gaps, #68 encrypted-DNS assessment, #178
-notification completion and the later #143 trust-zone segmentation design.
+the remaining #108 DNS-visibility gaps, #68 encrypted-DNS assessment,
+notification grouping/provisioning follow-ups after closed #178, and the later
+platform-neutral #143 trust-zone segmentation design.
 
 ## In progress — Network DNS Visibility / Client Activity Analytics
 
@@ -410,7 +414,7 @@ After the completed unchanged-state observation:
 - Add persistence thresholds, deduplication, and per-event cooldowns so a transient failure or repeated identical log entry does not create alert storms.
 - Emit a distinct `RECOVERED` notification when a previously active incident returns to a validated healthy state.
 - Prefer alert evaluation and notification delivery on an external collector/NAS/workstation rather than adding unnecessary processing to the low-memory router.
-- Use Telegram as the current preferred phone notification path under #178 because it can provide immediate push without exposing Grafana publicly; self-hosted ntfy/Gotify remain optional alternatives if the design later changes.
+- Telegram is the accepted live phone notification path as of the 2026-10-12 synthetic Gmail+Telegram `Firing/Resolved` test; ongoing grouping/provisioning/reload consistency still needs independent validation. Self-hosted ntfy/Gotify remain optional alternatives if the design later changes.
 - Add an external heartbeat/dead-man check so complete router or WAN failure can still be detected when the router itself is unable to send an alert.
 - Validate alert severity, false-positive rate, duplicate suppression, recovery notifications, and loss-of-router scenarios before describing the feature as production-ready.
 
@@ -447,29 +451,36 @@ Remaining recovery-maturity work:
 
 Target end state: a versioned, integrity-verified, encrypted off-router recovery path that complements the repository and existing `backup.sh`/`restore.sh` workflow.
 
-## Phase 2 — RT-BE88U platform migration
+## Phase 2 — ASUS CORE v1.0, optional OPNsense lab (2026-10-12 decision)
 
-The planned next router platform is **ASUS RT-BE88U** on a compatible
-Asuswrt-Merlin 3006.x branch. The migration should preserve the existing
-project model rather than redesigning the lab around another firewall platform.
+**The earlier RT-BE88U migration plan has been cancelled.** No ASUS replacement
+is ordered or scheduled. Current TUF-AX5400 remains the production gateway,
+with DNS/Firewall/Tailscale/RouterCloud/monitoring baseline preserved. The
+former 2026-10-06 RT-BE88U plan is **historical**, not a deployment gate.
 
-Target migration work:
+**Complete CORE first:** #129 disaster recovery, #196 DNS Guard candidate
+hardening, #142/#213/#214 independent DNS health/watchdog coverage, #139/#140
+observability, #176 exit-node local source policy, plus bounded RouterCloud
+and relevant documentation. Keep #212 LAN/Tailscale client DNS failover
+OFF-ROUTER and OPEN: synthetic v0.41 pass had a direct-gateway bypass,
+and v0.42 did not prove ASUS netns/veth/TPROXY support. No production trial.
 
-- reproduce the current Tailscale, DNS, firewall, logging and recovery baseline
-  on the RT-BE88U before adding new features;
-- revalidate all platform-sensitive assumptions, including interface names,
-  WAN detection, NAT ownership, hooks, Entware startup, swap/storage handling,
-  DNS listeners and WebUI integration;
-- use the newer platform's VLAN/network capabilities to implement the planned
-  Trusted / IoT / Guest / management segmentation from issue #143;
-- retain explicit inter-zone default deny with documented service exceptions;
-- keep heavy observability, databases and application workloads off-router;
-- perform configuration backup/restore and cold-boot validation on the new
-  platform before retiring the TUF-AX5400 reference role.
+**OPNsense/x86:** possible future platform, with no committed date or purchase.
+A **separate Windows 11 laptop** (16 GiB RAM, one physical USB Ethernet
+adapter; no current virtualization deployment) may host an isolated VM
+laboratory. Virtual WAN+LAN NICs do not require a second physical adapter.
+No lab DHCP/bridge to production LAN and no uncontrolled fault injection
+on a NAT uplink that can still reach the home network.
 
-OPNsense/x86 is **not** the current target architecture. It remains only a
-future contingency if requirements later exceed the RT-BE88U/Asuswrt-Merlin
-platform.
+A possible future architecture would be a separate x86 firewall with PF/
+Unbound, optional independent resolver/filtered failover, and ASUS as AP or
+otherwise repurposed — **all design hypotheses requiring real acceptance**.
+Do not imply an installed OPNsense host, migrated Pi-hole, proven DNS
+failover or current VLANs. Preserve historical RT-BE88U benchmark work
+as a comparison artifact only. Platform and transition decisions must be
+based on measured evidence, security, maintenance and recoverability.
+
+See [2026-10-12 platform decision](architecture/platform-direction-2026-10-12.md).
 
 ## Phase 3 — detection and response
 
@@ -488,5 +499,6 @@ platform.
 - Hardware/ISP failure tests, measured RTO/RPO, and a documented incident runbook.
 - Power-continuity / UPS assessment for the gateway, ISP handoff/CPE and Fedora monitoring host; do not claim uninterrupted operation until runtime and recovery behavior are measured.
 
-The TUF-AX5400 can remain an isolated secondary lab/reference node after the
-validated gateway role moves to the RT-BE88U.
+The TUF-AX5400 remains the production gateway. Only after a separately
+approved, validated future platform migration could it become a secondary
+lab/AP node; there is no current retirement date or target hardware order.
