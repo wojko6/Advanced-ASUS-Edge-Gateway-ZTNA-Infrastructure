@@ -522,6 +522,12 @@ A read-only Fedora SELinux query was run with **SELinux Enforcing** active:
 
 `SELINUX_PREDEPLOY_POLICY=PASS`; `SELINUX_MODE=ENFORCING`; `TARGET_PRIVATE_FILE_POLICY_TYPE=etc_t`; `TARGET_SYSTEMD_DROPIN_TYPE=systemd_unit_file_t`; `SELINUX_POST_INSTALL_LABELS=NOT_TESTED`; `PRODUCTION_UNTOUCHED=YES`.
 
+## Operator approval — phased production change, 2026-10-13
+
+The operator approved the **production Telegram Chat ID migration and one planned Grafana restart**. Approval does not imply execution. Deployment procedure updated in [the runbook](../../docs/grafana-236-telegram-chatid-deployment-runbook.md): phase 1 installs only private file/drop-in and verifies SELinux labels **without touching active YAML or reloading systemd**, then phase 2 atomically applies reviewed candidate YAML with `daemon-reload` and a single approved Grafana restart, with scoped rollback if health checks fail. Notification Firing/Resolved tests remain separately gated. 
+
+`PRODUCTION_MIGRATION_AUTHORIZED=YES`; `PHASE1=NOT_YET_REPORTED`; `PHASE2=NOT_EXECUTED`; `SYNTHETIC_NOTIFICATIONS=NOT_AUTHORIZED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
