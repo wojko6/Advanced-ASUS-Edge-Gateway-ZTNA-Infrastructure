@@ -218,6 +218,14 @@ The operator expressly authorized another V4 migration attempt, **one planned se
 
 **Actual execution:** Not yet reported under this authorization.
 
+### Operator reports V4 Stage 1 PASS; stage 2 may proceed under existing approval
+
+Under renewed user approval, the Stage 1 installer completed `PREINSTALL_VALIDATION=PASS`, `ROOT_ONLY_ENV_FILE=PASS`, `DROPIN_CREATED=PASS`, `SELINUX_NEW_OBJECTS=PASS`, `ORIGINAL_LIVE_YAML_UNCHANGED=PASS`, `PRODUCTION_STAGE1=PASS` with no daemon reload, Grafana restart, notifier send or secret-value print.
+
+**Next guarded action:** launch only the reviewed `grafana236_stage2_v4_candidate.py` whose SHA-256 is `7fa3866015893c34d44edef46b04d2cb20e266f277288f9fed211f5f8b931697`, **one time**, as root on the Fedora host. The script will revalidate the private files, SELinux and four original sources, create a **third distinct** backup (no overwrite), require five additive sources on reload, perform the single approved restart, and poll stable readiness. Failure may trigger one recovery restart. Do not blindly retry; save `FAILED_GATE` and rollback status. The project repository's Email-only YAML is **not** a substitute for the live two-receiver contact file. Notification-send E2E validation remains separately gated.
+
+**Stage 2 status:** NOT YET REPORTED.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
