@@ -798,6 +798,29 @@ The downloadable Stage 1 script checked in the working environment has SHA-256 `
 
 `V4_RETRY_APPROVED=YES`; `PLANNED_RESTART_APPROVED=YES`; `ROLLBACK_RESTART_IF_NEEDED_APPROVED=YES`; `STAGE1_REINSTALL=NOT_YET_REPORTED`; `V4_SWITCH=NOT_EXECUTED`; `NOTIFIER_SEND_TEST=NOT_AUTHORIZED`.
 
+## Operator-reported Stage 1 PASS under renewed V4 authorization — 2026-10-13
+
+The operator re-executed the SHA-verified host-local Stage 1 installer after a fresh approval for **one planned V4 Grafana restart plus a rollback restart if needed**. Output:
+
+```text
+PREINSTALL_VALIDATION=PASS
+ROOT_ONLY_ENV_FILE=PASS
+DROPIN_CREATED=PASS
+SELINUX_NEW_OBJECTS=PASS
+ORIGINAL_LIVE_YAML_UNCHANGED=PASS
+SYSTEMD_DAEMON_RELOAD=NO
+GRAFANA_RESTARTED=NO
+NOTIFICATIONS_SENT=NO
+VALUES_PRINTED=NO
+PRODUCTION_STAGE1=PASS
+```
+
+The previously existing private backups from Stage 2 and V3 remain required and must not be overwritten. Source of the V4 candidate `grafana236_stage2_v4_candidate.py` in the working environment was rechecked against SHA-256 `7fa3866015893c34d44edef46b04d2cb20e266f277288f9fed211f5f8b931697`; offline helper suite **27/27 PASS**, V4 stable-readiness Fedora read-only audit **PASS**. The V4 script still requires fresh baseline health, matching private YAML, labels and environment sources and no pre-existing V4 snapshot before any `daemon-reload`.
+
+**Stage 1 completed, but V4 Stage 2 has not been reported as executed.** Any new failure requires stopping and preserving the full sanitized terminal output, including `FAILED_GATE` and `ROLLBACK`. Avoid running twice. After migration, actual scoped Firing/Resolved delivery is a separate, still-unapproved gate.
+
+`RENEWED_STAGE1=PASS`; `V4_PRODUCTION_SWITCH=PENDING`; `GRAFANA_RESTART=NOT_YET_REPORTED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
