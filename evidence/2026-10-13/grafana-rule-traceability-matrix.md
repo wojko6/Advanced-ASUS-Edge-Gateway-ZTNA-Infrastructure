@@ -544,6 +544,31 @@ Automatic rollback returned `ROLLBACK_DAEMON_RELOAD=PASS`, `ROLLBACK_ENVFILES_RE
 
 **Status:** phase 2 switch blocked, automatic rollback PASS; first perform sanitized read-only post-rollback and ordering diagnosis; review any proposed fix before retries. [Deployment/rollback runbook](../../docs/grafana-236-telegram-chatid-deployment-runbook.md).
 
+## Operator-confirmed post-rollback audit and V3 gate fix — 2026-10-13
+
+The operator independently audited Fedora after the failed Phase 2 attempt and reported:
+
+| Post-rollback check | Result |
+|---|---|
+| `GRAFANA_ACTIVE` / `DAEMON_RELOAD_CLEAN` | `True` / `True` |
+| `ENVIRONMENT_FILES` / `ORIGINAL_FOUR_RESTORED` | `4` / `True` |
+| `NEW_DROPIN_REMOVED` / `NEW_ENV_FILE_REMOVED` | `True` / `True` |
+| `ORIGINAL_CONTACT_RESTORED` | `True` (exact backup match) |
+| `PRIVATE_BACKUP_SECURE` / `SQLITE_BACKUP_INTEGRITY` | `True` / `True` |
+| `ALERT_RULES_TOTAL` / `ALERT_RULES_PAUSED` | `15` / `0` |
+| `EXISTING_DROPINS` / `DROPINS_SORTING_AFTER_TARGET` | `5` / `2` |
+| `NEW_ENV_MIGHT_NOT_BE_LAST` | `True` |
+| **`POST_ROLLBACK_AUDIT`** | **`PASS`** |
+| File changes / Grafana restarts / printed secrets during audit | all `NO` |
+
+**Conclusion:** rollback restored service state, contact YAML and the original four loaded env sources. Two existing drop-ins sort after the proposed `90-grafana236-telegram-chatid.conf`, explaining why the V1 Phase 2 check's **position-at-end** assumption was invalid. The previous failure recorded no actual source list at the failed gate, so order remains the **strongly supported probable cause**, not a direct observation of that intermediate list.
+
+An updated **Phase 2 V3** executable has been prepared for download and passed Python syntax validation plus isolated source-order fixtures (**all five legal insertion positions and five invalid sets**). It preserves the old `grafana-pre-stage2.db` and requires it to remain present, `0600` and SQLite `quick_check=ok`; creates a **new** uniquely named `grafana-pre-stage2-v3.db` backup (no overwrite); checks `len(current)==5`, `new_file_count==1`, and that removing the new source leaves **exactly the four baseline sources in their original order**. The old four need not occupy the first four positions. It **does not waive** SELinux, YAML, rules, contact/policy or restart/rollback checks.
+
+**Important workflow:** Stage 1 was removed by the earlier rollback. Before a V3 attempt, the operator must re-run the SHA-verified Stage 1 installer and confirm `PRODUCTION_STAGE1=PASS`, then execute V3 only under the previously authorized controlled restart plan. Do **not** re-run the original Stage 2 script. V3 is prepared, **not yet executed**.
+
+`POST_ROLLBACK_AUDIT=PASS`; `ROLLBACK_STATE_RECONCILED=YES`; `ENVFILE_END_POSITION_BUG=CORRECTED_IN_V3`; `PRIOR_PRIVATE_SQLITE_BACKUP=PRESERVED`; `STAGE1_REINSTALL_REQUIRED=YES`; `PHASE2_V3=NOT_EXECUTED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
