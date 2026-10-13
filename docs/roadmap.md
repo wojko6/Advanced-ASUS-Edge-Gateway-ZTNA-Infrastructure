@@ -14,6 +14,13 @@
 - **Current DNS Guard v3.2** (PR #197 merged): bounded manual ON/OFF and power-cycle acceptance passed on 2026-10-08. An additional controlled reboot of the **existing router** on 2026-10-09 recovered the Pi-hole-aware DNS stack with healthcheck 0/0; no blank-device restore is claimed. v3.1 remains historical.
 - **2026-10-12 superseding decision:** there is **NO planned RT-BE88U migration**. Maintain current TUF-AX5400 in production while completing CORE v1.0. OPNsense/x86 is an **optional future replacement**, with no date, purchase or production approval; explore only as an isolated Windows 11 VM lab when ready. See [platform decision](architecture/platform-direction-2026-10-12.md).
 
+### Grafana #236 — 2026-10-13 production V4 and dual-channel E2E closeout
+
+- **Complete within scoped evidence:** production Grafana 13.2.3 Chat ID migration to private `GRAFANA_TELEGRAM_CHAT_ID` environment source (5 additive systemd EnvironmentFiles, protected labels, single planned restart and stable 3-sample HTTP/DB/process checks); the live single Contact Point retains one Email and one Telegram integration, and 15 permanent rules survived.
+- **Complete within scoped evidence:** temporary `E2E-TEST-2026-10-13` delivered real Firing **and** Resolved to both Gmail and Telegram; the temporary rule was deleted, with operator-observed UI rule count back to **15**. No further identical notification test needed for this scenario.
+- **Still open, Issue [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236):** individual production-rule transports, grouping/repetition/anti-flap, and clean-room provisioning/notification policy restore. Host-only full Email+Telegram contact configuration does **not** yet have a sanitized full equivalent in Git (the tracked template is Email-only). Do not overwrite the host contact YAML with that source. Detailed [traceability matrix](../evidence/2026-10-13/grafana-rule-traceability-matrix.md) and [deployment/rollback runbook](grafana-236-telegram-chatid-deployment-runbook.md).
+- Preserve 2026-10-12 as a **separate historical** successful E2E test prior to the Chat ID migration.
+
 ### Grafana alerting acceptance checkpoint — 2026-10-12
 
 The Fedora monitoring-host audit verified 15/15 enabled healthy Grafana rules
