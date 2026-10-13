@@ -62,7 +62,26 @@ No live service change has yet been reported.
 5. Confirm a controlled maintenance window and **explicit operator approval** for a short production Grafana restart and for any separate test notification. Identify how operator will reach Grafana if it fails.
 6. Prepare and validate an **offline** rollback: revert the exact active contact YAML from the private original byte copy; remove only this migration's drop-in/env source; run `daemon-reload` and **one controlled restart**; re-verify 15 rules and expected contact/policy. Do not overwrite unrelated overrides or remove preexisting files.
 
-## Stage 1 — planned single production switch (NOT YET EXECUTED)
+### Operator confirmation — production Phase 1 PASS (2026-10-13)
+
+The operator ran the previously reviewed Stage 1 script (`grafana236_stage1.py`) and reported:
+
+```text
+PREINSTALL_VALIDATION=PASS
+ROOT_ONLY_ENV_FILE=PASS
+DROPIN_CREATED=PASS
+SELINUX_NEW_OBJECTS=PASS
+ORIGINAL_LIVE_YAML_UNCHANGED=PASS
+SYSTEMD_DAEMON_RELOAD=NO
+GRAFANA_RESTARTED=NO
+NOTIFICATIONS_SENT=NO
+VALUES_PRINTED=NO
+PRODUCTION_STAGE1=PASS
+```
+
+**Interpretation:** The protected Chat ID environment source and additive unit drop-in are **installed on Fedora** and new-file SELinux labels were verified. Active contact YAML remains the original. No `daemon-reload` or restart has occurred, so the loaded Grafana process has **not** received the new env assignment. Phase 2 must recheck file modes, labels, binary freshness and the byte-identical original against live, then perform **one** approved restart, after validating five effective EnvironmentFile references. If preflight fails, leave the original running and do not touch its YAML. Real alert Firing/Resolved notifications remain separately gated.
+
+## Stage 1 — planned single production switch (PHASE 1 PASS; PHASE 2 PENDING)
 
 1. Re-validate private original against live source; fail closed if changed since backup.
 2. From the root-only private stage, install the Telegram Chat ID assignment to the reviewed stable root-only file, preserving the exact non-empty decimal string. **Never print assignment lines, Chat ID, bot token or destination metadata.** systemd environment variables are configuration, not a secret store; restrict host/process access appropriately.
