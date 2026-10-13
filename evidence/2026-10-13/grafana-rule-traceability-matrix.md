@@ -305,6 +305,29 @@ Sanitized V2 result:
 
 `SECURE_STAGING=PASS`; `HOST_ONLY_ROLLBACK_COPY=CREATED`; `CHAT_ID_ENV_STAGE=CREATED_NOT_ACTIVATED`; `ACTIVE_YAML_MODIFIED=NO`; `SYSTEMD_MODIFIED=NO`; `GRAFANA_RELOADED=NO`; `PER_RULE_E2E_DELIVERY=UNVERIFIED`.
 
+## Staging integrity readback — operator-reported / 2026-10-13
+
+An additional read-only staging-integrity audit returned **twelve PASS assertions**:
+
+| Assertion | Result |
+|---|---|
+| Private staging directory `0700`, root-owned | `PASS` |
+| Original YAML, candidate YAML, Chat ID environment file: regular, root-owned `0600`, link count 1 | `PASS` for each |
+| Staged Contact Point unique | `PASS` |
+| Staged Telegram receiver unique | `PASS` |
+| Environment assignment format | `PASS` |
+| Staged env value equals original Chat ID | `PASS` |
+| Candidate references exactly `$GRAFANA_TELEGRAM_CHAT_ID` | `PASS` |
+| Reconstructing staged original by restoring Chat ID field only | `PASS` |
+| Unique matching live contact YAML | `PASS` |
+| Original backup bytes match the current live YAML | `PASS` |
+
+Reported final fields: `STAGING_INTEGRITY=PASS`, `GRAFANA_FILES_MODIFIED=NO`, `SYSTEMD_MODIFIED=NO`, `SERVICES_RESTARTED=NO`, `NOTIFICATIONS_SENT=NO`, `SECRET_VALUES_PRINTED=NO`; `GRAFANA_RUNTIME_INTERPOLATION=NOT_TESTED`; `PRODUCTION_DEPLOYMENT=NOT_STARTED`.
+
+**What this proves:** the original YAML backup is byte-identical with live local source *at the audit time*; the draft changes only the Telegram Chat ID field; the staged environment assignment supplies the same numeric destination value; file modes and ownership are constrained. It does **not** prove the stage can be read by the running Grafana process; the staged env file is **not attached to the service**, and neither Grafana's contact-point parser nor delivery was exercised.
+
+**Next bounded step:** collect **read-only Grafana version, installed binary, systemd run-as user/group, homepath and isolation prerequisites** without printing environment content. Then build a fully isolated local scratch Grafana experiment using **synthetic** Email and Telegram credentials, synthetic Chat ID, a separate database, no alert rules and no network notification transport, so interpolation/receiver-schema behavior can be tested independently of production. Avoid running production Grafana against the staged real-contact YAML, switching live EnvironmentFiles or reloading live provisioning without separate operator approval.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -327,7 +350,7 @@ Sanitized V2 result:
 - `SYSTEMD_ENVFILE_COUNT=4`; `ENVFILE_ROOT_OWNED=4/4`; `ENVFILE_0644=1`; `ENVFILE_0600=2`; `ENVFILE_0640=1`; `EMAIL_LAST_ENV_SOURCE=ENV2_PRIVATE`; `TELEGRAM_BOTTOKEN_LAST_ENV_SOURCE=ENV3_PRIVATE`; `ENV4_GROUP=GRAFANA`; `WORLD_READABLE_ENV_CONTENTS=NOT_AUDITED`.
 - `EXISTING_TELEGRAM_CHATID_ENV_NAME_CANDIDATES=0_OF_4_FILES`; `GRAFANA_TELEGRAM_CHAT_ID=PROPOSED_NOT_DEPLOYED`.
 - `TELEGRAM_CHATID_YAML_IN_MEMORY_DRY_RUN=PASS`; `DRAFT_YAML_VALID=TRUE`; `ONLY_CHATID_CHANGED=TRUE`; `LIVE_INTERPOLATION=NOT_TESTED`.
-- `HOST_SECURE_STAGING_V2=PASS`; `STAGING_ROOT_MODE=0700`; `STAGING_FILE_MODES=0600`; `STAGED_CHATID_NONNEGATIVE=TRUE`; `STAGED_ENV_SOURCE=NOT_ACTIVE`.
+- `HOST_SECURE_STAGING_V2=PASS`; `STAGING_ROOT_MODE=0700`; `STAGING_FILE_MODES=0600`; `STAGED_CHATID_NONNEGATIVE=TRUE`; `STAGED_ENV_SOURCE=NOT_ACTIVE`; `STAGING_INTEGRITY=12_CHECKS_PASS`; `BACKUP_MATCHES_LIVE=PASS`; `LIVE_GRAFANA_INTERPOLATION=NOT_TESTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
