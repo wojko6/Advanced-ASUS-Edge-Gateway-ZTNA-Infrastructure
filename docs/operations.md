@@ -6,6 +6,12 @@ The reference deployment completed its SSD migration and controlled reboot valid
 
 Routine router changes may now proceed only as deliberate maintenance with backup, rollback planning, repository/CI validation and post-change live verification. Read-only inspection remains preferred when it can answer the question without changing the reference state.
 
+### Fedora Grafana #236 — production change completion (2026-10-13)
+
+The approved V4 migration of Telegram `settings.chatid` to a private root-protected `GRAFANA_TELEGRAM_CHAT_ID` EnvironmentFile succeeded on the **Fedora monitoring host**, not on the ASUS router. Systemd retains the four original EnvironmentFiles plus a fifth, the new Grafana process passed stable HTTP/DB/contact/rule checks, and a separate temporary alert delivered real Firing/Resolved to Gmail and Telegram before being removed. The operator confirmed **15** rules remain. Preserve all three root-only SQLite backups; they contain private Grafana state and must not be committed or included in public evidence. Refer to the [Grafana migration/rollback runbook](grafana-236-telegram-chatid-deployment-runbook.md).
+
+**Operational warning:** the tracked [Email-only contact source](../monitoring/grafana/provisioning/alerting/asus-email-contact.yml) is *not* a replacement for the host's Email+Telegram contact provisioning. Do not overwrite the running Grafana YAML with this template. Grouping/repeat/anti-flap, per-rule delivery and clean-room restore remain open under [Issue #236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236); do not force a new restart to close them.
+
 ## Change workflow
 
 Use this workflow for a planned maintenance window outside an active unchanged-state observation:
