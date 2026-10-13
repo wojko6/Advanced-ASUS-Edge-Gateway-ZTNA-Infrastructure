@@ -479,6 +479,29 @@ A new **read-only** operator diagnostic returned:
 
 `SYSTEMD_ENVFILE_COUNT_DISCREPANCY=LIKELY_SCRIPT_ARTIFACT_PENDING_CONFIRMATION`; `SYSTEMD_DIRECTIVES=4_NONEMPTY_0_RESET`; `SOURCE_RESOLUTION_AUDIT=INCOMPLETE_SCRIPT_ERROR`; `PRODUCTION_UNTOUCHED=YES`.
 
+## Resolved systemd EnvironmentFiles parsing discrepancy — operator-reported / 2026-10-13
+
+A corrected read-only **V2** reconciliation resolved the earlier `4 vs 1` inconsistency as a **parser defect** rather than a demonstrated systemd change:
+
+| Check | Operator result |
+|---|---|
+| `SINGLE_SOURCES` / `MULTI_PROPERTY_LINES` / `MULTI_SOURCES_TOTAL` | `4` / `4` / `4` |
+| `SOURCE_ORDER_MATCH` | `True` |
+| `ENVFILE_DIRECTIVES` / `ENVFILE_RESETS` | `4` / `0` |
+| All four source files readable/root-owned | `PASS` / `True` |
+| Ordered modes | `0644`, `0600`, `0600`, `0640` |
+| Contact name unique | `True` |
+| Email env source found/private | `True` / `True` |
+| Telegram token env source found/private | `True` / `True` |
+| **`ENV_RECONCILIATION`** | **`PASS`** |
+| Values printed / files changed / systemd reloaded / Grafana restarted / notifications | all `NO` |
+
+In the previous flawed script, constructing a dictionary from repeated multi-property `EnvironmentFiles=` lines discarded all but the last property occurrence. Another prior script tried to unpack a one-group regex return (path string) as two values and crashed. Neither represents a genuine loss of three sources. **The environment-file count discrepancy is now CLOSED.**
+
+**Remaining gates:** SELinux `Enforcing` means a reviewed private file location, safe context and unit drop-in wiring must be checked before deployment; operator-approved production restart/reload and separate post-change notification tests remain **NOT EXECUTED**. Re-run live backup-to-file byte comparison immediately before implementation.
+
+`SYSTEMD_ENV_RECONCILIATION=PASS`; `ENVFILE_COUNT_DISCREPANCY=RESOLVED_PARSER_BUG`; `ENVFILE_COUNT=4`; `REFERENCED_EMAIL_PRIVATE=PASS`; `REFERENCED_TELEGRAM_TOKEN_PRIVATE=PASS`; `SELINUX_TARGET_VALIDATION=PENDING`; `PRODUCTION_UNTOUCHED=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -507,7 +530,7 @@ A new **read-only** operator diagnostic returned:
 - `SYSTEMD_DYNAMICUSER_PRIVATE_NETWORK_SANDBOX=6_6_PASS`; `SANDBOX_GRAFANA_RUNTIME=NOT_STARTED`.
 - `SYNTHETIC_GRAFANA_13_2_3_PROVISIONING=PASS`; `SYNTHETIC_API_CONTACT_READ=PASS`; `SYNTHETIC_EMAIL_AND_TELEGRAM=PASS`; `SYNTHETIC_CHATID_INTERPOLATION=PASS`; `PRODUCTION_MIGRATION=NOT_STARTED`.
 - `DEPLOYMENT_PREFLIGHT=10_10_PASS`; `ONE_RESTART_RUNBOOK=PREPARED_NOT_EXECUTED`; `SYSTEMD_DROPIN_AND_SELINUX_PREFLIGHT=PENDING`.
-- `DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED`; `ENVFILES_COUNT_PRIOR=4`; `ENVFILES_COUNT_LATEST=1`; `DISCREPANCY=OPEN`; `EXISTING_DROPINS=5`; `SELINUX=ENFORCING`; `NO_PRODUCTION_WRITES=TRUE`.
+- `DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED` (historical result invalidated by parser defect); `ENVFILES_RECONCILIATION_V2=PASS`; `ENVFILES_CURRENT=4`; `MULTI_PROPERTY_LINES=4`; `DISCREPANCY=RESOLVED_SCRIPT_BUG`; `SELINUX=ENFORCING`; `NO_PRODUCTION_WRITES=TRUE`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
