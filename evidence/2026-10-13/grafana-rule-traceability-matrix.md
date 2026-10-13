@@ -898,6 +898,26 @@ Following the already documented **Firing** for the scoped Grafana rule `E2E-TES
 
 `POST_V4_SYNTHETIC_FIRING_EMAIL=PASS`; `POST_V4_SYNTHETIC_FIRING_TELEGRAM=PASS`; `POST_V4_SYNTHETIC_RESOLVED_EMAIL=PASS_OPERATOR`; `POST_V4_SYNTHETIC_RESOLVED_TELEGRAM=PASS_OPERATOR`; `TEMP_RULE_DELETED=NOT_YET_CONFIRMED`; `FINAL_15_RULES=NOT_YET_RECHECKED`; `ISSUE236=OPEN`.
 
+## Post-V4 scoped notification test cleanup — operator-confirmed PASS / 2026-10-13
+
+After the previously confirmed `E2E-TEST-2026-10-13` **Firing** and **Resolved** deliveries to both Gmail and Telegram, the operator confirms the temporary rule was **deleted** and the Grafana alert rule list returned to **exactly 15** rules. This closes the bounded synthetic test cleanup and restores the operator-observed rule count to the pretest baseline.
+
+| Gate | Status / evidence |
+|---|---|
+| Real test rule `Firing` → Gmail | **PASS**, inbox screenshot |
+| Real test rule `Firing` → Telegram | **PASS**, operator confirmation |
+| Real test rule `Resolved` → Gmail | **PASS**, operator confirmation |
+| Real test rule `Resolved` → Telegram | **PASS**, operator confirmation |
+| Temporary `E2E-TEST-2026-10-13` rule removed | **PASS**, operator confirmation |
+| Remaining rules | **15**, operator UI count (no independent post-cleanup API dump) |
+| Recheck of all permanent-rule `is_paused` values after cleanup | **NOT REPORTED** |
+| Optional empty temporary evaluation group cleanup | **NOT VERIFIED**, can be left empty safely |
+| V4 systemd/YAML migration | **PASS**, independently accepted earlier in same day's operator output |
+
+**Bounded outcome:** Post-V4 real rule-triggered **Email + Telegram Firing→Resolved + temporary-rule cleanup PASS**. These claims are limited to one synthetic rule and user-observed cleanup. They do not establish every permanent rule's independent notification delivery, grouping/anti-flap/repeat behavior, or clean-room reconstruction. Keep **Issue #236 OPEN**, and preserve the three private SQLite backups; no extra restart, metrics injection or router mutation is needed for this already passed E2E test.
+
+`POST_V4_FIRING_GMAIL=PASS`; `POST_V4_FIRING_TELEGRAM=PASS`; `POST_V4_RESOLVED_GMAIL=PASS`; `POST_V4_RESOLVED_TELEGRAM=PASS`; `TEMP_TEST_RULE_DELETED=PASS_OPERATOR`; `FINAL_RULE_COUNT=15_OPERATOR`; `SYNTHETIC_E2E_CLEANUP=PASS`; `ISSUE236_REMAINING_ACCEPTANCE=OPEN`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
