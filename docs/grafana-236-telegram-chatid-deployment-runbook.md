@@ -35,6 +35,12 @@ An initial operator-read path preflight reported only one EnvironmentFile, confl
 
 **Current hold remains:** the server runs SELinux in `Enforcing`, the proposed private environment directory does not yet exist, and live changes/restart/testing have not been authorized. Next perform a **read-only file-context policy lookup** (`matchpathcon -n -m dir|file`) and inspect current private EnvironmentFile context *types* without logging file paths/values; the policy's default label prediction by itself does **not** demonstrate actual service read access. Review systemd unit ordering, maintain all four existing EnvironmentFile entries, and plan label restoration and rollback before a single operator-approved Grafana restart. A synthetic isolated Grafana test already passed; it does not replace production post-change acceptance.
 
+### SELinux lookup result — policy preflight PASS
+
+The operator verified that proposed private directory and environment file paths have predicted type `etc_t`, matching the **actual** SELinux type of each of the four existing `EnvironmentFile` sources. The proposed systemd unit drop-in has predicted type `systemd_unit_file_t`. `TARGET_POLICY_LOOKUP=PASS`, `EXISTING_LABELS_READ=PASS`, with SELinux `Enforcing`; no paths created, contexts changed, service restarts or messages sent.
+
+This clears the **predicted-label policy lookup**, not actual post-install labels or service access. A reviewed deployment should create only the chosen root-owned private environment path, apply `restorecon` to newly created objects and check actual labels and ownership/mode *before* the single approved restart; revert immediately on any mismatch. Do not assume a future label is correct merely because `matchpathcon` predicted it.
+
 ## Stage 0 — immediately before implementation (read-only; STOP on failure)
 
 1. Confirm Grafana v13.2.3, active `grafana-server.service`, count **exactly 15** rules, no failures, correct receiver counts and current delivery status. Do not dump contact-point settings or credentials.
