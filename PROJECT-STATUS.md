@@ -4,6 +4,9 @@
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
+**RouterCloud #235 off-router security checkpoint (2026-10-13):** Local Fedora-only Dufs 0.46.0 branch `security/issue235-file-origin-guard` reproduced and regression-tested unsafe custom 404, trusted-asset/login symlink and startup-index HTML trust boundaries; targeted patches and a single-file-descriptor MIME/metadata refactor reached local GREEN (`ISSUE235_SINGLE_FD_V2=PASS`; preceding suite 217/217, assets 8/8). **Not committed, merged, or deployed; TOCTOU in the remaining trusted pathname validation→open sequence, optional static-render compatibility and production process privilege/root-capability risk remain OPEN.** [Sanitized lab evidence](evidence/2026-10-13/issue-235-http-origin-hardening-lab.md). No new live RouterCloud acceptance.
+
+
 **Latest broad router checkpoint:** 2026-10-09 — controlled reboot of the existing router with the Pi-hole-aware DNS stack and project healthcheck 0/0; the 2026-10-08 DNS Guard v3.2 live break-glass/power-cycle gate remains a separate earlier acceptance
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
