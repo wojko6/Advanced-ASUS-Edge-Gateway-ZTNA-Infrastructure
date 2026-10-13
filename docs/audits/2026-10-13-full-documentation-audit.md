@@ -40,6 +40,14 @@
 - [Client DNS failover #212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212): **paused** pending suitable separate hardware and explicit operator authorization, with direct-sidecar bypass still not accepted in production.
 - Separate security, hardening and RouterCloud branches/issues remain subject to their own merge, deployment and evidence status; no live deployment is inferred from a GitHub branch or source-only test.
 
+## Final branch verification (after corrections)
+
+A fresh recursive GitHub HEAD tree check after the documentation edits returned **497 entries** and **228 Markdown files**, `truncated=false`. Draft [PR #237](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/237) then showed **15 changed files, all Markdown**; no scripts, live configuration, binaries, archived PDFs or router files were changed in this documentation patch. The two dated architecture PDFs (`2026-10-08`, `2026-10-13 v1.1`) are present and intentionally **not rewritten**.
+
+All 15 files changed in the PR were fetched again **from the same current HEAD SHA**. A refreshed reference scan checked **440 relative Markdown links**, with **0 missing targets and 0 fetch errors**, including both newly created documents. This resolves the two earlier temporary pre-creation-tree warnings related to `docs/worklog/2026-10-13.md`. These results validate path existence at review HEAD, not remote URLs, fragment IDs or HTML/diagram/PDF rendering.
+
+**Verification summary:** original complete 226-document snapshot: 780 relative references scanned, no genuine missing targets; final 15 changed documents: 440 local references, all present. No local repository `tests/test-static.sh` run or GitHub CI outcome has been claimed; review/CI remains appropriate prior to merging.
+
 ## Evidence model and review limitations
 
 1. **Historical versus current:** `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md` and earlier worklogs preserve dated truth; the later [2026-10-12 decision](../architecture/platform-direction-2026-10-12.md) and [current project status](../../PROJECT-STATUS.md) supersede any historical RT-BE88U target language. A prior [2026-10-13 audit snapshot](2026-10-13-repository-documentation-consistency.md) is also retained unchanged as its own earlier review.
