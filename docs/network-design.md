@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Applies to:** reference ASUS TUF-AX5400 deployment  
-**Last reviewed:** 2026-10-13 (architecture PDF v1.1 publication/navigation only; prior live validation dates and scopes are unchanged)
+**Last reviewed:** 2026-10-13 (architecture PDF v1.1 and post-V4 Grafana monitoring acceptance; underlying router validation dates are unchanged)
 
 This document is the entry point for the network-design view of the project.
 It complements the repository's incident/case-study material by organizing the
@@ -78,6 +78,14 @@ server is not part of the current reference platform.
 SNMP and NetFlow/IPFIX are not required for the current validated baseline.
 Read-only SSH collection, Traffic Analyzer import, Blackbox probes, syslog-ng,
 VictoriaMetrics, Loki, Alloy and Grafana provide the present observability path.
+
+The 2026-10-13 Grafana #236 production change moved the Telegram Chat ID
+to a protected Fedora systemd environment source; the monitored ASUS router
+configuration was not modified by this migration. A synthetic Grafana
+Firing→Resolved cycle delivered to Gmail and Telegram and was removed, with
+15 permanent rules remaining (operator-confirmed). This does not prove HA
+or full individual alert-rule delivery. See [monitoring](../monitoring/README.md)
+and the [sanitized 2026-10-13 report](../evidence/2026-10-13/grafana-rule-traceability-matrix.md).
 
 ## 8. Availability, redundancy and failure domains
 
