@@ -883,6 +883,21 @@ The operator created one temporary Grafana-managed rule `E2E-TEST-2026-10-13` in
 
 `POST_V4_SYNTHETIC_FIRING_EMAIL=PASS_SCREENSHOT`; `POST_V4_SYNTHETIC_FIRING_TELEGRAM=PASS_OPERATOR`; `POST_V4_SYNTHETIC_RESOLVED=NOT_YET_TESTED`; `TEMPORARY_RULE_CLEANUP=PENDING`; `ISSUE236=OPEN`.
 
+## Post-V4 Firing and Resolved notifications — both channels PASS (operator confirmed, 2026-10-13)
+
+Following the already documented **Firing** for the scoped Grafana rule `E2E-TEST-2026-10-13` (`vector(1)`), which was evidenced by a received Gmail screenshot and the operator's Telegram confirmation, the operator changed **only the temporary rule's** query back to `vector(0)` and now confirms: **both Gmail and Telegram delivered the `Resolved` notification**.
+
+| Delivery step | Gmail | Telegram | Evidence level |
+|---|---|---|---|
+| `Firing` for `E2E-TEST-2026-10-13` | **PASS** | **PASS** | Gmail screenshot (Grafana 13.2.3, `A=1`, `C=1`); Telegram operator report |
+| `Resolved` for the same test rule | **PASS** | **PASS** | Operator confirms both arrived; no Resolved screenshot stored |
+| Deletion of temporary test rule | **PENDING** | — | User instructed to remove only after return to `Normal` |
+| Post-test baseline `15` production rules / no paused rules | **PENDING RECHECK** | — | Do not infer from notification receipts |
+
+**Bounded acceptance:** Post-migration **real, rule-triggered Email+Telegram Firing→Resolved transport is PASS** for the single isolated test. The Chat ID migration itself already passed the independent V4 deployment/health acceptance. **Do not confuse** a single successful test with individual delivery/grouping/repeat/anti-flap validation for all 15 production rules or the clean-room restore test. The user must still remove the temporary rule and verify the 15-rule baseline (and optionally the now-unused separate evaluation group).
+
+`POST_V4_SYNTHETIC_FIRING_EMAIL=PASS`; `POST_V4_SYNTHETIC_FIRING_TELEGRAM=PASS`; `POST_V4_SYNTHETIC_RESOLVED_EMAIL=PASS_OPERATOR`; `POST_V4_SYNTHETIC_RESOLVED_TELEGRAM=PASS_OPERATOR`; `TEMP_RULE_DELETED=NOT_YET_CONFIRMED`; `FINAL_15_RULES=NOT_YET_RECHECKED`; `ISSUE236=OPEN`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
