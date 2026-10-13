@@ -116,8 +116,8 @@ The RC13J v0.41 off-router Fedora **synthetic** sidecar experiment left a
 direct-gateway access bypass; v0.42 read-only ASUS Linux 4.1.52 inspection
 did not prove the necessary netns/veth/TPROXY facilities. DNS wire/DNSSEC
 end-to-end acceptance, actual ASUS runtime compatibility and safe client
-failover remain unproven. See the separate [draft PR #227](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/227);
-its research notes are not current production design or an approved pilot.
+failover remain unproven. See [merged PR #227](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/227) (documentation/research merged 2026-10-13, **not** production validation).
+[Issue #212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212) is currently **PAUSED pending separate suitable hardware**; its lab research is not deployed, its direct-sidecar bypass remains unresolved, and no pilot is authorized.
 
 **Not deployed — [#216](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/216):**
 An independent second Pi-hole **with its own Unbound on a separate host**
