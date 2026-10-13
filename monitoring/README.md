@@ -87,6 +87,15 @@ directory.
 
 ## Grafana alerting
 
+### 2026-10-13 — post-migration production and notification validation (#236)
+
+The Fedora **Grafana 13.2.3** production V4 cutover replaced only the live Telegram `settings.chatid` numeric literal with `$GRAFANA_TELEGRAM_CHAT_ID`, supplied by a root-owned `0600` systemd EnvironmentFile with SELinux `etc_t` and a new drop-in. Five effective EnvironmentFiles (the four original ones in the same order plus the private fifth), one controlled restart, three consecutive healthy checks, the new PID and expected private Chat ID all passed. **15 permanent rules and the single Contact Point with one Email and one Telegram integration survived**. Previous failed V3 attempts and successful rollback remain documented as dated incident history.
+
+A temporary `E2E-TEST-2026-10-13` rule (`vector(0) → vector(1) → vector(0)`) delivered actual **Firing and Resolved** messages to **both Gmail and Telegram**. Gmail Firing was evidenced by an inbox screenshot; the other deliveries were operator-confirmed. The temporary rule was deleted and the operator counted **15** remaining rules. This proves real transport for **one** test rule only; anti-flap, group/repeat timing, individual delivery of all 15 permanent rules and clean-room restoration remain open under [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236).
+
+**Important configuration boundary:** the repository `grafana/provisioning/alerting/asus-email-contact.yml` still describes **Email only**, while the local Fedora file has **Email + Telegram**. The private environment migration removes the inline Chat ID from the active host YAML; it **does not** resolve full source/live contact parity or authorize copying the live file to public Git. Do not overwrite the host YAML from the Email-only repository file. Preserve all sensitive SQLite backups outside version control. See [sanitized traceability](../evidence/2026-10-13/grafana-rule-traceability-matrix.md) and [deployment/rollback runbook](../docs/grafana-236-telegram-chatid-deployment-runbook.md).
+
+
 Fifteen source-controlled Grafana alert rules are provisioned from
 [`grafana/provisioning/alerting/asus-tuf-alerts.yml`](grafana/provisioning/alerting/asus-tuf-alerts.yml):
 
