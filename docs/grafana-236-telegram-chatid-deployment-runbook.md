@@ -206,6 +206,12 @@ A self-contained **Phase 2 V4 candidate (NOT DEPLOYED)** is prepared offline, SH
 
 **Do not execute yet:** Stage 1 files are absent after rollback, and the previous operator restart authorization has already been used. The V4 candidate requires a new explicit maintenance approval and renewed Stage 1 PASS before any production use. No Firing/Resolved test has been authorized.
 
+### Fedora V4 offline tests PASS and parser interpretation corrected
+
+The operator ran V4's synthetic offline suite on Fedora and got **`Ran 27 tests ... OK`**, with no Grafana service changes. An independent isolated test of the **unmodified** V4 `env_sources()` implementation confirmed that its systemd regex has **one** capture group: `(?:yes|no)` is noncapturing. Earlier speculation that it returned path/ignore-error tuples was incorrect and was **retracted before any code was deployed**. Full source-contract fixture: original four ordered paths parsed as strings, five legal new-source positions accepted and four malformed source sets rejected. Keep the existing V4 candidate SHA-256 `7fa3866015893c34d44edef46b04d2cb20e266f277288f9fed211f5f8b931697` unchanged.
+
+**Deployment is still HOLD.** Both the prior two SQLite backups remain preserved, Stage 1 private env and drop-in are absent after rollback, and the first V3 failing post-restart gate has not been recovered. The 27 checks do not simulate provisioning/restart end-to-end. Any new Stage 1/Phase 2 restart attempt requires a **fresh explicit operator approval**, a restricted maintenance window and safeguarded failure recovery. No test notifications authorized yet.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
