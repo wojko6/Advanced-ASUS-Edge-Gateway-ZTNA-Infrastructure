@@ -2,7 +2,7 @@
 
 **Tracking:** [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) (P2, open)  
 **Evidence classification:** repository-source inventory + previously accepted dated evidence + 2026-10-13 operator-reported **read-only SQLite** inventory (UID/group/pause and field structure only; not a fresh API receiver/delivery acceptance).  
-**No changes to production**, no test notifications sent, no DNS/RouterCloud/WAN failure injection, no Grafana service or provisioning reload.
+**Document chronology:** initial inventory and early tests were read-only; later phases performed an explicitly approved production V4 change and one Grafana restart (see final dated section below). No synthetic notifier send or ASUS router failure injection in the successful V4 phase.
 
 ## Source baseline and ownership
 
@@ -820,6 +820,42 @@ The previously existing private backups from Stage 2 and V3 remain required and 
 **Stage 1 completed, but V4 Stage 2 has not been reported as executed.** Any new failure requires stopping and preserving the full sanitized terminal output, including `FAILED_GATE` and `ROLLBACK`. Avoid running twice. After migration, actual scoped Firing/Resolved delivery is a separate, still-unapproved gate.
 
 `RENEWED_STAGE1=PASS`; `V4_PRODUCTION_SWITCH=PENDING`; `GRAFANA_RESTART=NOT_YET_REPORTED`.
+
+## Production V4 migration — operator-reported SUCCESS / 2026-10-13
+
+The operator ran the checksum-verified, approved `grafana236_stage2_v4_candidate.py` after Stage 1 `PASS`. **The production cutover has completed successfully.** Sanitized operator output:
+
+| Gate | Result |
+|---|---|
+| Protected Stage 1 secret and drop-in, SELinux and stage match | **PASS** |
+| Unique matching live Email+Telegram contact, env references and candidate `ONLY_CHATID_CHANGED` | **PASS** |
+| Original live YAML equals private backup before change | **PASS** |
+| Four original `EnvironmentFile` sources; no direct name collision | **PASS** |
+| DB rules, contact, policy baseline and HTTP health | **PASS** |
+| Pre-change stable readiness | `3/3` samples in `3` attempts — **PASS** |
+| Earlier root-only SQLite backups preserved and integrity-checked | **PASS** for both |
+| New third SQLite snapshot, available space | `PRIVATE_SQLITE_SNAPSHOT=PASS` |
+| `SYSTEMD_DAEMON_RELOAD` | **PASS** |
+| `ENVIRONMENT_FILES_5_ADDITIVE` | **PASS**; `NEW_ENVFILE_POSITION=4`; four originals in order **PASS** |
+| `CANDIDATE_YAML_INSTALLED` | **PASS** |
+| `GRAFANA_RESTART_REQUESTED` / `SYSTEMD_RESTART_COMMAND` | `YES` / **PASS** |
+| Post-restart stable readiness | `3/3` samples in `4` attempts — **PASS** |
+| `RUNNING_ENV_CONTAINS_CHATID` | **PASS** (value comparison private) |
+| `FRESH_SERVICE_PID` and `GRAFANA_HTTP_HEALTH` | **PASS** |
+| `FINAL_SYSTEMD_ENV_FILES_5` and previous backups preserved | **PASS** |
+| `FINAL_ACTIVE_YAML` | **PASS** |
+| `EMAIL_AND_TELEGRAM_CONFIG_IN_DB` | **PASS** |
+| `PERMANENT_ALERT_RULES_15` | **PASS** |
+| **`PRODUCTION_STAGE2_V4`** | **PASS** |
+| `FILES_MODIFIED` | `EXPECTED_CHATID_AND_SYSTEMD_ONLY` |
+| `NOTIFICATIONS_SENT_BY_TEST`, `SECRET_VALUES_PRINTED` | both **NO** |
+| `SCOPED_FIRING_RESOLVED_DELIVERY` | **NOT_TESTED** |
+
+**Acceptance:** The Telegram `settings.chatid` has been changed only in the host-local live alerting YAML to reference the private systemd environment variable; the current Grafana process has the correct value, systemd retains all four old sources plus one new source, and the 15 rules and Email+Telegram receivers are present after the planned restart. The script reported no error and no rollback. Avoid committing any live copy of secret-bearing host files or SQLite backups.
+
+**Boundaries:** The post-restart configuration **PASS does not establish real Email or Telegram transport** for Firing/Resolved alerts, nor acceptance of grouping/repeat/anti-flap for each of the 15 rules, or clean-room recovery. `Issue #236` remains OPEN; PR #237 remains draft/review until remaining evidence. Scoped synthetic notification exercise must be separately approved before sending any message. Post-deployment monitoring and an operator-observed Firing/Resolved cycle are the next acceptance gates.
+
+`PRODUCTION_V4_CHATID_MIGRATION=PASS`; `GRAFANA_POST_RESTART_STABLE_READY=PASS`; `POST_RESTART_ENV_CHATID_PRESENT=PASS`; `PERMANENT_RULES=15`; `CONTACT_EMAIL_TELEGRAM=PASS`; `ROLLBACK_REQUIRED=NO`; `SCOPED_DELIVERY=NOT_TESTED`.
 
 ## Next acceptance gates — safe sequence
 
