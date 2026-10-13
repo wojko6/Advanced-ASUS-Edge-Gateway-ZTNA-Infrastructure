@@ -31,6 +31,14 @@
 | A-12 | PR #230 has unique dated Mermaid development notes, not part of main and not evidence of an active production diagram redesign | **Retain for review**; history must not be silently dropped |
 | A-13 | PR #227 research remains draft and current; conflicting design assumptions `NET_NS` / direct sidecar bypass not resolved by CI | **Keep draft / no deploy** |
 
+## Related GitHub metadata reconciled on 2026-10-13
+
+- [#159](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/159) now links directly to the merged strategy PR #228 and canonical platform decision on `main`; the historical RT-BE88U research content remains intact.
+- [#178](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/178) stays **closed** with a current bounded acceptance notice before its dated historical phase body.
+- [#194](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/194) now explicitly distinguishes the unmerged benchmarking draft PR #195 from a published file and the cancelled RT-BE88U hardware plan.
+- [#229](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/229) now places the original **119-branch snapshot** in historical context and records the **14-branch** read-only observation before additional audit branches. Branch deletion remains **paused** at operator request.
+- PRs [#195](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/195), [#198](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/198), and [#230](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/230) have explanatory review notices. **#198 was returned to DRAFT** to prevent unreviewed replacement of the final 2026-10-08 worklog; its unique Wi-Fi/RouterCloud observations are preserved for a later reconciliation. All existing PR head commits/branches remain available.
+
 ## CI and accuracy boundary
 
 `tests/test-doc-links.py` checks Markdown paths, and `tests/test-doc-language-policy.py` checks EN/PL index references; neither proves semantic/current-state consistency. The new narrow status tripwires complement those checks. All new edits are documentation/test/CI only, with no production DNS/firewall/firmware/monitoring modifications and no live failure injection.
