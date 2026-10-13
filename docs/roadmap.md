@@ -1,5 +1,11 @@
 # Roadmap
 
+### Current work scheduling — 2026-10-13 (supersedes older #212 next-step text)
+
+- **#212 LAN/Tailscale client DNS failover is PAUSED until separate suitable hardware is available**. Its issue remains open for traceability, not as scheduled engineering or deployment; RC13J v0.41 sidecar direct-access bypass and ASUS firmware feature gates remain unresolved. No further lab/pilot/production work is approved without a new operator decision.
+- **PR #227 was merged to `main`** on 2026-10-13 as dated RC13J evidence, not implementation acceptance. Older draft-PR mentions in historical 2026-10-12 checkpoints retain their point-in-time meaning.
+- Benchmark [methodology](benchmarks/asus-opnsense-comparison-methodology.md) is preserved for measured current ASUS baseline and a future independent OPNsense/x86 firewall, only when obtained/approved; no RT-BE88U purchase or new performance result.
+
 ### Current reference router checkpoint — 2026-10-10 (documentation review; last broad live gate 2026-10-09)
 
 - Current router: ASUS TUF-AX5400 / GNUton 3004.388.11_1.
