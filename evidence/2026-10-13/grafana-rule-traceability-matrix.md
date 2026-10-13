@@ -569,6 +569,12 @@ An updated **Phase 2 V3** executable has been prepared for download and passed P
 
 `POST_ROLLBACK_AUDIT=PASS`; `ROLLBACK_STATE_RECONCILED=YES`; `ENVFILE_END_POSITION_BUG=CORRECTED_IN_V3`; `PRIOR_PRIVATE_SQLITE_BACKUP=PRESERVED`; `STAGE1_REINSTALL_REQUIRED=YES`; `PHASE2_V3=NOT_EXECUTED`.
 
+## Operator-reported repeated Phase 1 installation — V3 retry preparation
+
+The operator re-ran Stage 1 following the audited successful prior rollback, reporting `PREINSTALL_VALIDATION=PASS`, `ROOT_ONLY_ENV_FILE=PASS`, `DROPIN_CREATED=PASS`, `SELINUX_NEW_OBJECTS=PASS`, `ORIGINAL_LIVE_YAML_UNCHANGED=PASS`, and `PRODUCTION_STAGE1=PASS`. `SYSTEMD_DAEMON_RELOAD=NO`, `GRAFANA_RESTARTED=NO`, `NOTIFICATIONS_SENT=NO`, `VALUES_PRINTED=NO`.
+
+**Now staged for approved Phase 2 V3; not yet switched.** See [runbook](../../docs/grafana-236-telegram-chatid-deployment-runbook.md). The original failed Stage 2 script must not be retried. The Phase 2 V3 script hash is `355fbc847e350fea6f3d463ca98c6dd6fc5a718a7e8fc540cad8893dc07d28f6`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
