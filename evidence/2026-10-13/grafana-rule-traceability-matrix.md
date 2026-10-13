@@ -97,11 +97,34 @@ A follow-up operator-run SQLite audit read `alert_configuration` in `mode=ro` wi
 
 **Limits:** A database snapshot does **not** establish actual ongoing transport health, the ability to deliver all production alerts, exact effective routing with every policy override, file-provisioning ownership, or persistence after a reload/restart. The existing 2026-10-12 synthetic test supports delivery for one specific temporary route only. Source `asus-email-contact.yml` still provisions Email only, so source-versus-live **durability/parity gap remains OPEN**. No production change, contact test, notification send, or service restart was performed.
 
+## Operator-run read-only grouping/default-route snapshot — 2026-10-13
+
+An additional operator-run SQLite `alert_configuration` read (no write/reload) reported the following sanitized values:
+
+| Parameter | Observed |
+|---|---|
+| `DEFAULT_ROUTE_PRESENT` | `True` |
+| `GROUP_BY_COUNT` | `2` |
+| `GROUP_BY_ALERTNAME` | `True` |
+| `GROUP_BY_FOLDER` | `True` |
+| `GROUP_WAIT` | `30s` |
+| `GROUP_INTERVAL` | `5m` |
+| `REPEAT_INTERVAL` | `4h` |
+| `ROUTES_TOTAL` | `1` |
+| `CHILD_ROUTES` / `CHILD_RECEIVER_OVERRIDES` | `0` / `0` |
+| `AUDIT` / `DATABASE_MODIFIED` | `PASS` / `NO` |
+
+**Interpretation:** The **default notification policy** has standard grouping by `alertname` and `grafana_folder`, a 30-second initial group wait, a 5-minute group update interval and a 4-hour reminder interval. This is **configuration evidence, not an anti-flapping runtime test**. Grouping by alert name/folder does **not** merge unrelated rules into a single group.
+
+**Important routing boundary:** Per the [Grafana rule configuration documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/), alert rules selecting a contact point **directly** do not use the notification-policy tree. The 15 production rules configure direct `notification_settings.receiver`; therefore the root-policy timing values cannot automatically be claimed as the **effective** per-rule timings. Each rule's own nested notification settings (keys such as `group_by`, `group_wait`, `group_interval`, `repeat_interval`) need a sanitized read-only inventory; no implicit inheritance is asserted.
+
+**Next gate:** read only the types, timing values and group label *names* of the direct per-rule settings; never dump raw notification JSON or recipient details. Verify behaviour with an operator-approved bounded fixture later, without changing router/DNS production or flooding Email/Telegram.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
 2. The 2026-10-13 read-only DB confirms expected direct rule receiver, both Email/Telegram integration types, and default receiver; **remaining**: inspect notification-policy child routes/grouping and contact point/default-policy provisioning ownership without displaying contact destinations or secrets.
-3. Mark each path `NOT_TESTED`, `PARTIAL`, `PASS`, or `WAIVED` with timestamp and operator-confirmed delivery channel in a per-rule evidence ledger.
+3. First inspect **effective direct rule notification settings** (grouping, timing, overrides) separately from the default policy; then mark each notification path `NOT_TESTED`, `PARTIAL`, `PASS`, or `WAIVED` with timestamp and operator-confirmed delivery channel in a per-rule evidence ledger.
 4. Design isolated/bounded negative fixtures for **stale telemetry**, **DNS Guard critical recovery route**, **grouping/repeat/anti-flap**, and receiver failure. **Explicit operator approval required** before live notification tests.
 5. Review a safe Email+Telegram provisioning parity proposal and persistence test plan. **No blind reload/restart**, no overwriting manually configured Telegram credentials or default-policy edits.
 6. After explicit approval and non-destructive testing, verify individual warning/critical paths and `Firing`/`Resolved` delivery, regression to exactly 15 permanent rules, and document gaps/waivers.
@@ -112,6 +135,7 @@ A follow-up operator-run SQLite audit read `alert_configuration` in `mode=ro` wi
 - `FRESH_LIVE_2026_10_13=PARTIAL_UID_GROUP_PAUSE_RECEIVER_PASS`; `LIVE_NOTIFICATION_SETTINGS_JSON_TYPE=list`; `LIVE_RECEIVER_MATCH=15/15_PASS`; `PER_RULE_E2E_DELIVERY=UNVERIFIED`.
 - `LIVE_EMAIL_INTEGRATIONS=1`; `LIVE_TELEGRAM_INTEGRATIONS=1`; `LIVE_DEFAULT_RECEIVER_MATCH=PASS` (operator-reported read-only DB).
 - `SOURCE_EMAIL_ONLY_VS_LIVE_EMAIL_TELEGRAM_PROVISIONING_PARITY=UNRESOLVED`.
+- `DEFAULT_POLICY_GROUPING_CONFIG=PASS` (30s / 5m / 4h, grouped by alertname+grafana_folder); `DIRECT_RULE_EFFECTIVE_GROUPING=UNVERIFIED`; `ANTI_FLAP_DELIVERY=NOT_TESTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
