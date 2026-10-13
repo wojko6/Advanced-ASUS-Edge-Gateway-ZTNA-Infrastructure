@@ -146,6 +146,12 @@ PRODUCTION_STAGE1=PASS
 
 This reinstalls the private host-only env source and additive drop-in; it does **not** activate the new variable in the running service. **Stage 2 V3 is now eligible for execution under the prior operator authorization, but has not yet been reported as run.** V3 must still pass all its own preflight checks, preserve the earlier SQLite snapshot, create a new independent backup and, if safe, do one planned Grafana restart. On any failed check, stop and inspect rollback status; do not rerun blindly.
 
+### Phase 2 V3 attempt — blocked before any live change
+
+The operator's V3 result has only `ROOT_REQUIRED=PASS`, `STAGING_PRIVATE=PASS`, `STAGE_FILES_PRIVATE=PASS` before `PRODUCTION_STAGE2=FAIL`, `FAILED_CLASS=FileNotFoundError`, `STARTING_ROLLBACK=NO` and `ROLLBACK=NOT_REQUIRED_NO_LIVE_YAML_CHANGE`. Inspection of the exact downloaded V3 source places this failure at the first checks of `/etc/grafana/private` or the previously created private env/drop-in file. No `daemon-reload`, candidate YAML replacement, Grafana restart or new V3 SQLite snapshot was reached.
+
+**HOLD:** Do not re-run Stage 1 or V3 until a read-only path-state and service-state audit establishes which Stage 1 target is missing, whether service health/config are intact, and why the target is unavailable after the prior Stage 1 PASS. The script's rollback-not-required message does **not** prove the Stage 1 files still exist.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
