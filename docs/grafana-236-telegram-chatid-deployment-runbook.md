@@ -246,6 +246,14 @@ The operator separately approved a real Email+Telegram **Firing → Resolved** e
 
 **Do not mark this gate PASS until the operator confirms both notifications and cleanup.** The systemd/Chat ID migration is already accepted separately; #236 remains open for all-rule and DR/grouping/anti-flap work.
 
+## Post-V4 dual-channel notification acceptance — Firing and Resolved PASS
+
+The operator reports real notification delivery for a single isolated synthetic alert `E2E-TEST-2026-10-13` after the V4 migration. **Firing** reached Gmail (screenshot observed) and Telegram (operator confirmed). After returning the temporary rule to `vector(0)`, the operator confirms **Resolved** arrived at both Gmail and Telegram (operator report, no Resolved screenshot saved).
+
+This satisfies the **scoped rule-triggered delivery check** for both channels, not all 15 rule-specific delivery or behavior. **Cleanup is not yet reported:** the temporary rule should be `Normal`, deleted, and the final 15 permanent rules checked with no paused rules. The temporary evaluation group can be removed separately if it is empty. Do not touch the preexisting provisioned `ASUS TUF-AX5400` evaluation group or contact point.
+
+Maintain #236 OPEN for separate grouping/repeat/anti-flap and clean-room recovery acceptance, regardless of this successful single synthetic cycle.
+
 ## Evidence and acceptance gate
 
 Log timestamps and sanitized PASS/FAIL booleans: YAML + EnvironmentFile verified; restart once; service ready; rule count 15; receiver UID/name/type parity; Chat ID numeric and equivalent **without disclosure**; policy/grouping unchanged; scoped Firing and Resolved confirmed through both channels; no additional persistent alerts; no unexpected log errors.
