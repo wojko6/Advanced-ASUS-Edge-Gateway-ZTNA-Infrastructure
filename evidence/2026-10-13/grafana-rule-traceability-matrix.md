@@ -416,6 +416,30 @@ The user ran a short-lived second Grafana instance from the installed **13.2.3 h
 
 `SANDBOX_RUNTIME_GRAFANA_13_2_3=PASS`; `SYNTHETIC_EMAIL=PASS`; `SYNTHETIC_TELEGRAM=PASS`; `SYNTHETIC_CHAT_ID_EXPANSION=PASS`; `PRODUCTION_CHANGE=NOT_STARTED`; `POST_MIGRATION_DELIVERY=NOT_TESTED`.
 
+## Production deployment preflight — operator-reported / 2026-10-13
+
+The operator ran the final read-only readiness checks and reported **all ten PASS**:
+
+| Check | Result |
+|---|---|
+| `SYSTEMD_QUERY` / `GRAFANA_RUNNING` | `PASS` / `PASS` |
+| `NO_DIRECT_ENV_COLLISION` | `PASS` |
+| `ENVIRONMENT_SOURCES_PRESENT` / `ENVIRONMENT_SOURCES_READABLE` | `PASS` / `PASS` |
+| `NO_ENVFILE_NAME_COLLISION` | `PASS` |
+| `LIVE_CONTACT_UNIQUE` | `PASS` |
+| `BACKUP_STILL_MATCHES_LIVE` | `PASS` |
+| `CANDIDATE_REFERENCE_VALID` | `PASS` |
+| `PERMANENT_ALERT_RULES_15` | `PASS` |
+| **`DEPLOYMENT_PREFLIGHT`** | **`PASS`** |
+
+`CONFIG_MODIFIED=NO`, `GRAFANA_RESTARTED=NO`, `NOTIFICATIONS_SENT=NO`, `SECRET_VALUES_PRINTED=NO`.
+
+**Approved finding:** pre-change inventory is consistent. **Not yet authorized:** modifications to `EnvironmentFile` wiring, live YAML or a Grafana restart. The earlier two-restart conceptual approach was revised to a *single controlled restart* that applies the environment and one-field YAML change together, after final review and authorization. This reduces interruption but requires a complete private rollback plan, systemd drop-in inventory and SELinux safeguards.
+
+A separate **review-only** guide has been committed: [`docs/grafana-236-telegram-chatid-deployment-runbook.md`](../../docs/grafana-236-telegram-chatid-deployment-runbook.md). It specifies source-of-truth limitations, host-only secure storage, one restart (after approval), post-boot contact/rule/policy validation and single-restart rollback; **no production change was applied from this GitHub commit**.
+
+`DEPLOYMENT_PREFLIGHT=10/10_PASS`; `DEPLOYMENT_RUNBOOK=PREPARED`; `LIVE_RESTART_AUTHORIZATION=PENDING`; `PRODUCTION_MIGRATION=NOT_STARTED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -443,6 +467,7 @@ The user ran a short-lived second Grafana instance from the installed **13.2.3 h
 - `PODMAN_GRAFANA_IMAGE_CACHE=0`; `PODMAN_VERSION_MATCH_IMAGES=0`; `DOCKER_IMAGE_QUERY=FAILED`; `ISOLATED_HOST_BINARY_TEST=NOT_STARTED`.
 - `SYSTEMD_DYNAMICUSER_PRIVATE_NETWORK_SANDBOX=6_6_PASS`; `SANDBOX_GRAFANA_RUNTIME=NOT_STARTED`.
 - `SYNTHETIC_GRAFANA_13_2_3_PROVISIONING=PASS`; `SYNTHETIC_API_CONTACT_READ=PASS`; `SYNTHETIC_EMAIL_AND_TELEGRAM=PASS`; `SYNTHETIC_CHATID_INTERPOLATION=PASS`; `PRODUCTION_MIGRATION=NOT_STARTED`.
+- `DEPLOYMENT_PREFLIGHT=10_10_PASS`; `ONE_RESTART_RUNBOOK=PREPARED_NOT_EXECUTED`; `SYSTEMD_DROPIN_AND_SELINUX_PREFLIGHT=PENDING`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
