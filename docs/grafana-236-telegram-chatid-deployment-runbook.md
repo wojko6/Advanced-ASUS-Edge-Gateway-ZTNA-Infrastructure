@@ -198,6 +198,14 @@ A **standalone read-only** V4 stable-readiness probe is prepared for the operato
 
 **Next action: read-only Fedora host validation of the probe.** No production V4 switch helper has yet been created or run, and no restart is part of this probe. Keep Stage 1/V3 off, preserve root-only SQLite backups and require another reviewed change decision before a restart.
 
+### Fedora V4 baseline confirmed; Phase 2 V4 candidate prepared offline
+
+The operator's **read-only** Fedora V4 probe passed three consecutive identical-PID samples on its first three attempts, including systemd active, Email+Telegram process env names, 15 unpaused rules, DB receiver parity and Grafana 13.2.3 HTTP healthy. `STABLE_READINESS=PASS` without any reload/restart/file change/notification.
+
+A self-contained **Phase 2 V4 candidate (NOT DEPLOYED)** is prepared offline, SHA-256 `7fa3866015893c34d44edef46b04d2cb20e266f277288f9fed211f5f8b931697`. Its new `stable_poll()` replaces V3's immediate post-start HTTP gate with at least three consecutive samples of **stable fresh PID**, unchanged 15-rule/contact/policy baseline, healthy HTTP and runtime Email+Telegram+new Chat ID environment. It validates the same stable readiness for rollback (without requiring the migration-specific Chat ID variable). Two previous root-only SQLite backups are preserved and separately integrity-checked; a new `grafana-pre-stage2-v4.db` would be created, never overwritten. Adds a V4 execution lock. The pure/helper/static safety fixture passed **27/27 offline tests**; these do not prove a complete deployment.
+
+**Do not execute yet:** Stage 1 files are absent after rollback, and the previous operator restart authorization has already been used. The V4 candidate requires a new explicit maintenance approval and renewed Stage 1 PASS before any production use. No Firing/Resolved test has been authorized.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
