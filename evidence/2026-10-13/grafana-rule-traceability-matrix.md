@@ -194,6 +194,25 @@ A narrowly scoped operator-run PyYAML audit of the matching local Contact Point 
 
 **Status:** `LOCAL_YAML_PRIVACY_GAP=OPEN`; `CONTACT_CHAT_ID_INLINE=TRUE`; `CONTACT_YAML_OTHER_READABLE=TRUE`; `BOT_TOKEN_INLINE=FALSE` (in checked field only); `SECURE_ENV_SOURCE_PERMISSIONS=UNVERIFIED`; `SOURCE_RECONCILIATION=PENDING`; `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 
+## systemd EnvironmentFile ownership and mode audit — operator-reported / 2026-10-13
+
+The operator corrected an audit-script unpacking error and ran a sanitized **read-only** `systemctl show grafana-server --property=EnvironmentFiles` plus `os.stat` inspection. Four files were present, all owned by root; none was group-/other-writable:
+
+| Ordered env file | Mode | Root-owned | Group-readable | Other-readable | Group-/other-writable |
+|---|---|---|---|---|---|
+| 1 | `0644` | yes | yes | yes | no |
+| 2 | `0600` | yes | no | no | no |
+| 3 | `0600` | yes | no | no | no |
+| 4 | `0640` | yes | yes | no | no |
+
+Reported: `SYSTEMD_QUERY=PASS`; `ENVIRONMENT_FILES=4`; `ENV_VALUES_READ=NO`; `ENV_VALUES_PRINTED=NO`; `CONFIG_MODIFIED=NO`.
+
+**Risk interpretation:** File 1 is readable by other local accounts; whether this represents sensitive exposure **depends on the assignments inside it** and remains `PENDING_KEY_ONLY_AUDIT`. It must not be labeled a confirmed credential leak. The exact owning group of File 4 and its members have not yet been audited. Root-only `0600` and root-owned `0640` with a suitably narrow group are typical restricted-file postures; no `chmod`, move or service restart is approved by this evidence.
+
+**systemd semantics:** `EnvironmentFile` data is loaded by the service manager at service execution and multiple files are processed in order; later assignments override earlier assignments. File read permissions alone are not proof of what the already-running Grafana process received. Per [systemd.exec](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html), environment variables should not be considered a full secret-isolation mechanism; review the effective service/exposure boundary separately without revealing values.
+
+**Next safe gate:** key-name-only inventory (never emit values) of all four files, distinguish ordinary distro defaults from sensitive-looking assignments in world-readable File 1, check which source defines the variable names referenced in Grafana YAML and its *last effective definition*, and check File 4 group access. Preserve all four files, ensure no unrelated services are modified and avoid printing tokens, chat IDs or recipient addresses.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -213,6 +232,7 @@ A narrowly scoped operator-run PyYAML audit of the matching local Contact Point 
 - `ROOT_POLICY_FILE_DECLARATION=NOT_OBSERVED`; `CLEAN_ROOM_RESTORE_POLICY_REPRODUCIBILITY=NOT_TESTED`.
 - `DEFAULT_POLICY_GROUPING_CONFIG=PASS` (30s / 5m / 4h, grouped by alertname+grafana_folder); `DIRECT_RULE_NO_EXPLICIT_OVERRIDE=15/15_PASS`; `DIRECT_RULE_EFFECTIVE_GROUPING=NOT_LIVE_VALIDATED`; `ANTI_FLAP_DELIVERY=NOT_TESTED`.
 - `EMAIL_ADDRESSES=ENV_REFERENCE`; `TELEGRAM_BOTTOKEN=ENV_REFERENCE`; `TELEGRAM_CHATID=INLINE_VALUE`; `CONTACT_YAML_OTHER_READABLE=TRUE`; `CHATID_PRIVACY_REMEDIATION=PENDING`.
+- `SYSTEMD_ENVFILE_COUNT=4`; `ENVFILE_ROOT_OWNED=4/4`; `ENVFILE_0644=1`; `ENVFILE_0600=2`; `ENVFILE_0640=1`; `WORLD_READABLE_ENV_CONTENTS=NOT_AUDITED`; `ENVFILE_0640_GROUP_SCOPE=NOT_AUDITED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
