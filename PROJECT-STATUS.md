@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-10-12 (Grafana synthetic end-to-end notification acceptance; architecture/roadmap decision; latest broad ASUS router checkpoint remains 2026-10-09). The architectural decision and repo edits are **documentation only**; no new live-router acceptance is implied.
+**Status date:** 2026-10-13 (Grafana #236 production Chat ID migration V4 and scoped dual-channel notification lifecycle, operator-confirmed). The latest broad ASUS router acceptance remains 2026-10-09; today's Grafana change was on the **Fedora monitoring host**, not the production router.
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
@@ -13,6 +13,14 @@
 **Current platform decision (2026-10-12):** no RT-BE88U migration or purchase is planned. Keep TUF-AX5400 production and complete CORE v1.0; consider OPNsense/x86 **only in an unspecified future**, starting with an isolated Windows 11 VM lab (not yet installed). See [platform direction](docs/architecture/platform-direction-2026-10-12.md). Historical RT-BE88U references remain dated context, not today's target.
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #129 Pi-hole-aware disaster recovery, #196 DNS Guard candidate hardening, #142/#214 client-visible detection/watchdog independence, #176 exit-node source scoping, #108 DNS visibility, #68 encrypted-DNS assessment and platform-neutral #143 trust-zone design. Issue #178 is **closed**, but known grouping/anti-flap, Email+Telegram provisioning parity and persistence-after-reload evidence gaps must not be portrayed as completed.
+
+## 2026-10-13 — Grafana #236 migration and scoped notification acceptance
+
+**Production V4 deployment: PASS (operator-reported).** The Fedora Grafana 13.2.3 host replaced the live contact's inline Telegram `settings.chatid` with `$GRAFANA_TELEGRAM_CHAT_ID` read from a root-protected `0600` EnvironmentFile, added by one systemd drop-in. The four existing EnvironmentFiles and their order were preserved (now five total); the new service process received the correct Chat ID privately. The one planned restart passed three consecutive readiness samples, HTTP/database health, expected single Contact Point containing Email and Telegram and all 15 permanent rules. Earlier V3 failures and two restarts/rollback remain documented in the [dated traceability evidence](evidence/2026-10-13/grafana-rule-traceability-matrix.md); do not present the whole day as zero production restarts.
+
+**Notification acceptance: PASS for one temporary rule.** The isolated `E2E-TEST-2026-10-13` Grafana rule used `vector(0) → vector(1) → vector(0)`. Gmail inbox screenshot and operator confirmation established real **Firing** delivery to Gmail and Telegram; the operator confirmed **Resolved** delivery to both. The temporary rule was deleted and the operator observed **15** rules remaining in the Grafana UI (no independent post-cleanup pause-state API snapshot). No router/DNS/WAN interruption was introduced by the synthetic test.
+
+**Remaining:** Issue [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) is **OPEN** for per-rule delivery of permanent alerts, grouping/repeat/anti-flap and clean-room alerting restore. The public [Email-only contact template](monitoring/grafana/provisioning/alerting/asus-email-contact.yml) **does not reproduce the full live Email+Telegram configuration** and must not be applied over the host copy. Private host snapshots and notification credentials remain outside the repository. Related [runbook](docs/grafana-236-telegram-chatid-deployment-runbook.md) and draft [PR #237](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/237) retain the detailed acceptance and rollback record.
 
 ## 2026-10-12 — Grafana/Loki monitoring audit (bounded)
 
