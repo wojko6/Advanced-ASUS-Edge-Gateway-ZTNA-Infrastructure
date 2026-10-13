@@ -21,6 +21,12 @@ The single existing Contact Point keeps its **name, org ID, receiver UIDs, exist
 
 The checked-in `monitoring/grafana/provisioning/alerting/asus-email-contact.yml` is currently **Email-only** and is not an authoritative live-replacement source. **Never deploy it directly over the Fedora local Email+Telegram file.** The public-repository follow-up should use a separately reviewed sanitized representation, not a verbatim copy of any host file.
 
+## Blocking update (2026-10-13): systemd EnvironmentFiles discrepancy
+
+**STOP / no production migration.** After the earlier 10/10 deployment preflight, an operator-run read-only path check showed `EXISTING_ENVIRONMENT_FILES=1` despite an earlier same-host read reporting **four** effective `EnvironmentFile` sources (modes 0644/0600/0600/0640). Other observations: five effective drop-ins, Grafana loaded/active, no target path collision, SELinux `Enforcing`, `restorecon` installed, intended private env parent not yet created. Path audit final verdict: **`DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED`**.
+
+Do **not** trust the earlier assumption that four environment files will remain present. Audit unit/drop-in `EnvironmentFile=` directives and resets, compare single-property vs multi-property `systemctl show` and check effective sources via *names-only* variable lookup. Do not expose raw `Environment`, `EnvironmentFiles`, unit files or token values in output. If the discrepancy is real, stop to assess impact on existing Email/Telegram credentials **before** adding a new drop-in. Add SELinux context validation and appropriate restoration to the implementation plan. All production changes and Grafana service restarts remain **not authorized**.
+
 ## Stage 0 — immediately before implementation (read-only; STOP on failure)
 
 1. Confirm Grafana v13.2.3, active `grafana-server.service`, count **exactly 15** rules, no failures, correct receiver counts and current delivery status. Do not dump contact-point settings or credentials.
