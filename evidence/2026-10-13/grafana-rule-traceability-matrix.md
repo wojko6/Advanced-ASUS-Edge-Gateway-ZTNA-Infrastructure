@@ -534,6 +534,16 @@ Stage 1 installation returned `PREINSTALL_VALIDATION=PASS`, `ROOT_ONLY_ENV_FILE=
 
 **Phase 1 is complete**; private root-only Chat ID env file and additive systemd drop-in exist on Fedora, with current service still running on original config. Phase 2 (apply new env at daemon reload + atomic YAML candidate + single restart) **not yet reported**. Post-restart health and delivery unverified. Refer to [migration runbook](../../docs/grafana-236-telegram-chatid-deployment-runbook.md).
 
+## Operator-reported production Phase 2 failure and guarded rollback — 2026-10-13
+
+`grafana236_stage2.py` passed original private staging, SELinux, four-source environment, unique contact, matching backup, 15-rule baseline, and private SQLite snapshot checks. `SYSTEMD_DAEMON_RELOAD=PASS` but `ENVIRONMENT_FILES_5_ADDITIVE=FAIL`; script aborted **before installing candidate live YAML and before any Grafana restart**. Printed `PRODUCTION_STAGE2=FAIL`, `FAILED_CLASS=RuntimeError`, `FAILED_GATE=ENVIRONMENT_FILES_5_ADDITIVE`.
+
+Automatic rollback returned `ROLLBACK_DAEMON_RELOAD=PASS`, `ROLLBACK_ENVFILES_RESTORED=PASS`, `ROLLBACK_ORIGINAL_YAML=PASS`, `ROLLBACK=PASS`, `SECRET_VALUES_PRINTED=NO`. Operator has not yet supplied a separate readback of service health or rollback file absence.
+
+**Potential script bug:** the 5-source check incorrectly assumes the new drop-in's `EnvironmentFile` will be the **last** item, rather than verifying that it occurs **exactly once** and the four original files remain in relative order. Existing later-named systemd drop-ins may add EnvironmentFiles after `90-grafana236-telegram-chatid.conf`; actual count/order at the failed gate was **not printed**, so root cause remains unverified. The Phase 2 helper has additionally created private `/root/grafana-236-staging/grafana-pre-stage2.db`; a direct rerun would fail on `SQLITE_BACKUP_NOT_PRESENT`, so do not rerun or delete the backup.
+
+**Status:** phase 2 switch blocked, automatic rollback PASS; first perform sanitized read-only post-rollback and ordering diagnosis; review any proposed fix before retries. [Deployment/rollback runbook](../../docs/grafana-236-telegram-chatid-deployment-runbook.md).
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
