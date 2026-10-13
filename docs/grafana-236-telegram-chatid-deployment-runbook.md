@@ -1,6 +1,6 @@
 # Grafana #236 — Telegram Chat ID provisioning migration (deployment & rollback plan)
 
-**Status:** OPERATOR AUTHORIZED migration with one planned Grafana restart; **NOT YET EXECUTED**  
+**Status:** **PRODUCTION V4 MIGRATION EXECUTED — PASS** (operator-reported 2026-10-13); Email/Telegram Firing+Resolved delivery and remaining #236 acceptance gates **PENDING**  
 **Prepared:** 2026-10-13  
 **Tracking:** [Issue #236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236), [draft PR #237](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/237)  
 **Target:** Fedora Grafana 13.2.3, `grafana-server.service`; production ASUS TUF router is **out of scope**.
@@ -231,6 +231,14 @@ Under renewed user approval, the Stage 1 installer completed `PREINSTALL_VALIDAT
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
 
 **Rollback plan:** using the private copies, restore only this migration's contact YAML from `contact-original.yml`; remove or disable only the new migration-specific systemd drop-in (do not delete any preexisting overrides) and optionally the new environment file after it is no longer referenced; reload systemd unit metadata and restart Grafana **once**, then verify health, original Contact Point Email+Telegram, 15 rules, default policy and both channels. Preserve separate copies of pre-/post-change evidence (without secrets) and note any interruption. If rollback cannot restore the service, stop rather than trying blind unrelated configuration rewrites.
+
+## Production V4 completion report — 2026-10-13
+
+After Stage 1 installation and explicit operator approval, the operator ran `grafana236_stage2_v4_candidate.py` **once** and reported `PRODUCTION_STAGE2_V4=PASS`. The report confirms `DEPLOYMENT_PREFLIGHT=PASS`, additive five EnvironmentFiles with four original sources preserved in order, `CANDIDATE_YAML_INSTALLED=PASS`, one planned Grafana restart, `STABLE_POST_RESTART_READY=PASS` (3 consecutive passing samples / 4 attempts), new Chat ID value present in the new Grafana process, a fresh MainPID, healthy HTTP, correct active YAML, one Email + one Telegram integration persisted in Grafana DB, all 15 permanent rules intact, and preexisting root-only SQLite backups preserved. Rollback was **not needed**.
+
+The deployment changed only the planned host-local private Chat ID environment/systemd setup and the `chatid` YAML reference. **Do not commit host copies of YAML, env files or SQLite.** A root-only third backup `grafana-pre-stage2-v4.db` was created; preserve all backups until full acceptance. Refer to [the dated traceability evidence](../evidence/2026-10-13/grafana-rule-traceability-matrix.md) for the complete operator PASS transcript summary. Historical sections above describe prior failed/rolled-back attempts and the pre-deployment runbook; they are retained as audit history.
+
+**Still open:** `SCOPED_FIRING_RESOLVED_DELIVERY=NOT_TESTED`. No intentional synthetic notifier send occurred in the V4 procedure. Do not conflate post-restart receiver configuration with actual delivery, nor close Issue #236 on the basis of this migration alone. Real email+Telegram Firing/Resolved needs separately authorized, scoped testing; per-rule grouping, repeat/anti-flap and clean-room restore are further acceptance gates.
 
 ## Evidence and acceptance gate
 
