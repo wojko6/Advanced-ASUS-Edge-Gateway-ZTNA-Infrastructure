@@ -1,6 +1,6 @@
 # Grafana alert traceability — source baseline / 2026-10-13
 
-**Tracking:** [#236](../../issues/236) (P2, open)  
+**Tracking:** [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) (P2, open)  
 **Evidence classification:** repository-source inventory + previously accepted dated evidence. **No new live Fedora host snapshot was performed for this document.**  
 **No changes to production**, no test notifications sent, no DNS/RouterCloud/WAN failure injection, no Grafana service or provisioning reload.
 
