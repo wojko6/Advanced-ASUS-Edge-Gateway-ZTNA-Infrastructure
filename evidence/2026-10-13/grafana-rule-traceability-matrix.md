@@ -78,10 +78,29 @@ The operator ran two **read-only** `sqlite3 mode=ro` checks on the live Fedora G
 
 **Live/source UID, group, pause state and nested direct receiver match: PASS (operator-reported).** This is a partial DB snapshot, not a fresh per-rule evaluation health or end-to-end notification audit.
 
+## Operator-run read-only Contact Point / default policy snapshot — 2026-10-13
+
+A follow-up operator-run SQLite audit read `alert_configuration` in `mode=ro` with `query_only=ON`, parsed the latest selected Alertmanager configuration and reported **only sanitized counts and boolean matches**:
+
+| Check | Operator-reported result |
+|---|---|
+| `RECEIVERS_TOTAL` (named receiver entries in parsed config) | `2` |
+| `EXPECTED_CONTACT_FOUND` (`ASUS Edge Gateway Email`) | `True` |
+| `EMAIL_INTEGRATIONS` within the matching receiver | `1` |
+| `TELEGRAM_INTEGRATIONS` within the matching receiver | `1` |
+| `OTHER_INTEGRATIONS` within the matching receiver | `0` |
+| `DEFAULT_RECEIVER_MATCH` | `True` |
+| `CONFIG_PARSE` | `PASS` |
+| `DATABASE_MODIFIED` | `NO` |
+
+**Interpretation:** The current database snapshot contains the expected receiver, one Email and one Telegram integration under that receiver, and a matching default-route receiver. Together with `LIVE_RECEIVER_MATCH=15/15_PASS` this establishes **read-only configuration-level routing parity for all rules and both integration types**. The count `RECEIVERS_TOTAL=2` reflects named receiver entries in that config snapshot; it must not be misreported as two integrations or two separately validated delivery routes. The other receiver entry was not investigated in this sanitized snapshot.
+
+**Limits:** A database snapshot does **not** establish actual ongoing transport health, the ability to deliver all production alerts, exact effective routing with every policy override, file-provisioning ownership, or persistence after a reload/restart. The existing 2026-10-12 synthetic test supports delivery for one specific temporary route only. Source `asus-email-contact.yml` still provisions Email only, so source-versus-live **durability/parity gap remains OPEN**. No production change, contact test, notification send, or service restart was performed.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
-2. Read-only inspect actual per-rule direct routing vs notification-policy fallback; inventory integration **types and counts only** (Email/Telegram). Determine configuration owner for contact point, default policy and secret storage without printing tokens.
+2. The 2026-10-13 read-only DB confirms expected direct rule receiver, both Email/Telegram integration types, and default receiver; **remaining**: inspect notification-policy child routes/grouping and contact point/default-policy provisioning ownership without displaying contact destinations or secrets.
 3. Mark each path `NOT_TESTED`, `PARTIAL`, `PASS`, or `WAIVED` with timestamp and operator-confirmed delivery channel in a per-rule evidence ledger.
 4. Design isolated/bounded negative fixtures for **stale telemetry**, **DNS Guard critical recovery route**, **grouping/repeat/anti-flap**, and receiver failure. **Explicit operator approval required** before live notification tests.
 5. Review a safe Email+Telegram provisioning parity proposal and persistence test plan. **No blind reload/restart**, no overwriting manually configured Telegram credentials or default-policy edits.
@@ -91,7 +110,8 @@ The operator ran two **read-only** `sqlite3 mode=ro` checks on the live Fedora G
 
 - `SOURCE_RULE_COUNT=15`; `SOURCE_PAUSED=0`; `SOURCE_DIRECT_RECEIVER_RESOLVED=15`.
 - `FRESH_LIVE_2026_10_13=PARTIAL_UID_GROUP_PAUSE_RECEIVER_PASS`; `LIVE_NOTIFICATION_SETTINGS_JSON_TYPE=list`; `LIVE_RECEIVER_MATCH=15/15_PASS`; `PER_RULE_E2E_DELIVERY=UNVERIFIED`.
-- `LIVE_EMAIL_TELEGRAM_PARITY=UNRESOLVED`.
+- `LIVE_EMAIL_INTEGRATIONS=1`; `LIVE_TELEGRAM_INTEGRATIONS=1`; `LIVE_DEFAULT_RECEIVER_MATCH=PASS` (operator-reported read-only DB).
+- `SOURCE_EMAIL_ONLY_VS_LIVE_EMAIL_TELEGRAM_PROVISIONING_PARITY=UNRESOLVED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
