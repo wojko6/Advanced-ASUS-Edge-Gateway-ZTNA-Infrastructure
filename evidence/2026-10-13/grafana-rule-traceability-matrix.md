@@ -666,6 +666,28 @@ Earlier independent post-rollback audit confirmed **4** original loaded Environm
 
 `GRAFANA_RESTART_CYCLES_CONFIRMED=2`; `CURRENT_SERVICE_HEALTH=PASS`; `POST_ROLLBACK_CONTACT=EMAIL_PLUS_TELEGRAM`; `LIVE_15_RULES=PASS`; `FIRST_V3_FAILED_GATE=UNKNOWN`; `DEPLOYMENT=HELD`.
 
+## Grafana restart journal keyword-only audit — 2026-10-13
+
+Operator ran a **read-only** classifier over the Grafana journal for `2026-10-13 21:04:35–21:04:45`, across the confirmed two-restart interval:
+
+| Sanitized classifier output | Reported result |
+|---|---|
+| `JOURNAL_QUERY` | `PASS` |
+| `APPLICATION_ENTRIES` | `527` |
+| `PROVISIONING_MATCHES` | `29` |
+| `DATABASE_MATCHES` | `54` |
+| `ENVIRONMENT_MATCHES` | `24` |
+| `ALERTING_MATCHES` | `37` |
+| `STARTUP_ERROR_MATCHES` | `53` |
+| `HIGH_PRIORITY_LOGS` (syslog PRIO ≤ 3) | `0` |
+| Raw messages, config writes, restarts, test notifications | none |
+
+**Interpretation warning:** `STARTUP_ERROR_MATCHES=53` is a regex **match count** for `error|failed|panic|fatal`, **NOT** 53 confirmed startup errors. Messages may include benign `error` field names, quoted text, messages from both restart cycles, or non-critical failures. The zero high-priority count means none of the matching records had a syslog priority ≤3, **NOT** that Grafana encountered no errors. This classifier is inadequate to identify the *first V3 script's* `FAILED_GATE`, which was emitted by the Python deployment helper to its terminal rather than necessarily recorded in Grafana's own journal. The current Grafana health/rules/contact state remains PASS from the preceding independent audit.
+
+**Next gate remains the original first V3 run's stdout**, particularly `FAILED_GATE`, `SYSTEMD_RESTART_COMMAND`, `SERVICE_AND_RULES_READY`, `RUNNING_ENV_CONTAINS_CHATID`, `FRESH_SERVICE_PID` and `ROLLBACK=PASS`. If irretrievable, use **limited, read-only** checks of the Grafana MainPID environment **names only** (not values), current env file name resolution and systemd process type, and structured journal `level` counts to prioritize hypotheses. Do **not** try to reproduce the bug via production restart and do not claim exact cause.
+
+`RESTART_LOG_ENTRIES=527`; `KEYWORD_STARTUP_ERROR_MATCHES=53_NOT_VERIFIED_ERRORS`; `HIGH_SYSLOG_PRIORITY_ENTRIES=0`; `FIRST_V3_FAILED_GATE=STILL_UNKNOWN`; `DEPLOYMENT=ON_HOLD`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
