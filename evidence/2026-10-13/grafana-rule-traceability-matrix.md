@@ -596,6 +596,28 @@ The deployed helper's verified source SHA-256 `355fbc847e350fea6f3d463ca98c6dd6f
 
 `PHASE2_V3=FAILED_EARLY`; `FAILED_CLASS=FileNotFoundError`; `FAILED_STAGE=STAGE1_TARGET_FILE_PREFLIGHT`; `DEAMON_RELOAD_ATTEMPTED=NO`; `YAML_SWAPPED=NO`; `GRAFANA_RESTART_ATTEMPTED=NO`; `ROOT_CAUSE=UNVERIFIED`.
 
+## Follow-up: all Stage 1 objects absent; pre-existing V3 SQLite backup — 2026-10-13
+
+Operator performed a **read-only** host audit after early V3 `FileNotFoundError`:
+
+| Check | Result |
+|---|---|
+| `PRIVATE_DIRECTORY` / `TELEGRAM_ENV_FILE` / `SYSTEMD_DROPIN` | all `PRESENT=False` |
+| `GRAFANA_ACTIVE` / `NEED_DAEMON_RELOAD` | `True` / `no` |
+| Loaded `EnvironmentFile` count / new source loaded | `4` / `False` |
+| `ORIGINAL_YAML_UNCHANGED` | `True` |
+| `RULES_TOTAL` / `RULES_PAUSED` | `15` / `0` |
+| `PREVIOUS_BACKUP_PRESENT` / `V3_BACKUP_PRESENT` | `True` / `True` |
+| Script-caused changes / reload / restart / secret output | all `NO` |
+
+**Source inspection of exact V3 helper** (SHA-256 `355fbc847e350fea6f3d463ca98c6dd6fc5a718a7e8fc540cad8893dc07d28f6`) establishes that immediately after `STAGE_FILES_PRIVATE=PASS`, it evaluates `SECRET_DIR.lstat()`. This **raises `FileNotFoundError` on a missing private directory** before `PRIVATE_ENV_AND_DROPIN_SECURE` prints. In the reported exception branch `STARTING_ROLLBACK=NO` / `ROLLBACK=NOT_REQUIRED_NO_LIVE_YAML_CHANGE`, that code performs **no unlink/rmdir**. The reported V3 backup creation occurs **later**, after all Stage 1 file checks and other preflight gates, so the `grafana-pre-stage2-v3.db` seen in this audit **was not created by this failed execution**. It is likely from a separate/earlier invocation or external actor; actual provenance and timing are unverified. Do not imply the V3 script removed the Stage 1 resources or created the snapshot in this run.
+
+**Incident posture:** This is a significant timeline inconsistency between Stage 1 `PASS` and the next V3 failure. Without host-side time-correlated evidence we cannot determine whether other processes/terminal tabs ran cleanup, previous stage attempts ran concurrently, or paths changed outside these scripts. **Do not re-run Stage 1 or either Stage 2, and do not delete either private SQLite backup.** The still-running Grafana and original YAML are healthy and should be left alone.
+
+**Next diagnostic:** perform root read-only metadata audit: directory objects' existence; `ctime`/`mtime`/`birthtime` (when available) of both SQLite backups and original/candidate stage files, and sanitized **sudo journal command counts / timestamps** for Stage 1, old Stage 2 and V3 on October 13 (never print raw log lines). Check current service process start time, 15-rule count, and `quick_check` of both backups. A timestamp alone does not establish which process changed a path. Escalate any unexpected additional invocation before further deployment. 
+
+`DEPLOYMENT=HELD`; `ROOT_CAUSE=UNRESOLVED_PATH_DISAPPEARANCE`; `FAILED_V3_CREATED_BACKUP=NO`; `STAGE1_OBJECTS_ABSENT=3/3`; `PRODUCTION_GRAFANA_HEALTHY=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
