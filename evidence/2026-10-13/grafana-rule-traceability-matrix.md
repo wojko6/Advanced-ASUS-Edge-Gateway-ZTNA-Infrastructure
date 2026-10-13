@@ -731,6 +731,45 @@ A separate **offline-only synthetic fixture** (`test_grafana236_readiness_v4.py`
 
 `READINESS_V4_OFFLINE_TESTS=11_OF_11_PASS`; `READINESS_V4_HOST_BASELINE=NOT_YET_TESTED`; `PRODUCTION_DEPLOYMENT=HELD`; `FIRST_V3_FAILED_GATE=UNKNOWN`.
 
+## V4 baseline read-only validation and candidate V4 deployment helper — 2026-10-13
+
+**Operator-run Fedora read-only stable readiness probe** `grafana236_readiness_v4.py` (SHA-256 `3c14a10674d9d852299acf3a8fb149c00025e8c9c31ada8784d86f6c9435d93f`) returned:
+
+```text
+CONTACT_ENV_REFERENCES_VALID=PASS
+SERVICE_ACTIVE=PASS
+MAINPID_VALID=PASS
+EMAIL_ENV=PASS
+TELEGRAM_ENV=PASS
+RULE_COUNT_15=PASS
+RULES_UNPAUSED=PASS
+DB_RECEIVER_PARITY=PASS
+HTTP_READY=PASS
+READINESS_SAMPLES_REQUIRED=3
+READINESS_SAMPLES_CONSECUTIVE=3
+READINESS_ATTEMPTS=3
+STABLE_READINESS=PASS
+FILES_MODIFIED=NO
+SYSTEMD_RELOADED=NO
+GRAFANA_RESTARTED=NO
+NOTIFICATIONS_SENT=NO
+SECRET_NAMES_VALUES_PRINTED=NO
+```
+
+**Meaning:** three consecutive fully passing measurements on the *currently restored* production service demonstrate the new read-only readiness approach works on Fedora. It does not establish first V3 run `FAILED_GATE`, new Chat ID interpolation or real email/telegram delivery after any future migration.
+
+A separate **review-only, self-contained Phase 2 V4 candidate** was assembled offline from the original V3 source with:
+- Three consecutive fully passing post-restart samples with the **same new PID**, verifying service active, original Email+Telegram env names, **exact** private Chat ID environment assignment **without printing it**, immutable 15-rule/contact/policy SQLite snapshot and Grafana 13.2.3 HTTP/database health; readiness sampling also used after rollback with the original environment. Replaces the old immediate one-time HTTP assertion.
+- Before deployment, an equivalent three-sample readiness check of the existing healthy baseline.
+- The existing original and V3 root-only SQLite backups preserved, with mode `0600` and separate `quick_check=ok`; only a new `grafana-pre-stage2-v4.db` can be created, and never if already present.
+- An exclusive root-private V4 lock file, repeated private staging/security/SELinux checks, preserving original four EnvironmentFile sources in relative order when the new fifth source is inserted, and rollback confined to this migration's files.
+- Printed explicit `FAILED_GATE` for RuntimeError, sanitized outputs only.
+- Offline `py_compile` **PASS** and **27/27 synthetic `unittest` fixtures PASS** for the modified V4 candidate's extracted pure logic and static safety invariants (not complete execution or a production integration run). V4 candidate SHA-256 `7fa3866015893c34d44edef46b04d2cb20e266f277288f9fed211f5f8b931697`; offline test SHA-256 `180439a6df38644126915e0e19d4364e7c1de591b5e9d305450b985fd11fbe35`.
+
+**Status: REVIEW-ONLY CODE, NOT DEPLOYED.** Stage 1 targets were removed by the earlier rollback; **do not** run the V4 candidate directly in the current host state. The prior explicit one-restart approval was already consumed by the 21:04:38 / 21:04:40 restart and rollback attempts. Require a fresh review/authorization for a new live change window and its possible failure-recovery restart, after operator inspection of candidate and environment/backup readiness. Scoped Firing/Resolved notifications require their own approval.
+
+`FEDORA_V4_STABLE_READINESS=PASS`; `V4_CANDIDATE_OFFLINE_TESTS=27/27_PASS`; `V4_PRODUCTION_SWITCH=NOT_ATTEMPTED`; `FIRST_V3_FAILED_GATE=UNKNOWN`; `DEPLOYMENT_HELD=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
