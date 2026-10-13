@@ -127,6 +127,25 @@ The revised downloaded helper `grafana236_stage2_v3.py` has SHA-256 **`355fbc847
 
 **Retry sequence:** first re-run Stage 1 (previous rollback removed the two installed files) and inspect `PRODUCTION_STAGE1=PASS`. Only then run SHA-verified Stage 2 V3 under the existing operator-approved single restart. **Never** rerun original `grafana236_stage2.py`, overwrite/delete the existing backup, or bypass any failing preflight. Do not claim V3 PASS until the operator provides its result; separately authorize real Email/Telegram notification test messages.
 
+### Operator confirmation — Phase 1 reinstallation PASS (V3 retry preparation)
+
+After the previous Phase 2 aborted before YAML replacement and the independent `POST_ROLLBACK_AUDIT=PASS` readback, the operator **re-executed Stage 1** and reported:
+
+```text
+PREINSTALL_VALIDATION=PASS
+ROOT_ONLY_ENV_FILE=PASS
+DROPIN_CREATED=PASS
+SELINUX_NEW_OBJECTS=PASS
+ORIGINAL_LIVE_YAML_UNCHANGED=PASS
+SYSTEMD_DAEMON_RELOAD=NO
+GRAFANA_RESTARTED=NO
+NOTIFICATIONS_SENT=NO
+VALUES_PRINTED=NO
+PRODUCTION_STAGE1=PASS
+```
+
+This reinstalls the private host-only env source and additive drop-in; it does **not** activate the new variable in the running service. **Stage 2 V3 is now eligible for execution under the prior operator authorization, but has not yet been reported as run.** V3 must still pass all its own preflight checks, preserve the earlier SQLite snapshot, create a new independent backup and, if safe, do one planned Grafana restart. On any failed check, stop and inspect rollback status; do not rerun blindly.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
