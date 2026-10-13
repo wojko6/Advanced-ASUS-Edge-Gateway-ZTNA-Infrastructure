@@ -715,6 +715,22 @@ The exact downloaded V3 implementation was also inspected offline. Its `check_se
 
 `RESTORED_PROCESS_EMAIL_ENV=PASS`; `RESTORED_PROCESS_TELEGRAM_BOTTOKEN_ENV=PASS`; `TRANSIENT_V3_CHATID_ENV=UNKNOWN`; `POTENTIAL_READINESS_RACE=UNPROVEN`; `DEPLOYMENT_HELD=YES`.
 
+## V4 stabilized readiness — offline fixtures PASS, Fedora read-only check pending (2026-10-13)
+
+Source-level review of the downloaded V3 script found a **concrete validation weakness**:
+
+1. `check_service_ready()` returns when systemd is `active` and the SQLite rule/contact/policy snapshot matches, without checking HTTP health/provisioning readiness.
+2. Immediately afterwards V3 tests the new Chat ID environment variable and then calls `health_local()` **once** with a two-second network timeout.
+3. The first V3 attempt's service started and was stopped again in the **same second** (21:04:40), consistent with a premature post-start assertion. This is a **credible readiness race, not a confirmed cause**: first invocation's `FAILED_GATE` remains unavailable.
+
+A **new read-only V4 baseline probe** has been prepared as a downloadable local artifact (`grafana236_readiness_v4.py`, SHA-256 `3c14a10674d9d852299acf3a8fb149c00025e8c9c31ada8784d86f6c9435d93f`). It does **NOT** change the production YAML, secret files, systemd service or alerting. It requires **three consecutive samples with the same PID**, all passing: systemd active, PID valid, existing Email and Telegram environment **names present in /proc**, exactly 15 unpaused rules, one matching Email+Telegram Contact Point in SQLite, and HTTP 200, database healthy, Grafana 13.2.3. Only PASS/FAIL booleans and attempt/sample counts are emitted.
+
+A separate **offline-only synthetic fixture** (`test_grafana236_readiness_v4.py`, SHA-256 `1fac8ec17e46b7a131905451aafe60c9fc342c0ea830df3987289a7c89a07e50`) passed Python `py_compile` plus **11/11 `unittest` cases** in the isolated assistant runtime: delayed HTTP, PID change resets consecutive count, absent Email/Telegram variable, database receiver drift, paused rules, transient bad sample, probe exception, invalid input, and healthy-path three-sample acceptance. No user secrets, services or real Grafana DB were accessed by the fixture.
+
+**Important boundaries:** neither the read-only V4 probe nor its fixture constitutes a reviewed V4 production deployment/rollback script, nor proves post-restart provisioning Chat ID interpolation or actual notification delivery. Fedora operator **has not yet run** the read-only probe. Current production status is healthy **after rollback**. The next step is to run the hash-verified **read-only** probe on Fedora and inspect its sanitized output. No Stage 1/V3 retry, synthetic notifier send or Grafana restart is authorized for this step. Do not assume the missing first `FAILED_GATE`.
+
+`READINESS_V4_OFFLINE_TESTS=11_OF_11_PASS`; `READINESS_V4_HOST_BASELINE=NOT_YET_TESTED`; `PRODUCTION_DEPLOYMENT=HELD`; `FIRST_V3_FAILED_GATE=UNKNOWN`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
