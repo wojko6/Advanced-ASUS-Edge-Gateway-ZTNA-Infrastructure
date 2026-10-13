@@ -155,13 +155,33 @@ Per [Grafana file provisioning documentation](https://grafana.com/docs/grafana/l
 
 **Next safe gate:** parse the local contact-point YAML (or mark parser missing); verify that Email and Telegram are receivers of the expected *same* named contact point, and assess secret handling and file permissions by boolean checks **without outputting token, chat ID, email address, file contents, or local paths**.
 
+## Fedora local YAML parse, contact identity and permission audit — 2026-10-13
+
+Operator executed PyYAML `safe_load` in read-only mode on the three locally present alerting YAML files:
+
+| Observation | Reported |
+|---|---|
+| `YAML_FILES` and parsability | 3; `YAML_PARSE=PASS` for each |
+| Expected contact-point name | `EXPECTED_CONTACT=MATCH`; `EXPECTED_CONTACT_DEFINITIONS=1` |
+| Receiver types in that contact | `EMAIL_RECEIVERS=1`, `TELEGRAM_RECEIVERS=1` |
+| Telegram token representation | `TELEGRAM_TOKEN_MODE=ENV_REFERENCE` |
+| Contact YAML group-readable / other-readable | `True` / `True` |
+| `POLICIES_DEFINED` across the three files | `False` |
+| `FILES_MODIFIED` / `SECRETS_PRINTED` | `NO` / `NO` |
+
+**Accepted limited finding:** Locally installed alerting YAML parses and contains exactly one contact definition with both Email and Telegram receivers under the expected name. The checked Telegram bot token is written as an environment-variable reference (not an inline literal in the tested key). A 2026-10-13 live database snapshot separately shows this logical contact and both types, consistent with—but not conclusive proof of—these particular file resources having been loaded. No file-reload/startup reapplication test occurred.
+
+**Security caveat:** The contact YAML is readable by the filesystem group and other users. That alone is not proof of a token leak because the examined token uses an environment reference, but **other fields** (Telegram chat ID, email destination, API URLs/keys, variables expansion behavior) and the referenced variable's actual storage/perms are **not yet audited**. Do not publish the local YAML or apply permission changes blindly; assess only presence/modes and secret *reference-vs-inline* classification without disclosing contents. File-provisioning environment expansion is [documented by Grafana](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/).
+
+**Remaining drift:** The public GitHub contact provisioning file remains Email-only. The observed Fedora local file includes Telegram; source-of-truth consistency and local secret/environment persistence remain open. UI-edited default-policy routing is stored in Grafana database but no YAML `policies` declaration was found: clean-room restoration of that policy is also unproven. Keep `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`, `ANTI_FLAP_DELIVERY=NOT_TESTED` and `ALL_15_PER_RULE_E2E=NOT_TESTED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
 2. The 2026-10-13 read-only DB confirms expected direct rule receiver, both Email/Telegram integration types, and default receiver; **remaining**: inspect notification-policy child routes/grouping and contact point/default-policy provisioning ownership without displaying contact destinations or secrets.
 3. Direct rule notification settings were inspected: all 15 lack explicit grouping/timing overrides. Confirm effective Grafana fallbacks and runtime behaviour **separately** from root-policy routing; then mark each notification path `NOT_TESTED`, `PARTIAL`, `PASS`, or `WAIVED` with timestamp and operator-confirmed delivery channel in a per-rule evidence ledger.
 4. Design isolated/bounded negative fixtures for **stale telemetry**, **DNS Guard critical recovery route**, **grouping/repeat/anti-flap**, and receiver failure. **Explicit operator approval required** before live notification tests.
-5. Reconcile **local Fedora provisioning vs checked-in Email-only YAML** and separately document how the database-stored UI-edited root notification policy will be rebuilt in disaster recovery. First perform safe YAML/permissions checks; then review a safe Email+Telegram parity proposal and persistence plan. **No blind reload/restart**, no overwriting credentials or policy edits.
+5. Local YAML parsing and Email+Telegram receiver structure are now verified. Audit **other sensitive fields and environment-variable source file permissions** without logging values; then reconcile the **local Fedora Email+Telegram** configuration vs checked-in Email-only YAML. Separately document how the UI-edited default notification policy will be restored in disaster recovery, and plan a staged/reviewed provisioning persistence test. **No blind reload/restart**, no overwriting credentials or policy edits.
 6. After explicit approval and non-destructive testing, verify individual warning/critical paths and `Firing`/`Resolved` delivery, regression to exactly 15 permanent rules, and document gaps/waivers.
 
 ## Acceptance / non-claims
@@ -170,6 +190,7 @@ Per [Grafana file provisioning documentation](https://grafana.com/docs/grafana/l
 - `FRESH_LIVE_2026_10_13=PARTIAL_UID_GROUP_PAUSE_RECEIVER_PASS`; `LIVE_NOTIFICATION_SETTINGS_JSON_TYPE=list`; `LIVE_RECEIVER_MATCH=15/15_PASS`; `PER_RULE_E2E_DELIVERY=UNVERIFIED`.
 - `LIVE_EMAIL_INTEGRATIONS=1`; `LIVE_TELEGRAM_INTEGRATIONS=1`; `LIVE_DEFAULT_RECEIVER_MATCH=PASS` (operator-reported read-only DB).
 - `REPO_CONTACT_SOURCE=EMAIL_ONLY`; `FEDORA_LOCAL_FILE_CONTACT_TYPES=EMAIL_PLUS_TELEGRAM_TEXT_MARKERS` (structural scan, not yet parsed); `LIVE_CONTACT_DB=EMAIL_PLUS_TELEGRAM`; `LOCAL_YAML_AUTHENTICITY_AND_LOADED_PROVENANCE=UNVERIFIED`.
+- `FEDORA_LOCAL_YAML_PARSE=3/3_PASS`; `EXPECTED_CONTACT_DEFINITIONS=1`; `LOCAL_CONTACT_EMAIL=1`; `LOCAL_CONTACT_TELEGRAM=1`; `TELEGRAM_BOTTOKEN_MODE=ENV_REFERENCE`; `CONTACT_YAML_GROUP_READABLE=TRUE`; `CONTACT_YAML_OTHER_READABLE=TRUE`; `OTHER_SECRET_FIELDS_AUDIT=PENDING`.
 - `ROOT_POLICY_FILE_DECLARATION=NOT_OBSERVED`; `CLEAN_ROOM_RESTORE_POLICY_REPRODUCIBILITY=NOT_TESTED`.
 - `DEFAULT_POLICY_GROUPING_CONFIG=PASS` (30s / 5m / 4h, grouped by alertname+grafana_folder); `DIRECT_RULE_NO_EXPLICIT_OVERRIDE=15/15_PASS`; `DIRECT_RULE_EFFECTIVE_GROUPING=NOT_LIVE_VALIDATED`; `ANTI_FLAP_DELIVERY=NOT_TESTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
