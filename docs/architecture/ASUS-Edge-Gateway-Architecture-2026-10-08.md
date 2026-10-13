@@ -9,6 +9,17 @@
 > Przegląd architektury w danej dacie. Szczegółowe pliki Markdown, repozytoryjne
 > testy i datowane dowody produkcyjne pozostają autorytatywne. Dokument nie jest
 > pełnym prywatnym IPAM, instrukcją instalacji ani gwarancją HA.
+>
+> **Nota uaktualniająca (2026-10-12, bez zmiany stanu historycznego):** wpis
+> `RT-BE88U — TARGET` poniżej opisuje plan istniejący **8 października**.
+> Decyzja późniejsza: **nie migrujemy na RT-BE88U**, ASUS TUF-AX5400 pozostaje
+> produkcyjną bramą, a OPNsense jest jedynie możliwym, bezterminowym kierunkiem
+> badań (na początek VM na Windows 11). Historyczne PDF i pomiary pozostają
+> bez zmian. Aktualna polityka: [2026-10-12 platform direction](platform-direction-2026-10-12.md).
+> Podobnie historyczny stan alertów i `#200 OPEN` poniżej nie zastępują
+> aktualnego statusu z 12 października: #200 jest zamknięte, #178 jest
+> zamknięte, a syntetyczne alarmy Gmail/Telegram osiągnęły `Firing/Resolved`
+> w ograniczonym teście, bez indywidualnego testu wszystkich 15 reguł.
 
 ## 1. Executive summary i sprzęt
 
