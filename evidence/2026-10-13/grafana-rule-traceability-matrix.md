@@ -688,6 +688,33 @@ Operator ran a **read-only** classifier over the Grafana journal for `2026-10-13
 
 `RESTART_LOG_ENTRIES=527`; `KEYWORD_STARTUP_ERROR_MATCHES=53_NOT_VERIFIED_ERRORS`; `HIGH_SYSLOG_PRIORITY_ENTRIES=0`; `FIRST_V3_FAILED_GATE=STILL_UNKNOWN`; `DEPLOYMENT=ON_HOLD`.
 
+## Process environment baseline + V3 source race review — 2026-10-13
+
+The operator performed a **read-only** `/proc/<MainPID>/environ` audit of the currently running (restored) Grafana process, without printing environment names or values:
+
+```text
+MAINPID_VALID=True
+PROCESS_ENV_READABLE=True
+CONTACT_UNIQUE=True
+EMAIL_REFERENCE_FOUND=True
+TELEGRAM_REFERENCE_FOUND=True
+EMAIL_VARIABLE_IN_PROCESS=True
+TELEGRAM_VARIABLE_IN_PROCESS=True
+ACTIVE_SERVICE=True
+DAEMON_RELOAD_NEEDED=no
+FILES_MODIFIED=NO
+SERVICES_RESTARTED=NO
+SECRET_NAMES_OR_VALUES_PRINTED=NO
+```
+
+**Interpretation:** The current healthy Grafana process includes the existing **Email** and **Telegram bot-token** environment references, consistent with proper restored baseline wiring. This result does **not** establish whether the transient `GRAFANA_TELEGRAM_CHAT_ID` variable existed in the process during the first (rolled-back) V3 deployment.
+
+The exact downloaded V3 implementation was also inspected offline. Its `check_service_ready()` loop calls `systemctl is-active --quiet` and compares the SQLite alert rule/contact/policy snapshot; it **does not test HTTP responsiveness or Grafana provisioning completion**. After it returns, V3 checks the new environment variable and performs a **single immediate** `health_local()` HTTP request (`timeout=2`) when baseline HTTP health was available. Because the service lifecycle shows STARTED at 21:04:40 and another STOPPING in the same second, a startup/readiness **race** is a plausible cause of post-restart rollback. Competing possibilities include `RUNNING_ENV_CONTAINS_CHATID`, health failure or another post-restart gate. **None is confirmed absent the first invocation's `FAILED_GATE` output.** The earlier keyword journal search is not a substitute for the helper's gate output.
+
+**Action:** no further production restart or Stage 1/V3 execution. First obtain terminal output for the V3 invocation around 21:04:37 if saved. If it is irretrievable, draft an offline-reviewed stronger readiness protocol (wait/poll status, HTTP health, rule/contact persistence, fresh PID, and process environment) and exercise its logic in isolated fixtures; only then discuss a separately approved new attempt. Preserve the two sensitive SQLite backups.
+
+`RESTORED_PROCESS_EMAIL_ENV=PASS`; `RESTORED_PROCESS_TELEGRAM_BOTTOKEN_ENV=PASS`; `TRANSIENT_V3_CHATID_ENV=UNKNOWN`; `POTENTIAL_READINESS_RACE=UNPROVEN`; `DEPLOYMENT_HELD=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
