@@ -1,7 +1,7 @@
 # Grafana alert traceability — source baseline / 2026-10-13
 
 **Tracking:** [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) (P2, open)  
-**Evidence classification:** repository-source inventory + previously accepted dated evidence. **No new live Fedora host snapshot was performed for this document.**  
+**Evidence classification:** repository-source inventory + previously accepted dated evidence + 2026-10-13 operator-reported **read-only SQLite** inventory (UID/group/pause and field structure only; not a fresh API receiver/delivery acceptance).  
 **No changes to production**, no test notifications sent, no DNS/RouterCloud/WAN failure injection, no Grafana service or provisioning reload.
 
 ## Source baseline and ownership
@@ -10,7 +10,7 @@
 - Exactly **15** source-controlled rules, one Grafana group `ASUS TUF-AX5400`, folder `Network`, evaluation interval `1m`, **0** source-paused rules.
 - All 15 source rules use datasource UID `victoriametrics` with a per-rule direct receiver `ASUS Edge Gateway Email`; runtime state and runtime configuration must be checked separately.
 - Source contact-point file: [`asus-email-contact.yml`](../../monitoring/grafana/provisioning/alerting/asus-email-contact.yml) — one Email integration, secrets externalized through `GF_SMTP_USER`. This does **not** reproduce the Email+Telegram integrations observed in the live Grafana API on 2026-10-12.
-- Last documented **live** inventory (2026-10-12): 15 loaded/unpaused, 15 healthy/inactive at snapshot; 15 direct receivers; contact API displayed one logical contact point with Email and Telegram; UI-edited default policy pointed to the named receiver. See [audit](../2026-10-12/grafana-alerting-routing-audit.md). **No live re-check yet on 2026-10-13**.
+- Last documented **live** inventory (2026-10-12): 15 loaded/unpaused, 15 healthy/inactive at snapshot; 15 direct receivers; contact API displayed one logical contact point with Email and Telegram; UI-edited default policy pointed to the named receiver. See [audit](../2026-10-12/grafana-alerting-routing-audit.md). **2026-10-13 SQLite checks cover UID/group/pause but not these runtime health and contact-point/API routing claims.**
 - Source YAML is not a statement that the live policy or integrations will persist after a provisioning reload/restart.
 
 ## Per-rule source and historic evidence matrix
@@ -64,9 +64,22 @@ All rules route in **source** to `ASUS Edge Gateway Email`. Notification policy 
 - Old WAN-speed Email `Firing/Resolved` and RouterCloud Backup BAD `Firing/recovery` findings are independently documented; they are not evidence of all channels.
 - Source Email-only provisioning and 2026-10-12 live Email+Telegram are **not reconciled**. Treat controlled reload/restart persistence as `NOT_TESTED`.
 
+## Operator-run read-only SQLite checks — 2026-10-13
+
+The operator ran two **read-only** `sqlite3 mode=ro` checks on the live Fedora Grafana database, without service reload or notification tests:
+
+- `LIVE_RULES=15`; `EXPECTED_RULES=15`; `MISSING_UID_COUNT=0`; `EXTRA_UID_COUNT=0`; `PAUSED_RULES=0`.
+- All 15 expected UIDs reported `GROUP=MATCH`.
+- The first script returned `RECEIVER=OTHER_OR_MISSING` for all 15, **but that result is not a proven routing failure**: it attempted `.get("receiver")` on a decoded JSON value without verifying object shape.
+- The follow-up script verified `STORAGE=str`, `STRUCTURE=list` for **all 15** `alert_rule.notification_settings` values. Hence the earlier direct receiver check was **invalid for the observed representation**; the exact contents and interpretation of these arrays remain unknown.
+- No raw JSON, recipient names other than the static source name, destination IDs, secrets, full labels, private paths or credentials were published in the result.
+- **Acceptance gate:** inspect array length, nested key schema and `receiver` match status **without revealing values**; cross-check read-only sanitized Grafana provisioning API when necessary. Do not assume the underlying routing is missing, and do not mark it PASS just because previous Email/Telegram E2E delivery worked.
+
+**Live/source UID and group match: PASS (operator-reported).** Direct notification routing: **UNVERIFIED**, until list shape and API effective config are checked. This is a partial DB snapshot, not a fresh per-rule evaluation health audit.
+
 ## Next acceptance gates — safe sequence
 
-1. Capture a **fresh read-only, sanitized Fedora-side inventory**: loaded UID/title, evaluation group/folder, pause, thresholds, `for`, `noDataState`, runtime health/state; map 15 UIDs against source without dumping rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
+1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause already PASS) with loaded title, folder, thresholds, `for`, `noDataState`, runtime health/state and effective notification receiver. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
 2. Read-only inspect actual per-rule direct routing vs notification-policy fallback; inventory integration **types and counts only** (Email/Telegram). Determine configuration owner for contact point, default policy and secret storage without printing tokens.
 3. Mark each path `NOT_TESTED`, `PARTIAL`, `PASS`, or `WAIVED` with timestamp and operator-confirmed delivery channel in a per-rule evidence ledger.
 4. Design isolated/bounded negative fixtures for **stale telemetry**, **DNS Guard critical recovery route**, **grouping/repeat/anti-flap**, and receiver failure. **Explicit operator approval required** before live notification tests.
@@ -76,7 +89,7 @@ All rules route in **source** to `ASUS Edge Gateway Email`. Notification policy 
 ## Acceptance / non-claims
 
 - `SOURCE_RULE_COUNT=15`; `SOURCE_PAUSED=0`; `SOURCE_DIRECT_RECEIVER_RESOLVED=15`.
-- `FRESH_LIVE_2026_10_13=NOT_TESTED`.
+- `FRESH_LIVE_2026_10_13=PARTIAL_UID_GROUP_PAUSE_PASS`; `LIVE_NOTIFICATION_SETTINGS_JSON_TYPE=list`; `LIVE_RECEIVER_MATCH=UNVERIFIED`.
 - `LIVE_EMAIL_TELEGRAM_PARITY=UNRESOLVED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
