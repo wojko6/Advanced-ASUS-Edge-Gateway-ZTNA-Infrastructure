@@ -152,6 +152,14 @@ The operator's V3 result has only `ROOT_REQUIRED=PASS`, `STAGING_PRIVATE=PASS`, 
 
 **HOLD:** Do not re-run Stage 1 or V3 until a read-only path-state and service-state audit establishes which Stage 1 target is missing, whether service health/config are intact, and why the target is unavailable after the prior Stage 1 PASS. The script's rollback-not-required message does **not** prove the Stage 1 files still exist.
 
+### V3 missing-directory forensic checkpoint — deployment still on hold
+
+The operator reports that `/etc/grafana/private`, `telegram-chatid.env`, and the unique systemd drop-in are **all absent**, while Grafana is active, 4 original EnvironmentFiles are loaded, the live contact YAML equals the original, and 15 rules are present/unpaused. **Both** private SQLite backups are present.
+
+Inspection of the downloaded Phase 2 V3 source (SHA-256 `355fbc847e350fea6f3d463ca98c6dd6fc5a718a7e8fc540cad8893dc07d28f6`) shows the failed invocation stopped at `SECRET_DIR.lstat()` immediately after `STAGE_FILES_PRIVATE=PASS`. The `ROLLBACK=NOT_REQUIRED_NO_LIVE_YAML_CHANGE` branch does **not** remove Stage 1 files, and this invocation never reached the V3 backup creation code. Therefore **the Stage 1 objects were already missing as observed by V3**, and the V3 backup existed independently of that failed invocation. Their provenance cannot be inferred from this output.
+
+**HOLD ALL REDEPLOYMENTS.** Perform a read-only timeline/provenance audit (file metadata, private backup integrity, sanitized system journal invocation counts/timestamps) before touching these paths. Do not delete, rename, rerun, chmod, reload systemd or restart Grafana for diagnosis. Restore strategy will be revisited only after the discrepancy is understood.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
