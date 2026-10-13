@@ -641,6 +641,31 @@ The Stage 2 V3 source's rollback block **removes the migration env file, unit dr
 
 `V3_EXECUTION_MATCHES=2`; `V3_BACKUP_BIRTH=21:04:37`; `GRAFANA_LAST_ACTIVE_SINCE=21:04:42`; `REPORTED_SECOND_V3_FAIL=21:05:14`; `PRODUCTION_RESTORED_ON_READBACK=YES`; `FIRST_V3_RESULT=UNKNOWN`.
 
+## V3 service lifecycle and restored contact — operator-reported 2026-10-13
+
+A read-only systemd journal and current-state check resolves the restart question and confirms recovery:
+
+| Lifecycle event (CEST) | Type |
+|---|---|
+| `21:04:38` | `STOPPING`, `STOPPED`, `STARTING` |
+| `21:04:40` | `STARTED`, `STOPPING`, `STOPPED`, `STARTING` |
+| `21:04:42` | `STARTED` |
+
+The journal query matched **eight systemd PID-1 lifecycle events** across the two consecutive service restarts. Along with the 21:04:37 first V3 invocation, private V3 SQLite snapshot creation at 21:04:37, and three vanished Stage 1 objects, this is strong evidence of a **production restart followed by rollback restart during the first V3 run**, *prior* to the separately reported second V3 invocation at 21:05:14. The precise first V3 failure gate and rollback stdout remain **unavailable**; avoid claiming the precise failing check from timing alone. The prior statement that V3 never restarted Grafana is **retracted** except for the *second* failed invocation.
+
+The operator also reported:
+
+- `GRAFANA_ACTIVE=True`, `NEED_DAEMON_RELOAD=no`, `ActiveEnterTimestamp=2026-10-13 21:04:42 CEST`.
+- `GRAFANA_HTTP_HEALTH=True`; `VERSION_13_2_3=True`.
+- `RULES_TOTAL=15`, `RULES_PAUSED=0`, `CONTACT_UNIQUE=True`, `EMAIL_RECEIVER_PRESENT=True`, `TELEGRAM_RECEIVER_PRESENT=True`.
+- `RAW_JOURNAL_MESSAGES_PRINTED=NO`, `CONTACT_VALUES_PRINTED=NO`, `FILES_MODIFIED=NO`, `SERVICES_RESTARTED_BY_AUDIT=NO`, `NOTIFICATIONS_SENT=NO`.
+
+Earlier independent post-rollback audit confirmed **4** original loaded EnvironmentFiles, production contact YAML byte-identical to original and the new private env file/drop-in absent; both private SQLite snapshots were root-owned `0600` and passed integrity. Together, this supports **current healthy rollback state**, **not** proof of resumed real Email/Telegram message delivery after restart.
+
+**Do not rerun Stage 1/V3**. Collect the **first** V3 terminal output, especially last `...=PASS/FAIL` gate, `FAILED_GATE`, `STARTING_ROLLBACK`, `ROLLBACK`. The reviewed V3 source can fail after its first restart at `SERVICE_AND_RULES_READY`, `RUNNING_ENV_CONTAINS_CHATID`, `FRESH_SERVICE_PID`, `GRAFANA_HTTP_HEALTH`, `FINAL_SYSTEMD_ENV_FILES_5`, `PREVIOUS_SQLITE_BACKUP_PRESERVED` or `FINAL_ACTIVE_YAML`. Do not guess among them; journal lifecycle alone cannot identify the failing assertion. If the first output is gone, use a sanitized *read-only* journal health/error classification for this period, never full token/contact/error messages. Any future redeployment needs a separate reviewed fix after identifying the actual cause.
+
+`GRAFANA_RESTART_CYCLES_CONFIRMED=2`; `CURRENT_SERVICE_HEALTH=PASS`; `POST_ROLLBACK_CONTACT=EMAIL_PLUS_TELEGRAM`; `LIVE_15_RULES=PASS`; `FIRST_V3_FAILED_GATE=UNKNOWN`; `DEPLOYMENT=HELD`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
