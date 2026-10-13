@@ -465,6 +465,20 @@ The operator checked loaded unit state and migration target paths in read-only m
 
 `PATH_PREFLIGHT=REVIEW_REQUIRED`; `SYSTEMD_ENVFILE_COUNT_DISCREPANCY=4_VS_1_OPEN`; `SELINUX=ENFORCING`; `PRODUCTION_UNTOUCHED=YES`.
 
+## Reconciliation follow-up — 2026-10-13: likely audit parser artifact, still unclosed
+
+A new **read-only** operator diagnostic returned:
+
+- `SINGLE_QUERY_SOURCES=4`; `SOURCE_PARSE_COMPLETE=True`.
+- `MULTI_QUERY_SOURCES=1`; `SOURCE_LISTS_EQUAL=False`. The script assembled multi-property output into a Python dictionary using `properties[key] = value`; if `systemctl show` emits multiple `EnvironmentFiles=` lines, earlier records are overwritten. Therefore the reported count `1` does **not** establish that only one file is effective.
+- `ENVFILE_DIRECTIVES=4`; `ENVFILE_NONEMPTY_DIRECTIVES=4`; `ENVFILE_RESET_DIRECTIVES=0`, from `systemctl cat`.
+- `SERVICE_ACTIVE=True`; `NEED_DAEMON_RELOAD=no`; `LOADED_DROPINS=5`; `CONTACT_UNIQUE=True`; `EMAIL_REFERENCE_VALID=True`; `TELEGRAM_REFERENCE_VALID=True`.
+- The reference-source loop then crashed with `ValueError: too many values to unpack (expected 2)`. This is a **script unpacking defect**: `re.findall` has only one capturing group and returns individual path strings, not `(path, ignore_errors)` tuples. No effective-source ownership/readability comparisons from this interrupted run are valid.
+
+**Preliminary interpretation:** the new evidence makes a **parsing bug** considerably more likely than genuine Grafana service configuration loss, but does not conclusively reconcile the multi-query serialization nor prove both referenced variables are presently supplied to the running service. The production deployment gate remains **on hold**. Next read-only script should collect **all** `EnvironmentFiles=` lines in multi-property output, compare their ordered path list against the one-property query, and iterate `for filename in sources` without unpacking. Do not reveal paths, environment assignments, contact values, tokens or IDs.
+
+`SYSTEMD_ENVFILE_COUNT_DISCREPANCY=LIKELY_SCRIPT_ARTIFACT_PENDING_CONFIRMATION`; `SYSTEMD_DIRECTIVES=4_NONEMPTY_0_RESET`; `SOURCE_RESOLUTION_AUDIT=INCOMPLETE_SCRIPT_ERROR`; `PRODUCTION_UNTOUCHED=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
