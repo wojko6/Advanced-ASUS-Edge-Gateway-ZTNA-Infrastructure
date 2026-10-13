@@ -575,6 +575,27 @@ The operator re-ran Stage 1 following the audited successful prior rollback, rep
 
 **Now staged for approved Phase 2 V3; not yet switched.** See [runbook](../../docs/grafana-236-telegram-chatid-deployment-runbook.md). The original failed Stage 2 script must not be retried. The Phase 2 V3 script hash is `355fbc847e350fea6f3d463ca98c6dd6fc5a718a7e8fc540cad8893dc07d28f6`.
 
+## Phase 2 V3 attempt — missing path before mutation (operator report, 2026-10-13)
+
+The operator executed `grafana236_stage2_v3.py` after a reported Stage 1 reinstallation PASS, with:
+
+```text
+ROOT_REQUIRED=PASS
+STAGING_PRIVATE=PASS
+STAGE_FILES_PRIVATE=PASS
+PRODUCTION_STAGE2=FAIL
+FAILED_CLASS=FileNotFoundError
+STARTING_ROLLBACK=NO
+ROLLBACK=NOT_REQUIRED_NO_LIVE_YAML_CHANGE
+SECRET_VALUES_PRINTED=NO
+```
+
+The deployed helper's verified source SHA-256 `355fbc847e350fea6f3d463ca98c6dd6fc5a718a7e8fc540cad8893dc07d28f6` shows that after `STAGE_FILES_PRIVATE`, the **next operation is `SECRET_DIR.lstat()`**, followed by a compound check invoking `info(ENV, 0600)` and `info(DROPIN, 0644)`. All may raise `FileNotFoundError`; the exception handler only prints the exception class, not the failed operation. Thus the specific missing object **cannot be established from this output**. Code has **not yet reached** `daemon-reload`, YAML install, Grafana restart or new SQLite backup creation. The `NO` rollback flag covers the script's controlled live-YAML/reload/restart tracking, **not** the existence/absence of the previous Stage 1 files.
+
+**Status:** abort before mutation; no blind Stage 1 replay or Phase 2 V3 retry. Next diagnostic: read-only `lstat()`/mode/owner/SELinux **types** for precisely these three Stage 1 target objects, confirm systemd loaded 4 environment files and service running, live contact YAML equals original byte-for-byte, 15 rules present/unpaused, private prior SQLite backups untouched. Do not print paths, contents, values, identifiers or unit lines. Only after resolving which path is absent and why should a revised guarded deployment be considered.
+
+`PHASE2_V3=FAILED_EARLY`; `FAILED_CLASS=FileNotFoundError`; `FAILED_STAGE=STAGE1_TARGET_FILE_PREFLIGHT`; `DEAMON_RELOAD_ATTEMPTED=NO`; `YAML_SWAPPED=NO`; `GRAFANA_RESTART_ATTEMPTED=NO`; `ROOT_CAUSE=UNVERIFIED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
