@@ -770,6 +770,24 @@ A separate **review-only, self-contained Phase 2 V4 candidate** was assembled of
 
 `FEDORA_V4_STABLE_READINESS=PASS`; `V4_CANDIDATE_OFFLINE_TESTS=27/27_PASS`; `V4_PRODUCTION_SWITCH=NOT_ATTEMPTED`; `FIRST_V3_FAILED_GATE=UNKNOWN`; `DEPLOYMENT_HELD=YES`.
 
+## Operator Fedora offline V4 tests PASS; supplemental parser source-contract review — 2026-10-13
+
+The user executed the SHA-checked, offline-only suite `test_grafana236_stage2_v4_offline.py` against the **unchanged** V4 candidate `grafana236_stage2_v4_candidate.py` and reported:
+
+```text
+Ran 27 tests in 0.001s
+
+OK
+```
+
+These are **synthetic/unit/static** checks, not an end-to-end live deployment and not an authorization to restart Grafana.
+
+An additional assistant-side review briefly hypothesized that `ENV_RE.findall` returned tuples rather than strings; this was an **incorrect regex reading**. The second `ignore_errors=(?:yes|no)` group is explicitly **noncapturing**. The actual `ENV_RE` has precisely **one capture group** (for the path), and `env_sources()` therefore returns plain path strings. A supplemental isolated AST-extracted source-contract fixture on the **unchanged original V4 script** (SHA-256 `7fa3866015893c34d44edef46b04d2cb20e266f277288f9fed211f5f8b931697`) confirmed `SOURCE_READ_RETURNS_PLAIN_PATH_STRINGS=PASS`, all **5/5 valid systemd source insertion positions PASS**, and **4/4 invalid source sets rejected**, without reading Grafana configuration or invoking any service. No V4 parser modification is required. This is a correction of reviewer interpretation, **not a resolved production failure gate**.
+
+**State:** 27/27 Fedora offline tests PASS, supplementary source-contract tests PASS, and previous live read-only `STABLE_READINESS=PASS`. Exact first V3 failure gate remains unknown; V4 untested in real deployment; private backups untouched. Any subsequent Stage 1 reinstall or Grafana restart requires a new explicit operator approval and a reviewed rollout window. Post-migration notification Firing/Resolved tests remain separately gated.
+
+`FEDORA_V4_OFFLINE_TESTS=27_OF_27_PASS`; `V4_ENV_RE_CAPTURE_GROUPS=1`; `V4_ENV_ORDER_FIXTURES=5_OF_5_PASS`; `V4_ENV_INVALID_FIXTURES=4_OF_4_REJECTED`; `V4_PRODUCTION_MIGRATION=NOT_EXECUTED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
