@@ -1,7 +1,7 @@
 # Availability, redundancy and single points of failure
 
 **Status:** CURRENT  
-**Last reviewed:** 2026-10-12 (strategy update; failure domains unchanged)
+**Last reviewed:** 2026-10-13 (DNS failure-domain clarification; no live changes)
 
 ## Purpose
 
@@ -18,8 +18,37 @@ deployment is not a redundant gateway architecture.
 | Router power | single router power input; site backup-power state not documented | gateway outage | boot/recovery validation | UPS/power-continuity baseline not yet documented |
 | Router-attached SSD | single local persistent-storage device | Entware/services/RouterCloud/swap impact | off-router backup, recovery procedures | no live storage redundancy |
 | Fedora monitoring host | single monitoring/collector host | monitoring, dashboards and collector visibility lost | services restart automatically; gateway dataplane remains separate | no monitoring HA |
-| Pi-hole + Unbound | co-resident on router | DNS filtering/resolution degradation if router/service fails | DNS Guard fail-open for local resolver-stack failure, health checks | does not survive complete router/power loss |
+| Pi-hole + Unbound | co-resident on router, with firmware dnsmasq sharing the same Unbound | client DNS filtering/resolution degraded if FTL or shared Unbound fails; all services lost if router/SSD/power fails | health checks; DNS Guard v3.2 **router-system-resolver-only** bootstrap/fail-open | no proven LAN/Tailscale client DNS failover; no independent filtered secondary |
 | Tailscale control/Internet dependency | external dependency | remote overlay unavailable | trusted local recovery path | no independent remote OOB channel |
+
+## DNS availability boundaries — 2026-10-13
+
+- **Router versus clients:** DNS Guard v3.2 can move the **router's own
+  system resolver** to an independent WAN bootstrap resolver under documented
+  conditions; this is not a general continuity guarantee for LAN DHCP clients
+  or Tailscale peers. The bootstrap DNS intentionally does **not** preserve
+  Pi-hole blocking policy.
+- **Shared upstream:** current Pi-hole and firmware dnsmasq both depend on
+  the single ASUS Unbound. Two local DNS frontend processes do not constitute
+  independent DNS failure domains.
+- **Missing recovery coverage:** [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)
+  remains OPEN for full Pi-hole-aware clean-device restoration;
+  [#213](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/213)
+  covers cache-masked upstream failures;
+  [#214](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/214)
+  covers independent monitoring for lost DNS Guard cron scheduling.
+- **Optional, not purchased or deployed:** [#216](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/216)
+  evaluates a second, separately powered/storage-backed Pi-hole **and its own
+  Unbound**. It could reduce dependence on the ASUS DNS stack, but two DHCP
+  DNS addresses do not ensure strict standby selection; ASUS classic-DNS
+  interception rules, client filtering parity and real failover must be
+  validated before considering it resilient.
+- **Gateway remains a single point of failure:** even a second functioning DNS
+  host would not preserve WAN routing or the existing ASUS Tailscale exit node
+  if the main router fails. A shared switch/power source may also remain an SPOF.
+
+No secondary resolver, DNS failover or additional network hardware is present
+in the validated topology. No live configuration was changed in this review.
 
 ## Enterprise HA mechanisms applicability
 
