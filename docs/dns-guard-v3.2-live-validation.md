@@ -1,5 +1,10 @@
 # DNS Guard v3.2 live acceptance
 
+> **Document lifecycle: COMPLETED / HISTORICAL — 2026-10-13 review.**
+> This is the *original acceptance procedure* for [Issue #192](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/192) / [PR #193](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/193), **both already closed/merged**. DNS Guard v3.2 was subsequently merged through [PR #197](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/197) and passed bounded production validation on 2026-10-08. The earlier phrases *candidate*, *until checkpoints pass* and *only after tests* below describe the **pre-acceptance historical gate**, not today's task list.
+>
+> **Do not execute the fault-injection, DNS fallback, WAN dispatch or reboot commands below as routine maintenance.** They modify live router state and require a new, separately approved supervised maintenance/test window. For current accepted results, waivers and remaining DR gaps, read the [v3.2 production validation and waiver matrix](dns-guard-v3.2-recovery-audit-live-validation.md), [current operations](operations.md) and [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129).
+
 This runbook covers the **remaining live acceptance only** for issue #192 and
 PR #193. Source-controlled mock/static coverage and the full Validation suite
 must already be green before using it.

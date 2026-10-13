@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-10-10 (dated #212/#129 documentation sync; no deployment test)
+**Last reviewed:** 2026-10-13 (source-of-truth / lifecycle clarification; no deployment test)
 
 **Applies to:** `main`
 
@@ -29,6 +29,10 @@ Use one of these labels for documents whose lifecycle could be ambiguous:
 - **SUPERSEDED** — replaced by another named document or design.
 
 A historical document may intentionally contain old dates or open findings when it is clearly marked as historical. Do not rewrite historical records merely to make them look current.
+
+**Operational safety rule:** an old acceptance runbook with commands that could change DNS, WAN, firewall or reboot state must carry a conspicuous `COMPLETED / HISTORICAL` notice and link to the current accepted evidence. Merely leaving it in the docs tree must not imply that its instructions are pending or safe to re-run.
+
+**Version vocabulary:** `ASUS CORE v1.0` names an *engineering stability/recovery milestone* for the current TUF-AX5400 architecture. The independent repository software `VERSION` file (at this review `2.1.4-dev`) is a packaging/release identifier, **not** proof that CORE v1.0 has been accepted or released. Do not infer deployed versions from either label alone.
 
 ## Documentation language ownership
 
