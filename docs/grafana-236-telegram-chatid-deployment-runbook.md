@@ -254,6 +254,14 @@ This satisfies the **scoped rule-triggered delivery check** for both channels, n
 
 Maintain #236 OPEN for separate grouping/repeat/anti-flap and clean-room recovery acceptance, regardless of this successful single synthetic cycle.
 
+## Final E2E cleanup confirmation — 2026-10-13
+
+After the approved post-migration `E2E-TEST-2026-10-13` synthetic alert triggered actual **Firing** and **Resolved** notifications received in **Gmail** and **Telegram**, the operator reports deleting only that temporary rule. The rule list now shows **15** rules again (operator UI observation; independent API paused-state requery not part of this report).
+
+**Status of this scoped gate: COMPLETE — PASS**, including inbox delivery and cleanup. Existing provisioned `ASUS TUF-AX5400` rules/evaluation group and the live Contact Point were not intentionally changed by this test. The disposable evaluation group, if still present and empty, can remain in place; do not remove any production group by mistake. V4 migration remains accepted and needs no repeated restart for this scope.
+
+**Issue #236 remains OPEN** for separate per-rule notification, grouping/repeat/anti-flap and clean-room restoration gates. Preserve root-only backups outside Git. Do not overstate this one synthetic cycle as full issue closure.
+
 ## Evidence and acceptance gate
 
 Log timestamps and sanitized PASS/FAIL booleans: YAML + EnvironmentFile verified; restart once; service ready; rule count 15; receiver UID/name/type parity; Chat ID numeric and equivalent **without disclosure**; policy/grouping unchanged; scoped Firing and Resolved confirmed through both channels; no additional persistent alerts; no unexpected log errors.
