@@ -213,6 +213,23 @@ Reported: `SYSTEMD_QUERY=PASS`; `ENVIRONMENT_FILES=4`; `ENV_VALUES_READ=NO`; `EN
 
 **Next safe gate:** key-name-only inventory (never emit values) of all four files, distinguish ordinary distro defaults from sensitive-looking assignments in world-readable File 1, check which source defines the variable names referenced in Grafana YAML and its *last effective definition*, and check File 4 group access. Preserve all four files, ensure no unrelated services are modified and avoid printing tokens, chat IDs or recipient addresses.
 
+## systemd environment name-source mapping — operator-reported / 2026-10-13
+
+The read-only operator check scanned **variable names only** (the variable values were read locally but not printed; no environment data was sent in the output), correlating Grafana Contact Point references to ordered systemd `EnvironmentFile` entries:
+
+| Source | Mode | Variables | Sensitive-looking *names* | World-readable | Notes |
+|---|---|---:|---:|---|---|
+| ENV 1 | `0644` | 12 | 0 | yes | No matching names found by heuristic; **not proof content is non-sensitive** |
+| ENV 2 | `0600` | 8 | 8 | no | Referenced email destination last defined here |
+| ENV 3 | `0600` | 1 | 1 | no | Referenced Telegram bot token last defined here |
+| ENV 4 | `0640` | 1 | 1 | no | File's owner group matches `grafana`; the specific variable/consumer remains unidentified |
+
+Check result: `EMAIL_ENV_REFERENCE=True`, `EMAIL_DEFINED_IN_FILES=True`, `EMAIL_LAST_FILE_INDEX=2`, `EMAIL_LAST_SOURCE_WORLD_READABLE=False`; likewise `TELEGRAM_TOKEN_ENV_REFERENCE=True`, `TELEGRAM_TOKEN_DEFINED_IN_FILES=True`, `TELEGRAM_TOKEN_LAST_FILE_INDEX=3`, `TELEGRAM_TOKEN_LAST_SOURCE_WORLD_READABLE=False`. `VALUES_PRINTED=NO`, `FILES_MODIFIED=NO`, `SERVICES_RESTARTED=NO`.
+
+**Risk conclusion:** no world-readable source is reported for the two referenced Email/Telegram bot token variables, and ENV 4 is readable by the `grafana` group but not by other users. The world-readable ENV 1 still merits a limited content/meaning review rather than automatic `chmod`: heuristic checking of variable **names** cannot prove its **values** harmless. The currently deployed YAML remains world-readable with an **inline Telegram chat ID**, which is a destination identifier (not a bot authentication token); this is the immediate privacy-hardening candidate.
+
+**Planned remediation gate:** first check whether any existing private env file contains a usable chat-ID variable **by key name only**, then stage a fresh environment-reference version of Telegram `settings.chatid`. Ensure the referenced variable will be non-empty in the service launch environment; Grafana [replaces absent interpolation values with an empty string](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/). Keep all staged backups private, retain the current receiver UID and both integrations, and do not restart/reload production until separately approved with rollback and test notifications. A clean-room reprovisioning approach should also address the UI-edited policy.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -232,7 +249,7 @@ Reported: `SYSTEMD_QUERY=PASS`; `ENVIRONMENT_FILES=4`; `ENV_VALUES_READ=NO`; `EN
 - `ROOT_POLICY_FILE_DECLARATION=NOT_OBSERVED`; `CLEAN_ROOM_RESTORE_POLICY_REPRODUCIBILITY=NOT_TESTED`.
 - `DEFAULT_POLICY_GROUPING_CONFIG=PASS` (30s / 5m / 4h, grouped by alertname+grafana_folder); `DIRECT_RULE_NO_EXPLICIT_OVERRIDE=15/15_PASS`; `DIRECT_RULE_EFFECTIVE_GROUPING=NOT_LIVE_VALIDATED`; `ANTI_FLAP_DELIVERY=NOT_TESTED`.
 - `EMAIL_ADDRESSES=ENV_REFERENCE`; `TELEGRAM_BOTTOKEN=ENV_REFERENCE`; `TELEGRAM_CHATID=INLINE_VALUE`; `CONTACT_YAML_OTHER_READABLE=TRUE`; `CHATID_PRIVACY_REMEDIATION=PENDING`.
-- `SYSTEMD_ENVFILE_COUNT=4`; `ENVFILE_ROOT_OWNED=4/4`; `ENVFILE_0644=1`; `ENVFILE_0600=2`; `ENVFILE_0640=1`; `WORLD_READABLE_ENV_CONTENTS=NOT_AUDITED`; `ENVFILE_0640_GROUP_SCOPE=NOT_AUDITED`.
+- `SYSTEMD_ENVFILE_COUNT=4`; `ENVFILE_ROOT_OWNED=4/4`; `ENVFILE_0644=1`; `ENVFILE_0600=2`; `ENVFILE_0640=1`; `EMAIL_LAST_ENV_SOURCE=ENV2_PRIVATE`; `TELEGRAM_BOTTOKEN_LAST_ENV_SOURCE=ENV3_PRIVATE`; `ENV4_GROUP=GRAFANA`; `WORLD_READABLE_ENV_CONTENTS=NOT_AUDITED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
