@@ -276,6 +276,35 @@ An in-memory, read-only transformation of the **actual local contact provisionin
 
 **Deployment gating:** No chat ID env var is currently known by the checked four `EnvironmentFile` sources. Prepare a private root-owned env source, verify variable presence/nonempty and Grafana's actual interpolation in a disposable isolated test; preserve existing receiver UIDs, create private rollback snapshot and obtain operator approval **before** any live YAML change, reload/restart, or test notification. Do not publish real Chat ID or Telegram token, including in test fixture logs.
 
+## Secure host-only staging completed — operator-reported / 2026-10-13
+
+The corrected **V2** staging routine ran successfully on Fedora after an initial **V1 unpacking exception** (`matches` was a one-item list; the corrected script used `matches[0]`). The V1 failure occurred before staging creation; there is no evidence of production changes by either version.
+
+Sanitized V2 result:
+
+| Validation | Operator result |
+|---|---|
+| `CONTACT_UNIQUE` | `PASS` |
+| Email and Telegram receiver checks | `PASS` / `PASS` |
+| `RECEIVER_UIDS_PRESERVED` | `PASS` |
+| `CHATID_NUMERIC` | `PASS` |
+| `CHATID_NEGATIVE` | `False` |
+| `ONLY_CHATID_CHANGED` / `DRAFT_YAML_VALID` | `PASS` / `PASS` |
+| Private staging directory mode | `0700` |
+| `contact-original.yml`, `contact-candidate.yml`, `telegram-chatid.env` | all root-owned, `0600` |
+| `STAGING_READY` | `PASS` |
+| Active Grafana YAML/systemd edits | `NO` / `NO` |
+| Service restart / notifications sent | `NO` / `NO` |
+| Secret values printed | `NO` |
+
+**Host-only artifacts (not public):** `/root/grafana-236-staging/contact-original.yml` (exact bytes of source YAML), `contact-candidate.yml` (draft YAML with Telegram Chat ID variable reference), and `telegram-chatid.env` (new `GRAFANA_TELEGRAM_CHAT_ID` assignment with **real numeric destination ID**). The environment assignment file is sensitive even though a Chat ID is not a bot credential. Do not copy it or either original/candidate YAML (which can contain private receiver metadata) into a public Git repository.
+
+**Meaning:** staged rollback copy, candidate and private env file exist with restrictive filesystem permissions; the corrected preparatory script verified YAML structure and only the Chat ID field change. The candidate has **not** been loaded by Grafana. Root-owned backup and private env file existence alone do **not** establish service environment injection, alert receiver provisioning API compatibility, proper interpolation or Firing/Resolved delivery.
+
+**Next gate:** execute a read-only consistency check: verify mode/owner and file types, that staged original matches the live source byte-for-byte, the new variable name has not been added to current systemd environment sources, and that injecting the staged value into a *copy in memory* reconstructs the original parsed YAML. Do not output the secret value or file contents. Isolated Grafana interpolation/provisioning testing and a reviewed rollback procedure are required before a production change.
+
+`SECURE_STAGING=PASS`; `HOST_ONLY_ROLLBACK_COPY=CREATED`; `CHAT_ID_ENV_STAGE=CREATED_NOT_ACTIVATED`; `ACTIVE_YAML_MODIFIED=NO`; `SYSTEMD_MODIFIED=NO`; `GRAFANA_RELOADED=NO`; `PER_RULE_E2E_DELIVERY=UNVERIFIED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -298,6 +327,7 @@ An in-memory, read-only transformation of the **actual local contact provisionin
 - `SYSTEMD_ENVFILE_COUNT=4`; `ENVFILE_ROOT_OWNED=4/4`; `ENVFILE_0644=1`; `ENVFILE_0600=2`; `ENVFILE_0640=1`; `EMAIL_LAST_ENV_SOURCE=ENV2_PRIVATE`; `TELEGRAM_BOTTOKEN_LAST_ENV_SOURCE=ENV3_PRIVATE`; `ENV4_GROUP=GRAFANA`; `WORLD_READABLE_ENV_CONTENTS=NOT_AUDITED`.
 - `EXISTING_TELEGRAM_CHATID_ENV_NAME_CANDIDATES=0_OF_4_FILES`; `GRAFANA_TELEGRAM_CHAT_ID=PROPOSED_NOT_DEPLOYED`.
 - `TELEGRAM_CHATID_YAML_IN_MEMORY_DRY_RUN=PASS`; `DRAFT_YAML_VALID=TRUE`; `ONLY_CHATID_CHANGED=TRUE`; `LIVE_INTERPOLATION=NOT_TESTED`.
+- `HOST_SECURE_STAGING_V2=PASS`; `STAGING_ROOT_MODE=0700`; `STAGING_FILE_MODES=0600`; `STAGED_CHATID_NONNEGATIVE=TRUE`; `STAGED_ENV_SOURCE=NOT_ACTIVE`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
