@@ -6,6 +6,8 @@
 **Canonical source of truth:** [PROJECT-STATUS.md](../../PROJECT-STATUS.md) i [network-design index](../network-design.md)  
 **PDF:** [Architektura techniczna — wydanie 2026-10-08](ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) (datowany dokument do pobrania; nie zastępuje aktualizowanych plików Markdown)
 
+> **Nowsza publikacja:** [ASUS Edge Gateway — architektura techniczna, wydanie 1.1 (2026-10-13)](ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf). Bieżące odnośniki i aktualny stan projektu są w [indeksie architektury](../network-design.md). Niniejszy dokument oraz PDF z 8 października pozostają niezmienionymi zapisami historycznymi.
+
 > Przegląd architektury w danej dacie. Szczegółowe pliki Markdown, repozytoryjne
 > testy i datowane dowody produkcyjne pozostają autorytatywne. Dokument nie jest
 > pełnym prywatnym IPAM, instrukcją instalacji ani gwarancją HA.
