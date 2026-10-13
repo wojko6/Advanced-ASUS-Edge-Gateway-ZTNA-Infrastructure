@@ -91,6 +91,22 @@ If any post-change gate fails, it attempts to restore the original YAML and remo
 
 **Caution:** no systemd or container tool in this chat can execute on the user's Fedora host; only the operator can execute and inspect its output. Do not claim Stage 2 PASS until the operator has run it. The private SQLite backup contains sensitive application configuration and must remain outside Git and any shared logs. The script's approval covers the one planned restart and necessary failure recovery, not a standalone synthetic Firing/Resolved delivery test.
 
+### Production Phase 2 attempt — gate failed BEFORE live YAML/restart; rollback PASS
+
+Operator output for a SHA-verified `grafana236_stage2.py` invocation:
+
+- Pre-install and service gates: all `PASS`, including `RULES_CONTACT_POLICY_BASELINE`, `PRIVATE_SQLITE_SNAPSHOT`, `DEPLOYMENT_PREFLIGHT`, and `SYSTEMD_DAEMON_RELOAD`.
+- The first post-reload gate failed: **`ENVIRONMENT_FILES_5_ADDITIVE=FAIL`**, raising `RuntimeError`; `PRODUCTION_STAGE2=FAIL`.
+- Automatic rollback ran: `ROLLBACK_DAEMON_RELOAD=PASS`, `ROLLBACK_ENVFILES_RESTORED=PASS`, `ROLLBACK_ORIGINAL_YAML=PASS`, **`ROLLBACK=PASS`**.
+- The gate failed **before** the candidate YAML installation and before `systemctl restart grafana-server`; neither was requested by the script. The script also reported no secrets printed. No controlled notification test was attempted.
+- A **private Grafana SQLite snapshot now exists** in the root-only staging directory; the original Stage 2 helper requires the snapshot path to **not already exist**. **Do NOT rerun the same Stage 2 script** or delete that backup in order to bypass the check. Stage 1 objects were removed during the scripted rollback (pending host readback).
+
+**Potential explanation, NOT a confirmed cause:** the Stage 2 helper's validation checks more than additive inclusion. It requires the fifth EnvironmentFile to appear **at the end**, i.e. `current_sources[:4] == baseline_sources` and `current_sources[4] == new_secret_path`. systemd drop-ins are applied in name ordering, and an existing later-named drop-in may legitimately contribute one or more EnvironmentFile entries **after** the new `90-...` drop-in. In that case all **five** entries can be present, all four existing entries preserved, yet this unnecessarily strict position check rejects the safe configuration. Alternatively, the newly installed drop-in may not have been loaded, may have been superseded or the count may actually differ. **Do not assume which** until a read-only diagnosis.
+
+**Immediate next gate:** verify Grafana active/healthy and 15 rules, staged backup still matches live contact YAML, loaded EnvironmentFile list back to four, proposed private secret and drop-in now absent and private SQLite backup present/integrity valid; inspect only **relative drop-in name ordering** and the count of entries declared in later drop-ins. Never print paths, settings, tokens or raw unit contents. Do not modify running service or restore the old Stage 1 automatically. If the fifth source was present out of order, fix only the gate to check that the **original list is an ordered subsequence** and the new source occurs **exactly once** with no unexpected sixth source; do not weaken owner/SELinux/secret constraints. Change will require another reviewed script and a new backup path strategy with existing snapshot protected.
+
+`STAGE2_ATTEMPT=FAILED_PRE_YAML_PRE_RESTART`; `FAILING_GATE=ENVIRONMENT_FILES_5_ADDITIVE`; `ROLLBACK=PASS`; `PRODUCTION_SWITCH=NOT_COMPLETED`; `BACKUP_DB=CREATED_PRIVATE`; `NEXT_ACTION=READ_ONLY_DIAGNOSIS`.
+
 ## Stage 1 — planned single production switch (PHASE 1 PASS; PHASE 2 PENDING)
 
 1. Re-validate private original against live source; fail closed if changed since backup.
