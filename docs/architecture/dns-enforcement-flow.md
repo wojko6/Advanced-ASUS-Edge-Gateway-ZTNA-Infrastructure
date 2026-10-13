@@ -100,6 +100,42 @@ flowchart TD
 - DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted
   resolvers and IPv6 resolver paths remain separate assessment items.
 
+## Client DNS continuity boundary — 2026-10-13 (design-only clarification)
+
+**Current / validated:** DHCP-managed main-LAN clients receive only the
+router-local Pi-hole alias `192.168.50.253:53` in the validated baseline.
+Firmware dnsmasq and Pi-hole forward ordinary external queries to the **same
+on-router Unbound** `127.0.0.1:53535`. The DNS Guard v3.2 watchdog selects
+the **ASUS router-system resolver** for bootstrap, healthy or break-glass
+states; it does **not** advertise a standby DNS to LAN DHCP clients, switch
+their resolvers, or maintain filtered DNS when the shared Unbound fails.
+Its independent WAN bootstrap option is deliberately **not** Pi-hole-filtered.
+
+**Not deployed — [#212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212):**
+The RC13J v0.41 off-router Fedora **synthetic** sidecar experiment left a
+direct-gateway access bypass; v0.42 read-only ASUS Linux 4.1.52 inspection
+did not prove the necessary netns/veth/TPROXY facilities. DNS wire/DNSSEC
+end-to-end acceptance, actual ASUS runtime compatibility and safe client
+failover remain unproven. See the separate [draft PR #227](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/227);
+its research notes are not current production design or an approved pilot.
+
+**Not deployed — [#216](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/216):**
+An independent second Pi-hole **with its own Unbound on a separate host**
+(e.g. hypothetical GL-MT6000/Flint 2) remains optional research. No second
+router, DNS listener, DHCP-advertised resolver, VLAN or bypass exception has
+been added. If considered later, first reproduce the existing
+`EDGE_LAN_DNS_PREROUTING` TCP/UDP 53 path: traffic to a new LAN resolver
+might currently be intercepted and sent to firmware dnsmasq, defeating
+independence. Separately prove filtering parity, private/local naming,
+DNSSEC, original client identity, DHCP IPv4/IPv6 behaviour and real
+client-side failover. Two DNS IPs offered via DHCP do **not** enforce a strict
+primary-then-secondary priority.
+
+The chart above is **only the validated single-router datapath**. Neither
+research alternative is depicted as a functioning service. This document
+update is source-only; no router, DHCP, DNS, firewall, Tailscale or Fedora
+runtime configuration was modified.
+
 ## DNS analytics visibility boundary
 
 Issue #108 builds analytics from the query history already recorded by Pi-hole
