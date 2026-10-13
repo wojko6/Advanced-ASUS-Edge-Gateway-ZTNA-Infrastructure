@@ -212,6 +212,12 @@ The operator ran V4's synthetic offline suite on Fedora and got **`Ran 27 tests 
 
 **Deployment is still HOLD.** Both the prior two SQLite backups remain preserved, Stage 1 private env and drop-in are absent after rollback, and the first V3 failing post-restart gate has not been recovered. The 27 checks do not simulate provisioning/restart end-to-end. Any new Stage 1/Phase 2 restart attempt requires a **fresh explicit operator approval**, a restricted maintenance window and safeguarded failure recovery. No test notifications authorized yet.
 
+### Fresh V4 maintenance authorization — 2026-10-13
+
+The operator expressly authorized another V4 migration attempt, **one planned service restart and one rollback/recovery restart if necessary**. The earlier V3 authorization is not reused. Start by running Stage 1 **on its own**, validating root-only file permissions/SELinux and unchanged active YAML and confirming `PRODUCTION_STAGE1=PASS`. Stage 1 does not reload systemd or restart Grafana. Only after this result and renewed preflight may the reviewed Stage 2 V4 candidate be run. Keep prior SQLite backups, root-only staging, the original four EnvironmentFiles and the sole live Email+Telegram Contact Point. No approval has been given for synthetic alert delivery or unrelated production edits.
+
+**Actual execution:** Not yet reported under this authorization.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
