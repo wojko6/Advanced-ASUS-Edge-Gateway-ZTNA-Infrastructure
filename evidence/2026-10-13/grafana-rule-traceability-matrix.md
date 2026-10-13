@@ -502,6 +502,26 @@ In the previous flawed script, constructing a dictionary from repeated multi-pro
 
 `SYSTEMD_ENV_RECONCILIATION=PASS`; `ENVFILE_COUNT_DISCREPANCY=RESOLVED_PARSER_BUG`; `ENVFILE_COUNT=4`; `REFERENCED_EMAIL_PRIVATE=PASS`; `REFERENCED_TELEGRAM_TOKEN_PRIVATE=PASS`; `SELINUX_TARGET_VALIDATION=PENDING`; `PRODUCTION_UNTOUCHED=YES`.
 
+## SELinux context policy/readback preflight — operator-reported / 2026-10-13
+
+A read-only Fedora SELinux query was run with **SELinux Enforcing** active:
+
+| Proposed path or existing source | SELinux **type** / result |
+|---|---|
+| New `/etc/grafana/private` directory (currently absent) | `etc_t` (predicted by `matchpathcon`) |
+| New `/etc/grafana/private/telegram-chatid.env` (currently absent) | `etc_t` (predicted) |
+| New `/etc/systemd/system/grafana-server.service.d/90-grafana236-telegram-chatid.conf` (currently absent) | `systemd_unit_file_t` (predicted) |
+| Existing EnvironmentFile sources #1–#4 (actual labels) | `etc_t`, `etc_t`, `etc_t`, `etc_t` |
+| `ENV_FILES` | `4` |
+| `TARGET_POLICY_LOOKUP` | **`PASS`** |
+| `EXISTING_LABELS_READ` | **`PASS`** |
+| `FILES_CREATED`, `LABELS_CHANGED`, `SYSTEMD_MODIFIED`, `GRAFANA_RESTARTED` | all **`NO`** |
+| `SECRETS_PRINTED` | `NO` |
+
+**Finding:** The predicted future `etc_t` context matches the type of all four readable current environment sources, and the prospective unit drop-in has the expected `systemd_unit_file_t` type. There are no file collisions for the prospective names. **This does not prove SELinux permissions for a newly created file, its eventual actual label, or Grafana start and notification delivery after deployment.** Those remain a controlled implementation gate requiring `restorecon`, verifying actual types and full service health/receiver checks. Do not create target paths or restart/reload Grafana without operator-approved change window and tested rollback.
+
+`SELINUX_PREDEPLOY_POLICY=PASS`; `SELINUX_MODE=ENFORCING`; `TARGET_PRIVATE_FILE_POLICY_TYPE=etc_t`; `TARGET_SYSTEMD_DROPIN_TYPE=systemd_unit_file_t`; `SELINUX_POST_INSTALL_LABELS=NOT_TESTED`; `PRODUCTION_UNTOUCHED=YES`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -531,6 +551,7 @@ In the previous flawed script, constructing a dictionary from repeated multi-pro
 - `SYNTHETIC_GRAFANA_13_2_3_PROVISIONING=PASS`; `SYNTHETIC_API_CONTACT_READ=PASS`; `SYNTHETIC_EMAIL_AND_TELEGRAM=PASS`; `SYNTHETIC_CHATID_INTERPOLATION=PASS`; `PRODUCTION_MIGRATION=NOT_STARTED`.
 - `DEPLOYMENT_PREFLIGHT=10_10_PASS`; `ONE_RESTART_RUNBOOK=PREPARED_NOT_EXECUTED`; `SYSTEMD_DROPIN_AND_SELINUX_PREFLIGHT=PENDING`.
 - `DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED` (historical result invalidated by parser defect); `ENVFILES_RECONCILIATION_V2=PASS`; `ENVFILES_CURRENT=4`; `MULTI_PROPERTY_LINES=4`; `DISCREPANCY=RESOLVED_SCRIPT_BUG`; `SELINUX=ENFORCING`; `NO_PRODUCTION_WRITES=TRUE`.
+- `SELINUX_POLICY_LOOKUP=PASS`; `EXISTING_ENVFILE_TYPES=4_X_etc_t`; `TARGET_ENVFILE_EXPECTED=etc_t`; `TARGET_DROPIN_EXPECTED=systemd_unit_file_t`; `POST_INSTALL_REAL_LABELS=NOT_TESTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
