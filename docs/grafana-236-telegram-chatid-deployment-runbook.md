@@ -176,6 +176,12 @@ Current operator-reported status: Grafana 13.2.3 active, HTTP health/database OK
 
 **No further attempt is permitted before identifying the first V3 `FAILED_GATE`.** Prefer retrieving that first command's output (no secrets). If unavailable, a limited journal error-category audit can narrow hypotheses but cannot substitute for the exact failed assertion. Preserve both root-owned private SQLite backups.
 
+### Journal keyword classifier not sufficient to diagnose Phase 2 V3 failure
+
+The operator's read-only 21:04:35–21:04:45 Grafana journal scan contained **527 application entries** and `STARTUP_ERROR_MATCHES=53` based on the broad regex `error|failed|panic|fatal`; no entries had syslog severity 0–3. These are **text match counts, not actual errors**, and do not establish the Python script's first `FAILED_GATE`. Other keyword matches: provisioning 29, database 54, environment 24 and alerting 37.
+
+V3 first-run `FAILED_GATE` remains unknown. **No new service restart or Stage 1 reinstall is permitted** until the earliest first-run terminal output is retrieved or a narrowly scoped read-only analysis establishes an actionable defect. Prefer the first output over speculative code changes.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
