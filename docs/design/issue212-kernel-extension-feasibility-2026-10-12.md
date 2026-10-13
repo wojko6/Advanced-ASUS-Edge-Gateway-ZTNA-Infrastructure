@@ -62,4 +62,4 @@ The **v0.41 selected-client direct sidecar-gateway bypass remains a blocker even
 - **RT-BE88U production custom kernel:** **NO-GO until separate approval after Gate A+B and a spare-device validation**. All usual firmware updates could require rebuilding and retesting the kernel and vendor modules.
 - **Linux 6.x rebase:** **NO-GO**: Broadcom SDK/Wi-Fi/SoC coupling makes an entire kernel family jump a platform-porting project rather than simply turning on netns.
 
-**No changes made to `main`, running ASUS services, firmware, routes, DNS, sysctls, Tailscale or iptables.** This is a documentation-only feasibility note on draft PR #227. Issue #212 remains **OPEN**.
+**Publication boundary:** This is a source-only feasibility assessment prepared in [PR #227](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/227). Publishing/merging this document does **not** modify the running ASUS, firmware, routes, DNS, sysctls, Tailscale or iptables, does not demonstrate kernel support and does not authorize a rollout. Issue #212 remains **OPEN**; a successful documentation CI is not a runtime acceptance.
