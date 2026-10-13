@@ -618,6 +618,29 @@ Operator performed a **read-only** host audit after early V3 `FileNotFoundError`
 
 `DEPLOYMENT=HELD`; `ROOT_CAUSE=UNRESOLVED_PATH_DISAPPEARANCE`; `FAILED_V3_CREATED_BACKUP=NO`; `STAGE1_OBJECTS_ABSENT=3/3`; `PRODUCTION_GRAFANA_HEALTHY=YES`.
 
+## Forensic timeline update — confirms two V3 invocations / 2026-10-13
+
+The user's **read-only** metadata/journal summary now establishes this order (Europe/Warsaw local time):
+
+| Time | Grounded observation |
+|---|---|
+| `20:02:55` | Original contact YAML, candidate YAML and staged private Chat ID assignment all created; root-owned `0600` |
+| `20:47:20` | First journal match for `grafana236_stage1.py` |
+| `20:55:56` | Journal match for **old** `grafana236_stage2.py` |
+| `20:55:57` | Original private SQLite backup created; integrity `True` |
+| `21:03:42` | Second journal match for Stage 1 |
+| **`21:04:37`** | **First journal match for `grafana236_stage2_v3.py`**; V3 SQLite backup created at exactly the same second, root `0600`, integrity `True` |
+| **`21:04:42`** | Current Grafana `ActiveEnterTimestamp` (service activated at this time; **possible restart during first V3 attempt**, not yet matched to service event) |
+| **`21:05:14`** | **Second journal match for `grafana236_stage2_v3.py`**, whose reported output ended at `STAGE_FILES_PRIVATE=PASS` / missing private directory and `ROLLBACK=NOT_REQUIRED_NO_LIVE_YAML_CHANGE` |
+
+There were **2** journal matches each for Stage 1 and V3, and **1** for old Stage 2. A journal match is not on its own proof of successful completion, but the creation of the **V3 backup at first-run time proves at least one invocation reached the SQLite backup step**; it was **not** created by the reported second invocation, which failed earlier. `ActiveEnterTimestamp` five seconds later is **strong circumstantial evidence of an actual service restart** in the first V3 attempt; the previous wording "Grafana was not restarted" can only apply to the **reported second invocation**, not the entire V3 sequence. Do not claim either the precise restart count, first-run failure gate, or first-run rollback result without its own output/systemd journal evidence.
+
+The Stage 2 V3 source's rollback block **removes the migration env file, unit drop-in, and now-empty private directory** when invoked after reload/YAML change. Therefore rollback during the first V3 invocation is a **plausible explanation** of all three missing objects before the second V3 run. This was previously mischaracterized as unexplained external deletion; the known two-run sequence substantially resolves the apparent contradiction, though first-run output is needed to confirm. The service is currently `active`, `NeedDaemonReload=no`, 4 baseline EnvironmentFile sources, original YAML byte-identical, 15 rules unpaused; both backups passed SQLite `quick_check`. The forensic audit performed **no changes, systemd reload, Grafana restart or secret printing**.
+
+**Incident decision:** continue to **HOLD deployment**. Do not repeat Stage 1 or V3. Next read-only check should: (a) confirm current Email+Telegram contact, 15 rules and local `/api/health`; (b) summarize only Grafana service lifecycle event **counts/timestamps** in `21:04:30–21:05:15` (not raw journal messages); (c) if available, review the **first V3 invocation terminal output**, especially `FAILED_GATE`, `STARTING_ROLLBACK` and `ROLLBACK` flags, without printing secrets. No further "fix" until a precise first-run failure gate is identified.
+
+`V3_EXECUTION_MATCHES=2`; `V3_BACKUP_BIRTH=21:04:37`; `GRAFANA_LAST_ACTIVE_SINCE=21:04:42`; `REPORTED_SECOND_V3_FAIL=21:05:14`; `PRODUCTION_RESTORED_ON_READBACK=YES`; `FIRST_V3_RESULT=UNKNOWN`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
