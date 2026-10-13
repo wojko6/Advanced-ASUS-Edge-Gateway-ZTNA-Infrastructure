@@ -2,9 +2,11 @@
 
 **Status:** CURRENT — reference deployment and planned validation
 
-**Reviewed:** 2026-10-12 (documentary acceptance reconciliation; no new router datapath test)
+**Reviewed:** 2026-10-13 (documentary update for Fedora Grafana #236 V4 acceptance; no new router datapath test)
 
 This map links the existing architecture and test procedures to the reference ASUS TUF-AX5400. The status applies only to the stated test date and path. It does not turn a roadmap proposal, a mock test, or an operator-reported observation into independently captured live evidence. For the latest deployment summary see [project status](../PROJECT-STATUS.md); for detailed test methods see [testing](testing.md).
+
+**Grafana scoped acceptance (2026-10-13):** production Chat ID migrated into a private host-only environment source, all 15 permanent rules preserved after one planned restart, and one temporary alert delivered Firing and Resolved on Gmail and Telegram before deletion and return to 15 rules (operator UI). The tracked Email-only contact file remains incomplete versus live Email+Telegram provisioning. Individual delivery of 15 permanent rules, grouping/repeat/anti-flap and clean-room alerting restore are not accepted. See [technical evidence](../evidence/2026-10-13/grafana-rule-traceability-matrix.md) and [Issue #236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236).
 
 ## Roles and use cases
 
