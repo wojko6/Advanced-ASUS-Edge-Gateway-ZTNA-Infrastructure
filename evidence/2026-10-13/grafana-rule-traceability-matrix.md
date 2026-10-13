@@ -390,6 +390,32 @@ The V2 test used `DynamicUser=yes`, `PrivateNetwork=yes`, `ProtectSystem=strict`
 
 `SYSTEMD_ISOLATION_V2=PASS`; `GRAFANA_SANDBOX_RUNTIME=NOT_STARTED`; `PRODUCTION_UNTOUCHED=YES`.
 
+## Grafana 13.2.3 isolated synthetic provisioning runtime — operator-reported / 2026-10-13
+
+The user ran a short-lived second Grafana instance from the installed **13.2.3 host binary** inside a transient systemd service, without downloading a container image. The sandbox enforced `DynamicUser=yes`, `PrivateNetwork=yes`, `ProtectSystem=strict`, `ProtectHome=yes`, `PrivateTmp=yes`, `PrivateDevices=yes`, `NoNewPrivileges=yes` and `InaccessiblePaths=/etc/grafana /var/lib/grafana /root`. A dedicated `RuntimeDirectory` held its configuration, temporary SQLite database, logs and test-only provisioning. The service listened only on loopback **within the private network namespace**. The fixture defined one fake Email and one fake Telegram receiver, with synthetic recipient, bot token and numeric Chat ID. SMTP and update checks were disabled; the fixture contained **no alert rules**, and no notification was sent.
+
+| Operator-printed check | Result |
+|---|---|
+| `PRIVATE_NETWORK` | `PASS` |
+| `DYNAMIC_USER` | `PASS` |
+| `PRODUCTION_CONFIG_HIDDEN` / `PRODUCTION_DB_HIDDEN` | `PASS` / `PASS` |
+| `SCRATCH_DIRECTORY` / `GRAFANA_BINARY` | `PASS` / `PASS` |
+| `ISOLATED_GRAFANA_READY` | `True` |
+| `CONTACT_API_READ` | `PASS` |
+| `EMAIL_PROVISIONED` | `True` |
+| `TELEGRAM_PROVISIONED` | `True` |
+| `TELEGRAM_CHATID_INTERPOLATED` | `True` |
+| **`SYNTHETIC_PROVISIONING`** | **`PASS`** |
+| `SYNTHETIC_DATA_ONLY` / `REAL_SECRETS_USED` | `YES` / `NO` |
+| `SMTP_DISABLED` / `NO_ALERT_RULES` | `YES` / `YES` |
+| `PRODUCTION_FILES_MODIFIED` / `PRODUCTION_SERVICES_RESTARTED` / `NOTIFICATIONS_SENT` | **All `NO`** |
+
+**Evidence meaning:** Grafana v13.2.3, not just PyYAML, actually accepted a Contact Point containing two integrations and expanded a synthetic `$GF236_TEST_CHAT_ID` value; its provisioning API returned the expected numeric-string Chat ID. The transient process terminated through the test's `finally` handler. This is strong evidence of **mechanism/schema compatibility for synthetic data**, **not** proof that the real `GRAFANA_TELEGRAM_CHAT_ID` will be supplied to the production service, that the active YAML will apply without drift, or that post-change Email/Telegram Firing and Resolved delivery will succeed. No negative Chat ID was tested; operator's actual Chat ID was previously reported nonnegative.
+
+**Next gate:** keep the production service unchanged while confirming the staged original still matches live source, `GRAFANA_TELEGRAM_CHAT_ID` is not defined by a conflicting current service assignment, and Grafana is healthy. Develop a reviewed, private and atomic deployment/rollback plan covering: root-only env source, explicit systemd `EnvironmentFile` loading, one-field YAML swap, a monitored Grafana restart (necessary for a newly supplied service environment variable), post-start contact API inspection and operator-confirmed synthetic Firing/Resolved Email+Telegram. Avoid blindly applying checked-in Email-only YAML; preserve receiver UIDs and existing policy tree. Request explicit operator approval for a live restart/reload and message sending. Grafana [file-provisioning documentation](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/) notes that startup/reload can create, update or delete alerting resources and that file-provisioned resources are managed by the file.
+
+`SANDBOX_RUNTIME_GRAFANA_13_2_3=PASS`; `SYNTHETIC_EMAIL=PASS`; `SYNTHETIC_TELEGRAM=PASS`; `SYNTHETIC_CHAT_ID_EXPANSION=PASS`; `PRODUCTION_CHANGE=NOT_STARTED`; `POST_MIGRATION_DELIVERY=NOT_TESTED`.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
@@ -416,6 +442,7 @@ The V2 test used `DynamicUser=yes`, `PrivateNetwork=yes`, `ProtectSystem=strict`
 - `ISOLATED_TEST_PREFLIGHT=PASS`; `GRAFANA_INSTALLED=13.2.3`; `PODMAN_AVAILABLE=TRUE`; `DOCKER_AVAILABLE=TRUE`; `CONTAINER_IMAGE_CACHE_STATUS=UNKNOWN`; `ISOLATED_RUNTIME_PROVISIONING=NOT_TESTED`.
 - `PODMAN_GRAFANA_IMAGE_CACHE=0`; `PODMAN_VERSION_MATCH_IMAGES=0`; `DOCKER_IMAGE_QUERY=FAILED`; `ISOLATED_HOST_BINARY_TEST=NOT_STARTED`.
 - `SYSTEMD_DYNAMICUSER_PRIVATE_NETWORK_SANDBOX=6_6_PASS`; `SANDBOX_GRAFANA_RUNTIME=NOT_STARTED`.
+- `SYNTHETIC_GRAFANA_13_2_3_PROVISIONING=PASS`; `SYNTHETIC_API_CONTACT_READ=PASS`; `SYNTHETIC_EMAIL_AND_TELEGRAM=PASS`; `SYNTHETIC_CHATID_INTERPOLATION=PASS`; `PRODUCTION_MIGRATION=NOT_STARTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
 - No live failure-injection, notifier send, service restart, config reload, or router mutation performed to create this document.
