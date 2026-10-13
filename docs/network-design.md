@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Applies to:** reference ASUS TUF-AX5400 deployment  
-**Last reviewed:** 2026-10-08
+**Last reviewed:** 2026-10-12 (current platform strategy and monitoring acceptance; earlier live network evidence retains dated scope)
 
 This document is the entry point for the network-design view of the project.
 It complements the repository's incident/case-study material by organizing the
@@ -19,6 +19,7 @@ N/A, PLANNED or NOT VALIDATED instead of implying that it exists.
 - [Project status](../PROJECT-STATUS.md)
 - [Requirements and acceptance map](requirements.md)
 - [Compatibility and revalidation](compatibility.md)
+- [Platform decision: current ASUS / optional future OPNsense](architecture/platform-direction-2026-10-12.md)
 
 ## 2. Physical topology and hardware boundary
 
@@ -109,7 +110,7 @@ in the live database. See [test scope and waivers](dns-guard-v3.2-recovery-audit
 - issue #176 — router-local exit-node source scoping
 - issue #129 — Pi-hole-aware current-state disaster recovery
 - issue #143 — Trusted/IoT/Guest segmentation design
-- issue #178 — complete Grafana notification policy and mobile escalation
+- issue #178 — **closed** after 2026-10-12 bounded Gmail+Telegram `Firing/Resolved` acceptance; provisioning parity, notification grouping/anti-flap and reload persistence still need independent evidence (see [current status](../PROJECT-STATUS.md))
 
 This index is intentionally concise. Detailed implementation and operational
 truth remains in the linked source documents.

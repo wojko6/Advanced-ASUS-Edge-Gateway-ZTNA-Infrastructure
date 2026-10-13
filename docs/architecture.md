@@ -120,7 +120,7 @@ The 2026-09-27 #66 evidence also records a current reference-router post-mount c
 Reference router: **ASUS TUF-AX5400**  
 Reference firmware: **GNUton / Asuswrt-Merlin 3004.388.11_1-gnuton1_tuf**
 
-Planned migration target: **ASUS RT-BE88U / compatible Asuswrt-Merlin 3006.x**. The current TUF-AX5400 remains the reference platform until that migration is separately validated.
+**2026-10-12 platform direction:** there is **no planned ASUS RT-BE88U migration**. The TUF-AX5400 remains the current production reference, and **OPNsense is only an unspecified future option** with a separate, not-yet-installed Windows 11 VM lab proposed for research. The legacy RT-BE88U notes are historical. See [decision](architecture/platform-direction-2026-10-12.md).
 
 Current architecture claims are anchored to dated evidence:
 

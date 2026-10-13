@@ -3,6 +3,8 @@
 **Decision: RESEARCH/OFF-ROUTER CONFIGURATION GATE ONLY; production kernel replacement NOT APPROVED.**
 This note records public source inspection plus operator-provided read-only ASUS data. No build or module load, no firmware image generated, and no hardware tested.
 
+> **Supersession note (2026-10-13):** The RT-BE88U is no longer a planned purchase/migration target under the [2026-10-12 platform decision](../architecture/platform-direction-2026-10-12.md). RT-BE88U kernel-profile observations below are **historical source-feasibility evidence**, not a proposed production kernel update or new router plan. All #212 client-DNS experiments remain off-router.
+
 ## Goal and risk boundary
 
 Assess whether enabling `CONFIG_NET_NS`, `CONFIG_VETH`, `CONFIG_NETFILTER_XT_TARGET_TPROXY` and `CONFIG_NETFILTER_XT_MATCH_SOCKET` could support the optional private DNS sidecar experiments of [Issue #212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212).
@@ -18,7 +20,7 @@ The **v0.41 selected-client direct sidecar-gateway bypass remains a blocker even
 - Negative `/proc`/`sys/module` inventory is a strong deployment warning, **not** an independently verified final `.config` or a safe authorization to load modules.
 - Practical benefit of custom kernel work on this **current production gateway** is low relative to bricking, closed-driver/ABI, stability and maintenance costs. **NO-GO for live experiments**.
 
-### RT-BE88U / planned migration
+### RT-BE88U / historical candidate (migration cancelled)
 
 - Official RMerl model target profile: Broadcom `BRCM_CHIP=6813`, `PROFILE_KARCH=aarch64`, `PROFILE_ARCH=armsfp`, `LINUX_4_19_0=y`: [RT-BE88U 96813GW profile](https://github.com/RMerl/asuswrt-merlin.ng/blob/main/release/src-rt-5.04behnd.4916/targets/96813GW/96813GW.RT-BE88U). **Kernel and userspace architecture can differ**; do not assume 64-bit userspace from aarch64 kernel target.
 - The repository's generic `arch/arm64/configs/defconfig` declares `CONFIG_VETH=m` and `CONFIG_USER_NS=y`: [generic ARM64 defconfig](https://github.com/RMerl/asuswrt-merlin.ng/blob/main/release/src-rt-5.04behnd.4916/kernel/linux-4.19/arch/arm64/configs/defconfig). **Generic ≠ RT-BE88U shipped .config**; neither `CONFIG_NET_NS` nor production VETH presence has been established by this observation.

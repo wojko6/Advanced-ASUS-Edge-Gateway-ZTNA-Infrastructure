@@ -1,7 +1,7 @@
 # Addressing and trust-zone plan
 
 **Status:** CURRENT + PLANNED SEGMENTATION  
-**Last reviewed:** 2026-10-07
+**Last reviewed:** 2026-10-12 (platform strategy; no subnet/VLAN changes)
 
 ## Purpose
 
@@ -46,9 +46,12 @@ the Internet.
 
 ## Planned Trusted / IoT / Guest design
 
-Issue #143 owns the future segmentation design. VLAN IDs and subnets are
-deliberately **TBD** until the target platform capability and device
-dependencies are measured.
+Issue #143 owns the **platform-neutral design** for any future segmentation. The
+ASUS RT-BE88U migration was **cancelled on 2026-10-12** and OPNsense is an
+unscheduled research direction only; the current TUF-AX5400 still has **no
+production Trusted/IoT/Guest VLAN zones**. VLAN IDs and subnets remain
+**TBD** until implementation hardware/capabilities and device dependencies are
+measured. See [platform decision](platform-direction-2026-10-12.md).
 
 Provisional policy intent:
 

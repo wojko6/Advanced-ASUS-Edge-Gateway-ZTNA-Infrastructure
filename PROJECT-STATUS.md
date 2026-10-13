@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-10-12 (monitoring/alerting-only live audit and one Grafana UI fallback-policy edit; the latest broad ASUS router checkpoint remains 2026-10-09)
+**Status date:** 2026-10-12 (Grafana synthetic end-to-end notification acceptance; architecture/roadmap decision; latest broad ASUS router checkpoint remains 2026-10-09). The architectural decision and repo edits are **documentation only**; no new live-router acceptance is implied.
 
 **Latest live RouterCloud checkpoint:** 2026-10-03
 
@@ -8,7 +8,9 @@
 
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin
 
-**Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #176 exit-node local source scoping, #129 Pi-hole-aware disaster recovery, #108 remaining DNS-visibility work, #68 encrypted-DNS assessment, the remaining #178 grouping/anti-flap and mobile/critical escalation work, and #143 trust-zone segmentation before the planned RT-BE88U migration.
+**Current platform decision (2026-10-12):** no RT-BE88U migration or purchase is planned. Keep TUF-AX5400 production and complete CORE v1.0; consider OPNsense/x86 **only in an unspecified future**, starting with an isolated Windows 11 VM lab (not yet installed). See [platform direction](docs/architecture/platform-direction-2026-10-12.md). Historical RT-BE88U references remain dated context, not today's target.
+
+**Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #129 Pi-hole-aware disaster recovery, #196 DNS Guard candidate hardening, #142/#214 client-visible detection/watchdog independence, #176 exit-node source scoping, #108 DNS visibility, #68 encrypted-DNS assessment and platform-neutral #143 trust-zone design. Issue #178 is **closed**, but known grouping/anti-flap, Email+Telegram provisioning parity and persistence-after-reload evidence gaps must not be portrayed as completed.
 
 ## 2026-10-12 — Grafana/Loki monitoring audit (bounded)
 
@@ -200,11 +202,9 @@ Current material follow-up:
   production state;
 - #68 — assess DoH/DoQ and other encrypted-DNS bypass paths;
 - #143 — design Trusted/IoT/Guest segmentation;
-- #178 — finish grouping/anti-flap behavior and bounded mobile/critical escalation; the **15 current rules** all specify the e-mail receiver (five newly loaded DNS Guard recovery rules are not individually firing/e-mail-tested); RouterCloud backup/maintenance alerting was merged through PR #190.
+- #178 — **CLOSED as tracked on GitHub**, with 2026-10-12 synthetic `Firing` and `Resolved` notification delivery to Gmail+Telegram and 15-rule cleanup accepted. Residual grouping/anti-flap, Email-only provisioning vs live Email+Telegram integrations, reload persistence, and per-rule five DNS Guard alert testing are **not yet proven** and remain follow-up quality work; do not treat the closed issue as evidence these scenarios passed.
 
-The planned router migration target is ASUS RT-BE88U on a compatible
-Asuswrt-Merlin 3006.x branch. OPNsense/x86 is not the current migration target
-and is retained only as a possible future contingency.
+The previous plan to migrate to ASUS RT-BE88U was **superseded on 2026-10-12**. The current TUF-AX5400 remains the production gateway; OPNsense/x86 is **future, undated research only**, initially isolated in a Windows 11 VM. Nothing here authorizes a physical migration or purchase. See [platform direction](docs/architecture/platform-direction-2026-10-12.md).
 
 Evidence:
 [Tailscale 1.103.375 runtime](evidence/2026-10-06/tailscale-1.103.375-router-upgrade-validation.md),

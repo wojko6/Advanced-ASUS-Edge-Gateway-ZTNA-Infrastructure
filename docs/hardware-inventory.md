@@ -1,7 +1,7 @@
 # Hardware and infrastructure inventory
 
 **Status:** CURRENT / PUBLIC SUMMARY  
-**Last reviewed:** 2026-10-07
+**Last reviewed:** 2026-10-12 (platform strategy only; hardware identification unchanged)
 
 ## Purpose
 
@@ -20,25 +20,23 @@ unnecessary endpoint identifiers remain private.
 | Remote Tailscale peers | remote management/validation/exit-node clients | CURRENT | individual node identities and addresses intentionally omitted |
 | ISP handoff/CPE | WAN connectivity | PROVIDER-SPECIFIC / NOT PUBLICLY INVENTORIED | public design records the WAN dependency, not unnecessary provider identifiers |
 
-## Planned gateway target
+## Current gateway and future platform evaluation
 
-The planned migration target is **ASUS RT-BE88U** on a compatible
-Asuswrt-Merlin 3006.x branch.
+**CURRENT:** ASUS TUF-AX5400. **No ASUS RT-BE88U purchase/migration is
+planned** following the 2026-10-12 decision. The RT-BE88U technical/benchmark
+records are retained solely as historical research.
 
-The migration is not an automatic in-place replacement. It must revalidate:
+**POSSIBLE FUTURE:** OPNsense/x86; no purchase, production deployment or
+timeline agreed. Initial research may run as an isolated VM on a separate
+Windows 11 laptop with 16 GiB RAM. The available external USB Ethernet
+adapter is not needed to produce two **virtual** WAN/LAN NICs. Hypervisor and
+guest are **not installed/validated** as of this checkpoint. Do not publish
+private host IDs or adapter MACs.
 
-- interface/WAN naming and NAT ownership;
-- JFFS/Entware hooks and startup ordering;
-- storage and swap behavior;
-- Tailscale netfilter-mode=off ownership;
-- Pi-hole/dnsmasq/Unbound listeners;
-- firewall policy;
-- monitoring/logging paths;
-- backup/restore;
-- Trusted/IoT/Guest segmentation capabilities.
-
-OPNsense/x86 remains a contingency only if documented requirements later exceed
-the ASUS/Asuswrt-Merlin platform.
+Any later OPNsense edge migration is a new-design and full-revalidation project,
+not an in-place port of Asuswrt/iptables/Entware/JFFS workflows. Protect the
+current ASUS, gateway availability and trusted LAN recovery at all stages.
+See [platform decision](architecture/platform-direction-2026-10-12.md).
 
 ## Selection criteria
 
