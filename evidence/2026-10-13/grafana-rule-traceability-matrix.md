@@ -134,13 +134,34 @@ Grafana's [rule-level notification documentation](https://grafana.com/docs/grafa
 
 **Recommended next work:** prioritize source-vs-live provisioning ownership and reboot/reload persistence risk (Email-only checked-in YAML vs Email+Telegram live) using only read-only, redacted file inventory. No live reload/restart or outbound message without explicit operator approval.
 
+## Fedora local provisioning inventory — 2026-10-13 (structural-only)
+
+The operator executed a read-only scan of files under `/etc/grafana/provisioning/alerting`. Reported results:
+
+| Check | Observed |
+|---|---|
+| `YAML_FILES` | `3` |
+| File 1: `contactPoints` / type markers | `True`; `EMAIL_TYPE_DECLARED=True`, `TELEGRAM_TYPE_DECLARED=True` |
+| File 2: `groups` | `True`, no contact-point type markers |
+| File 3: `contactPoints` / `groups` / `policies` | None found |
+| `policies` / `resetPolicies` in all three | Not found |
+| `FILES_MODIFIED` / `VALUES_OR_SECRETS_PRINTED` | `NO` / `NO` |
+
+**Evidence boundary:** This was a **textual regex-based inventory**, not YAML parsing, runtime provenance verification, or proof the file was loaded. The live contact record separately contains one Email and one Telegram integration and a matching default receiver in Grafana SQLite, but that does not establish this local file as their source. The checked-in GitHub `monitoring/grafana/provisioning/alerting/asus-email-contact.yml` still declares **Email only**. Therefore the more precise finding is **repository file versus observed Fedora local file declaration drift**, not **Fedora local versus live Email/Telegram inconsistency**.
+
+Neither a `policies` nor a `resetPolicies` declaration was found by the restricted textual scan. The UI-edited root policy is evidenced in Grafana DB, but its reproducibility in the repository remains unverified. Do not assume a Grafana restart necessarily resets this SQLite-backed policy; do not claim a clean-room restore could rebuild it, either.
+
+Per [Grafana file provisioning documentation](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/), a provisioning reload/startup can modify resources, and provisioning a policy tree overwrites the whole policy tree; any solution requires a reviewed source-of-truth, secret-redaction and rollback. **No reload, restart or file copy was performed.**
+
+**Next safe gate:** parse the local contact-point YAML (or mark parser missing); verify that Email and Telegram are receivers of the expected *same* named contact point, and assess secret handling and file permissions by boolean checks **without outputting token, chat ID, email address, file contents, or local paths**.
+
 ## Next acceptance gates — safe sequence
 
 1. Extend the **partial 2026-10-13 read-only Fedora SQLite inventory** (UID/group/pause/direct receiver already PASS) with loaded title, folder, thresholds, `for`, `noDataState` and runtime health/state; cross-check routing through the Grafana API where safe. Do not dump rule annotations, headers, secrets, local paths, addresses, or contact destination IDs.
 2. The 2026-10-13 read-only DB confirms expected direct rule receiver, both Email/Telegram integration types, and default receiver; **remaining**: inspect notification-policy child routes/grouping and contact point/default-policy provisioning ownership without displaying contact destinations or secrets.
 3. Direct rule notification settings were inspected: all 15 lack explicit grouping/timing overrides. Confirm effective Grafana fallbacks and runtime behaviour **separately** from root-policy routing; then mark each notification path `NOT_TESTED`, `PARTIAL`, `PASS`, or `WAIVED` with timestamp and operator-confirmed delivery channel in a per-rule evidence ledger.
 4. Design isolated/bounded negative fixtures for **stale telemetry**, **DNS Guard critical recovery route**, **grouping/repeat/anti-flap**, and receiver failure. **Explicit operator approval required** before live notification tests.
-5. Review a safe Email+Telegram provisioning parity proposal and persistence test plan. **No blind reload/restart**, no overwriting manually configured Telegram credentials or default-policy edits.
+5. Reconcile **local Fedora provisioning vs checked-in Email-only YAML** and separately document how the database-stored UI-edited root notification policy will be rebuilt in disaster recovery. First perform safe YAML/permissions checks; then review a safe Email+Telegram parity proposal and persistence plan. **No blind reload/restart**, no overwriting credentials or policy edits.
 6. After explicit approval and non-destructive testing, verify individual warning/critical paths and `Firing`/`Resolved` delivery, regression to exactly 15 permanent rules, and document gaps/waivers.
 
 ## Acceptance / non-claims
@@ -148,7 +169,8 @@ Grafana's [rule-level notification documentation](https://grafana.com/docs/grafa
 - `SOURCE_RULE_COUNT=15`; `SOURCE_PAUSED=0`; `SOURCE_DIRECT_RECEIVER_RESOLVED=15`.
 - `FRESH_LIVE_2026_10_13=PARTIAL_UID_GROUP_PAUSE_RECEIVER_PASS`; `LIVE_NOTIFICATION_SETTINGS_JSON_TYPE=list`; `LIVE_RECEIVER_MATCH=15/15_PASS`; `PER_RULE_E2E_DELIVERY=UNVERIFIED`.
 - `LIVE_EMAIL_INTEGRATIONS=1`; `LIVE_TELEGRAM_INTEGRATIONS=1`; `LIVE_DEFAULT_RECEIVER_MATCH=PASS` (operator-reported read-only DB).
-- `SOURCE_EMAIL_ONLY_VS_LIVE_EMAIL_TELEGRAM_PROVISIONING_PARITY=UNRESOLVED`.
+- `REPO_CONTACT_SOURCE=EMAIL_ONLY`; `FEDORA_LOCAL_FILE_CONTACT_TYPES=EMAIL_PLUS_TELEGRAM_TEXT_MARKERS` (structural scan, not yet parsed); `LIVE_CONTACT_DB=EMAIL_PLUS_TELEGRAM`; `LOCAL_YAML_AUTHENTICITY_AND_LOADED_PROVENANCE=UNVERIFIED`.
+- `ROOT_POLICY_FILE_DECLARATION=NOT_OBSERVED`; `CLEAN_ROOM_RESTORE_POLICY_REPRODUCIBILITY=NOT_TESTED`.
 - `DEFAULT_POLICY_GROUPING_CONFIG=PASS` (30s / 5m / 4h, grouped by alertname+grafana_folder); `DIRECT_RULE_NO_EXPLICIT_OVERRIDE=15/15_PASS`; `DIRECT_RULE_EFFECTIVE_GROUPING=NOT_LIVE_VALIDATED`; `ANTI_FLAP_DELIVERY=NOT_TESTED`.
 - `PROVISIONING_RELOAD_PERSISTENCE=NOT_TESTED`.
 - `ALL_15_PER_RULE_E2E=NOT_TESTED`.
