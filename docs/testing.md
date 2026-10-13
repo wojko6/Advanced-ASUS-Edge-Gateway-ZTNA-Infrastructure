@@ -13,6 +13,12 @@ This repository uses separate validation tracks. A PASS in one track must not be
 
 The unchanged-state router observation was closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22. Subsequent state-changing router tests remain planned maintenance actions; read-only packet/counter inspection can be used independently when it is sufficient.
 
+## Grafana #236 — notification and provisioning validation boundary (2026-10-13)
+
+The Fedora Grafana 13.2.3 V4 deployment passed a **real host restart**, five additive protected EnvironmentFiles, preserved original rule/contact/policy baseline and stable post-restart HTTP/DB/process checks. The subsequent temporary `E2E-TEST-2026-10-13` rule delivered **Firing and Resolved to Gmail and Telegram**, then was deleted with **15** rules left in the UI. These are **two distinct acceptance tracks**: configuration/restart health and real notification transport for *one* temporary rule. Neither result proves each permanent rule's delivery, grouping/repeat/anti-flap or a clean-room re-provisioning drill.
+
+For detailed results consult [Grafana #236 traceability](../evidence/2026-10-13/grafana-rule-traceability-matrix.md). The [deployment/rollback runbook](grafana-236-telegram-chatid-deployment-runbook.md) documents private backups, SELinux and the non-authoritative Email-only Git contact template. **Do not rerun past migration scripts or simulate production router outages** simply to reproduce an already accepted notification test. Future notification tests need an isolated synthetic rule and explicit approval.
+
 ## Static and mock tests
 
 ```sh
