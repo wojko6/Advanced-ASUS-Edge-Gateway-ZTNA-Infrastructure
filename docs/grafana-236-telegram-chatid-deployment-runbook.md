@@ -240,6 +240,12 @@ The deployment changed only the planned host-local private Chat ID environment/s
 
 **Still open:** `SCOPED_FIRING_RESOLVED_DELIVERY=NOT_TESTED`. No intentional synthetic notifier send occurred in the V4 procedure. Do not conflate post-restart receiver configuration with actual delivery, nor close Issue #236 on the basis of this migration alone. Real email+Telegram Firing/Resolved needs separately authorized, scoped testing; per-rule grouping, repeat/anti-flap and clean-room restore are further acceptance gates.
 
+## Authorized post-migration synthetic notification test — pending execution
+
+The operator separately approved a real Email+Telegram **Firing → Resolved** exercise after V4 production migration `PASS`. Reuse the successfully exercised **2026-10-12 Grafana UI temporary-rule approach** with an appropriately date-tagged new rule. Initial `vector(0)` must remain Normal; then switch only the temporary rule to `vector(1)` for Firing and verify both inboxes; revert to `vector(0)`, verify Normal and actual Resolved at both destinations, then delete only that rule and verify a 15-rule baseline. Route the temporary rule directly to the existing unique `ASUS Edge Gateway Email` Contact Point (which includes one Email and one Telegram integration). **No infrastructure outage, router interaction, new recipient, remote secrets, Grafana restart or modification of existing 15 permanent rules.** The host/UI operator performs the actions; this GitHub edit does not send messages.
+
+**Do not mark this gate PASS until the operator confirms both notifications and cleanup.** The systemd/Chat ID migration is already accepted separately; #236 remains open for all-rule and DR/grouping/anti-flap work.
+
 ## Evidence and acceptance gate
 
 Log timestamps and sanitized PASS/FAIL booleans: YAML + EnvironmentFile verified; restart once; service ready; rule count 15; receiver UID/name/type parity; Chat ID numeric and equivalent **without disclosure**; policy/grouping unchanged; scoped Firing and Resolved confirmed through both channels; no additional persistent alerts; no unexpected log errors.
