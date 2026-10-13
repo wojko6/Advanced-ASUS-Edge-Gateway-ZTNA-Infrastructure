@@ -37,6 +37,7 @@ deployment is not a redundant gateway architecture.
   covers cache-masked upstream failures;
   [#214](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/214)
   covers independent monitoring for lost DNS Guard cron scheduling.
+- **Current scheduling decision (2026-10-13):** [client DNS failover #212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212) is **PAUSED** because no suitable independent hardware is available. A second DNS listener on the same ASUS is not a separate failure domain. Merged PR #227 documents lab research only; it does not resolve the direct-sidecar bypass or authorize a pilot.
 - **Optional, not purchased or deployed:** [#216](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/216)
   evaluates a second, separately powered/storage-backed Pi-hole **and its own
   Unbound**. It could reduce dependence on the ASUS DNS stack, but two DHCP
