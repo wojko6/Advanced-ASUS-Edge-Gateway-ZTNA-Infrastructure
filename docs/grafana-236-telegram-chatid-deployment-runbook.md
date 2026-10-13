@@ -21,7 +21,7 @@ The single existing Contact Point keeps its **name, org ID, receiver UIDs, exist
 
 The checked-in `monitoring/grafana/provisioning/alerting/asus-email-contact.yml` is currently **Email-only** and is not an authoritative live-replacement source. **Never deploy it directly over the Fedora local Email+Telegram file.** The public-repository follow-up should use a separately reviewed sanitized representation, not a verbatim copy of any host file.
 
-## Blocking update (2026-10-13): systemd EnvironmentFiles discrepancy
+## Resolved audit anomaly (2026-10-13): systemd EnvironmentFiles
 
 **STOP / no production migration.** After the earlier 10/10 deployment preflight, an operator-run read-only path check showed `EXISTING_ENVIRONMENT_FILES=1` despite an earlier same-host read reporting **four** effective `EnvironmentFile` sources (modes 0644/0600/0600/0640). Other observations: five effective drop-ins, Grafana loaded/active, no target path collision, SELinux `Enforcing`, `restorecon` installed, intended private env parent not yet created. Path audit final verdict: **`DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED`**.
 
@@ -32,6 +32,12 @@ Do **not** trust the earlier assumption that four environment files will remain 
 The latest operator output reports **four** EnvironmentFiles in the single-property query and **four** nonempty `EnvironmentFile=` directives with **zero** resets, despite `MULTI_QUERY_SOURCES=1`. The multi-property parser stores each `EnvironmentFiles=` line into one dictionary key, possibly discarding earlier occurrences. The subsequent path loop crashed due to a one-group regex return incorrectly unpacked as a two-item tuple. Thus the count of one is **not reliable as evidence of lost sources**, and the effective path audit is incomplete.
 
 The block remains until a fixed, read-only diagnostic gathers **all** repeated property occurrences, confirms source ordering and validates name-only references for Email and Telegram. No production writes, service restart or provisioning reload authorized.
+
+### Resolution update — environment count gate PASS
+
+The corrected V2 read-only reconciliation reports `SINGLE_SOURCES=4`, `MULTI_PROPERTY_LINES=4`, `MULTI_SOURCES_TOTAL=4`, `SOURCE_ORDER_MATCH=True`, `ENVFILE_DIRECTIVES=4`, `ENVFILE_RESETS=0`, and `ENV_RECONCILIATION=PASS`. All four files were readable and root-owned with previously observed permissions, and Email/Telegram token names were each resolved in a private source. The apparent `4 vs 1` issue arose from **overwriting repeated `EnvironmentFiles` properties in a dictionary**, compounded by a separate regex-unpacking script error. Thus **only the source-count blocker is cleared**. Existing read-only `DEPLOYMENT_PATH_PREFLIGHT=REVIEW_REQUIRED` remains a historical snapshot, not evidence of current source loss.
+
+**Current hold:** SELinux mode is `Enforcing`; the prospective `/etc/grafana/private` directory is not yet created. Verify file-context expectations, effective unit/drop-in interactions and rollback/health checks before changing anything. Grafana restart, installation of any environment file, and notifier tests remain subject to explicit operator authorization.
 
 ## Stage 0 — immediately before implementation (read-only; STOP on failure)
 
