@@ -160,6 +160,14 @@ Inspection of the downloaded Phase 2 V3 source (SHA-256 `355fbc847e350fea6f3d463
 
 **HOLD ALL REDEPLOYMENTS.** Perform a read-only timeline/provenance audit (file metadata, private backup integrity, sanitized system journal invocation counts/timestamps) before touching these paths. Do not delete, rename, rerun, chmod, reload systemd or restart Grafana for diagnosis. Restore strategy will be revisited only after the discrepancy is understood.
 
+### Updated chronology: two V3 invocations, not one (2026-10-13)
+
+The operator's read-only metadata/journal summary found two V3 command records at `21:04:37` and `21:05:14` (CEST). The private `grafana-pre-stage2-v3.db` was created at **21:04:37**, exactly with the **first** invocation; Grafana's current `ActiveEnterTimestamp` is **21:04:42**. Stage 1 had been invoked at `21:03:42`. The **second V3 invocation** stopped at `SECRET_DIR.lstat()` because the three Stage 1 objects were absent; it did not create the backup or restart Grafana.
+
+**Important correction:** Earlier broad claims that Grafana had not restarted during the V3 sequence were overconfident. The 21:04:42 activation strongly suggests the **first V3 invocation did restart Grafana**, but the exact first-run output is not yet available. The V3 rollback code explicitly removes the new env, drop-in, and private dir when a prior live change/reload triggers rollback, which plausibly accounts for their absence before the second attempt. Avoid attributing this to an external process without evidence. Post-rollback readback is currently healthy, 15 rules unpaused, YAML original and 4 EnvironmentFiles.
+
+**STOP further attempts:** first retrieve the earliest V3 output if available and run a **read-only sanitized** service-lifecycle/contact/health check for the 21:04:30–21:05:15 interval. Determine which first-run acceptance gate failed and whether its rollback succeeded before planning any new script or deployment.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
