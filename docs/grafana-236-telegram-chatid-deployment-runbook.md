@@ -27,6 +27,12 @@ The checked-in `monitoring/grafana/provisioning/alerting/asus-email-contact.yml`
 
 Do **not** trust the earlier assumption that four environment files will remain present. Audit unit/drop-in `EnvironmentFile=` directives and resets, compare single-property vs multi-property `systemctl show` and check effective sources via *names-only* variable lookup. Do not expose raw `Environment`, `EnvironmentFiles`, unit files or token values in output. If the discrepancy is real, stop to assess impact on existing Email/Telegram credentials **before** adding a new drop-in. Add SELinux context validation and appropriate restoration to the implementation plan. All production changes and Grafana service restarts remain **not authorized**.
 
+### Reconciliation follow-up
+
+The latest operator output reports **four** EnvironmentFiles in the single-property query and **four** nonempty `EnvironmentFile=` directives with **zero** resets, despite `MULTI_QUERY_SOURCES=1`. The multi-property parser stores each `EnvironmentFiles=` line into one dictionary key, possibly discarding earlier occurrences. The subsequent path loop crashed due to a one-group regex return incorrectly unpacked as a two-item tuple. Thus the count of one is **not reliable as evidence of lost sources**, and the effective path audit is incomplete.
+
+The block remains until a fixed, read-only diagnostic gathers **all** repeated property occurrences, confirms source ordering and validates name-only references for Email and Telegram. No production writes, service restart or provisioning reload authorized.
+
 ## Stage 0 — immediately before implementation (read-only; STOP on failure)
 
 1. Confirm Grafana v13.2.3, active `grafana-server.service`, count **exactly 15** rules, no failures, correct receiver counts and current delivery status. Do not dump contact-point settings or credentials.
