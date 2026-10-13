@@ -182,6 +182,14 @@ The operator's read-only 21:04:35–21:04:45 Grafana journal scan contained **52
 
 V3 first-run `FAILED_GATE` remains unknown. **No new service restart or Stage 1 reinstall is permitted** until the earliest first-run terminal output is retrieved or a narrowly scoped read-only analysis establishes an actionable defect. Prefer the first output over speculative code changes.
 
+### Existing process environment parity PASS; V3 startup readiness concern
+
+Read-only audit of the **current restored** Grafana process returned `EMAIL_REFERENCE_FOUND=True`, `TELEGRAM_REFERENCE_FOUND=True`, `EMAIL_VARIABLE_IN_PROCESS=True`, `TELEGRAM_VARIABLE_IN_PROCESS=True`, `ACTIVE_SERVICE=True`, `DAEMON_RELOAD_NEEDED=no`; no secrets/names, writes or restarts. This proves baseline Email+Telegram token references reach the running process, **not** that a transient migrated Chat ID variable was present during the first V3 attempt.
+
+Offline source inspection shows V3's `check_service_ready()` can return as soon as systemd reports `active` and the SQLite rule/contact/policy snapshot matches; **it does not wait for HTTP readiness**. The HTTP test, when enabled, is one request with a 2-second timeout after the service-ready and process-environment checks. The service restarted and was stopped again within the same second (21:04:40), so this is a **credible readiness race**, but the exact first-run `FAILED_GATE` is unknown. Do **not** assume `GRAFANA_HTTP_HEALTH` was the failing gate: `RUNNING_ENV_CONTAINS_CHATID` and other post-restart gates could fail too.
+
+Until the first-run output is found (or a reviewed offline fix is devised and tested), **do not re-run production scripts or restart Grafana**. Next script design must explicitly poll both process environment and HTTP readiness with a bounded deadline before interpreting early startup as failure. Such a proposal needs separate review before use.
+
 ## Fail-safe stop and rollback triggers
 
 **STOP and return to the documented baseline** if the active contact YAML no longer matches backup, any required file is missing/insecure, `EnvironmentFile` ordering is unknown, Grafana start fails, the contact loses an integration or changes a receiver UID, the routing policy differs, rules no longer total 15, or either channel's delivery is unexpectedly broken.
