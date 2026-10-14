@@ -83,3 +83,18 @@ After stage 1 is validated in production: design a **dedicated persistent** UID/
 - Operator decision: **do not update/deploy Dufs now; wait for a future stable release**. No RC build or automatic promotion of upstream Dufs into the RouterCloud production binary; do not merge the current draft PR #4 as a deployment shortcut.
 - The Linux/ASUS SSD permissions work in Issue #235 proceeds separately as a design and isolated testing track. Fedora five-scenario DAC test PASSED; production ASUS remains untouched.
 - Any later Dufs upgrade will have a separate compatibility, application-feature, browser and rollback gate, explicitly authorized before deployment.
+
+
+## Phase 1A extension — existing sync and delegated workspace access
+
+A second self-contained, /tmp-only regression script is available at [test-issue235-ssd-consumer-paths.py](../tests/test-issue235-ssd-consumer-paths.py). It compares the `1777` (sticky-bit compatibility) and `0755` (restrictive) mount-root candidate with the protected `0700` root-owned `RouterCloud` serve folder and `.routercloud-system` state folder.
+
+Expected in both variants:
+- UID 0 can still write inside a pre-existing root-owned `RouterCloud` folder, as a **filesystem model** for a privileged sync process.
+- UID 65534 cannot read or write root-owned private data and cannot read the state file.
+- UID 65534 **can** write under its own explicitly delegated UID-owned `0700` workspace under a `0755` parent.
+- Direct creation of new top-level entries by UID 65534 is **allowed with `1777`** and **denied with `0755`**.
+
+An isolated Linux fixture run of this second suite completed with `ISSUE235_CONSUMER_COMPATIBILITY=PASS`. **Independent run on the user's Fedora: PENDING.** This test **does not** prove that production SSH/rsync, backup or addons actually run as UID 0, or that all other consumers are compatible. A separate read-only real-identity/access audit and dependency review remain mandatory before selecting the production mode. In particular, no current process snapshot proves the three OTHER folders are unused.
+
+This remains a design/test branch: no RouterCloud release promotion or Dufs update is authorized; operator's explicit decision is to await a future stable Dufs release.
