@@ -77,3 +77,9 @@ After stage 1 is validated in production: design a **dedicated persistent** UID/
 - All production changes, user creation, init changes and service restarts: **NOT PERFORMED**.
 - Three OTHER world-writable directory consumers: **UNRESOLVED**.
 - Production rollout: **BLOCKED pending explicit authorization, dependencies and rollback validation**.
+
+## Dufs update hold — operator decision (2026-10-14)
+
+- Operator decision: **do not update/deploy Dufs now; wait for a future stable release**. No RC build or automatic promotion of upstream Dufs into the RouterCloud production binary; do not merge the current draft PR #4 as a deployment shortcut.
+- The Linux/ASUS SSD permissions work in Issue #235 proceeds separately as a design and isolated testing track. Fedora five-scenario DAC test PASSED; production ASUS remains untouched.
+- Any later Dufs upgrade will have a separate compatibility, application-feature, browser and rollback gate, explicitly authorized before deployment.
