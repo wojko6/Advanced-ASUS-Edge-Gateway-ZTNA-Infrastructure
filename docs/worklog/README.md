@@ -27,3 +27,4 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-10-11](2026-10-11.md) — #212 isolated Fedora dnsmasq signed/forged DNSSEC UDP/TCP resolver gate PASS; original ASUS ARMv7 dnsmasq parser-only acceptance PASS; native ARMv7 DNSSEC runtime and client failover remain pending, not deployed.
 
 - [2026-10-12](2026-10-12.md) — Fedora Alloy/Loki freshness, Grafana 15-rule runtime/direct-routing PASS; Email+Telegram test delivery; default fallback receiver corrected and API-verified; synthetic E2E `Firing → Gmail+Telegram → Normal → Resolved` delivered PASS; temporary rule deleted and 15-rule baseline restored (operator-confirmed); configuration parity/persistence follow-ups remain.
+- [2026-10-14](2026-10-14.md) — controlled Entware feed refresh and opkg mode correction, ext4 ENTWARE root `0777 → 0755` with rollback record, production healthcheck 0/0; umask source, signature verification and reboot persistence remain open.
