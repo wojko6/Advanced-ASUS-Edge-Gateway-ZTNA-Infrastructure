@@ -155,3 +155,26 @@ No `chmod`, `chown`, user migration, file modifications, daemon restarts, Dufs u
 6. **Explicit operator authorization and maintenance plan** are required for each production change. Stage 2 (dedicated least-privilege RouterCloud UID/GID) and upstream Dufs 0.47.x audit are independent tracks; see [#242](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/242).
 
 **Gate:** `SSD_DAC_INVENTORY=PASS` (POSIX modes/read-only, operator reported); `ACL_REVIEW=PENDING`; `CONSUMER_ATTRIBUTION=PENDING`; `ROOT_FILE_REVIEW=PENDING`; `ROLLBACK_VALIDATION=PENDING`; `PRODUCTION_CHANGE=NOT_AUTHORIZED`.
+
+
+## 2026-10-14 — root-level regular file / active swap classification
+
+**Evidence:** sanitized, read-only production ASUS output from `ISSUE235 / ROOT FILE SWAP AUDIT`; no filenames disclosed, no files/services changed.
+
+| Anonymous mount-root file index (one scan only) | UID | Mode | World-writable | Active swap (exact path matched in `/proc/swaps`) |
+| --- | ---: | ---: | --- | --- |
+| ROOT_FILE_1 | 0 | `0600` | NO | YES |
+| ROOT_FILE_2 | 0 | `0755` | NO | NO |
+| ROOT_FILE_3 | 0 | `0666` | YES | NO |
+| ROOT_FILE_4 | 0 | `0666` | YES | NO |
+| ROOT_FILE_5 | 0 | `0666` | YES | NO |
+| ROOT_FILE_6 | 0 | `0666` | YES | NO |
+| ROOT_FILE_7 | 0 | `0666` | YES | NO |
+| ROOT_FILE_8 | 0 | `0666` | YES | NO |
+
+- **One active swap file under the mount root was matched by exact textual path** and had owner 0 and mode `0600`. The snapshot reported **two** active swap entries system-wide, so do not infer the second entry's location or identity from this test. Bind-mount or alias path spelling may prevent exact-path matching.
+- Six directly mounted-root regular files are **owner UID 0, mode `0666`**, but are **not** that exact-matched active swap file. One additional root-owned regular file is `0755`. Their services/purposes are not identified.
+- Current mount root `0777` without sticky exposes all eight root-level file **directory entries** to local rename/removal based on standard DAC; tightening the root mode to `0755` would protect directory entries but **leave six existing files directly writable through their own `0666` modes** if their names remain traversable and no other controls block access.
+- **No automatic `chmod 0600`**, recursive operation, swap toggle, file-content inspection or production change is authorized. First associate each `0666` file with its actual consumer and required UID/GID, creation mechanism/umask, access mode and backup/recovery plan. Anonymous `ROOT_FILE_N` indices are from one glob enumeration and are not persistent identities.
+
+**Incremental gate:** `ACTIVE_SWAP_ROOT_FILE_MODE=0600` observed; `SIX_ROOT_FILES_CONSUMERS=UNRESOLVED`; `FILE_MODE_REMEDIATION=NOT_AUTHORIZED`; `PRODUCTION_CHANGES=NO`.
