@@ -264,7 +264,7 @@ Stan backupu i maintenance jest oceniany poza routerem przez Grafanę na Fedorze
 Provisioning zawiera cztery reguły:
 
 - `routercloud_backup_bad` — ostatni wynik backupu jest nieudany; `for: 1m`;
-- `routercloud_backup_stale` — wiek ostatniego backupu przekracza 8 godzin; `for: 5m`;
+- `routercloud_backup_stale` — wiek ostatniego backupu przekracza 26 godzin (backup raz dziennie o 21:30 + 2 godziny marginesu); `for: 5m`;
 - `routercloud_maintenance_bad` — ostatni maintenance/integrity check jest nieudany; `for: 1m`;
 - `routercloud_maintenance_stale` — wiek ostatniego maintenance przekracza 8 dni; `for: 30m`.
 
