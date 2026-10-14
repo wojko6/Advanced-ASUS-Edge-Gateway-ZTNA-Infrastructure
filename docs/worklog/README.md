@@ -27,3 +27,5 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-10-11](2026-10-11.md) — #212 isolated Fedora dnsmasq signed/forged DNSSEC UDP/TCP resolver gate PASS; original ASUS ARMv7 dnsmasq parser-only acceptance PASS; native ARMv7 DNSSEC runtime and client failover remain pending, not deployed.
 
 - [2026-10-12](2026-10-12.md) — Fedora Alloy/Loki freshness, Grafana 15-rule runtime/direct-routing PASS; Email+Telegram test delivery; default fallback receiver corrected and API-verified; synthetic E2E `Firing → Gmail+Telegram → Normal → Resolved` delivered PASS; temporary rule deleted and 15-rule baseline restored (operator-confirmed); configuration parity/persistence follow-ups remain.
+- [2026-10-13](2026-10-13.md) — architecture/docs PRs #233/#234, RouterCloud issue #235 isolated HTTP-origin/asset TOCTOU V2 investigation, Fedora NVIDIA rollback and Grafana Gmail+Telegram checkpoint.
+- [2026-10-14](2026-10-14.md) — Entware mount hardening, Dufs Draft PR #4 cross-platform/ARMv7 lab, approved RouterCloud SSD DAC Stage 1 deployment and 21:30 encrypted backup PASS; Grafana 26h alert staged but not reloaded.
