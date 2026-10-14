@@ -95,6 +95,63 @@ Expected in both variants:
 - UID 65534 **can** write under its own explicitly delegated UID-owned `0700` workspace under a `0755` parent.
 - Direct creation of new top-level entries by UID 65534 is **allowed with `1777`** and **denied with `0755`**.
 
-An isolated Linux fixture run of this second suite completed with `ISSUE235_CONSUMER_COMPATIBILITY=PASS`. **Independent run on the user's Fedora: PENDING.** This test **does not** prove that production SSH/rsync, backup or addons actually run as UID 0, or that all other consumers are compatible. A separate read-only real-identity/access audit and dependency review remain mandatory before selecting the production mode. In particular, no current process snapshot proves the three OTHER folders are unused.
+An isolated Linux fixture run of this second suite completed with `ISSUE235_CONSUMER_COMPATIBILITY=PASS`. **Independent Fedora run on 2026-10-14: PASS, operator-reported; both `STICKY_1777` and `STRICT_0755` scenarios passed, with fixtures removed and ASUS production untouched.** This test **does not** prove that production SSH/rsync, backup or addons actually run as UID 0, or that all other consumers are compatible. A separate read-only real-identity/access audit and dependency review remain mandatory before selecting the production mode. In particular, no current process snapshot proves the three OTHER folders are unused.
 
 This remains a design/test branch: no RouterCloud release promotion or Dufs update is authorized; operator's explicit decision is to await a future stable Dufs release.
+
+
+## 2026-10-14 — production SSD read-only DAC inventory and remediation gate
+
+**Evidence type:** operator-provided read-only Asuswrt/Entware shell outputs; not a new independent execution or a production permission change. **Scope:** `/tmp/mnt/ROUTER_DATA` only, using `find -xdev`; excludes the separate ENTWARE filesystem. No names or contents of private files were collected in published outputs. None of these tests exercised a write as an unprivileged UID on the live SSD.
+
+### Production runtime and dependencies
+
+- Mount/data/state directories: `ROUTER_DATA` root:root `0777`; `RouterCloud` root:root `0700`; `.routercloud-system` root:root `0777`.
+- Runtime snapshot: 1 `dufs-personal-c` and 4 `dropbear` processes observed as effective UID/GID 0, `CapEff=0000003fffffffff`. No `rsync` process appeared in that instant; this is not evidence that periodic sync is unused. Dufs root + broad capabilities remain a separate phase-2 issue.
+- Files referencing `ROUTER_DATA`/`RouterCloud`/state: JFFS scripts 1/10; Entware startup scripts 1/10; ASUS Edge addon scripts 6/26; cron candidates 0/3. These are literal pattern hits, **not** proved mount-root writers.
+- Named scripts: `post-mount`, `S67routercloud`, `firewall-start`, `healthcheck.sh`, `personal-cloud-rsync`, `personal-cloud-rsync-backup`, `routercloud-status-publish`, `routercloud-sync-status-publish`. Three `rm` references in `S67routercloud` use `PIDFILE`/`LOCKFILE` variables; their detected assignments point to runtime paths rather than the data root. Static analysis is not a full execution trace.
+- Boot order static indicators: first `swapon` reference on line 8; first Entware startup reference line 18 (`SWAP_BEFORE_ENTWARE` **text order only**). Live swap snapshot: 2 entries, total 2,621,432 KiB, 13,576 KiB used. This does not prove future cold-boot recovery.
+- Five-scenario isolated SSD DAC regression and isolated consumer compatibility regression were both **PASS on Fedora** per operator output. `1777` permits direct root-level creation by an ordinary UID; `0755` denies it; both support a root writer in its pre-existing `0700` folder and an expressly delegated UID-owned `0700` subtree. These are **synthetic Linux tests**, not evidence that every live consumer is compatible.
+
+### Recursive directory DAC results
+
+| Scope | Directories | UID != 0 | World-writable | WW without sticky | Reached via others execute on all ancestors |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| ALL (including mount root) | 64 | 0 | 32 | 32 | 8 |
+| DATA (`RouterCloud`) | 6 | 0 | 5 | 5 | 0 |
+| STATE (`.routercloud-system`) | 4 | 0 | 1 | 1 | 1 |
+| OTHER trees (10 top-level directories) | 53 | 0 | 25 | 25 | 6 |
+| Mount root itself | 1 | 0 | 1 | 1 | 1 |
+
+All 32 world-writable directories were `0777` without a sticky bit; 31 directories were `0700`, one was `0755`. Twenty-four `0777` directories were hidden behind a non-traversable ancestor for the model ordinary UID. **Reachability was modeled from POSIX others-execute bits only**, not by attempting a real write; ACL, namespaces, bind mounts, group memberships, LSMs and live identity can change effective access. `OTHER_N` labels are anonymized per enumeration, not durable directory identities.
+
+For this snapshot, the 6 **reachable** world-writable directories inside other trees were: `OTHER_6` (2), `OTHER_7` (3), `OTHER_8` (1). Separately, the shared mount root and `.routercloud-system` were reachable and world-writable. `OTHER_9` contained 39 directories, 18 `0777` but zero reachable under the model. Other trees must not be blanket-chmodded: their users/services remain unverified.
+
+### Complete regular-file DAC results (corrected for zero-length files)
+
+The initial `stat -c %F` classifier counted 212 files and 9 'other types', because `regular empty file` was not recognized. The corrected `find -type f` count below is authoritative for the sampled filesystem, with zero parse/stat/find errors.
+
+| Scope | Regular files | Empty | Mode 0666/world-writable | World-writable + traversable ancestors |
+| --- | ---: | ---: | ---: | ---: |
+| ALL | 221 | 9 | 78 | 20 |
+| DATA | 33 | 1 | 13 | 0 |
+| STATE | 3 | 0 | 0 | 0 |
+| OTHER (includes eight root-level files) | 185 | 8 | 65 | 20 |
+
+- Non-root-owned regular files: 10 (all within anonymized `OTHER_9` during exposure mapping). SUID/SGID regular files: zero. Reported symlinks: zero; full file-content and POSIX ACL audits **not performed** (`getfacl` unavailable).
+- Vulnerable-by-mode direct write surface under the POSIX-others traversal model: 6 root-level files, 9 in `OTHER_6`, 5 in `OTHER_7` = **20**. Other `0666` files are behind inaccessible ancestors under this model (58).
+- A separate parent-directory analysis flagged **22 regular-file names potentially replaceable by another local user**: 8 directly under the shared mount root; 9 under `OTHER_6`; 5 under `OTHER_7`. This **overlaps** the 20 directly world-writable files; do not add the two counts. The rule is a POSIX-DAC exposure heuristic, not proof of arbitrary exploitation.
+- The critical distinction: changing **the mount root to `0755` blocks ordinary users from creating/removing entries there**, but **does not revoke existing direct writes to its six `0666` files**; those need a *separate per-file ownership/mode and functional dependency decision*. Likewise hardening the mount root and `.routercloud-system` will not automatically correct the accessible `OTHER_6/7/8` subtrees.
+
+### Phase-1 production change remains BLOCKED
+
+No `chmod`, `chown`, user migration, file modifications, daemon restarts, Dufs update, draft PR #4 merge, or deployment were performed. The following are mandatory before a separately approved maintenance action:
+
+1. **Stable consumer attribution, without publishing names:** map the three previously identified top-level shared `0777` directories and the `OTHER_6/7/8` **enumeration positions** to root-owned, private operator-only inventory identifiers. Inspect init jobs, forced-command sync and backup, mounts, scheduled tasks, runtime service identity, and read/write *needs*, not only literal path references or a one-time /proc snapshot. Do not assume index stability across scans.
+2. **Root-level file review:** identify the eight directly mounted-root files by **type and owning service** in private inventory, especially swap, and decide individually for six `0666` files whether writes by an ordinary UID are required. Never recursively alter modes or ownership.
+3. **Additional permission evidence:** inspect mount options, ACL if available (via a trustworthy tool or offline metadata review), and any special-file / named socket impacts. Lack of `getfacl` is an **audit limitation**, not `ACL=NONE`. Check boot-time creation/recreation modes (umask) to avoid reintroducing `0777/0666`.
+4. **Backup + rollback:** off-router recovery copy and checked owner/group/mode (+ ACL where available) manifest; validate the restore method in isolation and document stop/go criteria. Protect backup secrets and omit sensitive paths from issue logs. Insecure baseline rollback to `0777` is an explicit, exceptional decision, not an automatic remedy.
+5. **Isolated staging gates:** combined permission transition `0777/0777 -> 0755/0700` against realistic synthetic root-level files, nonroot consumers, rsync forced commands, status publishers, WebUI, private state, swap/mount startup ordering; stage B separately for `OTHER_6/7/8` and world-writable files. Do not infer successful boot or service operation from static grep hits.
+6. **Explicit operator authorization and maintenance plan** are required for each production change. Stage 2 (dedicated least-privilege RouterCloud UID/GID) and upstream Dufs 0.47.x audit are independent tracks; see [#242](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/242).
+
+**Gate:** `SSD_DAC_INVENTORY=PASS` (POSIX modes/read-only, operator reported); `ACL_REVIEW=PENDING`; `CONSUMER_ATTRIBUTION=PENDING`; `ROOT_FILE_REVIEW=PENDING`; `ROLLBACK_VALIDATION=PENDING`; `PRODUCTION_CHANGE=NOT_AUTHORIZED`.
