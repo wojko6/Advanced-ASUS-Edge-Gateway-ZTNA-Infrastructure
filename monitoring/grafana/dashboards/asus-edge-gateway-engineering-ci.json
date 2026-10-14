@@ -1166,7 +1166,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "(last_over_time(routercloud_backup_last_run_success[30d]) * ((time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[30d])) < bool 28800)) or vector(0)",
+                        "expr": "(last_over_time(routercloud_backup_last_run_success[30d]) * ((time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[30d])) < bool 93600)) or vector(0)",
                         "instant": true,
                         "interval": "",
                         "legendFormat": "RouterCloud Backup",
