@@ -77,14 +77,13 @@ Hasła restic nie wolno przechowywać w repozytorium.
 
 ## Harmonogram
 
-Automatyczny backup:
+Automatyczny backup: **codziennie o 21:30 czasu lokalnego Fedory**.
 
 ~~~text
-00:00
-06:00
-12:00
-18:00
+21:30
 ~~~
+
+Zmiana harmonogramu została wykonana na Fedorze 2026-10-14 przez lokalny drop-in systemd (`~/.config/systemd/user/routercloud-backup.timer.d/90-routercloud-2130.conf`). Walidacja operacyjna wykazała `ISSUE235_BACKUP_SCHEDULE=PASS` i następny termin 2026-10-14 21:30 CEST; **sukces rzeczywistego backupu po zmianie uprawnień SSD pozostaje do potwierdzenia**. Po aktualizacji jednostki z repozytorium należy upewnić się, że lokalny drop-in nie wymusza sprzecznego harmonogramu; nie usuwać go bez uprzedniej kontroli `systemctl --user cat routercloud-backup.timer` oraz `systemctl --user list-timers --all routercloud-backup.timer`.
 
 Timer:
 
