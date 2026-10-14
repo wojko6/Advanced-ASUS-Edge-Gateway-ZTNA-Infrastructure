@@ -6,6 +6,12 @@ The reference deployment completed its SSD migration and controlled reboot valid
 
 Routine router changes may now proceed only as deliberate maintenance with backup, rollback planning, repository/CI validation and post-change live verification. Read-only inspection remains preferred when it can answer the question without changing the reference state.
 
+### 2026-10-14 Entware feed and volume-root hardening checkpoint
+
+A controlled live audit changed `/opt/etc/opkg.conf` from `0666` to `0600`, the two Entware feed-list files from `0666` to `0644`, and the mounted ext4 `/tmp/mnt/ENTWARE` root from `0777` to `0755` after private backups/rollback planning. `opkg update` succeeded, `opkg list-upgradable` printed no candidates, and the deployed project healthcheck returned **0 failures, 0 warnings** with both SSD swap files active. No packages, services or router restart were involved. These are **bounded live observations**, not proof of upstream version parity, signature verification or RouterCloud functional E2E.
+
+**Unresolved:** original `umask 0000` source/persistence, firmware-managed `/tmp/mnt` mode `0777`, actual feed-signature trust path, and `0755` persistence across a future *separately approved* remount/reboot. Do not indiscriminately `chmod -R`, change the global firmware umask or reboot only for this checkpoint. Full results and limitations: [2026-10-14 Entware hardening evidence](../evidence/2026-10-14/entware-feed-and-ssd-permissions.md).
+
 ## Change workflow
 
 Use this workflow for a planned maintenance window outside an active unchanged-state observation:
