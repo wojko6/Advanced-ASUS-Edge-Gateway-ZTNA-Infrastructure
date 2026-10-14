@@ -72,7 +72,7 @@ After stage 1 is validated in production: design a **dedicated persistent** UID/
 
 ## Current status and decision
 
-- Isolated Linux fixture five-scenario gate: **PASS** on 2026-10-14 in a temporary Linux test environment; Fedora operator run: **PENDING**.
+- Isolated Linux fixture five-scenario gate: **PASS** on 2026-10-14 in a temporary Linux test environment; **Fedora operator execution on 2026-10-14: PASS (all five scenarios)**. Reported individual results: `0777/0777` state rename ALLOW, leaf rename ALLOW, mount create ALLOW; `1777/0700` DENY/DENY/ALLOW; `0755/0700` DENY/DENY/DENY; `1777/0777` DENY/ALLOW/ALLOW; `0777/0700` ALLOW/DENY/ALLOW. `PRODUCTION_FILES_TOUCHED=NO`, `SOURCE_DEVICE_MOUNTS_TOUCHED=NO`, `TEMP_FIXTURE_REMOVED=YES`, `ISSUE235_SSD_DAC_LAB=PASS`.
 - Mount-root/state permission changes on ASUS: **NOT PERFORMED**.
 - All production changes, user creation, init changes and service restarts: **NOT PERFORMED**.
 - Three OTHER world-writable directory consumers: **UNRESOLVED**.
