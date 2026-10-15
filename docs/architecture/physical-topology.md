@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Reference platform:** ASUS TUF-AX5400 / Asuswrt-Merlin GNUton  
-**Last reviewed:** 2026-10-12 (topology/strategy documentation; no physical connections changed)
+**Last reviewed:** 2026-10-15 (documentation-only addition of a separate hypothetical Flint 4 variant; no physical connections changed)
 
 ## Purpose
 
@@ -41,6 +41,8 @@ The previously proposed ASUS RT-BE88U migration has been cancelled. OPNsense
 remains an unscheduled future possibility with, at most, an isolated VM lab on
 a separate Windows 11 laptop. No OPNsense instance or extra gateway/switch/AP
 has joined the present reference network. See [platform decision](platform-direction-2026-10-12.md).
+
+**New 2026-10-15 planning note (NOT DEPLOYED):** A later [conditional Flint 4 + ASUS services-node architecture](Flint4-ASUS-Future-Architecture-2026-10-15.md) is being evaluated as a separate design alternative, not a purchase or gateway-migration commitment. In its **initial version**, Flint 4 supplies VLANs and direct Ethernet access connections, while ASUS provides services with its Wi-Fi disabled. A managed switch is **optional** for future port/trunk/PoE expansion. Neither Flint 4 nor such a switch is installed in the reference production topology. The [current v1.2 publication](ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md) describes only the existing ASUS setup. OPNsense remains an independent, undated research option.
 
 ## What is not part of the documented reference topology
 
