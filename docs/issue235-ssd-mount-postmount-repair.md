@@ -383,3 +383,9 @@ Operator ran an ASUS **read-only** `/proc` identity inventory with `ISSUE235_SER
 **Scope:** this proves only the process identity snapshot, not that all processes or periodic jobs can tolerate mount-root `0755`. In particular, verify the unprivileged dnsmasq and Unbound consumers have writable **descendant** directories and do not need to create entries directly beneath `ROUTER_DATA` or `ENTWARE` mount roots. A read-only FD inventory is supporting evidence at most, not proof of all possible future writes. Production mount-root mode remains `0777` and both SSD swap entries remain active. Production helper activation, custom JFFS hook edits and reboot continue to be blocked pending consumer and rollback acceptance plus explicit operator approval. Custom UID1000-owned `services-start` is out of scope.
 
 [Issue #235 service identity evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6189514912).
+
+## 2026-10-15 — nonroot descriptor snapshot for SSD resolvers
+
+A read-only ASUS FD inventory (no file paths printed) found one nonroot dnsmasq and one nonroot Unbound process. Both processes had 0 FDs on either SSD mount root, 0 FDs at the first directory level of either SSD and 0 root-CWD matches. dnsmasq had 0 nested SSD FDs; Unbound had 1 nested FD; both had 0 unreadable FDs. No writes or service changes occurred. This narrows direct mount-root compatibility concerns but does not establish future write/create/rename usage; it also does not establish the access mode of Unbound's nested descriptor.
+
+This snapshot does not satisfy the formal writer/rollback GO gate. Retain Draft PR #245, leave the existing live mount modes and helper untouched, and require separately authorized production staging and later reboot.
