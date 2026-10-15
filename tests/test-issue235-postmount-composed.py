@@ -76,7 +76,25 @@ def main():
             'printf "AMTM:%s\\n" "$(stat -c %a "$1")" >> "$ISSUE235_LAB_EVENTS"\n'
         ))
 
+        # Isolated firmware-shaped numeric ls output; no host BusyBox needed.
+        mock_busybox = tools / "busybox"
+        write(mock_busybox, (
+            "#!/usr/bin/env python3\n"
+            "import os, stat, sys\n"
+            "if len(sys.argv) != 4 or sys.argv[1:3] != ['ls', '-ldn']:\n"
+            "    sys.exit(2)\n"
+            "path = sys.argv[3]\n"
+            "metadata = os.lstat(path)\n"
+            "print(f'{stat.filemode(metadata.st_mode)} 2 "
+            "{metadata.st_uid} {metadata.st_gid} {metadata.st_size} "
+            "Jan 01 00:00 {path}')\n"
+        ), 0o755)
+        write(tools / "chmod", '#!/bin/sh\nexec /bin/chmod "$@"\n', 0o755)
+
         for before, after in (
+            ("BUSYBOX_BIN='/bin/busybox'", f"BUSYBOX_BIN='{mock_busybox}'"),
+            ("BLKID_BIN='/sbin/blkid'", f"BLKID_BIN='{tools / 'blkid'}'"),
+            ("CHMOD_BIN='/bin/chmod'", f"CHMOD_BIN='{tools / 'chmod'}'"),
             ("MOUNT_ROOT='/tmp/mnt'", f"MOUNT_ROOT='{mount_root}'"),
             ("MOUNT_TABLE='/proc/mounts'", f"MOUNT_TABLE='{table}'"),
             ("PATH=/usr/sbin:/usr/bin:/sbin:/bin", f"PATH={tools}:/usr/sbin:/usr/bin:/sbin:/bin"),
