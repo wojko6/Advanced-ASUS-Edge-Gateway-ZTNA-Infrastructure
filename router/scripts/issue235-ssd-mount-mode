@@ -86,10 +86,40 @@ command -v blkid >/dev/null 2>&1 || {
     blocked
     exit 1
 }
-actual_uuid=$(blkid -s UUID -o value "$source_device" 2>/dev/null) || {
+# GNUton's BusyBox blkid may ignore -o value and emit a tagged line:
+# /dev/sda2: LABEL="ROUTER_DATA" UUID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+# Do not log the raw output; only extract the UUID between matching quotes.
+# Also accept util-linux value-only output for compatibility.
+raw_uuid=$(blkid -s UUID -o value "$source_device" 2>/dev/null) || {
     blocked
     exit 1
 }
+case "$raw_uuid" in
+    *'UUID="'*)
+        uuid_field=${raw_uuid#*UUID=\"}
+        case "$uuid_field" in
+            *\"*)
+                actual_uuid=${uuid_field%%\"*}
+                uuid_tail=${uuid_field#*\"}
+                # An ambiguous response containing a second UUID tag fails closed.
+                case "$uuid_tail" in
+                    *'UUID='*) blocked; exit 1 ;;
+                esac
+                ;;
+            *) blocked; exit 1 ;;
+        esac
+        ;;
+    *'UUID='*) blocked; exit 1 ;;
+    *) actual_uuid=$raw_uuid ;;
+esac
+
+case "$actual_uuid" in
+    ????????-????-????-????-????????????) ;;
+    *) blocked; exit 1 ;;
+esac
+case "$actual_uuid" in
+    *[!0123456789abcdefABCDEF-]*) blocked; exit 1 ;;
+esac
 if [ "$actual_uuid" != "$expected_uuid" ]; then
     blocked
     exit 1
