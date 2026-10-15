@@ -66,3 +66,9 @@ Only after Stage C acceptance, request new consent for a planned test reboot. Ve
 - **E: separately approves a controlled reboot/physical remount** (never implied by earlier approvals).
 
 The next action today is **documentation and independent read-only audit only**. Production decision stays **NO-GO / HOLD** until the above gates are satisfied. Related references: [detailed diagnosis](issue235-ssd-mount-postmount-repair.md), [GO/NO-GO matrix](issue235-production-go-no-go-2026-10-15.md), [boot dependencies](architecture/boot-service-dependency-flow.md), [DR issue #129](router-bare-metal-recovery-pl.md).
+
+## 2026-10-15 — operator-confirmed independent wired recovery route
+
+Following the read-only JFFS, ext4 and dual-swap preflight PASS, the operator explicitly confirmed the ability to connect the Fedora workstation directly to ASUS by Ethernet and use the router administration WebUI **without depending on Tailscale, Pi-hole or Unbound**. This is a credible **operator-attested available recovery path**, not a newly executed cable/GUI test or a demonstrated recovery during an outage. Do not represent this as a completed live failure/recovery drill.
+
+Remaining gates are unchanged: fresh read-only post-mount source hash/owner check at the actual maintenance time, independently available original off-router/encrypted recovery evidence, final review/acceptance of unknown periodic/direct-root SSD writers and other residual risk, operator-authorized narrow payload staging, later separately approved hook activation and still later separately approved reboot. No JFFS artifacts installed; `DEPLOYMENT_GATE=HOLD`. Operator confirmation of Ethernet recovery is **not** authorization to mutate production.
