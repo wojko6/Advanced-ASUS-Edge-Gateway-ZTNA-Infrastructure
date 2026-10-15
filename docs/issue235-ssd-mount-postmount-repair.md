@@ -359,3 +359,11 @@ Operator's Fedora-only V2 run resolved the earlier CR/LF boundary discrepancy by
 The exact-byte **offline composition gate is closed PASS**, replacing the previous candidate's parity REVIEW; the *production* gate remains HOLD. Next revalidate the current live `/jffs/scripts/post-mount` owner/mode and baseline SHA via read-only SSH (no local source output), recheck service/SSD writer and recovery prerequisites, and seek explicit authorization separately for production staging, activation and later controlled reboot. Do not deploy helper or UUID files, edit JFFS hooks, chmod mount roots or alter the unrelated UID1000-owned `services-start` during this stage.
 
 [Issue #235 result](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6189333869).
+
+## 2026-10-15 — live JFFS post-mount baseline reconfirmed PASS
+
+Operator completed a live-router read-only revalidation through pinned SSH after creating the separate exact offline Fedora candidate. The actual `/jffs/scripts/post-mount` is a regular non-symlink file, `0755` owner `root:root` (`LIVE_HOOK_MODE_OWNER=PASS`). Streaming the live file to Fedora confirmed the original SHA-256 `8625bee2558d046e789e9ea871ed5d7758be42c39548ca7f6a63757704a02b66` (`LIVE_HOOK_BASELINE_SHA256=PASS`), `/bin/sh -n` PASS and second stream hash unchanged (`LIVE_HOOK_STABLE=PASS`). Aggregate `LIVE_POSTMOUNT_BASELINE=PASS`; no contents/hashes disclosed, no live script execution, files modified or services restarted.
+
+The **offline candidate and live original now refer to the same baseline**, and the privately rebuilt candidate's inserted bytes match the pinned public snippet. This closes the offline source freshness gate, **not production acceptance**. Open gates: formal SSD-mount consumer/writer 0755 compatibility and exception decision, predeployment recovery and UID/root ownership plan for two JFFS UUID files and helper, explicit operator consent for limited live staging/activation, then independent approval for reboot persistence tests. Preserve swap-before-AMTM and the unrelated UID1000-owned custom `services-start`. Draft PR #245 unmerged and helper not installed.
+
+[Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6189380307).
