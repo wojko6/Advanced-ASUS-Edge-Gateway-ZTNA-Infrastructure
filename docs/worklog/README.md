@@ -6,6 +6,8 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
+**Legacy #151 source archive (2026-10-15):** the [RouterCloud historical PR comparison](../audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md) preserves the [September 30 #137 acceptance evidence](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) and [original dated design notes](../history/routercloud-browser-access-2026-09-30.md) without installing obsolete startup scripts or changing the production router.
+
 - [2026-09-11](2026-09-11.md) — SSD/Entware migration, controlled reboot validation, QoS cleanup, Stability Gate baseline.
 - [2026-09-12](2026-09-12.md) — repository hardening, CI expansion, evidence boundaries, Zen/blocklist work.
 - [2026-09-13](2026-09-13.md) — no repository-backed engineering changes recorded.
