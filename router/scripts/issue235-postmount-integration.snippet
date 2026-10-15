@@ -1,0 +1,37 @@
+# ISSUE #235 / DRAFT INSERTION ONLY — NOT ACTIVE, DO NOT DEPLOY.
+# Proposed insertion: existing live JFFS post-mount blank line 17,
+# after its swap section and before sourcing AMTM on line 18.
+# Intentionally no "exit", "return", set -e, or early boot /opt dependency.
+# The UUID mapping is PRIVATE and must never be committed to this repository.
+ISSUE235_SSD_HELPER='/jffs/addons/asus-edge/bin/issue235-ssd-mount-mode'
+ISSUE235_SSD_UUID_ROOT='/jffs/addons/asus-edge/private'
+ISSUE235_SSD_UUID_FILE=''
+case "${1-}" in
+    /tmp/mnt/ROUTER_DATA)
+        ISSUE235_SSD_UUID_FILE="$ISSUE235_SSD_UUID_ROOT/router-data.uuid"
+        ;;
+    /tmp/mnt/ENTWARE)
+        ISSUE235_SSD_UUID_FILE="$ISSUE235_SSD_UUID_ROOT/entware.uuid"
+        ;;
+esac
+if [ -n "$ISSUE235_SSD_UUID_FILE" ]; then
+    if [ -x "$ISSUE235_SSD_HELPER" ] &&
+       [ -f "$ISSUE235_SSD_UUID_FILE" ] &&
+       [ ! -L "$ISSUE235_SSD_UUID_FILE" ] &&
+       [ -r "$ISSUE235_SSD_UUID_FILE" ]; then
+        ISSUE235_SSD_UUID=''
+        IFS= read -r ISSUE235_SSD_UUID < "$ISSUE235_SSD_UUID_FILE" || ISSUE235_SSD_UUID=''
+        if [ -n "$ISSUE235_SSD_UUID" ]; then
+            if "$ISSUE235_SSD_HELPER" "$1" "$ISSUE235_SSD_UUID"; then
+                :
+            else
+                printf '%s\n' 'ISSUE235_POSTMOUNT_REPAIR=REVIEW'
+            fi
+        else
+            printf '%s\n' 'ISSUE235_POSTMOUNT_REPAIR=NO_UUID'
+        fi
+    else
+        printf '%s\n' 'ISSUE235_POSTMOUNT_REPAIR=NOT_READY'
+    fi
+fi
+# END ISSUE235 / DRAFT INSERTION ONLY
