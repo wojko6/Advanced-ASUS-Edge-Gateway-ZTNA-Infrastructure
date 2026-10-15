@@ -43,7 +43,15 @@ def main():
             p.mkdir()
             p.chmod(0o777)
 
-        private = root / "private"
+        jffs = root / "jffs"
+        jffs.mkdir(mode=0o755)
+        addons = jffs / "addons"
+        addons.mkdir(mode=0o755)
+        addon = addons / "asus-edge"
+        addon.mkdir(mode=0o755)
+        bin_dir = addon / "bin"
+        bin_dir.mkdir(mode=0o755)
+        private = addon / "private"
         private.mkdir(mode=0o700)
         write(private / "router-data.uuid", UUID_D + "\n", 0o600)
         write(private / "entware.uuid", UUID_E + "\n", 0o600)
@@ -53,7 +61,7 @@ def main():
         events = root / "events"
         script = root / "fake-post-mount.sh"
         amtm = root / "fake-amtm.sh"
-        staged_helper = root / "mode-helper"
+        staged_helper = bin_dir / "issue235-ssd-mount-mode"
 
         write(table, "\n".join([
             f"/dev/mock-data {paths['ROUTER_DATA']} ext4 rw 0 0",
@@ -109,6 +117,18 @@ def main():
              f"ISSUE235_SSD_HELPER='{staged_helper}'"),
             ("ISSUE235_SSD_UUID_ROOT='/jffs/addons/asus-edge/private'",
              f"ISSUE235_SSD_UUID_ROOT='{private}'"),
+            ("ISSUE235_SSD_JFFS_ROOT='/jffs'",
+             f"ISSUE235_SSD_JFFS_ROOT='{jffs}'"),
+            ("ISSUE235_SSD_ADDONS_ROOT='/jffs/addons'",
+             f"ISSUE235_SSD_ADDONS_ROOT='{addons}'"),
+            ("ISSUE235_SSD_ADDON_ROOT='/jffs/addons/asus-edge'",
+             f"ISSUE235_SSD_ADDON_ROOT='{addon}'"),
+            ("ISSUE235_SSD_BIN_ROOT='/jffs/addons/asus-edge/bin'",
+             f"ISSUE235_SSD_BIN_ROOT='{bin_dir}'"),
+            ("ISSUE235_SSD_LS='/bin/busybox'",
+             f"ISSUE235_SSD_LS='{mock_busybox}'"),
+            ("ISSUE235_SSD_OWNER='0:0'",
+             f"ISSUE235_SSD_OWNER='{os.getuid()}:{os.getgid()}'"),
             ("/tmp/mnt/ROUTER_DATA", str(paths["ROUTER_DATA"])),
             ("/tmp/mnt/ENTWARE", str(paths["ENTWARE"])),
         ):
@@ -189,6 +209,58 @@ def main():
                code == 0 and stat.S_IMODE(data.stat().st_mode) == 0o777
                and "ISSUE235_POSTMOUNT_REPAIR=NOT_READY" in stdout
                and history == ["SWAP", "AMTM:777", "END"])
+
+        # A loose parent, UUID file or helper must stop hardening,
+        # but must never disrupt swap-before-AMTM.
+        def must_block(label):
+            code, stdout, history = run(data)
+            verify(label,
+                   code == 0
+                   and stat.S_IMODE(data.stat().st_mode) == 0o777
+                   and "ISSUE235_POSTMOUNT_REPAIR=NOT_READY" in stdout
+                   and history == ["SWAP", "AMTM:777", "END"])
+
+        (private / "router-data.uuid").unlink()
+        write(private / "router-data.uuid", UUID_D + "\n", 0o600)
+
+        for name, target, unsafe_mode, safe_mode in (
+            ("WORLD_READABLE_UUID_FAIL_CLOSED", private / "router-data.uuid", 0o644, 0o600),
+            ("WORLD_WRITABLE_UUID_FAIL_CLOSED", private / "router-data.uuid", 0o666, 0o600),
+            ("GROUP_OPEN_PRIVATE_DIR_FAIL_CLOSED", private, 0o750, 0o700),
+            ("WORLD_OPEN_PRIVATE_DIR_FAIL_CLOSED", private, 0o777, 0o700),
+            ("WRITABLE_ADDON_PARENT_FAIL_CLOSED", addon, 0o777, 0o755),
+            ("WRITABLE_BIN_PARENT_FAIL_CLOSED", bin_dir, 0o777, 0o755),
+            ("WRITABLE_JFFS_PARENT_FAIL_CLOSED", jffs, 0o777, 0o755),
+            ("WRITABLE_ADDONS_PARENT_FAIL_CLOSED", addons, 0o777, 0o755),
+            ("WORLD_WRITABLE_HELPER_FAIL_CLOSED", staged_helper, 0o777, 0o755),
+        ):
+            target.chmod(unsafe_mode)
+            must_block(name)
+            target.chmod(safe_mode)
+
+        # The private directory and executable cannot be symlink aliases.
+        original_private = addon / "private-real"
+        private.rename(original_private)
+        private.symlink_to(original_private, target_is_directory=True)
+        must_block("PRIVATE_DIRECTORY_SYMLINK_FAIL_CLOSED")
+        private.unlink()
+        original_private.rename(private)
+
+        original_helper = bin_dir / "helper-real"
+        staged_helper.rename(original_helper)
+        staged_helper.symlink_to(original_helper)
+        must_block("HELPER_SYMLINK_FAIL_CLOSED")
+        staged_helper.unlink()
+        original_helper.rename(staged_helper)
+
+        # Restore trusted metadata; legitimate startup still completes.
+        data.chmod(0o777)
+        code, stdout, history = run(data)
+        verify("SECURE_PRIVATE_STAGE_RECOVERY",
+               code == 0
+               and stat.S_IMODE(data.stat().st_mode) == 0o755
+               and "ISSUE235_MOUNT_MODE=APPLIED_0755" in stdout
+               and history == ["SWAP", "AMTM:755", "END"])
 
         other = paths["OTHER"]
         code, stdout, history = run(other, swap=False)
