@@ -160,5 +160,27 @@ Preconditions and acceptance:
 
 **2026-10-15 operator evidence: privately composed actual saved-hook copy and disposable byte-for-byte local rollback both PASS.** Original hash verification, restrictive local file/directory permissions, exact single-snippet delta, insertion after line 16, saved and composed `sh -n`, disposable test deployment/rollback to baseline, and preservation of original/candidate were reported PASS. `ROUTER_MODIFIED=NO`. This is an exact-diff and local restore proof; it does not demonstrate actual router hook behavior during boot, real JFFS restore, or independence of copies.
 
-**Next gate:** check availability of a separate protected backup destination, write and verify an encrypted/off-machine copy without exposing the real hook/UUIDs; then audit real consumer permissions and installer ownership before seeking any explicit production authorization. Remain in DRAFT until explicit permission for production rollout and a separately approved reboot.
+### 2026-10-15 — independent Verbatim SSD GPG backup verified
+
+Operator executed the Fedora read-only source preflight: original post-mount SHA-256 parity PASS. Independently identified the external USB Verbatim SSD as a 953.9 GB exFAT partition, mounted it as an existing filesystem (without repartitioning or formatting), and saved a **new GPG symmetric AES-256 encrypted tar archive** of the original script and manifest into a separate directory. GPG encryption succeeded. The archive was immediately decrypted in a streaming verification and the recovered original script matched baseline SHA-256 `8625bee2558d046e789e9ea871ed5d7758be42c39548ca7f6a63757704a02b66`. Operator-provided evidence:
+
+```text
+SOURCE_SHA256=PASS
+USB_DEVICE=PASS
+FILESYSTEM=exFAT
+SSD_MOUNT=PASS
+GPG_ENCRYPTION=COMPLETE
+ENCRYPTED_RECOVERY=PASS
+SOURCE_INTEGRITY=PASS
+USB_STORAGE=PASS
+AES256_BACKUP=PASS
+ENCRYPTED_RECOVERY_SHA256=PASS
+SOURCE_FILES_UNCHANGED=YES
+ROUTER_MODIFIED=NO
+ISSUE235_ENCRYPTED_BACKUP_COMPLETE
+```
+
+The separately stored encrypted copy is on the **external Verbatim SSD**, not the laptop's internal NVMe. The secret GPG passphrase and full original hook bytes were never provided to the public repository. Test includes a successful decrypt-and-verify, but does not yet establish readability following a physical disconnect/reconnect, passphrase-manager recovery, or full JFFS restore. The SSD should be unmounted/powered down cleanly before disconnection. This backup is protection against local filesystem loss, not a production deployment approval.
+
+**Next gate:** confirm Verbatim can be cleanly flushed/unmounted and retained independently from the Fedora laptop. Then audit private UUID mapping file security, root-level mount consumers, and installer ownership before seeking explicit production authorization. Remain in DRAFT until that review and a separately approved reboot.
 
