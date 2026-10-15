@@ -263,3 +263,11 @@ Public `router/scripts/personal-cloud-rsync` strictly allows rsync server comman
 Next gate: safely inspect only directory mode/owner, wrapper marker, hook mode/owner, and ELF header classification without printing source, credentials or script contents. The root-mode `0755` compatibility gate remains REVIEW, production approval withheld.
 
 [Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6187927310).
+
+## 2026-10-15 — final on-router writer preflight
+
+Reported RouterCloud rsync target exists in the expected child directory under ROUTER_DATA, owner root, mode 0700. Live JFFS forced-command wrapper is root-owned 0755 and the destination-reference and shell-syntax checks passed. This is favorable for root-mode 0755 compatibility but does not replace a run-as-identity check.
+
+Active JFFS services-start hook parses but is owned by UID/GID 1000 and mode 0755; the managed-hook marker is absent. This is a distinct potential privileged-script integrity risk, requiring separate origin/account/contents and service-execution review before changes. The deployed DNS supervisor type-check returned REVIEW for an ambiguous file-or-tool availability gate, not proof of binary corruption. Do not run/chown/rewrite either artifact. No production changes.
+
+Next read-only tests should compare the active hook with the managed bin without printing contents or hashes, check UID 1000 account mapping and parent ownership, and distinguish the DNS supervisor format-check failure causes. Remain in draft and hold production activation.
