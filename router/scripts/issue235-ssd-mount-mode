@@ -10,6 +10,11 @@ export PATH
 MOUNT_ROOT='/tmp/mnt'
 MOUNT_TABLE='/proc/mounts'
 EXPECTED_OWNER='0:0'
+# Firmware-native tools; never depend on /opt or shell command discovery.
+BUSYBOX_BIN='/bin/busybox'
+AWK_BIN='/usr/bin/awk'
+BLKID_BIN='/sbin/blkid'
+CHMOD_BIN='/bin/chmod'
 
 report() {
     printf 'ISSUE235_MOUNT_MODE=%s\n' "$1"
@@ -18,6 +23,24 @@ blocked() {
     report "REVIEW"
     return 1
 }
+
+# Numeric mode+owner parsing from GNUton's verified BusyBox ls -ldn format.
+# In a subshell, disable glob expansion before splitting fixed-format fields.
+# Never evaluate listing text or accept unexpected permissions or owners.
+mount_mode() (
+    [ -d "$1" ] && [ ! -L "$1" ] || return 1
+    listing=$("$BUSYBOX_BIN" ls -ldn "$1" 2>/dev/null) || return 1
+    set -f
+    set -- $listing
+    [ "$#" -ge 4 ] || return 1
+    case "$1" in
+        drwxrwxrwx) parsed_mode=777 ;;
+        drwxr-xr-x) parsed_mode=755 ;;
+        *) return 1 ;;
+    esac
+    [ "$3:$4" = "$EXPECTED_OWNER" ] || return 1
+    printf '%s\n' "$parsed_mode"
+)
 
 if [ "$#" -ne 2 ]; then
     blocked
@@ -52,18 +75,14 @@ if [ ! -d "$target" ] || [ -L "$target" ]; then
     exit 1
 fi
 
-owner=$(stat -c '%u:%g' "$target" 2>/dev/null) || {
+mode=$(mount_mode "$target") || {
     blocked
     exit 1
 }
-if [ "$owner" != "$EXPECTED_OWNER" ]; then
-    blocked
-    exit 1
-fi
 
 # Only an exact one-to-one /proc/mounts match of an ext4 block-device
 # mount is accepted. Never operate on an unmounted /tmp/mnt directory.
-source_device=$(awk -v target="$target" '
+source_device=$("$AWK_BIN" -v target="$target" '
     $2 == target {
         matches++
         device=$1
@@ -82,7 +101,7 @@ source_device=$(awk -v target="$target" '
     exit 1
 }
 
-command -v blkid >/dev/null 2>&1 || {
+[ -x "$BLKID_BIN" ] || {
     blocked
     exit 1
 }
@@ -90,7 +109,7 @@ command -v blkid >/dev/null 2>&1 || {
 # /dev/sda2: LABEL="ROUTER_DATA" UUID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 # Do not log the raw output; only extract the UUID between matching quotes.
 # Also accept util-linux value-only output for compatibility.
-raw_uuid=$(blkid -s UUID -o value "$source_device" 2>/dev/null) || {
+raw_uuid=$("$BLKID_BIN" -s UUID -o value "$source_device" 2>/dev/null) || {
     blocked
     exit 1
 }
@@ -125,10 +144,6 @@ if [ "$actual_uuid" != "$expected_uuid" ]; then
     exit 1
 fi
 
-mode=$(stat -c '%a' "$target" 2>/dev/null) || {
-    blocked
-    exit 1
-}
 case "$mode" in
     755) report "ALREADY_0755"; exit 0 ;;
     777) ;;
@@ -136,7 +151,7 @@ case "$mode" in
 esac
 
 # Narrow re-check just before mutation; no recursive operations.
-still_device=$(awk -v target="$target" '
+still_device=$("$AWK_BIN" -v target="$target" '
     $2 == target { matches++; device=$1; fstype=$3 }
     END {
         if (matches == 1 && fstype == "ext4") print device
@@ -146,18 +161,23 @@ still_device=$(awk -v target="$target" '
     blocked
     exit 1
 }
+still_mode=$(mount_mode "$target") || {
+    blocked
+    exit 1
+}
 if [ "$still_device" != "$source_device" ] ||
+   [ "$still_mode" != "$mode" ] ||
    [ -L "$target" ] ||
    [ ! -d "$target" ]; then
     blocked
     exit 1
 fi
 
-chmod 0755 "$target" || {
+"$CHMOD_BIN" 0755 "$target" || {
     blocked
     exit 1
 }
-after=$(stat -c '%a' "$target" 2>/dev/null) || {
+after=$(mount_mode "$target") || {
     blocked
     exit 1
 }
