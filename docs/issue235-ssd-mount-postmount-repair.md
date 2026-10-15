@@ -375,3 +375,11 @@ Operator's **read-only** runtime preflight confirmed single valid live ext4 moun
 Predeployment gates already PASS: locally staged UUID identity and independent manifest validation; byte-exact offline post-mount integration with pinned snippet; verified live original `post-mount` baseline owner/sha/syntax; firmware-native helper CI. Still OPEN: acceptance for non-root and root-level writers when both mount roots become `0755`, repeatable production-JFFS deployment and restoration instructions with protected owner/modes, service/backup health, explicit operator activation approval and separate reboot permission. The three previously identified world-writable RouterCloud test/rollback subtrees are separate and not covered by the mount-root-only change. Do not modify custom `services-start` with UID 1000 ownership; keep swap-before-AMTM. **GO/NO-GO = HOLD.**
 
 [Issue #235 runtime evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6189446891).
+
+## 2026-10-15 — live service process UID snapshot
+
+Operator ran an ASUS **read-only** `/proc` identity inventory with `ISSUE235_SERVICE_IDENTITY_COMPLETE`. Root/nonroot process counts: tailscaled 1/0; dnsmasq 1/1; unbound 0/1; syslog-ng 2/0; Dufs/RouterCloud 1/0. All unknown-UID counts zero. No arguments, private paths, files, permissions or services were modified or disclosed.
+
+**Scope:** this proves only the process identity snapshot, not that all processes or periodic jobs can tolerate mount-root `0755`. In particular, verify the unprivileged dnsmasq and Unbound consumers have writable **descendant** directories and do not need to create entries directly beneath `ROUTER_DATA` or `ENTWARE` mount roots. A read-only FD inventory is supporting evidence at most, not proof of all possible future writes. Production mount-root mode remains `0777` and both SSD swap entries remain active. Production helper activation, custom JFFS hook edits and reboot continue to be blocked pending consumer and rollback acceptance plus explicit operator approval. Custom UID1000-owned `services-start` is out of scope.
+
+[Issue #235 service identity evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6189514912).
