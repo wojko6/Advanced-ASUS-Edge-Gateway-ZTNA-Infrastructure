@@ -184,3 +184,8 @@ The separately stored encrypted copy is on the **external Verbatim SSD**, not th
 
 **Next gate:** confirm Verbatim can be cleanly flushed/unmounted and retained independently from the Fedora laptop. Then audit private UUID mapping file security, root-level mount consumers, and installer ownership before seeking explicit production authorization. Remain in DRAFT until that review and a separately approved reboot.
 
+## 2026-10-15 — safe external backup disconnect accepted
+
+Following the independently encrypted Verbatim SSD backup and successful streamed recovery SHA verification, the operator reported `MOUNT_IDENTITY=PASS`, `USB_IDENTITY=PASS`, `ENCRYPTED_ARCHIVE=PASS`, `DATA_FLUSH=COMPLETE`, `SAFE_UNMOUNT=PASS`, `USB_POWER_OFF=PASS`, `ROUTER_MODIFIED=NO`, and `ISSUE235_SAFE_DISCONNECT_COMPLETE`. The OS confirmed that the external exFAT partition unmounted. It is safe to physically disconnect the drive. Reconnect/decrypt verification after an extended offline period remains a separate optional durability gate; no production ASUS files were changed.
+
+**Next gate (read-only):** verify actual current JFFS path/permission ownership and whether the candidate helper and private expected-UUID files are even installed. No candidate file or private UUID has been deployed by this draft; absent helper/UUID files must be reported as `NOT_CONFIGURED`, not guessed or silently created. Then audit actual mount-root writers/consumers for mode `0755` compatibility and prepare an explicit go/no-go; no live chmod/hook edits/reboot.
