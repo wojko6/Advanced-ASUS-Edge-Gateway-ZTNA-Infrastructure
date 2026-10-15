@@ -293,3 +293,11 @@ Read-only router result: `HASH_PROVIDER=UNAVAILABLE` in the current shell, there
 The operator reported `SUPERVISOR_SHA256=PASS` from a read-only SSH byte stream of the live `edge-dns-supervisor` to Fedora, hashed locally against the installer-pinned SHA-256. This resolves the prior hash-tool-availability ambiguity and confirms binary identity against the repository artifact. The operator supplied **only** this result; `HOOK_VS_MANAGED` is **not yet reported** and remains UNKNOWN. No router or local file changes were made as part of this verification. Draft PR #245 remains uninstalled and on hold.
 
 [Issue #235 result](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188229976).
+
+## 2026-10-15 — confirmed live services-start hash divergence
+
+Operator completed a corrected read-only Fedora/off-router SHA-256 comparison with SSH stdin disabled. `HOOK_VS_MANAGED=DIFFERENT` and `ISSUE235_HASH_COMPARISON_V2_COMPLETE` were reported. The live JFFS `services-start` is **not** byte-identical to the root-owned managed script in ASUS Edge bin. This is not evidence of compromise or a deployment regression by itself: the JFFS hook may contain independent custom/legacy startup logic. The live JFFS hook still belongs to UID:GID 1000:1000 (mode 0755) and lacked the generated managed-hook marker in the previous inspection, so do **not** overwrite it with the managed bin or change ownership without a separate dependency/rollback review. The earlier `SUPERVISOR_SHA256=PASS` independently confirmed the installed native DNS supervisor matches the pinned repository binary.
+
+**Next read-only gate:** classify structural invocation markers in the live JFFS hook without printing its contents or modifying it, and determine whether the hook invokes the managed file, Entware/AMTM or other recovery logic. Preserve all existing live startup behavior and the post-mount swap-before-AMTM ordering. No live operations or production authorization; Draft PR #245 remains open.
+
+[Issue #235 result](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188289185).
