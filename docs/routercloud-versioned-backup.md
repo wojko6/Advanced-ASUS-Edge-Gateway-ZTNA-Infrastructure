@@ -83,7 +83,7 @@ Automatyczny backup: **codziennie o 21:30 czasu lokalnego Fedory**.
 21:30
 ~~~
 
-Zmiana harmonogramu została wykonana na Fedorze 2026-10-14 przez lokalny drop-in systemd (`~/.config/systemd/user/routercloud-backup.timer.d/90-routercloud-2130.conf`). Walidacja operacyjna wykazała `ISSUE235_BACKUP_SCHEDULE=PASS` i następny termin 2026-10-14 21:30 CEST; **sukces rzeczywistego backupu po zmianie uprawnień SSD pozostaje do potwierdzenia**. Po aktualizacji jednostki z repozytorium należy upewnić się, że lokalny drop-in nie wymusza sprzecznego harmonogramu; nie usuwać go bez uprzedniej kontroli `systemctl --user cat routercloud-backup.timer` oraz `systemctl --user list-timers --all routercloud-backup.timer`.
+Zmiana harmonogramu została wykonana na Fedorze 2026-10-14 przez lokalny drop-in systemd (`~/.config/systemd/user/routercloud-backup.timer.d/90-routercloud-2130.conf`). Walidacja operacyjna wykazała `ISSUE235_BACKUP_SCHEDULE=PASS` i następny termin 2026-10-14 21:30 CEST; **rzeczywisty harmonogramowy backup po zmianie uprawnień SSD zakończył się PASS 2026-10-14 o 21:30:03+02:00** (`LAST_RESULT=success`, `LAST_RC=0`, `LAST_STAGE=complete`); osobnego identyfikatora nowego snapshotu restic nie utrwalono w tym raporcie. Po aktualizacji jednostki z repozytorium należy upewnić się, że lokalny drop-in nie wymusza sprzecznego harmonogramu; nie usuwać go bez uprzedniej kontroli `systemctl --user cat routercloud-backup.timer` oraz `systemctl --user list-timers --all routercloud-backup.timer`.
 
 Timer:
 
@@ -268,12 +268,18 @@ Provisioning zawiera cztery reguły:
 - `routercloud_maintenance_bad` — ostatni maintenance/integrity check jest nieudany; `for: 1m`;
 - `routercloud_maintenance_stale` — wiek ostatniego maintenance przekracza 8 dni; `for: 30m`.
 
+**Granica źródło → produkcja (stan udokumentowany 2026-10-14):** zmiana na harmonogram dzienny `21:30` działała na Fedorze z lokalnego drop-in. Repozytorium w tym PR proponuje teraz odpowiadające mu `OnCalendar`, ale **nie uruchamia ani nie przeładowuje systemd/Grafany**. W ostatniej udokumentowanej kontroli uruchomiony alert `routercloud_backup_stale` nadal używał **8h/24h**. Na dysku Fedora miał już oddzielnie przygotowany plik `26h/48h`, lecz `GRAFANA_RELOADED=NO`. Nie ma w tym PR nowego odczytu produkcyjnego po 14 października. Przed jakąkolwiek kontrolowaną aktywacją osobno sprawdzić dane live przez API/UI oraz konfigurację Email+Telegram, 15 reguł, brak obcych zmian i prywatny rollback. Nie stosować surowej repozytoryjnej konfiguracji kontaktowej Email-only jako zamiennika dla produkcyjnego Email+Telegram. [Dziennik 14 października](worklog/2026-10-14.md); [Issue #236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236).
+
+**Okno metryk:** zarówno alarm `routercloud_backup_bad`, jak i `routercloud_backup_stale` analizują obecnie (źródłowo) ostatnie **48h** timestampu/rezultatu. Utrzymuje to informację o nieudanym backupie także między 24. a 26. godziną po ostatnim wyniku; ustawienie `noDataState: OK` w `*_bad` nie jest zastępnikiem alarmu `*_stale`. Dashboard używa 30-dniowego lookback, a `93600` sekund odpowiada 26h. Sprawność powiadomień po przyszłym provisioningu wymaga osobnego testu; samo `git merge` niczego nie aktywuje.
+
+**Ochrona punktu odtworzenia:** przejście z czterech kopii na dobę do jednej oznacza zwykle około **24h** odstępu między poprawnymi kopiami zamiast **6h**. `Persistent=true` może nadrobić pominięte uruchomienie po powrocie Fedory, ale nie gwarantuje powodzenia kopii, gdy ASUS/SSD nie są dostępne.
+
 Reguły `*_bad` używają `noDataState: OK`, ponieważ brak historii jest
 obsługiwany osobno przez reguły `*_stale`. Reguły staleness używają
 `noDataState: Alerting`, ponieważ brak świeżej próbki jest sam w sobie sygnałem
 problemowym.
 
-Wszystkie cztery reguły są częścią dziewięcioregułowego baseline Grafany i
+Wszystkie cztery reguły są częścią **15-regułowego** baseline Grafany i
 routują do istniejącego kontaktu `ASUS Edge Gateway Email`. Dane SMTP pozostają
 poza repozytorium.
 
