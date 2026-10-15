@@ -55,6 +55,7 @@ Operator ran the read-only on-ASUS `ISSUE235 / EARLY PATH UUID GATE`, deliberate
 ```sh
 sh -n router/scripts/issue235-ssd-mount-mode
 python3 tests/test-issue235-ssd-postmount-mode.py
+python3 tests/test-issue235-postmount-composed.py
 sh tests/test-static.sh
 ```
 
@@ -76,6 +77,40 @@ The isolated test creates fake directories under a randomized `/tmp` tree, rewri
 - [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235)
 - [Root-cause source finding](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6185981597)
 - [Oct 14 public engineering worklog](worklog/2026-10-14.md)
+
+## 2026-10-15 — candidate insertion boundary and composed-hook fixture
+
+After the earlier structural baseline, the operator ran a second **read-only** boundary audit against the same live JFFS `/jffs/scripts/post-mount`:
+
+```text
+SOURCE_INTEGRITY=PASS
+SYNTAX=PASS
+LINE_17_SLOT=BLANK_OR_COMMENT
+CONDITIONAL_DEPTH_AFTER_LINE_16=0
+EARLY_EXIT_REFERENCES=0
+ERREXIT_REFERENCES=0
+SWAP_BEFORE_AMTM=PASS
+INSERTION_BOUNDARY_STATIC=PASS
+SCRIPT_CONTENT_PRINTED=NO
+FILES_MODIFIED=NO
+SWAP_MODIFIED=NO
+SERVICES_RESTARTED=NO
+```
+
+The audited SHA-256 was `8625bee2558d046e789e9ea871ed5d7758be42c39548ca7f6a63757704a02b66`. The results confirm only the static placement class of the blank/comment slot at line 17, after the source file's swap operation (line 8) and before sourcing AMTM (line 18). **The actual JFFS hook bytes are not included in the public repository**; static keyword/depth checks are not a full control-flow proof.
+
+A proposal for that placement is recorded in [`issue235-postmount-integration.snippet`](../router/scripts/issue235-postmount-integration.snippet). It is **not installed** and has no installer registration. The proposal:
+
+- Uses exactly the `$1` mounted volume path to select one of two privately stored expected UUID files under a root-owned JFFS subtree. No actual UUID values are in Git.
+- Invokes the separately validated candidate helper for an allowlisted mount only when its executable and the non-symlink private UUID file are available.
+- On missing private UUID, helper verification failure or unrelated USB volume, performs **no intentional root-mode change**, reports a status without revealing identifiers, and continues to the existing AMTM line (does **not** `exit`/`return` or use `set -e`).
+- Must not be activated before the private mapping's integrity/ownership, real early-boot readiness, existing hook preservation, rollback, and root-level consumers have been reviewed.
+
+The synthetic [composed-hook test](../tests/test-issue235-postmount-composed.py) uses only disposable `/tmp` directories, a synthetic nested-IF + swap-before-AMTM script, fake `swapon` and fake AMTM sourced after a substituted version of the proposed snippet, plus mocked `blkid` and mount table. The fixture tests both target volumes, idempotent second run, invalid UUID, missing/symlink UUID file, and unrelated media. In failure cases it requires **swap and AMTM to continue** while leaving the synthetic root at `0777`; success cases require `0755` before AMTM. It is included in `tests/test-static.sh` on this draft branch.
+
+**Limitations:** the test does not execute the exact real JFFS source, cannot prove real boot ordering/races, cannot validate firmware-managed `0777` rewrite after hook, and does not give live production approval. A reversible composed **copy of the real hook** can only be validated by the operator in an isolated offline fixture under controlled conditions; never upload unsanitized JFFS contents/UUID material to the public repo.
+
+**Recovery/deployment gate still blocked:** obtain private byte-for-byte copies of `post-mount` on independent storage, verify SHA and mode, confirm the rollback restores the original hook while maintaining swap-before-AMTM, test root-level consumers and backups, ask explicit operator approval for scoped live activation, and perform a separate later approved reboot. Do not rely on rollback to `0777` as the default security response; reversion of the hook does not retroactively protect an ext4 root already set to `0777` by firmware.
 
 ## 2026-10-15 — structural JFFS post-mount snapshot
 
