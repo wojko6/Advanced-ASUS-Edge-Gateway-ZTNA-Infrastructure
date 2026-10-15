@@ -81,8 +81,8 @@ def main() -> int:
             '[ "$1" = "-s" ] && [ "$2" = "UUID" ] && '
             '[ "$3" = "-o" ] && [ "$4" = "value" ] || exit 1\n'
             'case "$5" in\n'
-            f'    /dev/mock-data) printf "%s\\n" "{DATA_UUID}" ;;\n'
-            f'    /dev/mock-entware) printf "%s\\n" "{ENTWARE_UUID}" ;;\n'
+            f"    /dev/mock-data) printf '%s\\n' '/dev/mock-data: LABEL=\"ROUTER_DATA\" UUID=\"{DATA_UUID}\"' ;;\n"
+            f"    /dev/mock-entware) printf '%s\\n' '/dev/mock-entware: LABEL=\"ENTWARE\" UUID=\"{ENTWARE_UUID}\"' ;;\n"
             '    *) exit 1 ;;\n'
             'esac\n',
             executable=True,
@@ -135,6 +135,63 @@ def main() -> int:
         case("IDEMPOTENT_REPEATED_RUN",
              a.returncode == 0 and "ALREADY_0755" in a.stdout
              and mode(data) == 0o755)
+
+
+        # GNUton BusyBox ignores -o value: tagged quoted UUID+LABEL arrives.
+        # Also support util-linux raw UUID and reject ambiguous/malformed tags.
+        def override_blkid(value: str) -> None:
+            assert "'" not in value
+            put(
+                mock_blkid,
+                "#!/bin/sh\n"
+                '[ "$1" = "-s" ] && [ "$2" = "UUID" ] && '
+                '[ "$3" = "-o" ] && [ "$4" = "value" ] || exit 1\n'
+                f"printf '%s\\n' '{value}'\n",
+                executable=True,
+            )
+
+        reset(data)
+        mounts()
+        override_blkid(DATA_UUID)
+        a = run(helper, data, DATA_UUID)
+        case("RAW_UUID_BACKWARD_COMPAT", a.returncode == 0
+             and "APPLIED_0755" in a.stdout
+             and mode(data) == 0o755)
+
+        reset(data)
+        mounts()
+        override_blkid(
+            f'/dev/mock-data: LABEL="ROUTER_DATA" UUID="{DATA_UUID}" '
+            f'UUID="{ENTWARE_UUID}"'
+        )
+        a = run(helper, data, DATA_UUID)
+        case("DUPLICATE_UUID_TAG_REJECTED", a.returncode != 0
+             and mode(data) == 0o777)
+
+        reset(data)
+        mounts()
+        override_blkid(f'/dev/mock-data: UUID="{DATA_UUID}')
+        a = run(helper, data, DATA_UUID)
+        case("UNCLOSED_UUID_TAG_REJECTED", a.returncode != 0
+             and mode(data) == 0o777)
+
+        reset(data)
+        mounts()
+        override_blkid(f'/dev/mock-data: UUID={DATA_UUID}')
+        a = run(helper, data, DATA_UUID)
+        case("UNQUOTED_UUID_TAG_REJECTED", a.returncode != 0
+             and mode(data) == 0o777)
+
+        reset(data)
+        mounts()
+        override_blkid('/dev/mock-data: LABEL="ROUTER_DATA" UUID="INVALID"')
+        a = run(helper, data, DATA_UUID)
+        case("INVALID_TAGGED_UUID_REJECTED", a.returncode != 0
+             and mode(data) == 0o777)
+
+        # Restore a valid UUID from BusyBox's tagged quoted output so all
+        # remaining negative tests exercise their intended independent gate.
+        override_blkid(f'/dev/mock-data: LABEL="ROUTER_DATA" UUID="{DATA_UUID}"')
 
         reset(data)
         mounts()
