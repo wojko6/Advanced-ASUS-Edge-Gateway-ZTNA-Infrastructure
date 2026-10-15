@@ -251,3 +251,15 @@ The earlier scan identified 45 inspected files, 9 files referring to SSD, and 7 
 The remaining compatibility gate is REVIEW, with production changes blocked. Next inspect the one same-line candidate's destination classification without exposing source text and determine the type of oversized file. Do not merge or deploy until consumers and rollback are accepted explicitly.
 
 [Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6187804095).
+
+## 2026-10-15 — specific writer inventory and source cross-check
+
+Operator-provided, read-only inventory of the seven candidate scripts: JFFS `services-start` (0755 uid/gid 1000:1000); Entware `S67routercloud` (0755 root:root); ASUS Edge bin `personal-cloud-rsync`, `personal-cloud-rsync-backup`, `services-start`, `services-start.bak-20260910`, `services-start.pre-dns-watchdog-20261006-213719` (all 0755 root:root). The large unclassified `edge-dns-supervisor` is 603664 bytes; a native ARMv7 binary of that name is a documented project component, but its on-router magic/identity still needs confirmation. The dated scripts are historical-looking copies, **not yet proof they are inactive**.
+
+Public `router/scripts/personal-cloud-rsync` strictly allows rsync server commands targeting `/tmp/mnt/ROUTER_DATA/RouterCloud/`, **not the mount root itself**; `docs/personal-cloud-sync.md` provisions that child with `0700`. The live destination mode and live wrapper compatibility are pending. This explains why the one same-line grep match must not be classified as a confirmed direct mount-root write.
+
+**Separate privileged-hook integrity concern:** operator observed JFFS `/jffs/scripts/services-start` mode 0755 owned by UID:GID 1000:1000, unlike the root-owned managed copy. Public `scripts/install.sh` generates its live managed hook using redirection to an existing path and applies `chmod 0755`, but no explicit `chown 0:0` in the `install_hook` path. That may preserve a pre-existing non-root owner; provenance is unproven. Firmware hook execution as root makes owner-write a possible integrity boundary, requiring separate remediation planning, **not an unreviewed live chown**. Verify marker/content equivalence, parent directory and account privileges first.
+
+Next gate: safely inspect only directory mode/owner, wrapper marker, hook mode/owner, and ELF header classification without printing source, credentials or script contents. The root-mode `0755` compatibility gate remains REVIEW, production approval withheld.
+
+[Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6187927310).
