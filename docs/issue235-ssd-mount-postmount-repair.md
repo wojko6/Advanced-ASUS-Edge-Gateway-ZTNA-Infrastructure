@@ -227,3 +227,11 @@ Read-only live ASUS inspection identified the three `0777`, root:root, non-stick
 Names suggest test and rollback uses, but the first two have not been proven obsolete, and the rollback directory must be treated as recovery-critical until inspected. Existing permission exposure persists inside these directories even if the mount-root inode changes from `0777` to `0755`. Do not automatically delete or chmod anything. Main-branch source search did not find exact references to the two favorites names; a search result for `routercloud-home-rollback.sh` uses a different temporary filename pattern and does not validate ownership or use of `.routercloud-rollback`.
 
 Next review is read-only collection of directory metadata and child type/mode counts, without printing contents or private credentials; review service/backup reliance before any separate child hardening. Operator reported file contents untouched, permission changes NO and services restarted NO. This remains out of the narrow mount-root mode patch deployment authorization.
+
+## 2026-10-15 — RouterCloud directory dependency sampling (read-only)
+
+Operator checked first-level *subdirectories* within the three root-owned, nonsticky world-writable directories on ROUTER_DATA. Favorites ARMv7 smoke has one world-writable subdir; favorites feature check has two world-writable subdirs; rollback has one root-standard, non-world-writable subdir. All three report zero active process file-descriptor/current-working-directory path references at the instant of sampling. No directory names below the previously known three locations, file contents, process arguments or secrets were disclosed; no production changes.
+
+Zero references are **not** evidence of an obsolete workspace or safe deletion. Parent directory mode 0777 still permits unprivileged manipulation of child *names*, including replacement of the protected rollback subdirectory's entry. Narrow Draft PR #245 only repairs the SSD mount-root inodes; independent RouterCloud subtree hardening requires a separate consumer, deployment, rollback and backup review. No recursive chmod or cleanup is authorized.
+
+[Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6187630758).
