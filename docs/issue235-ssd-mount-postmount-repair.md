@@ -76,3 +76,36 @@ The isolated test creates fake directories under a randomized `/tmp` tree, rewri
 - [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235)
 - [Root-cause source finding](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6185981597)
 - [Oct 14 public engineering worklog](worklog/2026-10-14.md)
+
+## 2026-10-15 — structural JFFS post-mount snapshot
+
+On the production router, the operator performed another read-only JFFS hook structural check:
+
+```text
+POST_MOUNT_SYNTAX=PASS
+POST_MOUNT_SHA256=8625bee2558d046e789e9ea871ed5d7758be42c39548ca7f6a63757704a02b66
+LINE_4=MOUNT_ARGUMENT
+LINE_6=IF
+LINE_7=IF
+LINE_8=SWAP
+LINE_9=FI
+LINE_11=IF
+LINE_13=ELSE
+LINE_15=FI
+LINE_16=FI
+LINE_18=AMTM
+LINE_23=IF
+LINE_29=IF
+LINE_36=ELSE
+LINE_39=FI
+LINE_40=FI
+SCRIPT_CONTENT_PRINTED=NO
+FILES_MODIFIED=NO
+PERMISSIONS_MODIFIED=NO
+SWAP_MODIFIED=NO
+SERVICES_RESTARTED=NO
+```
+
+**Interpretation:** `post-mount` remains syntactically valid, with an observed swap operation on line 8 before the AMTM sourcing on line 18, consistent with the critical #66 startup ordering. The first compound IF region appears to end at line 16; the proposed insertion region near line 17 is a **candidate only**, because a keyword-level sanitized output cannot prove that the top-level control path reaches the slot or that no additional side effects exist. The immutable-reference SHA-256 is a baseline for subsequent **on-device, read-only** source and staged-copy checks, not a substitute for a byte-for-byte off-router rollback copy.
+
+**Current gate:** do not insert a helper or overwrite `/jffs/scripts/post-mount` yet. A narrowly scoped, read-only check should confirm the exact line 17 class, lack of early `exit/return/exec` before the AMTM call, and balanced `if/fi` at the candidate boundary without exposing hook content. Keep any composed-hook testing in an isolated fixture before operator review. Do not conflate shell syntax PASS with boot persistence or recovery acceptance.
