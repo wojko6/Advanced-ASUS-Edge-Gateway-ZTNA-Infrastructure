@@ -88,6 +88,26 @@ def main() -> int:
             executable=True,
         )
 
+        # Mimic GNUton's ls -ldn output using an isolated local fixture.
+        # No host /bin/busybox or early-boot /opt dependency is required.
+        mock_busybox = tools / "busybox"
+        mock_busybox_source = (
+            "#!/usr/bin/env python3\n"
+            "import os, stat, sys\n"
+            "if len(sys.argv) != 4 or sys.argv[1:3] != ['ls', '-ldn']:\n"
+            "    sys.exit(2)\n"
+            "path = sys.argv[3]\n"
+            "metadata = os.lstat(path)\n"
+            "print(f'{stat.filemode(metadata.st_mode)} 2 "
+            "{metadata.st_uid} {metadata.st_gid} {metadata.st_size} "
+            "Jan 01 00:00 {path}')\n"
+        )
+        put(mock_busybox, mock_busybox_source, executable=True)
+        put(tools / "chmod", '#!/bin/sh\nexec /bin/chmod "$@"\n', executable=True)
+        assert "stat -c" not in source
+        assert "command -v blkid" not in source
+        assert "/opt/bin" not in source
+
         modified = source
         modified = modified.replace(
             "MOUNT_ROOT='/tmp/mnt'", f"MOUNT_ROOT='{mount_root}'"
@@ -100,6 +120,13 @@ def main() -> int:
             "EXPECTED_OWNER='0:0'",
             f"EXPECTED_OWNER='{os.getuid()}:{os.getgid()}'",
         )
+        for before, after in (
+            ("BUSYBOX_BIN='/bin/busybox'", f"BUSYBOX_BIN='{mock_busybox}'"),
+            ("BLKID_BIN='/sbin/blkid'", f"BLKID_BIN='{mock_blkid}'"),
+            ("CHMOD_BIN='/bin/chmod'", f"CHMOD_BIN='{tools / 'chmod'}'"),
+        ):
+            assert modified.count(before) == 1, f"Tool contract drift: {before}"
+            modified = modified.replace(before, after)
         put(helper, modified)
 
         def reset(mount: Path, root_mode: int = 0o777) -> None:
@@ -136,6 +163,25 @@ def main() -> int:
              a.returncode == 0 and "ALREADY_0755" in a.stdout
              and mode(data) == 0o755)
 
+
+        # Malformed ls metadata and wrong owners must never authorize chmod.
+        reset(data)
+        mounts()
+        put(mock_busybox, '#!/bin/sh\nprintf "%s\\n" "drwxrwxrwx 2 invalid 0 4096 Jan 01 00:00 fixture"\n',
+            executable=True)
+        a = run(helper, data, DATA_UUID)
+        case("INVALID_LS_OWNER_FAIL_CLOSED", a.returncode != 0
+             and mode(data) == 0o777)
+        put(mock_busybox, mock_busybox_source, executable=True)
+
+        reset(data)
+        mounts()
+        put(mock_busybox, '#!/bin/sh\nprintf "%s\\n" "drwxrwxrwx 2"\n',
+            executable=True)
+        a = run(helper, data, DATA_UUID)
+        case("TRUNCATED_LS_RECORD_FAIL_CLOSED", a.returncode != 0
+             and mode(data) == 0o777)
+        put(mock_busybox, mock_busybox_source, executable=True)
 
         # GNUton BusyBox ignores -o value: tagged quoted UUID+LABEL arrives.
         # Also support util-linux raw UUID and reject ambiguous/malformed tags.
