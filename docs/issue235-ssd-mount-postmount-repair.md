@@ -279,3 +279,11 @@ Final router diagnostic isolated the unresolved conditions: live `/jffs/scripts/
 The DNS supervisor is a regular 603664-byte, root-owned mode 0755 file. ELF header was not inspected because `head`, `od`, `dd`, and `hexdump` were unavailable in this restricted shell; that does NOT establish binary corruption. Public `scripts/install.sh` pins the packaged supervisor SHA-256 to `26f3615a99448469718f682bde6960e27e30b9466ecfc427c7e392c317103740` and supports the standalone `/bin/busybox sha256sum` applet for portable verification. Next read-only gate should verify the pinned hash without dumping file bytes, check the managed hook's existence, compare script hashes only (difference may be expected because the managed firmware hook is a wrapper), and count running UID 1000 process identities without printing process arguments. No production changes.
 
 [Issue evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188077727).
+
+## 2026-10-15 — hash tool unavailable / uid 1000 runtime snapshot
+
+Read-only router result: `HASH_PROVIDER=UNAVAILABLE` in the current shell, therefore `SUPERVISOR_SHA256=UNAVAILABLE` and `SCRIPT_HASH_COMPARISON=UNAVAILABLE`; this is a tooling limitation, not a hash mismatch. Managed `/jffs/addons/asus-edge/bin/services-start` exists with mode `0755` and owner `root:root`. The active `/jffs/scripts/services-start` remains mode `0755` and UID:GID `1000:1000`, and the managed marker was previously absent. Of 148 running processes successfully sampled, zero matched numeric real/effective UID 1000. An unmapped UID and zero observed processes do **not** eliminate the potential root-executed-hook ownership risk.
+
+**Next diagnostic only:** inspect configured PATH presence and fixed absolute locations for preexisting hash utilities, then verify expected supervisor SHA and compare files without emitting digests if an available utility is found. Never install packages, execute hooks, change ownership or restart services merely to recover this diagnostic. The case remains **REVIEW**, with production HOLD.
+
+[Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188148121).
