@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Applies to:** reference ASUS TUF-AX5400 deployment  
-**Last reviewed:** 2026-10-15 (Issue #235 security/SSD checkpoint navigation only; the Oct 13 architecture PDF remains a dated publication, not a live migration acceptance)
+**Last reviewed:** 2026-10-15 (v1.2 production architecture publication source + separately documented optional Flint 4 design; no production migration)
 
 This document is the entry point for the network-design view of the project.
 It complements the repository's incident/case-study material by organizing the
@@ -23,7 +23,9 @@ N/A, PLANNED or NOT VALIDATED instead of implying that it exists.
 
 ## 2. Physical topology and hardware boundary
 
-- [Latest technical architecture PDF (2026-10-13, v1.1)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf) — current dated portfolio publication; authoritative state and per-topic diagrams remain in maintained Markdown and dated evidence.
+- [Current production architecture — 2026-10-15, v1.2 (Markdown publication)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md) — latest dated **production** description; current ASUS only, including #235/SSD/PrivDrop lab limitations. Companion v1.2 PDF has been generated separately but is **not linked in the repository until the binary is uploaded**.
+- [Future architecture: Flint 4 gateway + ASUS services node — 2026-10-15 (design only)](architecture/Flint4-ASUS-Future-Architecture-2026-10-15.md) — optional, not purchased/deployed; VLANs configured at Flint, no mandatory separate switch, DNS failover requiring independent validation.
+- [Historical technical architecture PDF (2026-10-13, v1.1)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf) — retained unchanged for provenance; do not treat its dated status as overriding the v1.2 current-state Markdown.
 - [Historical architecture overview (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — original dated snapshot, not current project status.
 - [Historical architecture PDF (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) — retained unmodified for provenance.
 - [Hardware and infrastructure inventory](hardware-inventory.md)
@@ -32,6 +34,7 @@ N/A, PLANNED or NOT VALIDATED instead of implying that it exists.
 
 The current reference design uses one ASUS edge gateway and off-router Fedora
 for monitoring/administration. No redundant gateway or redundant WAN is claimed.
+The Flint 4 scenario is a conditional **future design only**, and must not be confused with the live ASUS topology. Its physical concept uses **direct Flint LAN ports and VLANs**; a managed switch is optional.
 
 ## 3. Addressing, trust zones and segmentation
 
