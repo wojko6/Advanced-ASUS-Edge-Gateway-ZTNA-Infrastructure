@@ -1,8 +1,8 @@
 # Project status
 
-**Status date:** 2026-10-12 (Grafana synthetic end-to-end notification acceptance; architecture/roadmap decision; latest broad ASUS router checkpoint remains 2026-10-09). The architectural decision and repo edits are **documentation only**; no new live-router acceptance is implied.
+**Status date:** 2026-10-15 (Issue #235 bounded SSD/JFFS read-only production observations, Draft PR #245 laboratory evidence and operator-reported unpublished PrivDrop work). This is a documentation checkpoint, **not a new broad router acceptance or production deployment**; the latest broad ASUS reboot/healthcheck checkpoint remains 2026-10-09.
 
-**Latest live RouterCloud checkpoint:** 2026-10-03
+**Latest live RouterCloud checkpoint:** 2026-10-14 bounded user-reported browser/File/Favorites and backup validation after DAC Stage 1 (the earlier broad RouterCloud checkpoint remains 2026-10-03). On 2026-10-15 read-only sampling still found Dufs running as root; no runtime privilege reduction is accepted.
 
 **Latest broad router checkpoint:** 2026-10-09 — controlled reboot of the existing router with the Pi-hole-aware DNS stack and project healthcheck 0/0; the 2026-10-08 DNS Guard v3.2 live break-glass/power-cycle gate remains a separate earlier acceptance
 
@@ -13,6 +13,18 @@
 **Current platform decision (2026-10-12):** no RT-BE88U migration or purchase is planned. Keep TUF-AX5400 production and complete CORE v1.0; consider OPNsense/x86 **only in an unspecified future**, starting with an isolated Windows 11 VM lab (not yet installed). See [platform direction](docs/architecture/platform-direction-2026-10-12.md). Historical RT-BE88U references remain dated context, not today's target.
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #129 Pi-hole-aware disaster recovery, #196 DNS Guard candidate hardening, #142/#214 client-visible detection/watchdog independence, #176 exit-node source scoping, #108 DNS visibility, #68 encrypted-DNS assessment and platform-neutral #143 trust-zone design. Issue #178 is **closed**, but known grouping/anti-flap, Email+Telegram provisioning parity and persistence-after-reload evidence gaps must not be portrayed as completed.
+
+## 2026-10-15 — Issue #235 SSD persistence and PrivDrop laboratory checkpoint
+
+**Source/evidence:** [2026-10-15 worklog](docs/worklog/2026-10-15.md), [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) and [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245). **Issue #235 OPEN; PR #245 DRAFT/UNINSTALLED; production GO/NO-GO HOLD.** The published branch status is not equivalent to operator-reported local Fedora work.
+
+- The Oct 14 explicitly authorized SSD DAC Stage 1 passed within its measured scope, **but did not survive remount**: on Oct 15 both ext4 SSD mount roots were again root:root `0777`, consistent with the matching GNUton firmware's mount-time mode reset. Protected RouterCloud/Entware descendants and both active swaps remained verified in read-only checks. No Oct 15 remedial production chmod is reported.
+- Draft PR #245 adds a narrowly allowlisted, UUID-verified `post-mount` repair candidate using early-boot firmware-native utilities. Private Fedora UUID mapping, exact pinned V3 insertion, isolated atomic rollback and candidate CI passed; **nothing was installed under live JFFS**. A separate trusted-`services-start` ownership discrepancy prevents use of the generic installer for this narrow change. Two SSD-referencing init scripts still require consumer review, and real early-boot/rollback compatibility is unproven.
+- The live RouterCloud process was sampled as **root**, with broad capabilities. Operator reported a separate **local-only** ARMv7 PrivDrop branch `security/issue235-privdrop-armv7` (latest local commit `e2ad8dc`, JFFS-8), with QEMU fixture PASS for SHA-256 vectors, sealed memfd and invalid-input rejection. **Not pushed/merged/deployed**, and neither memfd execution on the target router nor a real RouterCloud nonroot start has been validated. Do not infer source CI from local PASS.
+- User-file origin/security work (including custom 404 active-content handling) and broader authentication/preview regressions are **not yet production accepted**. Stable upstream Dufs remains the update policy; do not install an RC solely for #235.
+- The operator confirmed independent wired local administrative access and possession of an integrity-checked encrypted recovery copy, but no full live-JFFS restore has been demonstrated. Separate authorization is needed for JFFS payload staging, later hook activation and a future reboot.
+
+**Progress estimates are informal engineering planning, not release gates.** The remediation is not complete until least-privilege/origin tests and scoped router recovery/regression gates have passed.
 
 ## 2026-10-12 — Grafana/Loki monitoring audit (bounded)
 

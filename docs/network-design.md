@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Applies to:** reference ASUS TUF-AX5400 deployment  
-**Last reviewed:** 2026-10-13 (architecture PDF v1.1 publication/navigation only; prior live validation dates and scopes are unchanged)
+**Last reviewed:** 2026-10-15 (Issue #235 security/SSD checkpoint navigation only; the Oct 13 architecture PDF remains a dated publication, not a live migration acceptance)
 
 This document is the entry point for the network-design view of the project.
 It complements the repository's incident/case-study material by organizing the
@@ -58,6 +58,14 @@ NAT and keeps encrypted-DNS bypasses outside universal enforcement claims.
 - [Threat model](threat-model.md)
 - [L2 and network-access security applicability](architecture/l2-security-applicability.md)
 - [Port exposure and trust-boundary audit](case-studies/port-exposure-trust-boundary-audit-2026-10-07.md)
+- [Issue #235 — 2026-10-15 SSD/JFFS persistence, local PrivDrop ARMv7 and origin-security checkpoint](worklog/2026-10-15.md)
+
+The current production RouterCloud process still runs as root. Issue #235's
+SSD repair candidate is DRAFT/uninstalled, and ARMv7 PrivDrop remains
+operator-reported local laboratory work. Do not mistake historical DAC Stage 1
+PASS for a reboot-persistent fix; both SSD mount roots were observed 0777 after
+Oct 15 mount. See [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235)
+and the dated worklog for approval/rollback gates.
 
 ## 6. Management plane
 

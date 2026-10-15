@@ -1,5 +1,14 @@
 # Roadmap
 
+### Security #235 checkpoint — 2026-10-15 (evidence-scoped)
+
+- **Current priority:** finish the [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) security scope without risking the reference router. See [dated worklog](worklog/2026-10-15.md). The issue remains **OPEN** and SSD persistence [PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245) remains **DRAFT / NOT INSTALLED / GO-NO-GO HOLD**.
+- **SSD/JFFS:** the accepted Oct 14 DAC Stage 1 was not boot-persistent: matching GNUton firmware mode reset left two live ext4 mount roots `0777` on Oct 15. UUID-guarded repair, secure JFFS metadata gates and exact V3 insertion passed isolated/offline checks only. Classify two SSD-referencing scripts; require validated rollback and **separate operator approval for staging, activation, and reboot**. Avoid the generic installer and do not change the separate UID 1000-owned `services-start`.
+- **ARMv7 PrivDrop:** operator-reported local branch `security/issue235-privdrop-armv7`, latest local `e2ad8dc` (JFFS-8). QEMU fixture PASS is **not** remote-reviewed source, authenticated deployment hash, proven target `memfd` execution or a real ASUS nonroot service. Publish/review sanitized source and test actual binary/service behavior before a scoped pilot; live Dufs remains root.
+- **HTTP active-content origin:** complete 404, HTML/SVG/XML, content-disposition/CSP, authentication and preview regressions. Tests and draft upstream assets work must not be presented as an installed origin fix.
+- **Acceptance:** reviewable code and CI, consistent service/backup health, documented recovery, and properly authorized live verification; estimates of percent/time never substitute for these gates. No new Dufs RC update, routing/DNS changes or unattended router modification.
+
+
 ### Current work scheduling — 2026-10-13 (supersedes older #212 next-step text)
 
 - **#212 LAN/Tailscale client DNS failover is PAUSED until separate suitable hardware is available**. Its issue remains open for traceability, not as scheduled engineering or deployment; RC13J v0.41 sidecar direct-access bypass and ASUS firmware feature gates remain unresolved. No further lab/pilot/production work is approved without a new operator decision.
