@@ -87,6 +87,8 @@ directory.
 
 ## Grafana alerting
 
+**2026-10-15 repository synchronization:** [Merged PR #250](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/250) aligns the `routercloud-backup.timer` **source** with daily 21:30 and the Grafana `routercloud_backup_stale` **source** with a 26-hour threshold / 48-hour metrics window (and matching backup-failure lookback). Operator-reported live Fedora timer and a real scheduled backup on 2026-10-14 at 21:30 passed. Last reported **running** Grafana threshold on Oct 14, however, was still 8h/24h; staged 26h/48h file content was **not reloaded**. The repository merge does not install a unit or reload Grafana, and does not assert the production rule is now 26h. Any future activation must protect the live Email+Telegram contact, reconfirm 15 rules and rollback, and obtain separate explicit approval.
+
 **2026-10-13 bounded V4 follow-up (published 2026-10-15):** The [sanitized Grafana #236 traceability evidence](../evidence/2026-10-13/grafana-rule-traceability-matrix.md) and [dated migration/rollback record](../docs/grafana-236-telegram-chatid-deployment-runbook.md) document operator-confirmed V4 Chat ID protection and a single synthetic test's real Firing+Resolved delivery to **Gmail and Telegram**, with 15 production rules remaining. The live contact point has **Email + Telegram**; the Git source `asus-email-contact.yml` is **Email-only** and is **not safe to apply as a replacement**. Do not infer individual 15-rule delivery, anti-flap, full restore, or a later Grafana provisioning reload from this publication. Related [Issue #236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) remains OPEN.
 
 Fifteen source-controlled Grafana alert rules are provisioned from
@@ -104,7 +106,7 @@ Fifteen source-controlled Grafana alert rules are provisioned from
 - missing DNS Guard watchdog (`dns_guard_watchdog_missing`);
 - repeated DNS recovery/flapping (`dns_guard_recovery_flapping`);
 - RouterCloud backup result is failed;
-- RouterCloud backup age exceeds eight hours, with an additional five-minute `for` window;
+- RouterCloud backup age exceeds **26 hours** in current **Git source**, with an additional five-minute `for` window; its reference daily 21:30 timer and the 48-hour stale/failure lookbacks are source-aligned in [merged PR #250](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/250). **Production deployment of this rule is NOT independently confirmed** (last documented running Grafana on Oct 14 used 8h/24h);
 - RouterCloud maintenance/integrity result is failed;
 - RouterCloud maintenance age exceeds eight days, with an additional thirty-minute `for` window.
 
