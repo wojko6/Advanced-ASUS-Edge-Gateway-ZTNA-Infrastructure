@@ -1026,11 +1026,11 @@ for grafana_routercloud_guard in \
     'uid: routercloud_backup_stale' \
     'uid: routercloud_maintenance_bad' \
     'uid: routercloud_maintenance_stale' \
-    "last_over_time(routercloud_backup_last_run_success[24h])" \
-    "time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[24h])" \
+    "last_over_time(routercloud_backup_last_run_success[48h])" \
+    "time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[48h])" \
     "last_over_time(routercloud_maintenance_last_run_success[30d])" \
     "time() - last_over_time(routercloud_maintenance_last_run_timestamp_seconds[30d])" \
-    'params: [28800]' \
+    'params: [93600]' \
     'params: [691200]' \
     'receiver: ASUS Edge Gateway Email'
 do
@@ -1039,6 +1039,12 @@ do
         exit 1
     }
 done
+
+# Ensure the source-control timer matches the new once-daily backup alert.
+if ! grep -Fx 'OnCalendar=*-*-* 21:30:00' "$REPO_DIR/monitoring/systemd/routercloud-backup.timer" >/dev/null; then
+    echo 'FAIL: RouterCloud backup timer must run daily at 21:30 local time' >&2
+    exit 1
+fi
 
 for grafana_contact_guard in \
     'name: ASUS Edge Gateway Email' \
