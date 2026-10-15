@@ -235,3 +235,19 @@ Operator checked first-level *subdirectories* within the three root-owned, nonst
 Zero references are **not** evidence of an obsolete workspace or safe deletion. Parent directory mode 0777 still permits unprivileged manipulation of child *names*, including replacement of the protected rollback subdirectory's entry. Narrow Draft PR #245 only repairs the SSD mount-root inodes; independent RouterCloud subtree hardening requires a separate consumer, deployment, rollback and backup review. No recursive chmod or cleanup is authorized.
 
 [Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6187630758).
+
+## 2026-10-15 — SSD writer classification (read-only)
+
+Reported router classification:
+
+| Area | Writer candidates | Absolute mount paths | Write command + mount path on same line | Privilege-change hints | Oversized unknown files |
+|---|---:|---:|---:|---:|---:|
+| JFFS hooks | 1 | 0 | 0 | 0 | 0 |
+| Entware init | 1 | 1 | 0 | 0 | 0 |
+| ASUS Edge bin | 5 | 2 | 1 | 0 | 1 |
+
+The earlier scan identified 45 inspected files, 9 files referring to SSD, and 7 candidates matching a broad write-command heuristic. The two swap files are mode 0600 and root-owned. This classification found one syntactic same-line match, **not one proven SSD mount-root write**. Dynamic paths, source-vs-destination ambiguity, non-shebang text, systemd service users, privileged versus unprivileged commands and scheduled jobs remain outside this heuristic. The oversized unknown file needs metadata/type inspection; do not execute it to classify it. No content, filename, file, permission, swap or service change was reported.
+
+The remaining compatibility gate is REVIEW, with production changes blocked. Next inspect the one same-line candidate's destination classification without exposing source text and determine the type of oversized file. Do not merge or deploy until consumers and rollback are accepted explicitly.
+
+[Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6187804095).
