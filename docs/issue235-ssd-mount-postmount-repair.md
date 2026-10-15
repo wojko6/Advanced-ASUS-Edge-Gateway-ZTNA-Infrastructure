@@ -44,6 +44,12 @@ The real ASUS operator ran UUID probes for both ext4 SSD mounts. Both were genui
 
 The isolated candidate was updated to accept **exactly** canonical value-only UUID output and a single quoted tagged GNUton UUID. It rejects malformed, unquoted, duplicated or mismatched UUID fields without proceeding to chmod. The UUID is still compared to the privately preverified expected UUID; parsing a label by itself is not sufficient identity validation. The CI mock suite now explicitly models GNUton tagged/quoted output for both volumes, confirms value-only compatibility, and covers malformed/duplicate-tag rejection. **This is not proof of production integration or reboot persistence.**
 
+## 2026-10-15 — restricted-PATH live-router gate accepted
+
+Operator ran the read-only on-ASUS `ISSUE235 / EARLY PATH UUID GATE`, deliberately invoking `blkid` with `PATH=/usr/sbin:/usr/bin:/sbin:/bin` to approximate the draft helper's command lookup. Both `ROUTER_DATA` and `ENTWARE` reported `RESTRICTED_PATH_BLKID_RC=0`, `UUID_FORMAT=PASS`, and the pair reported `UUIDS_DISTINCT=PASS` with `ISSUE235_EARLY_PATH_GATE=PASS`. No identifiers were printed and the operator reported `PRODUCTION_CHANGES=NO`.
+
+**Acceptance boundary:** the check ran on the *already-booted router*, not from a newly invoked early `post-mount` hook. It establishes executable availability and UUID parser-compatible output under the intended restricted PATH in the current environment, **not** timing, device readiness, actual hook integration or post-reboot persistence. The hook must not depend on Entware or `/opt`-only utilities; its integration is still blocked pending read-only live-hook control-flow inspection, private expected-UUID binding and verified rollback.
+
 ## Local isolated test (Fedora/CI, unprivileged)
 
 ```sh
