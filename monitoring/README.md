@@ -87,6 +87,8 @@ directory.
 
 ## Grafana alerting
 
+**2026-10-13 bounded V4 follow-up (published 2026-10-15):** The [sanitized Grafana #236 traceability evidence](../evidence/2026-10-13/grafana-rule-traceability-matrix.md) and [dated migration/rollback record](../docs/grafana-236-telegram-chatid-deployment-runbook.md) document operator-confirmed V4 Chat ID protection and a single synthetic test's real Firing+Resolved delivery to **Gmail and Telegram**, with 15 production rules remaining. The live contact point has **Email + Telegram**; the Git source `asus-email-contact.yml` is **Email-only** and is **not safe to apply as a replacement**. Do not infer individual 15-rule delivery, anti-flap, full restore, or a later Grafana provisioning reload from this publication. Related [Issue #236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) remains OPEN.
+
 Fifteen source-controlled Grafana alert rules are provisioned from
 [`grafana/provisioning/alerting/asus-tuf-alerts.yml`](grafana/provisioning/alerting/asus-tuf-alerts.yml):
 
