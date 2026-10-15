@@ -189,3 +189,30 @@ The separately stored encrypted copy is on the **external Verbatim SSD**, not th
 Following the independently encrypted Verbatim SSD backup and successful streamed recovery SHA verification, the operator reported `MOUNT_IDENTITY=PASS`, `USB_IDENTITY=PASS`, `ENCRYPTED_ARCHIVE=PASS`, `DATA_FLUSH=COMPLETE`, `SAFE_UNMOUNT=PASS`, `USB_POWER_OFF=PASS`, `ROUTER_MODIFIED=NO`, and `ISSUE235_SAFE_DISCONNECT_COMPLETE`. The OS confirmed that the external exFAT partition unmounted. It is safe to physically disconnect the drive. Reconnect/decrypt verification after an extended offline period remains a separate optional durability gate; no production ASUS files were changed.
 
 **Next gate (read-only):** verify actual current JFFS path/permission ownership and whether the candidate helper and private expected-UUID files are even installed. No candidate file or private UUID has been deployed by this draft; absent helper/UUID files must be reported as `NOT_CONFIGURED`, not guessed or silently created. Then audit actual mount-root writers/consumers for mode `0755` compatibility and prepare an explicit go/no-go; no live chmod/hook edits/reboot.
+
+## 2026-10-15 — live-router JFFS baseline inventory
+
+Operator's **read-only** pre-install audit returned:
+
+```text
+JFFS_MODE_OWNER=755:0:0
+ADDONS_MODE_OWNER=755:0:0
+ASUS_EDGE_MODE_OWNER=755:0:0
+BIN_MODE_OWNER=755:0:0
+PRIVATE=NOT_CONFIGURED
+ROUTER_DATA_UUID=NOT_CONFIGURED
+ENTWARE_UUID=NOT_CONFIGURED
+SSD_MODE_HELPER=NOT_CONFIGURED
+ORIGINAL_POST_MOUNT=PASS
+POST_MOUNT_SYNTAX=PASS
+UUID_VALUES_PRINTED=NO
+PRIVATE_FILE_CONTENT_PRINTED=NO
+JFFS_MODIFIED=NO
+ROUTER_PERMISSIONS_MODIFIED=NO
+SERVICES_RESTARTED=NO
+```
+
+Current ancestor and bin directories are `0755 root:root`. The proposed private UUID mapping directory and UUID files and mode helper do **not yet exist**, consistent with the Draft PR being **not installed**. No writes or production service operations occurred. Their target permissions (`private` root:root `0700`, UUID files root:root `0600`, executable helper root-owned with reviewed access) remain **design requirements**, not production PASS findings. The baseline live `post-mount` SHA/parse remained unchanged.
+
+**Upcoming read-only gate:** enumerate only sanitized aggregate first-level filesystem owner/mode classes and running service identities (without printing directory contents or credentials); confirm current SSD roots' mount identity/mode and swap active state; review any legitimate non-root root-level writers. Root-mode `0755` changes must remain gated pending that assessment, protected private UUID storage design, installer ownership, staged integration review, and explicit authorization.
+
