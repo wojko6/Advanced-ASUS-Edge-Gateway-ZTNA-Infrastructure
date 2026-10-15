@@ -335,3 +335,11 @@ Operator completed both local Fedora UUID stages with no router writes. Initial 
 This is not a live JFFS install or production acceptance. Router private directory root:root 0700, file owner root:root 0600, helper delivery/integrity, existing post-mount exact byte provenance and insertion order, consumer compatibility, and restoration gating still need formal signoff. Planned integration must always keep swap activation before AMTM and never abort unrelated mounts. The separate UID1000-owned custom `services-start` hook must remain untouched. PR #245 remains DRAFT, deployment/reboot withheld pending explicit operator approval.
 
 [Issue #235 private staging result](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6189124550).
+
+## 2026-10-15 — saved post-mount candidate offline structural preflight PASS
+
+Operator reported a Fedora-only offline audit of the privately saved live `post-mount` original and candidate: both private regular files (0600) and `sh -n` PASS; the original still matches SHA-256 `8625bee2558d046e789e9ea871ed5d7758be42c39548ca7f6a63757704a02b66`; saved candidate passes prefix/suffix byte equality against the original with a single nonempty insertion after line 16. The insertion contains expected issue #235 helper and private UUID file identifiers; original swap logic was found before insertion and AMTM logic after. `OFFLINE_POSTMOUNT_COMPOSITION=PASS`; no live router access or file mutations occurred.
+
+**Important scope:** this structural test does not prove the inserted bytes match the **current** PR #245 snippet exactly, nor that current live JFFS source remains at the saved baseline, nor that early-boot integration functions. Next independent gate: compare the inserted slice with the publicly version-pinned snippet without printing original JFFS text or private UUIDs; confirm current live hook baseline read-only and verify the rollback/consumer contract. The private UUID staging V2 and independent manifest audit have passed separately. Production deployment and reboot remain on HOLD pending explicit operator approval; `services-start` is unchanged and its UID1000 owner concern separate.
+
+[Issue #235 result](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6189190119).
