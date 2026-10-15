@@ -615,12 +615,12 @@ groups:
         data:
           - refId: A
             relativeTimeRange:
-              from: 86400
+              from: 172800
               to: 0
             datasourceUid: victoriametrics
             model:
               editorMode: code
-              expr: 'last_over_time(routercloud_backup_last_run_success[24h])'
+              expr: 'last_over_time(routercloud_backup_last_run_success[48h])'
               instant: true
               intervalMs: 1000
               legendFormat: __auto
