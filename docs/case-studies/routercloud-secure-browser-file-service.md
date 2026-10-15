@@ -35,6 +35,7 @@ RouterCloud content root and must pass the application authorization layer.
 The production checkpoint records the live service state after the 2026-10-03
 deployment. Separate evidence covers the UI and password-recovery paths:
 
+- [Historical #137 LAN/Tailscale and reboot acceptance (2026-09-30)](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) — date-scoped operator evidence, **not** an assertion that old Dufs/Entware scripts are suitable today.
 - [UI production validation](../../evidence/2026-10-03/routercloud-ui-production-validation.md)
 - [password-recovery production validation](../../evidence/2026-10-03/routercloud-password-recovery-production-validation.md)
 
