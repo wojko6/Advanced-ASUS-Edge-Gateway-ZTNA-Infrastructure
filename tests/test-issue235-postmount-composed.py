@@ -101,12 +101,12 @@ def main():
         # before the free insertion slot, and sourced AMTM afterwards.
         fixture = (
             "#!/bin/sh\n"
-            'if [ -n "\${1-}" ]; then\n'
+            'if [ -n "${1-}" ]; then\n'
             '  if [ -f "$1/myswap.swp" ]; then\n'
             '    swapon "$1/myswap.swp" >/dev/null 2>&1\n'
             '  fi\n'
             'fi\n'
-            'if [ -n "\${1-}" ]; then :; else :; fi\n'
+            'if [ -n "${1-}" ]; then :; else :; fi\n'
             + snippet + "\n"
             + f'. "{amtm}"\n'
             + 'printf "END\\n" >> "$ISSUE235_LAB_EVENTS"\n'
