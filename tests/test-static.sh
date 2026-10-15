@@ -1026,11 +1026,12 @@ for grafana_routercloud_guard in \
     'uid: routercloud_backup_stale' \
     'uid: routercloud_maintenance_bad' \
     'uid: routercloud_maintenance_stale' \
-    "last_over_time(routercloud_backup_last_run_success[24h])" \
+    "last_over_time(routercloud_backup_last_run_success[48h])" \
     "time() - last_over_time(routercloud_backup_last_run_timestamp_seconds[48h])" \
     "last_over_time(routercloud_maintenance_last_run_success[30d])" \
     "time() - last_over_time(routercloud_maintenance_last_run_timestamp_seconds[30d])" \
     'params: [93600]' \
+    'OnCalendar=*-*-* 21:30:00' \
     'params: [691200]' \
     'receiver: ASUS Edge Gateway Email'
 do
