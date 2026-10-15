@@ -311,3 +311,11 @@ A local, non-executing structural audit of that verified copy counted matches in
 **Gate:** retain the live custom hook unmodified and protect its off-router original; root-owned managed script cannot be substituted. The distinct UID 1000 hook ownership concern needs a separate safety and rollback decision. Absence of literal direct SSD paths favors the narrow SSD mount-root repair but does not constitute proof of complete write compatibility; inspect active configured writers and private UUID storage before any deployment. PR #245 remains DRAFT and uninstalled. Post-mount swap-before-AMTM order is not to be disturbed.
 
 [Issue #235 audit](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188501055).
+
+## 2026-10-15 — early-boot tool resolution compatibility BLOCKER
+
+Operator's native read-only Asuswrt shell inventory after the earlier UUID staging preflight stopped: `stat` is executable at `/opt/bin/stat` only (Entware), whereas `awk` exists at `/usr/bin/awk`, `blkid` at `/sbin/blkid`, and `chmod` at `/bin/chmod`. Available `/bin/busybox` implements `awk`, `blkid`, `chmod`, but **not** the `stat` applet. The restricted early boot PATH embedded by the draft helper excludes /opt, and a direct `stat` execution under that PATH returned REVIEW. In this observed firmware shell, `command -v` returned MISSING for all four commands even though direct tools may work; therefore the helper's `command -v blkid` guard is not reliable without a separate actual-execution test. Do not patch these gates by adding Entware to the early-boot PATH.
+
+The separate read-only UUID diagnostics confirmed exactly one ext4 block device for each managed mount, mode `0777` owner root for both, `blkid` return code zero, a single valid tagged UUID for each, and distinct identifiers; no UUID values were shown. **No private UUID staging files were created.** Before editing the draft helper, investigate a firmware-native ownership/mode representation, e.g. explicit BusyBox `ls -ldn` in a read-only probe, and validate its exact output parsing. Preserve root-only ownership and reject every unexpected format. No live changes, no package installs, no helper activation or reboots.
+
+[Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188825461).
