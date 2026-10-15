@@ -1,0 +1,140 @@
+#!/bin/sh
+# Issue #235: DRAFT mount-root mode repair for controlled post-mount integration.
+# DO NOT INSTALL OR SOURCE THIS FILE ON PRODUCTION UNTIL THE REVIEW GATE.
+# Invocation: issue235-ssd-mount-mode /tmp/mnt/ROUTER_DATA EXPECTED_PARTITION_UUID
+# All source device/UUID and mountpoint checks are mandatory. Exit !=0 fails closed.
+set -u
+
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+MOUNT_ROOT='/tmp/mnt'
+MOUNT_TABLE='/proc/mounts'
+EXPECTED_OWNER='0:0'
+
+report() {
+    printf 'ISSUE235_MOUNT_MODE=%s\n' "$1"
+}
+blocked() {
+    report "REVIEW"
+    return 1
+}
+
+if [ "$#" -ne 2 ]; then
+    blocked
+    exit 2
+fi
+target=$1
+expected_uuid=$2
+
+case "$target" in
+    "$MOUNT_ROOT/ROUTER_DATA"|"$MOUNT_ROOT/ENTWARE") ;;
+    *)
+        # The firmware calls post-mount for other USB media too.
+        report "SKIP_UNMANAGED_MOUNT"
+        exit 0
+        ;;
+esac
+
+# A syntactically invalid or unknown UUID must never lead to chmod.
+case "$expected_uuid" in
+    ????????-????-????-????-????????????) ;;
+    *) blocked; exit 1 ;;
+esac
+case "$expected_uuid" in
+    *[!0123456789abcdefABCDEF-]*)
+        blocked
+        exit 1
+        ;;
+esac
+
+if [ ! -d "$target" ] || [ -L "$target" ]; then
+    blocked
+    exit 1
+fi
+
+owner=$(stat -c '%u:%g' "$target" 2>/dev/null) || {
+    blocked
+    exit 1
+}
+if [ "$owner" != "$EXPECTED_OWNER" ]; then
+    blocked
+    exit 1
+fi
+
+# Only an exact one-to-one /proc/mounts match of an ext4 block-device
+# mount is accepted. Never operate on an unmounted /tmp/mnt directory.
+source_device=$(awk -v target="$target" '
+    $2 == target {
+        matches++
+        device=$1
+        fstype=$3
+    }
+    END {
+        if (matches == 1 && fstype == "ext4" &&
+            device ~ /^\/dev\//) {
+            print device
+        } else {
+            exit 1
+        }
+    }
+' "$MOUNT_TABLE") || {
+    blocked
+    exit 1
+}
+
+command -v blkid >/dev/null 2>&1 || {
+    blocked
+    exit 1
+}
+actual_uuid=$(blkid -s UUID -o value "$source_device" 2>/dev/null) || {
+    blocked
+    exit 1
+}
+if [ "$actual_uuid" != "$expected_uuid" ]; then
+    blocked
+    exit 1
+fi
+
+mode=$(stat -c '%a' "$target" 2>/dev/null) || {
+    blocked
+    exit 1
+}
+case "$mode" in
+    755) report "ALREADY_0755"; exit 0 ;;
+    777) ;;
+    *) blocked; exit 1 ;;
+esac
+
+# Narrow re-check just before mutation; no recursive operations.
+still_device=$(awk -v target="$target" '
+    $2 == target { matches++; device=$1; fstype=$3 }
+    END {
+        if (matches == 1 && fstype == "ext4") print device
+        else exit 1
+    }
+' "$MOUNT_TABLE") || {
+    blocked
+    exit 1
+}
+if [ "$still_device" != "$source_device" ] ||
+   [ -L "$target" ] ||
+   [ ! -d "$target" ]; then
+    blocked
+    exit 1
+fi
+
+chmod 0755 "$target" || {
+    blocked
+    exit 1
+}
+after=$(stat -c '%a' "$target" 2>/dev/null) || {
+    blocked
+    exit 1
+}
+if [ "$after" != "755" ]; then
+    blocked
+    exit 1
+fi
+
+report "APPLIED_0755"
+exit 0
