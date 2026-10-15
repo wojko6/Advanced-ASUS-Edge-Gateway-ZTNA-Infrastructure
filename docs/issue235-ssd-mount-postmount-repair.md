@@ -147,7 +147,7 @@ SERVICES_RESTARTED=NO
 
 ## Controlled off-router backup and rollback preflight
 
-**Current gate: pending operator execution; this document is not evidence of a completed backup.** Before writing any SSD-mode helper into the live JFFS hook, use the Fedora workstation to **read-only fetch** the router's complete original `/jffs/scripts/post-mount` via the already trusted SSH connection (OpenSSH remote `cat`, not SFTP-dependent `scp`). Keep the downloaded original *locally*, never in a public or private GitHub repository.
+**2026-10-15 operator evidence: single private Fedora off-router baseline copy verified PASS; redundant protected backup remains pending.** Before writing any SSD-mode helper into the live JFFS hook, use the Fedora workstation to **read-only fetch** the router's complete original `/jffs/scripts/post-mount` via the already trusted SSH connection (OpenSSH remote `cat`, not SFTP-dependent `scp`). Keep the downloaded original *locally*, never in a public or private GitHub repository.
 
 Preconditions and acceptance:
 
@@ -158,5 +158,7 @@ Preconditions and acceptance:
 5. Preserve at least one additional **encrypted off-router** copy or established protected backup before any future production maintenance; a single file on the same Fedora disk is not sufficient disaster recovery. Independently confirm recovery access to the router.
 6. **Future rollback procedure, NOT executed by the backup phase:** in a separately authorized maintenance window, stop touching the hook on any concurrent installer/AMTM updater; compare the saved original's SHA-256; restore it atomically via a private staged file to JFFS, preserving root:root and mode `0755`; check `sh -n`, the original hash, swap-before-AMTM ordering and service health. Do not execute the original hook manually: it is an event-driven router hook. If the original is restored, the firmware will still revert the SSD roots to `0777` at subsequent mount; that is a documented security regression to manage rather than a guarantee of remediation.
 
-**Next gate only after snapshot verification:** privately rehearse an injected copy of the *actual* saved hook in a disposable fixture, test safe rollback of the **copy**, and complete consumer/writer compatibility review. Remain in DRAFT until explicit permission for production rollout and a separately approved reboot.
+**2026-10-15 operator evidence: privately composed actual saved-hook copy and disposable byte-for-byte local rollback both PASS.** Original hash verification, restrictive local file/directory permissions, exact single-snippet delta, insertion after line 16, saved and composed `sh -n`, disposable test deployment/rollback to baseline, and preservation of original/candidate were reported PASS. `ROUTER_MODIFIED=NO`. This is an exact-diff and local restore proof; it does not demonstrate actual router hook behavior during boot, real JFFS restore, or independence of copies.
+
+**Next gate:** check availability of a separate protected backup destination, write and verify an encrypted/off-machine copy without exposing the real hook/UUIDs; then audit real consumer permissions and installer ownership before seeking any explicit production authorization. Remain in DRAFT until explicit permission for production rollout and a separately approved reboot.
 
