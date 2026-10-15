@@ -1051,4 +1051,6 @@ do
     }
 done
 
+python3 "$REPO_DIR/tests/test-issue235-ssd-postmount-mode.py"
+
 printf '%s\n' "Static tests passed."
