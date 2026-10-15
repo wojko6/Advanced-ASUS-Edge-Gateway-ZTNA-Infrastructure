@@ -216,3 +216,14 @@ Current ancestor and bin directories are `0755 root:root`. The proposed private 
 
 **Upcoming read-only gate:** enumerate only sanitized aggregate first-level filesystem owner/mode classes and running service identities (without printing directory contents or credentials); confirm current SSD roots' mount identity/mode and swap active state; review any legitimate non-root root-level writers. Root-mode `0755` changes must remain gated pending that assessment, protected private UUID storage design, installer ownership, staged integration review, and explicit authorization.
 
+## 2026-10-15 — three identified RouterCloud writable directories
+
+Read-only live ASUS inspection identified the three `0777`, root:root, non-sticky directories at the ROUTER_DATA mount root:
+
+- `.routercloud-favorites-armv7-smoke`
+- `.routercloud-favorites-feature-check`
+- `.routercloud-rollback`
+
+Names suggest test and rollback uses, but the first two have not been proven obsolete, and the rollback directory must be treated as recovery-critical until inspected. Existing permission exposure persists inside these directories even if the mount-root inode changes from `0777` to `0755`. Do not automatically delete or chmod anything. Main-branch source search did not find exact references to the two favorites names; a search result for `routercloud-home-rollback.sh` uses a different temporary filename pattern and does not validate ownership or use of `.routercloud-rollback`.
+
+Next review is read-only collection of directory metadata and child type/mode counts, without printing contents or private credentials; review service/backup reliance before any separate child hardening. Operator reported file contents untouched, permission changes NO and services restarted NO. This remains out of the narrow mount-root mode patch deployment authorization.
