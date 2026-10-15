@@ -287,3 +287,9 @@ Read-only router result: `HASH_PROVIDER=UNAVAILABLE` in the current shell, there
 **Next diagnostic only:** inspect configured PATH presence and fixed absolute locations for preexisting hash utilities, then verify expected supervisor SHA and compare files without emitting digests if an available utility is found. Never install packages, execute hooks, change ownership or restart services merely to recover this diagnostic. The case remains **REVIEW**, with production HOLD.
 
 [Issue #235 evidence](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188148121).
+
+## 2026-10-15 — off-router supervisor SHA pin verified
+
+The operator reported `SUPERVISOR_SHA256=PASS` from a read-only SSH byte stream of the live `edge-dns-supervisor` to Fedora, hashed locally against the installer-pinned SHA-256. This resolves the prior hash-tool-availability ambiguity and confirms binary identity against the repository artifact. The operator supplied **only** this result; `HOOK_VS_MANAGED` is **not yet reported** and remains UNKNOWN. No router or local file changes were made as part of this verification. Draft PR #245 remains uninstalled and on hold.
+
+[Issue #235 result](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188229976).
