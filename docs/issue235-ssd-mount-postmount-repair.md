@@ -301,3 +301,13 @@ Operator completed a corrected read-only Fedora/off-router SHA-256 comparison wi
 **Next read-only gate:** classify structural invocation markers in the live JFFS hook without printing its contents or modifying it, and determine whether the hook invokes the managed file, Entware/AMTM or other recovery logic. Preserve all existing live startup behavior and the post-mount swap-before-AMTM ordering. No live operations or production authorization; Draft PR #245 remains open.
 
 [Issue #235 result](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188289185).
+
+## 2026-10-15 — private services-start backup and static references
+
+Operator made a private read-only SSH export of the existing live JFFS `services-start` to the Fedora workstation. The archive directory (0700), original-script copy (0600), manifest (0600), original source and metadata matches, SHA-256 parity and `sh -n` all passed. No private shell source or digest was uploaded or printed, no live files were changed.
+
+A local, non-executing structural audit of that verified copy counted matches in non-comment lines: ASUS Edge bin 3, managed services-start absolute path 0, Entware startup 1, Tailscale 32, DNS 15, post-mount 1, swapon 0, direct literal SSD path 0, explicit privilege-change keywords 0. Counts indicate potential independent network startup/recovery behavior but do not establish actual execution paths, dynamically generated paths, or whether services are launched directly. Combined with missing managed marker and hash divergence, this confirms the two scripts cannot be assumed interchangeable.
+
+**Gate:** retain the live custom hook unmodified and protect its off-router original; root-owned managed script cannot be substituted. The distinct UID 1000 hook ownership concern needs a separate safety and rollback decision. Absence of literal direct SSD paths favors the narrow SSD mount-root repair but does not constitute proof of complete write compatibility; inspect active configured writers and private UUID storage before any deployment. PR #245 remains DRAFT and uninstalled. Post-mount swap-before-AMTM order is not to be disturbed.
+
+[Issue #235 audit](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235#issuecomment-6188501055).
