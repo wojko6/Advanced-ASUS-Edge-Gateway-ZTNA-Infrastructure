@@ -5,7 +5,7 @@
 **Reference:** ASUS TUF-AX5400 / GNUton Asuswrt-Merlin `3004.388.11_1-gnuton1_tuf`; Fedora 44 for administration and observability.  
 **Evidence boundary:** this edition incorporates the October 15 security worklog. It is **not** a fresh full production acceptance, blanket deployment instruction, gateway HA assertion or confirmation that locally tested PrivDrop is live.
 
-> **Publication history:** [2026-10-13 PDF v1.1](ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf) is retained unchanged as a dated historical record. This Markdown edition is the maintained v1.2 text. The corresponding generated PDF v1.2 is a separate release artifact and must not be linked here until its binary is actually committed to the repository.
+> **Publication history:** [2026-10-13 PDF v1.1](ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf) is retained unchanged as a dated historical record. This Markdown edition is the maintained v1.2 text. The corresponding [architecture PDF v1.2](ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.pdf) has been committed to the repository; it is a dated 17-page snapshot.
 
 ## 1. Executive architecture
 
