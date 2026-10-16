@@ -31,6 +31,15 @@ zig cc -target arm-linux-musleabi -mcpu=cortex_a7 -mfloat-abi=soft \
 
 Inspect ELF flags, interpreter, dynamic dependencies and run only QEMU tests **before** any live router execution. The prior prototype v0.2 QEMU success is not verification of this new source.
 
+## 2026-10-16 — ARMv7/QEMU off-router verification
+
+The **v1 source above** (not only the earlier v0.2 prototype) was cross-compiled by the operator on Fedora using Zig **0.16.0**, target `arm-linux-musleabi`, CPU `cortex_a7`, soft-float and `-static`. Reported `ARMV7_BUILD=PASS`; `file`/`readelf` showed **ELF32 ARM EABI5 soft-float**, no ELF interpreter (`INTERP=ABSENT`) and no dynamic `NEEDED` dependencies (`STATIC_LINK=PASS`). QEMU user-mode **10.2.2** emulated Cortex-A7. The **normal production CLI build**, invoked only with invalid `--check INVALID`, printed usage and exited **3/REJECT**, confirming emulated startup and argument rejection, **not** checking a mounted SSD.
+
+A **separate laboratory-only** `-DISSUE235_TEST_BUILD` build used disposable Fedora directories and **synthetic** `mountinfo` fixtures. A self-consistent synthetic snapshot returned **RC=2/HOLD**; a deliberately wrong filesystem returned **RC=3/REJECT**. Both checks passed (`ARMV7_SYNTHETIC_LAB=PASS`). The subsequent Cortex-A7 negative matrix was **12/12 PASS**, each **RC=3** with `DEPLOYMENT_GATE=HOLD`: wrong mount ID, wrong device, wrong mount root, read-only mount options, read-only superblock, invalid source, wrong mountpoint, duplicate record, duplicate mount ID, symlink leaf, invalid mode and `..` traversal. The separate native x86-64 synthetic suite previously reported **15/15 PASS**. GitHub [Validation suite 38943417079](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/runs/38943417079) on branch commit `866385d3c20924e31b64cfcbbaf6bf88850cf98a` **SUCCESS**, but this does **not** mean the operator's complete QEMU matrix ran inside CI.
+
+**Acceptance boundary:** Synthetic `mountinfo` is not real ext4 proof. QEMU user-mode is not the ASUS 4.1.52 kernel, not physical SSD UUID verification and not a concurrency or power-loss test. `openat`/`O_NOFOLLOW`, `fstat`, `mnt_id` and re-opening constrain the observed identity snapshot, **not** the lifetime of the pathname during a later mutation. World-writable ancestors, privileged remounts, UUID binding, writer quiescence, Entware/RouterCloud/swap compatibility, and on-router restore/reboot validation remain unproven. Normal v1 returns **2/HOLD** for a valid diagnostic snapshot and **3/REJECT** on mismatch; **never 0**. The lab-only binary must **never be installed**. No ASUS contacted, SSD permissions changed or production services modified by these tests; `DEPLOYMENT_GATE=HOLD`.
+
+
 ## Explicit incomplete security gates
 
 1. **Private UUID binding is NOT implemented.** A `/dev/*` string is not authenticated media provenance.
