@@ -117,4 +117,4 @@ The architecture is intentionally **non-HA**: one Flint gateway, one ASUS servic
 
 The 2026-10-12 platform document cancelled any **RT-BE88U** migration and treated OPNsense/x86 as undated research. The Flint 4 option was discussed **later** and remains a conditional, non-purchased design candidate. It does **not** silently override the production decision to keep TUF-AX5400 and finish CORE v1.0.
 
-**Publication boundary:** this text and its companion future-oriented PDF v2.0 are design snapshots, not an approval to modify ASUS or Flint hardware.
+**Publication boundary:** this text and its [companion future-oriented PDF v2.0](ASUS-Edge-Gateway-Future-Flint4-ASUS-2026-10-15-v2.0.pdf) are design snapshots, not an approval to modify ASUS or Flint hardware.

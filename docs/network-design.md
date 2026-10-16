@@ -23,8 +23,8 @@ N/A, PLANNED or NOT VALIDATED instead of implying that it exists.
 
 ## 2. Physical topology and hardware boundary
 
-- [Current production architecture — 2026-10-15, v1.2 (Markdown publication)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md) — latest dated **production** description; current ASUS only, including #235/SSD/PrivDrop lab limitations. Companion v1.2 PDF has been generated separately but is **not linked in the repository until the binary is uploaded**.
-- [Future architecture: Flint 4 gateway + ASUS services node — 2026-10-15 (design only)](architecture/Flint4-ASUS-Future-Architecture-2026-10-15.md) — optional, not purchased/deployed; VLANs configured at Flint, no mandatory separate switch, DNS failover requiring independent validation.
+- [Current production architecture — 2026-10-15, v1.2 (Markdown publication)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md) — latest dated **production** description; current ASUS only, including #235/SSD/PrivDrop lab limitations. [PDF v1.2 — 17 stron](architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.pdf) został opublikowany w repozytorium.
+- [Future architecture: Flint 4 gateway + ASUS services node — 2026-10-15 (design only)](architecture/Flint4-ASUS-Future-Architecture-2026-10-15.md) — optional, not purchased/deployed; VLANs configured at Flint, no mandatory separate switch, DNS failover requiring independent validation. [Przyszły wariant PDF v2.0 — 19 stron](architecture/ASUS-Edge-Gateway-Future-Flint4-ASUS-2026-10-15-v2.0.pdf).
 - [Historical technical architecture PDF (2026-10-13, v1.1)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf) — retained unchanged for provenance; do not treat its dated status as overriding the v1.2 current-state Markdown.
 - [Historical architecture overview (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — original dated snapshot, not current project status.
 - [Historical architecture PDF (2026-10-08)](architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) — retained unmodified for provenance.
