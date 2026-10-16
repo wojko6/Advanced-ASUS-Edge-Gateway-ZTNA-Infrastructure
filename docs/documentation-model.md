@@ -89,6 +89,8 @@ Publishing v1.2 is a documentation change only: it does not establish a new
 router-wide acceptance, hardware purchase, DNS/firewall change, approved
 Issue #235 SSD remediation, or OPNsense/Flint migration.
 
+**Version namespace caveat (2026-10-16 audit):** version numbers are **publication-specific**, not a single monotonically increasing repository release sequence. The historical **2026-10-08** architecture PDF uses “wersja 2.0” on its cover; the **2026-10-15 production** architecture publication is **v1.2**, while the **2026-10-15 conditional Flint 4 future-design** PDF is separately **v2.0**. Always identify an architecture by **date + current-production versus hypothetical-future scope + exact filename**, never by “v2.0” alone. Do not rewrite historical PDF cover pages to fake a unified version history.
+
 `docs/images/Architecture.png` is retained only as a historical/illustrative
 artifact and is not a source of truth for the current deployment.
 
