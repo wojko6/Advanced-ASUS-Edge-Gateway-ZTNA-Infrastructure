@@ -80,12 +80,14 @@ updating source of truth. Publish only after a privacy review; record
 reference date and keep current Markdown status, diagrams, and evidence
 authoritative.
 
-The latest published technical-architecture PDF is
-[`ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf`](architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf).
-The previous 2026-10-08 PDF and its Markdown overview are kept as dated
-historical records, not overwritten or silently represented as current.
-Publishing v1.1 changes documentation/navigation only: no router, DNS,
-firewall, OPNsense lab or production acceptance is implied.
+The latest published **reference production** technical-architecture PDF is
+[`ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.pdf`](architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.pdf),
+with the [dated v1.2 Markdown source](architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md).
+The previous [2026-10-13 v1.1 PDF](architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf),
+2026-10-08 PDF and its Markdown overview are **historical records**.
+Publishing v1.2 is a documentation change only: it does not establish a new
+router-wide acceptance, hardware purchase, DNS/firewall change, approved
+Issue #235 SSD remediation, or OPNsense/Flint migration.
 
 `docs/images/Architecture.png` is retained only as a historical/illustrative
 artifact and is not a source of truth for the current deployment.
