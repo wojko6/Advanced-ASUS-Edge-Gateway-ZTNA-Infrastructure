@@ -44,7 +44,8 @@ The current reference architecture is documented as a source-controlled network-
 
 Core architecture documents now include:
 
-- [Architecture PDF — 2026-10-13, v1.1](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf) — latest dated, print-friendly architectural publication; current per-topic Markdown and evidence remain authoritative.
+- [Architecture PDF — 2026-10-15, v1.2](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.pdf) — latest published production-reference architecture PDF (publication merged 2026-10-16); per-topic Markdown and dated evidence remain authoritative.
+- [Architecture PDF — 2026-10-13, v1.1](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf) — retained as a historical version.
 - [Architecture PDF — 2026-10-08 (historical)](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) — preserved as the original point-in-time portfolio snapshot.
 
 - [Historical technical architecture overview — 2026-10-08](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.md) — dated snapshot; detailed architecture documents remain canonical.
