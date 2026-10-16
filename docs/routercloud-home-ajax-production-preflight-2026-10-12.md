@@ -1,6 +1,10 @@
 # RouterCloud Home AJAX — production preflight (2026-10-12)
 
-**Tracking:** draft PR #224. **Status:** automated tests and isolated browser acceptance PASS (operator reports); production compatibility PENDING. Nothing has been deployed.
+> **Document lifecycle: COMPLETED / HISTORICAL — reviewed 2026-10-16.** This is the chronological record of the 2026-10-11/12 preflight, staging, activation and browser acceptance, **not an approved repeat-deployment runbook**. The opening “not deployed” state below refers only to the **initial pre-activation stage**. Later sections record an operator-reported UI-only RouterCloud production activation and Home AJAX no-reload browser acceptance. [PR #224](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/224) was **MERGED on 2026-10-12**; old mentions of *Draft/unmerged*, *PENDING* and *NOT DONE* are historical checkpoints, not the current PR state.
+>
+> **STOP:** Do not rerun the staging, RouterCloud restart, production activation or rollback commands from this dated record on a currently healthy router. Compare against [current project status](../PROJECT-STATUS.md), [RouterCloud security boundary](security.md) and the active device with separately authorized read-only checks; obtain independent approval before any new live change. Issue [#235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) remains OPEN with `DEPLOYMENT_GATE=HOLD`.
+
+**Initial 2026-10-11/12 checkpoint (historical):** draft PR #224; automated tests and isolated browser acceptance PASS (operator reports), production compatibility PENDING; **no deployment had yet occurred at that earlier checkpoint**.
 
 ## Critical production-only drift
 
