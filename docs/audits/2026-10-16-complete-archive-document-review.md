@@ -31,7 +31,7 @@
 ## Unverified outside this review
 
 - HTTP health of every external hyperlink and actual rendered behavior of every GitHub Markdown anchor.
-- Full human interpretation of every paragraph across the 240 Markdown documents and replay of all 99 evidence-file test environments.
+- Full human interpretation of every paragraph across the 240 Markdown documents and replay of all historical evidence test environments (the `evidence/` directory also includes its index and templates).
 - Production ASUS Linux 4.1.52 compatibility, continuous SSD-mount identity, power-loss rollback, or non-root RouterCloud service start.
 
 **Decision:** publish the narrowly scoped documentary corrections and keep `DEPLOYMENT_GATE=HOLD`.
