@@ -1,6 +1,6 @@
 # Polish ASUS WebUI localization overlay
 
-**Status:** CURRENT — final localization sweep isolated-validated 2026-10-02; production validation pending
+**Status (clarified 2026-10-16):** the original eight-resource overlay passed bounded live installation, lifecycle and reboot checks on **2026-09-29**. The final 2026-10-02 localization *candidate* passed isolated build/hash checks; its own representative **production validation is not established by this document**. The updated source was merged under [PR #179](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/179) on 2026-10-06 and Issue #133 is closed. A Git merge is **not** proof that the final candidate was deployed and reboot-validated. These are separate evidence boundaries.
 
 ## Scope
 
