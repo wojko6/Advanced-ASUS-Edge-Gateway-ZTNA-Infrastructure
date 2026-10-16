@@ -27,6 +27,7 @@
 
 ~~~sh
 (
+set -e
 BB=/jffs/addons/asus-edge/tools/busybox/1.36.1/busybox
 EXPECTED=08929e6cf52e8ed49ea46f1945ac51193613550099a2bbec24f90b0c1c58763a
 
