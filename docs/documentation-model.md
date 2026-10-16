@@ -61,7 +61,7 @@ A merged PR or green CI run does **not** prove that the same revision is install
 The canonical current network design is indexed by `docs/network-design.md` and
 uses focused, source-controlled documents under `docs/architecture/`:
 
-- `ASUS-Edge-Gateway-Architecture-2026-10-08.md` — dated high-level technical overview, derived from current status; detailed files remain canonical.
+- `ASUS-Edge-Gateway-Architecture-2026-10-08.md` — historical high-level snapshot, not continuously refreshed; the later [v1.2 dated architecture](architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md) and current project status take precedence.
 - `physical-topology.md` — physical roles and attachment/failure boundaries;
 - `high-level-trust-boundaries.md` — logical trust boundaries;
 - `addressing-and-zones.md` — public IPAM and current/planned zone ownership;
