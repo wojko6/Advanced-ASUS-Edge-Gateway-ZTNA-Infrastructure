@@ -2,7 +2,7 @@
 
 **Status:** CURRENT  
 **Applies to:** reference ASUS TUF-AX5400 deployment  
-**Last reviewed:** 2026-10-15 (v1.2 production architecture publication source + separately documented optional Flint 4 design; no production migration)
+**Last reviewed:** 2026-10-16 (index synchronization with public #235 worklog; physical topology remains the dated 2026-10-15 v1.2 snapshot, without production migration)
 
 This document is the entry point for the network-design view of the project.
 It complements the repository's incident/case-study material by organizing the
@@ -61,7 +61,8 @@ NAT and keeps encrypted-DNS bypasses outside universal enforcement claims.
 - [Threat model](threat-model.md)
 - [L2 and network-access security applicability](architecture/l2-security-applicability.md)
 - [Port exposure and trust-boundary audit](case-studies/port-exposure-trust-boundary-audit-2026-10-07.md)
-- [Issue #235 — 2026-10-15 SSD/JFFS persistence, local PrivDrop ARMv7 and origin-security checkpoint](worklog/2026-10-15.md)
+- [Issue #235 — 2026-10-16 Native SSD Trust ARMv7/QEMU research checkpoint](worklog/2026-10-16.md) — laboratory only, not installed
+- [Issue #235 — 2026-10-15 SSD/JFFS persistence and PrivDrop checkpoint](worklog/2026-10-15.md) — dated production read-only evidence and separated lab progress
 
 The current production RouterCloud process still runs as root. Issue #235's
 SSD repair candidate is DRAFT/uninstalled, and ARMv7 PrivDrop remains
