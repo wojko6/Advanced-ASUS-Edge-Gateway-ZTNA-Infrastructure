@@ -56,7 +56,7 @@ Obowiązują [kanoniczne zasady DR (EN)](../router-disaster-recovery.md) i [pols
 
 ## Cofnięcie instalacji
 
-Rollback jest opisany w [dokumencie kanonicznym](../custom-busybox-armv7.md#rollback-documented-not-live-exercised), ale **nie został jeszcze wykonany w izolowanym teście**. Przed usunięciem sprawdź brak zależnych skryptów, dowiązań i zgodność SHA-256. Usuwać wolno wyłącznie dokładnie znany plik i pusty katalog jego wersji — nigdy cały katalog tools/ ani systemowy BusyBox. Przy rozbieżności **STOP**.
+Rollback jest opisany w [dokumencie kanonicznym](../custom-busybox-armv7.md#rollback-documented-not-live-exercised), ale **nie ma potwierdzonego testu usunięcia/rollbacku na produkcyjnym ASUS-ie**. Przed usunięciem sprawdź brak zależnych skryptów, dowiązań i zgodność SHA-256. Usuwać wolno wyłącznie dokładnie znany plik i pusty katalog jego wersji — nigdy cały katalog tools/ ani systemowy BusyBox. Przy rozbieżności **STOP**.
 
 ## Trwałość narzędzia po restarcie (10.10.2026)
 
