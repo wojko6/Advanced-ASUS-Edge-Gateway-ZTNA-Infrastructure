@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-10-13 (source-of-truth / lifecycle clarification; no deployment test)
+**Last reviewed:** 2026-10-16 (source-of-truth precedence and documentation consistency review; no router deployment test). See [dated audit](audits/2026-10-16-repository-documentation-review.md).
 
 **Applies to:** `main`
 

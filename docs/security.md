@@ -180,11 +180,14 @@ boundary:
   HTML/SVG/XML-style content should therefore be treated as a potential
   same-origin application risk until active content is forced to download or
   moved to a separate origin;
-- the production RouterCloud process privilege/UID boundary must be verified
-  explicitly. If the service runs as root, an application-level code execution
-  defect would have an unacceptably large router-wide blast radius.
+- a read-only operator inspection confirmed the RouterCloud production process
+  running as UID/GID 0 with broad process capabilities. The separate non-root
+  PrivDrop research is laboratory-only: no service privilege change has been
+  deployed, and the production attack surface remains high-impact if compromised.
 
 These are hardening findings, not a claim that an exploit has been demonstrated.
+
+**2026-10-16 bounded update:** separate proposed DUFS trusted-asset/file-origin fixes remain unmerged/not installed; synthetic QEMU acceptance cannot replace authenticated live browser regression. Both physical SSD partition mount roots were observed `0777` after reboot (2026-10-15), consistent with firmware source's mount-time `chmod(mountpoint, 0777)`. The experimental [native SSD identity probe](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/tree/security/issue235-native-ssd-trust-v1-lab-20261016) validates only a point-in-time descriptor/mountinfo snapshot, is read-only and always exits HOLD or REJECT. It does **not** authenticate private UUIDs, exclude concurrent privileged remount/rename, change mount modes or replace the separate [Draft #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245). Track implementation and residual risks in [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) and the [dated worklog](worklog/2026-10-16.md).
 
 ## Logging caveats
 

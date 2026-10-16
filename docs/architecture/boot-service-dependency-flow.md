@@ -4,9 +4,12 @@
 
 This diagram distinguishes the **current reference router's validated live boot ordering** from the repository-managed services-start recovery logic. That distinction matters because the pre-Entware swap ordering correction recorded by #66 currently lives in the reference router's /jffs/scripts/post-mount rather than in a repository-managed post-mount hook.
 
+**Dated security source clarification (2026-10-16):** the installed GNUton release source applies `chmod(mountpoint, 0777)` before invoking the `post-mount` hook for successfully mounted media. Oct 15 read-only evidence found both physical SSD roots back at `0777`; a proposed post-mount correction (Draft PR #245) and Native SSD Trust Helper v1 are **not** installed in the live flow. The following diagram depicts current startup ownership with that firmware permission step, **not** an activated remediation. The swap-before-AMTM sequence must be preserved.
+
 ```mermaid
 flowchart TD
-    B["Filesystem / Entware volume mounted"] --> PM["Reference /jffs/scripts/post-mount<br/>LIVE REFERENCE CONFIG"]
+    B["Filesystem / Entware volume mounted"] --> MODE["GNUton firmware mountpoint chmod 0777<br/>SOURCE-VERIFIED / ON-BOOT EFFECT"]
+    MODE --> PM["Reference /jffs/scripts/post-mount<br/>LIVE REFERENCE CONFIG"]
     PM --> PS["Activate mounted myswap.swp<br/>before AMTM Entware startup<br/>VALIDATED #66"]
     PS --> AM["AMTM mount-entware.mod"]
     AM --> RC["rc.unslung start"]

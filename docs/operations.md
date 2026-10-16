@@ -6,6 +6,12 @@ The reference deployment completed its SSD migration and controlled reboot valid
 
 Routine router changes may now proceed only as deliberate maintenance with backup, rollback planning, repository/CI validation and post-change live verification. Read-only inspection remains preferred when it can answer the question without changing the reference state.
 
+## SSD root mode after boot — Issue #235 HOLD (2026-10-16)
+
+A read-only ASUS observation on 2026-10-15 found both physical ext4 mount roots (`ROUTER_DATA` and `ENTWARE`) root-owned and mode `0777` again after mount/reboot; this does **not** invalidate the prior one-time, bounded 2026-10-14 Stage 1 acceptance of the `ROUTER_DATA` `0755` change. It **does** show mount-root mode persistence was not achieved. Installed GNUton firmware source includes `chmod(mountpoint, 0777)` before `post-mount`. Private RouterCloud state-directory `0700` remained a separately observed condition.
+
+Do **not** apply a blanket/recursive `chmod`, copy the research SSD Trust Helper v1 into `post-mount`, use a generic installer to overwrite existing JFFS hooks, or treat a QEMU/HOLD snapshot as permission-change authorization. [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245) and the [Native SSD Trust Helper v1 branch](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/tree/security/issue235-native-ssd-trust-v1-lab-20261016) are separate uninstalled candidates. The native v1 helper has **no mutation path** and cannot return GO (`RC=0`). A future live maintenance change requires reviewed private media/UUID binding, mount and writer compatibility, preservation of **swap-before-AMTM** startup ordering, verified off-router rollback and **explicit separate approvals** for JFFS staging, hook activation, permission mutation and reboot. Production `DEPLOYMENT_GATE=HOLD`. See [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235), [2026-10-16 worklog](worklog/2026-10-16.md) and the [2026-10-16 audit](audits/2026-10-16-repository-documentation-review.md).
+
 ## Change workflow
 
 Use this workflow for a planned maintenance window outside an active unchanged-state observation:

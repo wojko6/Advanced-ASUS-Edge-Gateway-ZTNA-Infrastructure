@@ -4,6 +4,8 @@ The current architecture is documented as a **source-controlled canonical networ
 
 Start with the [Network design documentation index](network-design.md).
 
+**Current security delta (2026-10-16; no architecture migration):** the dated [2026-10-15 production architecture v1.2](architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md) remains an accurate *dated* snapshot. Firmware-controlled mount-root `0777` behavior and open SSD/JFFS repair gate are tracked in [Project status](../PROJECT-STATUS.md) and [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235). The native SSD Trust Helper v1 was published and QEMU-tested **off-router only**; it is not part of the live boot/service architecture. See [16 October worklog](worklog/2026-10-16.md) and the [boot dependency flow](architecture/boot-service-dependency-flow.md).
+
 ## Canonical architecture documents
 
 1. [Physical Topology](architecture/physical-topology.md)  
