@@ -1,5 +1,12 @@
 # Roadmap
 
+### Security #235 checkpoint — 2026-10-16 (research milestone, not production)
+
+- [Native SSD Trust Helper v1](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/tree/security/issue235-native-ssd-trust-v1-lab-20261016): published C read-only candidate and 15 x86-64 isolated checks; branch CI PASS. Operator-reported static ARMv7 build/QEMU smoke PASS, synthetic `RC=2/HOLD` and `RC=3/REJECT` behavior, **12/12 ARMv7 negative matrix PASS**. See [dated worklog](worklog/2026-10-16.md).
+- **Hard block:** v1 returns **no authorization code 0**, has no `fchmod` or private UUID-to-device binding, and cannot assure continuous namespace identity. QEMU does not prove ASUS 4.1.52 compatibility. [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) remains OPEN; [Draft #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245) is a distinct shell-mode repair design and remains unmerged/uninstalled. `DEPLOYMENT_GATE=HOLD`.
+- **Next:** review UUID binding and mount lifetime/quiescence, firmware behavior and independent rollback; then request **separate authorization** before any router read-only run, staging, mode repair, activation, or reboot.
+- **RouterCloud #254:** resumable/hash-verified large-file transfer is proposed, not implemented. Preserve #235 security constraints and stable-only DUFS update policy.
+
 ### Security #235 checkpoint — 2026-10-15 (evidence-scoped)
 
 - **Current priority:** finish the [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) security scope without risking the reference router. See [dated worklog](worklog/2026-10-15.md). The issue remains **OPEN** and SSD persistence [PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245) remains **DRAFT / NOT INSTALLED / GO-NO-GO HOLD**.
