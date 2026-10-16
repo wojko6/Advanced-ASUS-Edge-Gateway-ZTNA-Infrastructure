@@ -54,9 +54,11 @@ For a repeat deployment **do not run an unreviewed blind installer**. First prov
 
 ### Read-only verification
 
-Run in an authenticated administrator shell on the router:
+Run in an authenticated administrator shell on the router. **The example runs in a subshell:** a failed guard using `exit 1` must not terminate the operator's interactive SSH session. Stop on any unexpected hash, path or command failure:
 
 ~~~sh
+(
+set -e
 BB=/jffs/addons/asus-edge/tools/busybox/1.36.1/busybox
 EXPECTED=08929e6cf52e8ed49ea46f1945ac51193613550099a2bbec24f90b0c1c58763a
 
@@ -68,6 +70,7 @@ test "$ACTUAL" = "$EXPECTED" || exit 1
 "$BB" find /jffs/addons/asus-edge/backup -perm -0002 >/dev/null
 "$BB" timeout 3 /bin/sleep 1
 /jffs/addons/asus-edge/bin/healthcheck.sh
+)
 ~~~
 
 These commands are diagnostic only; FIND matches are intentionally not printed. A healthcheck PASS is not a substitute for service recovery after a wiped router.
@@ -79,13 +82,16 @@ These commands are diagnostic only; FIND matches are intentionally not printed. 
 3. In a separately authorized maintenance step, remove **only** the exact known version file; remove its version directory only if empty. Leave /bin/busybox, /bin/sh, all other versions and any unrelated tools untouched. Never apply recursive deletion to the parent tools tree.
 4. Re-run project healthcheck and, if needed, check callers. A failed hash/path test must **STOP**, not delete unknown content.
 
-Example of pre-removal inspection (**read-only**):
+Example of pre-removal inspection (**read-only**). This is **not** an instruction to remove the binary; run in a subshell so a STOP does not log out the administrator:
 
 ~~~sh
+(
+set -e
 BB=/jffs/addons/asus-edge/tools/busybox/1.36.1/busybox
 test -f "$BB" && test ! -L "$BB" || exit 1
 ls -ldn /jffs/addons/asus-edge/tools /jffs/addons/asus-edge/tools/busybox /jffs/addons/asus-edge/tools/busybox/1.36.1 "$BB"
  /opt/bin/sha256sum "$BB"
+)
 ~~~
 
 Rollback is straightforward in design because the binary has no automatic consumers, but **removal/restore was not executed** in this acceptance. Do not mark rollback PASS until an isolated exercise is recorded.
