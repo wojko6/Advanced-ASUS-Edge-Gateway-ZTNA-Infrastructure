@@ -2,6 +2,13 @@
 
 **Status:** DOCUMENTATION AUDIT / SOURCE-ONLY. **Archive baseline:** `main` `1e293bcc1f6818280e15585c8f4ffdda99de8b29` (after merged PR #256). **Production:** untouched; [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) OPEN, [PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245) DRAFT/UNMERGED; `DEPLOYMENT_GATE=HOLD`.
 
+## File-by-file register (245 documents)
+
+- [Full Markdown register — 245 documents](2026-10-16-register-245-documents.md): filename, evidence/document category, size in lines, section scope and **snapshot-time** disposition.
+- [Machine-readable CSV register — 245 documents](2026-10-16-register-245-documents.csv): same inventory with content SHA-256 prefixes and a separate `post_audit_status` column.
+
+**Provenance:** the registers refer to the original reviewed ZIP at commit `1e293bcc1f6818280e15585c8f4ffdda99de8b29`, not to a fresh audit of every newer `main` revision. The three baseline findings A-01–A-03 were corrected by [merged PR #257](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/257); A-04 is a historical-PDF typography observation. A file's presence in the register is **not a certificate of line-by-line manual review**.
+
 ## Method and evidence limitations
 
 - Inspected user-provided complete public-main ZIP: **446 files**, **240 Markdown documents (34,685 lines / about 246,845 whitespace-delimited words)**, **4 PDFs (64 pages)**, **1 dated plain-text evidence report**. Four HTML files are frontend source, not counted among the 245 documentation artifacts.
