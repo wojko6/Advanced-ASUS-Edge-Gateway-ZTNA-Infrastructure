@@ -84,3 +84,12 @@ Design requirements were added to the [scoped JFFS Stage B runbook](issue235-jff
 | Production root-mode change or any service/reboot action | **NOT EXECUTED / HOLD** |
 
 **No scope expansion:** PrivDrop, UID/GID/DAC migration, SSD Trust Helper, unrelated RouterCloud worktrees and custom `services-start` remain out of scope. Do not edit those mechanisms from this branch's Stage B design work. Neither staged helper/UUID payloads nor a modified `post-mount` have been installed on production. **Issue #235 OPEN / Draft PR #245 / DEPLOYMENT_GATE=HOLD.**
+
+
+## 2026-10-17 — Stage B v1.3 and authenticated manifest design gate
+
+- **Fedora LAB PASS:** Stage B v1.3 importer **26/26** and preserved v1.2 regression **60/60**, with ARMv7 static soft-float/QEMU and Clang ASan/UBSan PASS, all using synthetic data. No real UUID, router JFFS or root:root delivery was exercised.
+- **Independent provenance OPEN:** compiled synthetic manifest hash does **not** authenticate real production file origins. No reviewed independent production manifest trust anchor, secure input channel or source snapshot exists.
+- **Device semantics OPEN:** sequential three-file publication is **not** a bundle transaction. JFFS2 no-clobber/`linkat`, directory fsync/durability, partial-state reconciliation, actual root ownership and concurrent writer safety remain unverified.
+- **Design reference:** [Stage B payload provenance, three-file state machine and recovery](issue235-stageb-payload-provenance-recovery-design-draft.md) (DRAFT; no implementation approval).
+- **Permissions unchanged:** B staging, C post-mount activation and E reboot/remount require **separate explicit operator approvals**; no production change, no PR merge. `DEPLOYMENT_GATE=HOLD`.
