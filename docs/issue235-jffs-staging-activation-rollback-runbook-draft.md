@@ -78,3 +78,43 @@ Remaining gates are unchanged: fresh read-only post-mount source hash/owner chec
 The operator additionally confirmed having access to the separate external Verbatim SSD holding the independently verified GPG-encrypted original `post-mount` recovery archive **and** the corresponding GPG passphrase. Neither the passphrase nor its parts were requested, shared or recorded. Together with the prior independently attested Ethernet/WebUI access, this closes **operator availability attestation** for both recovery paths; the earlier verified decrypt-and-hash test remains documented elsewhere. It does **not** constitute a new post-disconnection decrypt/reconnect test, a live JFFS restore exercise, or a guarantee against access-loss scenarios.
 
 The next decision gate is formal acceptance/rejection of residual scheduled/transient direct-root SSD writer compatibility risk and a final fresh read-only prechange live `post-mount` digest check. **No production installation permission has been given.** Separately authorize UUID/helper staging, hook activation and a future reboot only after explicit review; keep `services-start` untouched. `DEPLOYMENT_GATE=HOLD`.
+
+
+## 2026-10-17 — Stage B publication safety contract (DESIGN REVIEW CLOSED; PRODUCTION HOLD)
+
+This section closes the *design-level acceptance criteria* for future Stage B file delivery. It does **not** approve or implement a production stager, supersede the rollback runbook, or close the production compatibility gate. Isolated Fedora tests were operator-reported PASS: basic synthetic staging **6/6**, single-file publish/interruption/collision **7/7**, and directory-FD / ancestor replacement / orphan handling **9/9**. These tests used synthetic data and simulated ownership using the local Fedora UID. No actual JFFS filesystem, root:root transfer, physical power loss, private V3/archive modification or ASUS connection was involved. They are **evidence of test-fixture behavior**, not proof of portable JFFS correctness.
+
+### Exact future Stage B objects and provenance
+
+Only the following install targets are in scope (all below \`/jffs/addons/asus-edge/\`):
+
+| Target | Required file type and mode | Owner | Content source |
+|---|---|---|---|
+| \`bin/issue235-ssd-mount-mode\` | regular, non-symlink, \`0755\` | \`0:0\` | byte-pinned helper from reviewed PR #245 commit |
+| \`private/\` | real directory, non-symlink, \`0700\` | \`0:0\` | private JFFS directory only |
+| \`private/router-data.uuid\` | regular, non-symlink, \`0600\` | \`0:0\` | privately verified local UUID mapping |
+| \`private/entware.uuid\` | regular, non-symlink, \`0600\` | \`0:0\` | privately verified local UUID mapping |
+
+The existing JFFS ancestor directories \`/jffs\`, \`/jffs/addons\`, \`/jffs/addons/asus-edge\`, and \`bin\` must be trustworthy **root:root 0755 non-symlink** directories, as required by the draft runtime snippet. Recheck the exact helper SHA, private UUID *identity/manifest* and confidentiality **without writing/printing the UUIDs in logs, Git, diagnostics or issues**. Revalidate exact V3/original hook byte integrity separately; Stage B must **not** publish or edit V3 or touch \`/jffs/scripts/post-mount\`. No \`services-start\` edit, generic \`scripts/install.sh\`, \`/opt\`-dependent boot tooling, child SSD chmod, remount, swap operation or daemon restart.
+
+### Non-overwrite publication and directory-trust design
+
+1. Revalidate the approved destination allowlist and the entire trusted directory chain, including numeric owner/group, mode, type and absence of symlinks. A symlink/unknown object, path drift, unexpected target collision, missing provenance, unsafe permission, insufficient free space or failure to pin identities is an immediate **STOP/REVIEW**, not an invitation to chmod or delete existing material.
+2. The Fedora \`dir_fd\` experiment demonstrates the **intent** to anchor and re-check directory identity, but is **not** a deployable JFFS mechanism. A future audited implementation must avoid reconstructing unchecked pathnames from mutable ancestors between validation and publication; use independently justified firmware-supported descriptor-relative primitives if available. If the router's tooling cannot meet the contract, Stage B stays HOLD; do not replace it silently with an unchecked shell \`mv\`.
+3. Prepare each candidate under a unique, restrictive, non-symlink temporary name in its **intended directory/on the same filesystem**, opened with exclusive creation and no-follow semantics where supported. Write complete content, verify bytes/digest, assign required numeric ownership and final mode, verify on the final descriptor, and sync the file before publication. In particular, Fedora's \`os.getuid()\` checks are **not** evidence of \`root:root\` after transfer to GNUton.
+4. Publish a **single verified file without replacing an existing destination**, using a publication primitive whose no-clobber/atomicity and filesystem support are explicitly established for the target JFFS environment. The Fedora \`os.link\` experiment does not establish JFFS hard-link or power-loss behavior; ordinary \`rename\`/\`mv\` may replace a destination and is not an acceptable implicit equivalent. After publication, verify target type, owner, mode, digest and directory identity; establish file/directory durability semantics independently before production use.
+5. A successful *per-file* publish is **not a transaction for the complete helper + two UUID files**. An interrupted session may leave only a subset installed; any partial set, ambiguous existing target or unexpected hidden temp name requires **STOP and operator reconciliation**, not an automatic retry/overwrite/cleanup. Treat unverified staging as untrusted. Do not label Stage B PASS or contemplate Stage C until all three files and trusted parents independently pass post-transfer checks.
+6. Fedora simulated exception interruption, **not sudden power loss**. Orphaned temporary entries must remain untouched pending owner/type/path/integrity review. Cleanup of only specifically verified artifacts needs its own narrow recovery decision. Do not remove unknown third-party entries or recursively delete the private subtree. If the directory was replaced during staging, refuse publication and require a fresh trust assessment.
+
+### Stage B audit/decision record (before ANY future authorized router write)
+
+Record only nonsecret boolean/aggregate evidence: exact reviewed PR revision and helper digest verification, private mapping/manifest verified (never the values), current live \`post-mount\` hash/owner/mode, expected two ext4 mount identities and two active swap entries, trusted JFFS directory metadata, secure wired recovery + off-router original backup availability, Stage B transfer/rollback plan and its file/directory atomicity assumptions. Re-evaluate scheduled/transient *non-root mount-root writers* and acknowledge the separately scoped permissive first-level SSD objects in [Issue #263](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/263). Do not equate a static script scan or sampled file descriptor inventory to full write-compatibility proof.
+
+**Gate separation remains mandatory:**
+- **Design gate:** Fedora synthetic tests PASS; acceptance criteria documented; **not a production stager implementation**.
+- **Stage A:** read-only fresh preflight + explicit acceptance of any remaining writer/recovery risk.
+- **Stage B:** separately and explicitly approved, narrow helper/private-UUID delivery only, with actual JFFS primitive/ownership/integrity compatibility independently justified.
+- **Stage C:** a **second** separate approval to atomically activate the byte-exact V3 hook under the existing runbook; do not execute \`post-mount\` manually to trigger the change.
+- **Stage E:** later **separate** approval for controlled reboot/remount persistence and service checks.
+
+Do not infer Stage B authorization from a positive lab test, PR/issue comment, or approval of this design document. **Issue #235 OPEN / Draft PR #245 unmerged / DEPLOYMENT_GATE=HOLD.** Work on PrivDrop, SSD Trust Helper, process UID/GID and DAC migration is separate; this section makes no changes to those worktrees or their production behavior.
