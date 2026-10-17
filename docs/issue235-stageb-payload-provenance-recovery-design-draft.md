@@ -102,3 +102,10 @@ A Stage B-only rollback is not automatically defined as deleting all three files
 **Next development action:** review the **manifest authority and transport contract** in a nonsecret design; select a justified strategy for keeping expected digests independent from uploaded payloads, and define safe bounded on-target JFFS2 capability validation requiring separate advance authorization. Do not start the actual on-router test or use real private payloads as synthetic inputs.
 
 Related documents: [scoped staging/activation/rollback runbook](issue235-jffs-staging-activation-rollback-runbook-draft.md), [production GO/NO-GO](issue235-production-go-no-go-2026-10-15.md), [SSD mount-mode repair analysis](issue235-ssd-mount-postmount-repair.md). **Issue #235 OPEN / PR #245 DRAFT / `DEPLOYMENT_GATE=HOLD`.**
+
+
+## 8. 2026-10-17 — private manifest v1 canonical/trust proposal
+
+The previously open manifest-authority design now has a separate **DRAFT** [private canonical manifest and independent offline approval pin contract](issue235-stageb-private-manifest-v1-trust-contract-draft.md). It proposes **nine exact LF-terminated ASCII lines**, fixed role fields, independently reviewed helper revision and SHA-256, secret private UUID digests confined to private operator material, exact numeric size limits and fixed destination/mode/UID/GID **policy in the verifier**, not arbitrary manifest-controlled paths.
+
+**Crucial separation:** the private manifest candidate is authenticated only against a SHA-256 pin independently approved and held on a separate trusted offline checkpoint. A hash bundled beside an untrusted manifest is insufficient. This is a **model under review**, **not** a built key trust system, deployed verifier or real UUID import. No new lab validation, ASUS filesystem checks or production permission changes are claimed. The canonical format still requires independent technical review, and physical JFFS2 no-clobber/fsync/power-loss gates remain **OPEN**. All Stage B/C/E approvals **NOT GRANTED**; `DEPLOYMENT_GATE=HOLD`.
