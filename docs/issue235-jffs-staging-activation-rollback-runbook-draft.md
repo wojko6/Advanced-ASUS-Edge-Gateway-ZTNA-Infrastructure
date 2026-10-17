@@ -118,3 +118,10 @@ Record only nonsecret boolean/aggregate evidence: exact reviewed PR revision and
 - **Stage E:** later **separate** approval for controlled reboot/remount persistence and service checks.
 
 Do not infer Stage B authorization from a positive lab test, PR/issue comment, or approval of this design document. **Issue #235 OPEN / Draft PR #245 unmerged / DEPLOYMENT_GATE=HOLD.** Work on PrivDrop, SSD Trust Helper, process UID/GID and DAC migration is separate; this section makes no changes to those worktrees or their production behavior.
+
+
+## 2026-10-17 — Stage B three-file provenance / recovery state-machine draft
+
+The following **DESIGN-ONLY** companion is now available: [Stage B payload provenance and recovery contract](issue235-stageb-payload-provenance-recovery-design-draft.md). It supersedes **no** mandatory Stage A/B/C/E approvals in this runbook. Stage B v1.3 synthetic importer independently passed **60/60 unchanged v1.2 regressions + 26/26 new input checks** in the operator-provided Fedora native / static ARMv7 soft-float QEMU / Clang ASan+UBSan runs. This remains test-fixture evidence, not an installer.
+
+The proposed production-facing *contract*, not yet implemented, requires independent manifest authenticity, exactly three allowlisted targets, root:root JFFS ownership/modes, a verified prepared set, strict no-replace publish (private UUIDs first, helper last), post-link sync/readback verification, explicit `PARTIAL_STATE_REVIEW` on uncertainty and **no automatic retry or cleanup**. The helper-last ordering is **not** an atomic transaction or authorization to execute it. JFFS2 file/directory `fsync`, no-clobber primitive semantics, power-loss state, source immutability, root-writer coverage and prechange live hook hash remain **unproven/open**. No router files touched, no Stage B/C/E permission granted. `DEPLOYMENT_GATE=HOLD`.
