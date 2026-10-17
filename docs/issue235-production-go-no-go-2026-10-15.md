@@ -54,3 +54,33 @@ The project has previously detected three separate world-writable RouterCloud su
 **Acceptance:** GO requires every material blocker to be resolved, the residual risk explicitly accepted and a separate operator approval for scoped production installation. A later reboot needs another explicit approval. Absent these, remain HOLD.
 
 Evidence and implementation: [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235), [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245), [detailed post-mount review](issue235-ssd-mount-postmount-repair.md), and [startup-order guide](architecture/boot-service-dependency-flow.md).
+
+
+## 2026-10-17 — Stage B Fedora design-gate review
+
+The operator-reported isolated Fedora staging progression is now complete as a **design/test-fixture gate only**:
+
+| Evidence (synthetic Fedora only) | Result | What it does NOT establish |
+|---|---|---|
+| Initial file creation / no overwrite / symlink and insecure-parent refusal | **6/6 PASS** | JFFS/GNUton transfer, root:root ownership |
+| Single-file staged publish / simulated exception / no target replacement | **7/7 PASS** | Sudden power-loss durability, all-file transaction, JFFS hardlink support |
+| Directory-FD trust / ancestor swap detection / orphan handling | **9/9 PASS** | A portable production JFFS stager, race-free router implementation |
+| Byte-exact V3 original+snippet composition recheck | **6/6 PASS** | Manifest revalidated this session, production activation or in-boot behavior |
+
+The fresh V3 integrity check reconfirmed the saved original's expected SHA-256 and the current guarded snippet Git blob; the previous apparent FAIL arose from confusing **2803 Unicode characters** with **2805 UTF-8 bytes**. Both corrected checks PASS; no source rewrite needed. The earlier independent V3 manifest audit and Fedora-only atomic replacement/rollback simulation were already recorded PASS on 2026-10-15; these historical gates were **not newly rerun** on 2026-10-17.
+
+Design requirements were added to the [scoped JFFS Stage B runbook](issue235-jffs-staging-activation-rollback-runbook-draft.md): strict target/owner/mode allowlist; pinned payload provenance; trusted non-symlink directory ancestry; verified complete same-filesystem temporary files; explicit **no-clobber** publication; verify after publish; refuse ambiguous partial stage, symlink collisions, changed parents and orphan temp entries; do not automatically overwrite or delete anything. Fedora Python `dir_fd` / `os.link` behavior is a laboratory model, **not** a validated router primitive. If the implementation cannot provide the required filesystem/ownership guarantees on real JFFS, **Stage B must remain blocked**; simply replacing those operations with ordinary `mv` is not an accepted workaround.
+
+**Updated decision matrix:**
+
+| Decision gate | Status on 2026-10-17 |
+|---|---|
+| Offline safety *design and mock behavior* | **PASS, closed at design level** |
+| Production-ready scoped Stage B delivery mechanism | **OPEN: not implemented/reviewed for JFFS** |
+| Scheduled/transient mount-root writers and remaining mode-0755 compatibility risk | **OPEN: static scans and process snapshots only** |
+| Remaining first-level 12 files `0666` and 3 directories `0777` | **INDEPENDENT audit: [Issue #263](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/263)** |
+| Fresh pre-maintenance JFFS original/UUID/backup/boot-path gate | **PENDING: must repeat at authorized window** |
+| Explicit authorization for payload staging (B), hook activation (C), reboot/remount (E) | **NOT GRANTED** |
+| Production root-mode change or any service/reboot action | **NOT EXECUTED / HOLD** |
+
+**No scope expansion:** PrivDrop, UID/GID/DAC migration, SSD Trust Helper, unrelated RouterCloud worktrees and custom `services-start` remain out of scope. Do not edit those mechanisms from this branch's Stage B design work. Neither staged helper/UUID payloads nor a modified `post-mount` have been installed on production. **Issue #235 OPEN / Draft PR #245 / DEPLOYMENT_GATE=HOLD.**
