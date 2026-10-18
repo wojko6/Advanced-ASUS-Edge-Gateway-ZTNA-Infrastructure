@@ -4,6 +4,8 @@ Ten przewodnik opisuje pierwsze, kontrolowane wdrożenie projektu na Asuswrt-Mer
 
 > **Status referencyjnego routera:** obserwacja niezmienionego stanu została zakończona **2026-09-22** po ciągłej pracy od 2026-09-11 do 2026-09-22. Poniższe polecenia wykonuj wyłącznie podczas kontrolowanego wdrożenia lub okna serwisowego, z aktualnym backupem, drogą rollbacku i walidacją po zmianie. Sukces testów repozytorium/CI nie oznacza automatycznie, że dana zmiana została wdrożona na referencyjnym ASUS-ie.
 
+> **Ostrzeżenie bezpieczeństwa — 2026-10-18 / Issue #235:** niniejszy dokument opisuje kontrolowane wdrożenie projektu, **nie** zatwierdzoną procedurę naprawy obecnie działającego routera. W odczytowym audycie produkcyjnego ASUS-a stwierdzono, że skrypt DNS Guard wykonywany przez root z Cron ma **nie-rootowego właściciela/grupę i bit zapisu dla właściciela**. Hash pliku odpowiada sprawdzonej wersji v3.2, ale zgodność bajtów nie daje gwarancji zaufania do właściciela ani odporności na przyszłe zapisy. `scripts/install.sh` kopiuje pliki przez `cp` i ustawia tryb `chmod`, **bez wymuszenia poprawnej własności istniejącego pliku**; może zatem utrwalić niepożądany stan. **Nie uruchamiaj tego instalatora jako szybkiej naprawy #235.** Nie wykonuj doraźnego `chown`/`chmod`, nie podmieniaj skryptu DNS Guard i nie zmieniaj Cron, JFFS ani SSD bez osobnego, zatwierdzonego planu z preflightem zaufania, niezależnym backupem, bezpiecznym rollbackiem i walidacją. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD` dla tego zakresu. [Bieżący stan](../PROJECT-STATUS.md) · [Dowody 18 października](worklog/2026-10-18.md) · [Kontrakt operacyjny](operations.md).
+
 ## 1. Przygotowanie routera
 
 Włącz obsługę własnych skryptów JFFS. Sprawdź montowanie `/opt`, Entware i wymagane pakiety:
@@ -68,7 +70,9 @@ sh tests/test-static.sh
 
 ## 4. Instalacja etapowa
 
-Najpierw zainstaluj pliki bez aktywowania nowej polityki firewalla:
+**Bramka STOP dla aktualnej instalacji:** poniższe polecenie **zmienia** pliki i hooki JFFS nawet bez `--apply`. Nie stosuj go do bieżącego produkcyjnego ASUS-a w celu usunięcia znalezionego nie-rootowego właściciela DNS Guard ani w ramach Issue #235. Takie działania wymagają osobnego przeglądu i jawnej zgody operatora; samo CI/backup nie jest taką zgodą.
+
+W osobnym, zatwierdzonym scenariuszu wdrożenia najpierw instaluje się pliki bez aktywowania nowej polityki firewalla:
 
 ```sh
 ./scripts/install.sh
