@@ -4,6 +4,8 @@ This directory records dated engineering sessions for the ASUS Edge Gateway / ZT
 
 The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deeper troubleshooting case studies. Entries are based on repository history and published evidence. When a date has no repository-backed engineering change, the worklog says so instead of reconstructing activity from memory.
 
+**Publication boundary (2026-10-18):** This is a curated, *sanitized public chronology*, not a verbatim mirror of the operator's private diary. Historical retrospective entries are labeled as such, and separate Android/workstation activities are operator-reported unless public evidence is linked. Never transfer raw private worklogs, keys, sensitive paths, user data or credentials. Compare date coverage weekly and publish only reviewed, documentation-only changes. [October 1–18 coverage and publication audit](../audits/2026-10-18-public-worklog-coverage-audit.md).
+
 ## Timeline
 
 **Legacy #151 source archive (2026-10-15):** the [RouterCloud historical PR comparison](../audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md) preserves the [September 30 #137 acceptance evidence](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) and [original dated design notes](../history/routercloud-browser-access-2026-09-30.md) without installing obsolete startup scripts or changing the production router.
@@ -21,6 +23,11 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-09-27](2026-09-27.md) — current-firmware DNS/Diversion/startup/Android validation closure, canonical Mermaid architecture set, and completed router disaster-recovery baseline with clean-room restore.
 - [2026-09-28](2026-09-28.md) — Pi-hole main-LAN cutover, DNS analytics/Loki pipeline, reboot persistence, two-client validation and initial Grafana GitHub/CI dashboard.
 - [2026-09-29](2026-09-29.md) — Engineering/CI Grafana closure; #127/#128 security hardening; project-native Edge Gateway WebUI; final eight-resource Polish WebUI persistence; CI-fixture and documentation reconciliation.
+- [2026-10-01](2026-10-01.md) — existing RouterCloud versioned backup and Fedora syslog-ng resilience checkpoint (previously unindexed).
+- [2026-10-02](2026-10-02.md) — existing ASUS WebUI localization and DNS Director deployment checkpoint (previously unindexed).
+- [2026-10-03](2026-10-03.md) — RouterCloud UI/Favorites, restricted backup status and password-recovery production acceptance; links to original evidence.
+- [2026-10-04](2026-10-04.md) — separate Android Metro Tile Engine layout/move/resize tests; no router-side deployment.
+- [2026-10-05](2026-10-05.md) — Fedora VMware/Secure Boot workstation recovery and separate Android Tile Engine/Folders progress (sanitized operator recap).
 - [2026-10-06](2026-10-06.md) — WAN-speed email alert validation, final Polish WebUI closure, Tailscale package/live-version drift hardening, and issue #152 Android Pi-hole/Tailscale source-scoped DNS plus management-path reconciliation.
 - [2026-10-07](2026-10-07.md) — port-exposure/network-design documentation closure and RouterCloud Grafana alerting expansion with controlled live firing/recovery validation.
 - [2026-10-08](2026-10-08.md) — interim DNS Guard recovery hardening followed by merged PR #197, bounded live break-glass/power-cycle acceptance, 15-rule monitoring baseline, separate #200 local permissions reconciliation and unmerged Unbound rebuild PR #202.
@@ -33,4 +40,5 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-10-14](2026-10-14.md) — Entware mount hardening, Dufs Draft PR #4 cross-platform/ARMv7 lab, approved RouterCloud SSD DAC Stage 1 deployment and 21:30 encrypted backup PASS; Grafana 26h alert staged but not reloaded.
 - [2026-10-15](2026-10-15.md) — post-mount firmware SSD-root permission regression, PR #245 offline V3 staging/rollback evidence, periodic writer audit, local-only PrivDrop ARMv7/JFFS-8 lab and remaining security/production HOLD. [Detailed Entware Oct 14 evidence](../../evidence/2026-10-14/entware-feed-and-ssd-permissions.md); [Oct 13 HTTP-origin lab evidence](../../evidence/2026-10-13/issue-235-http-origin-hardening-lab.md).
 - [2026-10-16](2026-10-16.md) — Issue #235 Native SSD Trust Helper v1 source/CI, operator-reported ARMv7 QEMU synthetic and negative matrix checks, separate JFFS-13 DIRFD lab and production HOLD; [repository-wide documentation review](../audits/2026-10-16-repository-documentation-review.md).
+- [2026-10-17](2026-10-17.md) — approved ASUS read-only SSD/DAC audit and isolated Stage B/ARMv7/QEMU research for Issue #235 and Draft PR #245; production HOLD.
 - [2026-10-18](2026-10-18.md) — **two separate workstreams:** (1) DNS Guard root-Cron owner trust, approved ASUS read-only checks and Fedora V0.1–V0.3 isolated owner-repair labs (**Issue #235 / PR #264, remediation HOLD**); (2) Fedora Homelab check-only Update Watch, operator-approved Grafana 13.2.4 manual pilot and v0.1–v0.9 isolated update-engine locks (**PR #265, unattended AUTO HOLD**). [Fedora runbook](../operations/fedora-homelab-automatic-updates.md).
