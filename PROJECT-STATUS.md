@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-10-16 (Issue #235 native SSD trust v1 source/CI and operator-reported ARMv7/QEMU laboratory checks; no production acceptance). Prior accepted live baseline remains separately dated.
+**Status date:** 2026-10-18 (added separate Fedora off-router controlled-update observations; **router baseline and Issue #235 production HOLD are unchanged**). The latest Issue #235 source/CI and operator ARMv7/QEMU checkpoint remains 2026-10-16; earlier accepted live router baselines remain separately dated.
 
 **Latest live RouterCloud checkpoint:** 2026-10-14 bounded user-reported browser/File/Favorites and backup validation after DAC Stage 1 (the earlier broad RouterCloud checkpoint remains 2026-10-03). On 2026-10-15 read-only sampling still found Dufs running as root; no runtime privilege reduction is accepted.
 
@@ -15,6 +15,14 @@
 **Additional conditional design (2026-10-15; no purchase or deployment):** A later architectural study considers GL.iNet Flint 4 as the only WAN/Wi-Fi/VLAN/DHCP gateway and the existing ASUS as a Wi-Fi-disabled Pi-hole/Unbound/RouterCloud/SSD service node. An initial standalone switch is **not required**; Flint LAN ports and supported VLAN access/trunk assignments are proposed, and a managed switch is only optional expansion. This is **not** the current production state, a superseding purchase decision, or a verified independent client DNS failover. See the [separate future-design document](docs/architecture/Flint4-ASUS-Future-Architecture-2026-10-15.md) versus the [2026-10-15 production v1.2 architecture](docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md). Keep #212 paused unless separately reauthorized.
 
 **Current phase:** Core hardening/recovery closeout plus network-design documentation maturity. RouterCloud #136/#137/#138, repository protection #130, Tailscale version-drift hardening #177, Android Pi-hole/Tailscale policy #152, the 2026-10-07 multi-vantage port-exposure audit, and the RouterCloud Grafana alert-routing increment from PR #190 are completed. The reference router runs Tailscale 1.103.375 unstable/dev and DNS Guard v3.2 is merged and production-validated within a bounded live acceptance scope; v3.1 is a historical milestone. Current bounded follow-up is #129 Pi-hole-aware disaster recovery, #196 DNS Guard candidate hardening, #142/#214 client-visible detection/watchdog independence, #176 exit-node source scoping, #108 DNS visibility, #68 encrypted-DNS assessment and platform-neutral #143 trust-zone design. Issue #178 is **closed**, but known grouping/anti-flap, Email+Telegram provisioning parity and persistence-after-reload evidence gaps must not be portrayed as completed.
+
+## 2026-10-18 — Fedora Homelab Update (off-router only)
+
+**Operator-reported Fedora production change:** `homelab-update-check.timer` runs **check-only** daily; manual Grafana Pilot v2.3 upgraded Grafana `13.2.3-1 → 13.2.4-1` after a quiesced, verified backup. Postflight: five monitored services active, Grafana API HTTP 200, 15 stored rules / 0 paused, 0 priority-error entries in the checked hour, and operator-confirmed Email+Telegram receipt. These checks do **not** prove each rule fired, full provisioned-contact parity or a validated SQLite restore/downgrade.
+
+**Isolated engineering:** Update Engine v0.1–v0.3 discovery/lock tests and v0.4–v0.9 cross-UID, cooperative-exec, descendant and static RouterCloud backup-wrapper audits passed their individually scoped reported gates, including v0.6 `DESCENDANT_LAB_TOTAL=12/12`. Both existing backup wrappers have `flock` hints and shared lexical lock expression, but their **actual lock inode/lifetime and any root/user production cooperation remain unverified**. First v0.6 entrypoint audit held on unsupported systemd `%h`; v0.7 resolved both units. All unattended installer tests remain laboratory only: **`APPLY_IMPLEMENTED=NO`, `AUTO_INSTALL_ENABLED=NO`**.
+
+**Pending:** Caddy HTTP HTTPS E2E, source-identified ASUS→Loki flow, Restic repository/restore, lock integration on isolated wrapper copies and approval before any unattended timer. **No ASUS change and no live RouterCloud backup modification** occurred in these tests. See [Fedora operations](docs/operations/fedora-homelab-automatic-updates.md), [worklog](docs/worklog/2026-10-18.md) and [sanitized evidence](evidence/2026-10-18/fedora-update-operator-validation.md).
 
 ## 2026-10-16 — Issue #235 native SSD trust v1 (published research, not installed)
 
