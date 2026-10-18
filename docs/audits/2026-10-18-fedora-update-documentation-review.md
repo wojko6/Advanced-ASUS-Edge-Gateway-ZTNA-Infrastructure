@@ -44,3 +44,14 @@ The repository had **two distinct same-day documentation PRs**, both created aga
 **Provenance correction:** the global statement “ASUS not contacted on October 18” would be wrong, because #264 records separately approved **read-only** ASUS tests. “ASUS not contacted” is restricted to the **Fedora Homelab Update laboratory**. No claim of ASUS *mutation* or new router-wide acceptance is made.
 
 **Safety:** documentation reconciliation only. No production Linux service, ASUS script, router permissions, root Cron, RouterCloud timer, Dufs code, JFFS mount/hook or backup lock was changed.
+
+## Post-approval Git history checkpoint — PR #264 merged
+
+After the two PRs were reviewed and the operator explicitly approved the documented merge sequence:
+
+1. [PR #264](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/264) was marked ready and **merged into `main`**, preserving the reviewed DNS Guard owner-trust record. Merge commit: `b3dfc19ba170962ac5243f3052eff3b0f707c563`. That commit's tree matched the reviewed #264 head tree byte-for-byte.
+2. GitHub automatically changed [PR #265](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/265)'s base from the #264 branch to `main`. The #265 branch carried the reconciled combined worklog and all remaining Fedora documentation.
+3. To explicitly synchronize Git history without altering the approved #265 content, a new ancestry-only merge commit `02fa6cf8d3ccd814bcf00e3e247df280b2ce3c42` was created with the #265 head and new `main` as its two parents, retaining the existing #265 tree `d30102986367e15fedd7921725c1045a80901e1e`.
+4. The current #265 PR must still pass its **fresh post-synchronization GitHub validation** and a checked, documentation-only diff before it can be approved for merging into `main`. This paragraph records the chronology, **not** a claim that #265 has already merged.
+
+The previously documented Draft/merge-order sections above are **historical decisions at their respective checkpoints**. The public worklog continues to distinguish approved ASUS read-only checks from Fedora updater laboratory non-contact, and maintains all unrelated production HOLD gates.
