@@ -1,7 +1,7 @@
 # Dokumentacja po polsku — ASUS Edge Gateway
 
 **Status:** indeks bieżących instrukcji i dokumentów pomocniczych  
-**Aktualizacja:** 2026-10-16 (przegląd spójności indeksu; bez nowego testu produkcyjnego ASUS-a)
+**Aktualizacja:** 2026-10-18 (uzgodnienie indeksu z bieżącym stanem i ostrzeżeniami bezpieczeństwa; wyłącznie dokumentacja, bez nowego testu ASUS-a)
 
 Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest osobną kopią całej dokumentacji projektu. **Techniczny stan infrastruktury i zasady bezpieczeństwa** pozostają opisane w [PROJECT-STATUS.md](../../PROJECT-STATUS.md), [modelu dokumentacji](../documentation-model.md) i [polityce językowej](../language-policy.md).
 
@@ -23,16 +23,18 @@ Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest
 
 Punkt startowy: [indeks Disaster Recovery](../disaster-recovery-index.md) — wskazuje, **który dokument otworzyć**, które testy przeszły i czego nadal nie udowodniono. Materiały operacyjne scalono w [PR #205](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/205). Polska instrukcja jest **rozszerzoną adaptacją dla operatora**, nie tłumaczeniem zdanie po zdaniu. Testy z 2026-10-09 potwierdziły zarówno **restart istniejącego routera**, jak i **instalację 65 pakietów Pi-hole/Entware przez opkg w odizolowanym kontenerze ARMv7** ([dowód EN](../../evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md)). **Nie** potwierdziły pełnego odtworzenia pustego routera, konfiguracji usług ani DNS/DHCP po awarii.
 
-## Aktualne informacje i granice wdrożenia — 16 października 2026
+## Aktualne informacje i granice wdrożenia — 18 października 2026
 
-- [Bieżący stan projektu (EN)](../../PROJECT-STATUS.md) i [dziennik prac 16 października (EN)](../worklog/2026-10-16.md) — najnowsze wyniki badań, z wyraźnym oddzieleniem testów Fedory/QEMU od stanu ASUS-a.
+- [Bieżący stan projektu (EN)](../../PROJECT-STATUS.md), [dziennik 17 października (EN)](../worklog/2026-10-17.md) oraz [dziennik 18 października (EN)](../worklog/2026-10-18.md) — ostatnie datowane ustalenia. Raporty z testów Fedora/QEMU oraz odczytów z rzeczywistego ASUS-a mają różne zakresy dowodowe; nie są automatycznie potwierdzeniem wdrożenia.
 - [Architektura produkcyjna ASUS v1.2 (Markdown, EN)](../architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.md) oraz [PDF v1.2](../architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.pdf) — **datowany** stan z 15 października; nie jest to świeży test całej infrastruktury.
 - [Issue #235 — bezpieczeństwo RouterCloud i uprawnienia SSD](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) pozostaje **OTWARTE / `DEPLOYMENT_GATE=HOLD`**. [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245) dotyczy eksperymentalnej naprawy uprawnień po montowaniu; **nie został wdrożony**. Native SSD Trust Helper v1 był testowany lokalnie na ARMv7/QEMU (12/12 negatywnych przypadków PASS), ale nie działa na produkcyjnym ASUS-ie i nie upoważnia do `chmod`.
+- **Nowe ustalenie Issue #235 z 18 października:** zatwierdzony audyt **tylko do odczytu** wykazał, że plik DNS Guard wykonywany przez root z Cron ma nie-rootowego właściciela/grupę i uprawnienie zapisu dla właściciela. Zawartość SHA-256 odpowiadała przejrzanej wersji v3.2, lecz zgodność treści **nie rozwiązuje problemu zaufania do uprawnień**. Testy naprawy na Fedorze były syntetyczne; produkcyjne `chown`, podmiana pliku, edycja Cron lub użycie instalatora pozostają **HOLD**. Szczegóły: [operacje (EN)](../operations.md#dns-guard-privileged-cron-target-ownership--review-hold-2026-10-18), [worklog (EN)](../worklog/2026-10-18.md) i [polska instrukcja wdrożenia](../deployment-pl.md).
+- [Issue #263 — audyt uprawnień obiektów SSD](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/263) pozostaje **OTWARTE / AUDIT-ONLY**: zidentyfikowano 12 plików `0666` i 3 katalogi `0777` pierwszego poziomu. Nie jest to potwierdzenie wykorzystania podatności i nie upoważnia do masowego `chmod`/`chown`.
 - [Projekt przyszłej architektury Flint 4 + ASUS (EN)](../architecture/Flint4-ASUS-Future-Architecture-2026-10-15.md) jest **wariantem planistycznym**, a nie aktualnym sprzętem. OPNsense pozostaje możliwą, nieokreśloną w czasie alternatywą; nie ma zatwierdzonej migracji.
 - [Odporność DNS klientów — Issue #212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212) pozostaje wstrzymana do czasu niezależnego sprzętu. [Transfer dużych plików RouterCloud — Issue #254](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/254) jest w fazie pomysłu, **bez wdrożonego wznawiania transferów**.
-- Odtwarzanie routera od zera ([Issue #129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)) nadal **nie ma pełnego testu bare-metal**; pozytywny test pakietów w kontenerze ARMv7 i restart istniejącego routera nie są takim odtworzeniem.
+- Odtwarzanie routera od zera ([Issue #129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)) nadal **nie ma pełnego testu bare-metal**. Zestaw 65 pakietów IPK oraz Pi-hole `2026.09.20-1` jest **historycznym wynikiem testu z 9 października**, nie automatycznie zgodnym zestawem dla każdej późniejszej wersji pakietu. Przed odtworzeniem należy ponownie sprawdzić wersje binariów, pakiety, manifesty i zależności; zobacz [polską procedurę DR](../router-bare-metal-recovery-pl.md).
 
-## Inne materiały po polsku
+## Powiązane materiały i historia prac
 
 - [Końcowy audyt uprawnień katalogów #200 — wyniki i ograniczenia (EN)](../../evidence/2026-10-09/issue-200-final-permissions-acceptance.md) — 698 obiektów, jeden wyjątek Pi-hole, testy regresji PR #209, zgłoszenie zamknięte; **bez testu awaryjnego rollbacku na produkcji**.
 - [Dziennik prac 9 października (EN)](../worklog/2026-10-09.md) — bieżący stan DR #129, wdrożenia BusyBox i zamknięcia #200.
@@ -46,4 +48,4 @@ Punkt startowy: [indeks Disaster Recovery](../disaster-recovery-index.md) — ws
 3. Przy rozbieżności PL/EN zatrzymaj zmianę i porównaj obie procedury z dowodami produkcyjnymi — nie zgaduj.
 4. Przegląd lub tłumaczenie dokumentu **nie stanowi testu** poprawności odbudowy infrastruktury.
 
-Wszelkie zmiany zasad należy zgłaszać w [Issue #206](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/206).
+Polityka językowa została przyjęta i [Issue #206](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/206) jest **zamknięte**. Nowe rozbieżności między instrukcjami PL i kontraktami EN wymagają osobnego przeglądu dokumentacji i kontrolowanego PR; nie traktuj zamkniętego zgłoszenia jako bieżącej listy zadań.

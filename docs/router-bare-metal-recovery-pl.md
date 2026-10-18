@@ -4,6 +4,8 @@
 **Stan na 2026-10-09:** procedura przygotowana i oparta na prawdziwych backupach oraz testach cząstkowych; **pełne odtworzenie od zera NIEZALICZONE**.  
 **Nie wykonywać na zdrowym routerze produkcyjnym.** Nie jest to jednoetapowy instalator.
 
+> **Uzupełnienie bezpieczeństwa — 2026-10-18:** instrukcja odzyskiwania opisuje **docelowe** warunki odbudowy, nie potwierdza aktualności wszystkich pakietów ani bezpieczeństwa ponownego użycia starego hooka/skryptu. Bieżący audyt DNS Guard ujawnił nie-rootowego właściciela skryptu uruchamianego przez root z Cron. Przy odbudowie **nie wolno bezrefleksyjnie odtworzyć słabego właściciela ani użyć ogólnego instalatora jako naprawy**. Weryfikacja zaufanego źródła, właścicieli/trybów, ścieżek nadrzędnych i procedury rollbacku wymaga odrębnego zatwierdzenia. [Status Issue #235](../PROJECT-STATUS.md) · [ustalenia i ograniczenia](worklog/2026-10-18.md). `DEPLOYMENT_GATE=HOLD` dla produkcyjnej naprawy #235.
+
 ## 0. Scenariusz i warunki bezpieczeństwa
 
 Przyjmujemy najtrudniejszy wariant: sprawny sprzęt ASUS TUF-AX5400, po resecie do ustawień fabrycznych, pusty nośnik SSD/JFFS bez pakietów Entware i bez działających Pi-hole, Unbound, DNS Guard i Tailscale. Dane ratunkowe są na oddzielnej Fedorze lub zaszyfrowanym nośniku offline.
@@ -93,13 +95,15 @@ Przed odtwarzaniem skryptów odtwórz **zgodne i zaufane pakiety** z prywatnego 
 
 Wymagają osobnego potwierdzenia:
 - **Unbound**: referencyjne `1.26.1`, środowisko Unbound Manager, zależności i konfiguracja DNSSEC;
-- **Pi-hole FTL**: referencyjny ARMv7 FTL `6.7.1`, pakiet `2026.09.20-1`, wymagane narzędzia `setcap/getcap`; sprawdzić sumy binariów i zgodność ABI;
+- **Pi-hole FTL (historyczny stan z 2026-10-09)**: ARMv7 FTL `6.7.1` i pakiet Pi-hole `2026.09.20-1` były podstawą **tamtego** zamrożonego zestawu 65 IPK. Przed odbudową sprawdź **nową, rzeczywistą** wersję pakietu i binarki na docelowym środowisku oraz dostępność pasujących, zweryfikowanych archiwów; wymagane są narzędzia `setcap/getcap`, kontrola sum i ABI. Nie traktuj wersji z 9 października jako bezwarunkowo aktualnej;
 - **Tailscale**: wersja faktycznych binariów może różnić się od metadanych `opkg`, dlatego wymagana kontrola provenance;
 - **syslog-ng**, GNU `patch` (instalator WebUI go wymaga) oraz zależności projektu.
 
 Pi-hole wymaga konta **uid=999/gid=999** zgodnie z prywatnym manifestem. Nie tworzyć go ślepo, gdy identyfikatory kolidują z nową instalacją.
 
 ### Stan potwierdzony 2026-10-09 — Pi-hole offline (issue #129)
+
+> **Ograniczenie aktualności (przegląd 2026-10-18):** dalsze aktualizacje Pi-hole/Entware mogą zmienić zestaw wymaganych pakietów i ich sumy. **65 IPK i wynik `opkg` PASS dowodzą wyłącznie spójności wersji archiwum użytego 9 października.** Nie jest to potwierdzony zestaw odtworzeniowy dla później zaktualizowanego Pi-hole. Wymagany jest nowy odczyt wersji z wiarygodnego źródła, prywatny manifest odpowiadających pakietów, ponowna kontrola zależności, skrótów, ABI i zgodności stanu Gravity/FTL oraz oddzielny test odbudowy. Brak kompletnego zestawu to **STOP**. Nie publikuj prywatnych pakietów ani manifestów w GitHubie.
 
 Na Fedorze, **bez zmian na produkcyjnym ASUS-ie**, zbudowano lokalny, prywatny komplet **65 pakietów IPK**: Pi-hole `2026.09.20-1`, 37 zależności bezpośrednich, 20 zależności pośrednich pierwszego poziomu i 7 drugiego poziomu. Wszystkie 65 sum SHA-256 są zgodne z manifestami; audyt **340 grup zależności** nie znalazł braków, ograniczeń wersji ani niezgodności z wersjami pakietów referencyjnego ASUS-a.
 
@@ -123,8 +127,8 @@ Manifesty SHA-256, IPK i logi instalacyjne zostają prywatnie poza GitHubem. Szc
 1. Zweryfikuj i odszyfruj prywatny CORE backup na Fedorze do tmpfs. Sprawdź wewnętrzny manifest i dokładną listę archiwum. Nie podawaj zaszyfrowanego `.gpg` bezpośrednio do `restore.sh`.
 2. Prawdziwy skrypt [`scripts/restore.sh`](../scripts/restore.sh) przyjmuje **`BACKUP.tar.gz --dry-run|--apply`**. Wcześniej wykazano, że może odtworzyć archiwum do alternatywnego katalogu `EDGE_RESTORE_ROOT` na odizolowanej Fedorze. **Bez tego parametru `--apply` zapisuje bezpośrednio do `/jffs` i `/opt` docelowego routera**.
 3. Właściwe odtworzenie CORE na odbudowywanym urządzeniu wymaga zatwierdzenia zawartości, sposobu bezpiecznego dostarczenia archiwum w prywatny obszar roboczy oraz planu cofnięcia zmian. Nie uruchamiaj `--apply` przed zakończeniem GATE 0–3.
-4. Zachowaj wersję managerów AMTM/Unbound Manager i nowy `post-mount`. W archiwum kopia hooka jest **wyłącznie do porównania**; `restore.sh` wyłącza automatyczne odtwarzanie nawet dawnych wersji `jffs/scripts/post-mount`.
-5. Jeżeli wybierasz ponowną instalację kodu projektu, [`scripts/install.sh`](../scripts/install.sh) wymaga `config/edge.conf` (prywatnego), GNU `patch` i zweryfikowanego artefaktu ARMv7 supervisor. Instalator modyfikuje hooki JFFS; nawet bez `--apply` nie jest wyłącznie odczytowy. **Nie wykonuj bez przeglądu, snapshotu i planu wycofania.**
+4. Zachowaj wersję managerów AMTM/Unbound Manager i nowy `post-mount`. W archiwum kopia hooka jest **wyłącznie do porównania**; `restore.sh` wyłącza automatyczne odtwarzanie nawet dawnych wersji `jffs/scripts/post-mount`. Oddzielny kandydat SSD/PR #245 jest **Draft / HOLD** — nie podmieniaj nim hooka podczas zwykłego odzyskiwania.
+5. Jeżeli wybierasz ponowną instalację kodu projektu, [`scripts/install.sh`](../scripts/install.sh) wymaga `config/edge.conf` (prywatnego), GNU `patch` i zweryfikowanego artefaktu ARMv7 supervisor. Instalator modyfikuje hooki JFFS; nawet bez `--apply` nie jest wyłącznie odczytowy. **Nie wykonuj bez przeglądu, snapshotu i planu wycofania.** Co ważne, implementacja kopiuje do istniejących miejsc przez `cp` i ustawia `chmod`, **bez wymuszenia docelowego UID/GID**, więc nie stanowi naprawy zaufania do DNS Guard. Na odbudowywanym celu przed uruchomieniem skryptu z Cron należy osobno potwierdzić, że treść pochodzi z zatwierdzonego źródła, plik i katalogi nadrzędne mają zaufanego właściciela/tryb, a przywracanie nie odtwarza niebezpiecznej własności; każda produkcyjna zmiana wymaga osobnego zatwierdzenia.
 
 Odczytowy checkpoint **po zatwierdzonym odtworzeniu**:
 
@@ -137,7 +141,7 @@ test -x /jffs/addons/asus-edge/bin/dns-guard
 test -x /jffs/addons/asus-edge/bin/healthcheck.sh
 ```
 
-**Uzupełnienie z 2026-10-09 — dodatkowy BusyBox ARMv7:** opcjonalna wersja 1.36.1 w /jffs/addons/asus-edge/tools/busybox/1.36.1/busybox **nie jest objęta obecnym archiwum CORE**. Nie jest zależnością rozruchu ani odbudowy DNS. Dopiero po ukończeniu odbudowy podstawowej infrastruktury odtwórz ją z **osobnego, zweryfikowanego artefaktu na Fedorze** albo z ponownej, sprawdzonej kompilacji. Nie zastępuj /bin/busybox, /bin/sh ani globalnego PATH. Instrukcja PL: [bezpieczne używanie BusyBox ARMv7](pl/busybox-armv7.md); kontrakt EN: [custom BusyBox ARMv7](custom-busybox-armv7.md). Weryfikacja trwałości po restarcie i osobny test rollbacku tej wersji pozostają otwarte.
+**Uzupełnienie z 2026-10-09 — dodatkowy BusyBox ARMv7:** opcjonalna wersja 1.36.1 w /jffs/addons/asus-edge/tools/busybox/1.36.1/busybox **nie jest objęta obecnym archiwum CORE**. Nie jest zależnością rozruchu ani odbudowy DNS. Dopiero po ukończeniu odbudowy podstawowej infrastruktury odtwórz ją z **osobnego, zweryfikowanego artefaktu na Fedorze** albo z ponownej, sprawdzonej kompilacji. Nie zastępuj /bin/busybox, /bin/sh ani globalnego PATH. Instrukcja PL: [bezpieczne używanie BusyBox ARMv7](pl/busybox-armv7.md); kontrakt EN: [custom BusyBox ARMv7](custom-busybox-armv7.md). Trwałość dodatkowego BusyBox po ostatnim restarcie istniejącego ASUS-a potwierdzono **2026-10-10 (PASS)** ([datowany dowód](../evidence/2026-10-10/issue-129-custom-busybox-reboot-persistence.md)). **Usunięcie/rollback** i pełna odbudowa pustego routera pozostają **nieprzetestowane**.
 
 **GATE 4:** manifest CORE i uprawnienia zweryfikowane, hooki zgodne z aktualnym managerem, testy składni PASS, rollback możliwy. **Nie aktywować docelowego DNS Guard do Pi-hole** przed ukończeniem następnego etapu.
 
