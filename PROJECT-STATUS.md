@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-10-18 (scoped DNS Guard root-Cron target ownership investigation and isolated Fedora owner-repair labs; no production remediation). Earlier SSD Trust Helper and broader acceptance checkpoints remain separately dated.
+**Status date:** 2026-10-18 — two independent, evidence-scoped checkpoints: (1) ASUS DNS Guard root-Cron target ownership and live read-only validation under Issue #235, plus Fedora-only synthetic owner-repair research; (2) off-router Fedora Homelab Update Watch and the operator-approved Grafana 13.2.4 pilot with separate synthetic lock labs. No production DNS Guard ownership repair, automatic package installer, RouterCloud wrapper deployment, or Issue #235/PR #245 SSD hook activation is claimed. Earlier broad live router acceptance remains separately dated.
 
 **Latest live RouterCloud checkpoint:** 2026-10-14 bounded user-reported browser/File/Favorites and backup validation after DAC Stage 1 (the earlier broad RouterCloud checkpoint remains 2026-10-03). On 2026-10-15 read-only sampling still found Dufs running as root; no runtime privilege reduction is accepted.
 
@@ -26,6 +26,14 @@
 - No live service, Cron, JFFS, SSD or DNS Guard script modification, no `--apply`, no rollback rehearsal on router, no merger or installation. The live code remains unmodified at the observed hash; the nonroot owner class remains unresolved.
 
 **Decision:** prepare an independently verified off-router recovery copy and a documented, separately approved root-owned replacement/rollback design only after trust and race preflight. Do not run the generic installer, apply ad hoc `chown`, or bundle this with **Draft PR #245** or other #235/Dufs worktrees. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `STAGE_B_C_E_AUTHORIZATION=NOT_GRANTED`, `DEPLOYMENT_GATE=HOLD`.
+
+## 2026-10-18 — Fedora Homelab Update (off-router only)
+
+**Operator-reported Fedora production change:** `homelab-update-check.timer` runs **check-only** daily; manual Grafana Pilot v2.3 upgraded Grafana `13.2.3-1 → 13.2.4-1` after a quiesced, verified backup. Postflight: five monitored services active, Grafana API HTTP 200, 15 stored rules / 0 paused, 0 priority-error entries in the checked hour, and operator-confirmed Email+Telegram receipt. These checks do **not** prove each rule fired, full provisioned-contact parity or a validated SQLite restore/downgrade.
+
+**Isolated engineering:** Update Engine v0.1–v0.3 discovery/lock tests and v0.4–v0.9 cross-UID, cooperative-exec, descendant and static RouterCloud backup-wrapper audits passed their individually scoped reported gates, including v0.6 `DESCENDANT_LAB_TOTAL=12/12`. Both existing backup wrappers have `flock` hints and shared lexical lock expression, but their **actual lock inode/lifetime and any root/user production cooperation remain unverified**. First v0.6 entrypoint audit held on unsupported systemd `%h`; v0.7 resolved both units. All unattended installer tests remain laboratory only: **`APPLY_IMPLEMENTED=NO`, `AUTO_INSTALL_ENABLED=NO`**.
+
+**Pending:** Caddy HTTP HTTPS E2E, source-identified ASUS→Loki flow, Restic repository/restore, lock integration on isolated wrapper copies and approval before any unattended timer. **No ASUS change and no live RouterCloud backup modification** occurred in these tests. See [Fedora operations](docs/operations/fedora-homelab-automatic-updates.md), [worklog](docs/worklog/2026-10-18.md) and [sanitized evidence](evidence/2026-10-18/fedora-update-operator-validation.md).
 
 ## 2026-10-16 — Issue #235 native SSD trust v1 (published research, not installed)
 

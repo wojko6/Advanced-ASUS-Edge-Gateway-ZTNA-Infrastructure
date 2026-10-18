@@ -2,6 +2,8 @@
 
 ## Test boundaries
 
+**Off-router package-maintenance evidence (2026-10-18):** the [Fedora update runbook](operations/fedora-homelab-automatic-updates.md) keeps check-only timer deployment, a real operator-approved Grafana upgrade, synthetic cross-UID lock laboratories and unverified end-to-end service gates separate. A 12/12 descendant laboratory test is not production backup cooperation or authorization for an unattended installer. See [dated evidence](../evidence/2026-10-18/fedora-update-operator-validation.md).
+
 This repository uses separate validation tracks. A PASS in one track must not be promoted into a claim about another layer.
 
 - **CI/static/mock** validates repository logic in an isolated test environment.

@@ -1,5 +1,9 @@
 # Roadmap
 
+### Fedora Homelab Update — 2026-10-18 (off-router, partly deployed)
+
+Completed: deployed a **check-only** daily update-watch timer and manually upgraded Grafana 13.2.3→13.2.4 after verified consistent backup, 15-rule/0-paused checks and Email+Telegram receipt. Operator-reported isolated engine/lock tests reached v0.9, including root/nonroot, cooperative job and descendant tests; **synthetic PASS is not RouterCloud production integration**. Follow-up gates before unattended AUTO: Caddy HTTP E2E, syslog-ng ASUS-specific ingestion, Restic repo/restore, verified real shared lock on backup wrappers, candidate-bearing transaction/rollback tests, individual package allowlist and explicit deployment approval. See [runbook](operations/fedora-homelab-automatic-updates.md), [worklog](worklog/2026-10-18.md). Router/SSD/Issue #235 scope unchanged.
+
 ### Security #235 checkpoint — 2026-10-16 (research milestone, not production)
 
 - [Native SSD Trust Helper v1](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/tree/security/issue235-native-ssd-trust-v1-lab-20261016): published C read-only candidate and 15 x86-64 isolated checks; branch CI PASS. Operator-reported static ARMv7 build/QEMU smoke PASS, synthetic `RC=2/HOLD` and `RC=3/REJECT` behavior, **12/12 ARMv7 negative matrix PASS**. See [dated worklog](worklog/2026-10-16.md).

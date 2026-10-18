@@ -224,6 +224,13 @@ for this feature.
 
 ## Updates
 
+### Fedora off-router monitoring updates (2026-10-18)
+
+The Fedora observability host now has a **check-only** `homelab-update-check.timer` and a **manually accepted** Grafana 13.2.4 single-package pilot (backup and bounded postflight verified). **No unattended installer** is deployed. Existing RouterCloud backup wrappers have `flock` hints, but their runtime lock lifetime and production cooperation with a root-owned update agent are unproven. Do not enable a generic DNF timer or touch the backup scripts before the separate RouterCloud integration review. [Canonical Fedora controlled-update runbook](operations/fedora-homelab-automatic-updates.md) · [2026-10-18 worklog](worklog/2026-10-18.md) · [sanitized evidence](../evidence/2026-10-18/fedora-update-operator-validation.md).
+
+This off-router work is separate from ASUS Entware/firmware updates and from the explicitly disabled Tailscale automatic update application described below.
+
+
 ### Current reference Tailscale runtime
 
 As of the end of 2026-10-06, the reference router runs:

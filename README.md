@@ -396,6 +396,8 @@ See [Tailscale maintenance and rollback](docs/tailscale-maintenance.md).
 
 ## Documentation
 
+**Fedora off-router update checkpoint (2026-10-18):** the check-only systemd timer is live and the operator-approved Grafana 13.2.4 upgrade passed bounded postflight checks. **Unattended installation remains disabled**; Restic/Caddy/syslog-ng E2E gates and shared backup locks remain open. See [controlled Fedora service updates](docs/operations/fedora-homelab-automatic-updates.md), [dated worklog](docs/worklog/2026-10-18.md) and [sanitized operator evidence](evidence/2026-10-18/fedora-update-operator-validation.md). This does not change the ASUS reference gateway or Issue #235.
+
 **Documentation languages:** canonical architecture, security, testing and evidence documentation is maintained in English. Polish-language operator guides are available through the [Polski indeks dokumentacji](docs/pl/README.md); see the [documentation language policy](docs/language-policy.md).
 
 - [Polski przewodnik wdrożenia](docs/deployment-pl.md)
