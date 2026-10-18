@@ -29,3 +29,18 @@
 - Any link/Markdown CI executed **after** opening this documentation PR should be reported by the actual CI result; do not infer a green build from a docs-only intent.
 
 **Outcome:** documentation reconciliation for the newly observed Fedora Update workflow, with explicit HOLD status for unattended installation.
+
+## Cross-PR reconciliation — Draft #264 and Draft #265 (2026-10-18)
+
+The repository had **two distinct same-day documentation PRs**, both created against the same `main` baseline:
+
+- [Draft PR #264](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/264) records **approved read-only ASUS DNS Guard root-Cron ownership investigations**, including a live SHA-256 comparison, and Fedora-only synthetic owner-repair V0.1–V0.3. The production trust gate remains HOLD.
+- [Draft PR #265](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/265) records the **real manual Fedora Grafana 13.2.4 upgrade**, the check-only watcher, and independent Fedora updater/lock labs. Unattended installation remains HOLD.
+
+**Resolution on the PR #265 branch (not on `main`):** retained PR #264 as a distinct Draft, added its commit as a second parent of a documentation-only merge commit, and reconciled four overlapping Markdown files in a single tree. The dated worklog now contains **both** independently scoped histories, the index has **one** October 18 link, `PROJECT-STATUS.md` carries **both** October 18 checkpoints, and `docs/operations.md` preserves both safety/maintenance sections. Git history is not force-rewritten. No PR was merged into `main` as part of this reconciliation.
+
+**Merge order:** review/merge #264 first, then review #265 against the updated `main`; check the resulting diff and re-run documentation CI. If #264 is squash-merged, explicitly verify #265's effective diff after the new base rather than assume GitHub hides the reconciled work automatically. PR #245 remains an unrelated, uninstalled Draft.
+
+**Provenance correction:** the global statement “ASUS not contacted on October 18” would be wrong, because #264 records separately approved **read-only** ASUS tests. “ASUS not contacted” is restricted to the **Fedora Homelab Update laboratory**. No claim of ASUS *mutation* or new router-wide acceptance is made.
+
+**Safety:** documentation reconciliation only. No production Linux service, ASUS script, router permissions, root Cron, RouterCloud timer, Dufs code, JFFS mount/hook or backup lock was changed.
