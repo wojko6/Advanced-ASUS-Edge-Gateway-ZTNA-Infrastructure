@@ -12,6 +12,16 @@ A read-only ASUS observation on 2026-10-15 found both physical ext4 mount roots 
 
 Do **not** apply a blanket/recursive `chmod`, copy the research SSD Trust Helper v1 into `post-mount`, use a generic installer to overwrite existing JFFS hooks, or treat a QEMU/HOLD snapshot as permission-change authorization. [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245) and the [Native SSD Trust Helper v1 branch](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/tree/security/issue235-native-ssd-trust-v1-lab-20261016) are separate uninstalled candidates. The native v1 helper has **no mutation path** and cannot return GO (`RC=0`). A future live maintenance change requires reviewed private media/UUID binding, mount and writer compatibility, preservation of **swap-before-AMTM** startup ordering, verified off-router rollback and **explicit separate approvals** for JFFS staging, hook activation, permission mutation and reboot. Production `DEPLOYMENT_GATE=HOLD`. See [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235), [2026-10-16 worklog](worklog/2026-10-16.md) and the [2026-10-16 audit](audits/2026-10-16-repository-documentation-review.md).
 
+## DNS Guard privileged Cron target ownership — review HOLD (2026-10-18)
+
+An explicitly approved **read-only** V2.8 audit on the ASUS matched the exact two project-owned root-Cron jobs. The `AsusEdgeDNSGuard` executable target is owner-writable and has **nonroot UID and GID**, while the `AsusEdgeWebUIStatus` target was root:root. The production DNS Guard content SHA-256 matched reviewed v3.2 source at PR #197 merge commit `01d6a7e00530ee8e9212820456047e2dee71a0a9` (`ecd44c59532073d33290b8eb500144e12ecfb4537542bc58a4c75be8753ab0db`). Content match is **not** ownership trust or a provenance attestation.
+
+The generic `scripts/install.sh` uses root-run `cp` followed by `chmod` without an explicit owner/group normalization for an existing destination. This may retain previous nonroot ownership but is **not a proven installation history**. V0.1 (22/22), V0.2 (26/26) and V0.3 (9/9) Fedora-only synthetic tests evaluated independent backups, atomic file replacement, open readers and rollback; an independent disposable-container DAC test was 4/4 PASS. None authorizes or verifies an ASUS owner repair, JFFS2 power-loss recovery or safe concurrent root-Cron execution.
+
+**Operational prohibition:** do not run the general installer, `chown`/`chmod` the live DNS Guard, delete/reschedule its Cron job, rewrite its parent directories, or deploy the test scripts as a quick fix. Preserve independent off-router verified recovery material and require separate operator approval, a trusted-parent/writer preflight, a secure owner/mode-preserving rollback and evaluated JFFS2 failure recovery. This is a **separate DNS Guard root-execution trust issue**, not a modification to the SSD mode-repair [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245).
+
+[Full dated evidence and limitations](worklog/2026-10-18.md). `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
 ## Change workflow
 
 Use this workflow for a planned maintenance window outside an active unchanged-state observation:
