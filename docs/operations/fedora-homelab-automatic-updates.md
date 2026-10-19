@@ -118,3 +118,14 @@ Evidence: operator-executed Fedora terminal outputs, not GitHub CI. This later c
 - The operator then ran the actual systemd check-only unit: Result=success, ExecMainStatus=0, normal oneshot inactive/dead afterwards. Post-run patch checksum, six DNF state file modes and non-root DNF5 JSON discovery all passed (zero candidates). This proves one successful live check-only invocation; it does not prove a future file recreation, live candidate-bearing DNF solver, unattended install, backup cooperation or application restore.
 
 - Next: read-only root/user-manager backup lock coordination review. Do not execute or modify backup wrappers, take a production lock, reveal credentials, alter timers, or touch ASUS, RouterCloud, Issue #235 or Fedora Recovery. AUTO_INSTALL_GATE=HOLD.
+
+
+### 2026-10-19 later backup runtime mapping audit (static only)
+
+- Operator-run non-root V1.0 coordination audit: 10/10 self-tests passed. The two live user-manager backup/maintenance units and timers were loaded/active as appropriate; both installed wrapper shapes used the same XDG_RUNTIME_DIR-or-/tmp and UID-based advisory lock name with fd 9 and nonblocking flock. User lock file was absent at the sampled instant. This supports source-level similarity only, not same runtime inode or root-user coordination.
+
+- Operator-run V1.1 user-manager runtime mapping audit: 8/8 self-tests passed; manager and login XDG_RUNTIME_DIR resolved to the same standard owner-0700 location. Both backup services use PrivateTmp=yes, UMask=0077 and were inactive at the instant sampled. Fallback /tmp separation risk was not needed under the observed manager environment, but actual service-process environment was not observed.
+
+- Existing root Update Watch is check-only and uses UMask=0077. A future root installer cannot assume that expanding the user's UID-based lock expression yields the same pathname or inode: root UID and environment differ. Neither the user backup tasks nor root updater has deployed a shared cross-UID cooperation lock.
+
+- Next test is an isolated root-owned fixture under /run with a controlled user-group-accessible advisory lock to establish bidirectional flock contention in lab only. No live backup process, unit, timer, file, or lock should be touched. The real resolved inode/descriptor lifetime and production coordination remain HOLD. AUTO_INSTALL_GATE=HOLD.
