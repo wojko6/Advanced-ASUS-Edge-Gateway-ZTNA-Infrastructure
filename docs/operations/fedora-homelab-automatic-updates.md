@@ -197,3 +197,12 @@ The exact local Grafana pilot backup directory was removed from this public runb
 - **Assistant-side isolated V1.6 prototype:** 12/12 self-tests plus a disposable nonroot test with a private JSON fixture PASS; validates exact attempt ID, required schema, success/rc 0/complete state, timestamp ordering and bounded age, no duplicate/unknown fields, and strict refusal of deferred/timeout/error outcomes. This is *not* operator Fedora acceptance and reads/writes no live RouterCloud state.
 
 - **Critical security limitation:** a user-owned receipt file, even mode 0600, can be fabricated or replayed by the same user; V1.6 validates only semantics and disposable DAC, **not authentic provenance, binding to actual Restic results, or continuity across service restarts**. Future implementation requires independently trusted execution/receipt design and the separate RouterCloud project's authorization. `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`.
+
+
+### 2026-10-19 — V1.6 operator check: isolated backup receipt semantics PASS
+
+The operator verified the V1.6 script hash and ran its nonroot, disposable fixture on Fedora: `SELFTEST_TOTAL_12_OF_12=PASS`, `LAB_RESULT=PASS_ISOLATED_RECEIPT_SEMANTICS`, `FIXTURE_CLEANUP=PASS`, `LAB_EXIT_CODE=0`. A fresh, complete attempt was accepted. Wrong-attempt replay, stale or future results, deferred, timeout, failed, absent, duplicate-field, unknown-field, boolean-RC and invalid-time cases were rejected. Private fixture directory and file tests passed.
+
+**Evidence limit:** schema and freshness checks do not establish trustworthy origin or a real Restic backup. `PRODUCTION_BACKUP_RECEIPT=NOT_CREATED`, `PROVENANCE_AUTHENTICATION=NOT_IMPLEMENTED`, `TRUSTED_PRODUCTION_RECEIPT=NOT_IMPLEMENTED`, `INTEGRATION_WITH_ROUTERCLOUD=NOT_DEPLOYED`. Real backup and DNF were not run by V1.6.
+
+**End of 2026-10-19 Fedora session:** the previously repaired production Update Watch remains check-only, and backup coordination V1.4, scheduling V1.5 and receipt validation V1.6 remain isolated-lab findings only. No further deployment was approved. Production cross-UID cooperation and trustworthy backup completion remain unproven. `AUTO_INSTALL_GATE=HOLD`.
