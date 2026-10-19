@@ -87,3 +87,19 @@ The v0.6 first static parser failed to recognize `%h` entrypoints (`STATIC_AUDIT
 - Only then design and authorize an unattended `systemd` installer service/timer. **None is deployed as of this evidence date.**
 
 See [operational index](../operations.md), [monitoring README](../../monitoring/README.md), [worklog](../worklog/2026-10-18.md), and [audit](../audits/2026-10-18-fedora-update-documentation-review.md).
+
+---
+
+## 2026-10-19 addendum — Fedora Recovery validation and return to service-scoped updates
+
+> **Later operator-reported checkpoint, not a retroactive change to the 2026-10-18 evidence above.** The operator verified a separate **Fedora host Recovery** mechanism through a real isolated Btrfs receive. This does **not** prove that the **RouterCloud backup repository** was restored or that its `flock` mechanism is coordinated with a root updater.
+
+- User-space RouterCloud backup/maintenance units and persistent timers were verified in the **user** systemd manager. Journals and bounded application markers for recent scheduled runs were successful. System-manager `not-found` and initial script-path lookup failures were **diagnostic context/specifier errors**, not failures of the real user units. Static Bash/DAC/Restic/flock checks passed; actual shared cross-UID lock lifetime and RouterCloud restore remain unproven.
+- The host recovery baseline includes read-only Btrfs snapshots of Fedora's system root and separately managed nested machines volume, with separate boot/EFI archives. The operator reported successful independent integrity checks, representative file restoration, a second physical NVMe encrypted Restic repository, full `restic check --read-data`, and **successful real `btrfs receive` of both exported subvolumes into an isolated disposable image**.
+- **Strict limits:** This recovery repository is separate from RouterCloud application backups. It is on a second NVMe **inside the same workstation**, not off-site; live databases are not asserted application-consistent, separate `/home` is not included, and complete Live USB recovery / a booted restored Fedora are **NOT TESTED**. The operator deferred V21A Live USB testing and chose to retain/refresh the baseline later.
+- The declared main goal is **automatic installation of explicitly allowed individual homelab service updates only**. The historical Fedora Recovery work is a completed prerequisite/checkpoint, not authorization for unattended OS-wide `dnf upgrade` or automatic kernel/NVIDIA changes. Grafana, Loki, Alloy and other higher-risk components still require separate approvals and verified service-specific recovery paths.
+- No 2026-10-19 package installation, production RouterCloud wrapper edit, ASUS mutation, firmware change or service reboot was reported in this update/recovery workstream. The previous-day manually approved Grafana pilot remains dated 2026-10-18.
+
+**Decision:** preserve the existing `homelab-update-check.timer` in check-only mode; continue solver transaction preview, package allowlisting, cooperative locking, per-service pre/postflight and notification design. No general unattended installer exists. **`AUTO_INSTALL_GATE=HOLD`.**
+
+See the [dated Fedora Recovery checkpoint](fedora-recovery-checkpoint-2026-10-19.md) and [October 19 sanitized worklog](../worklog/2026-10-19.md).
