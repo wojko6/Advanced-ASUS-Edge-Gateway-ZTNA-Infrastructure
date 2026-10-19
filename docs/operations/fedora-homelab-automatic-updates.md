@@ -164,3 +164,16 @@ The exact local Grafana pilot backup directory was removed from this public runb
 - Synthetic global-lock busy exit `75` is a *prototype* marker, not an approved live backup policy. Backup tasks should not be silently skipped, and the existing inner-busy `exit 0` is not evidence of completed backup. Agree on backup priority, bounded wait/retry, timeouts, alerts, and explicit RouterCloud workstream authorization before touching any live unit or wrapper.
 
 - Operator V1.4 read-only source audit / disposable root-supervised lab **PENDING**; real cooperative production integration **NOT IMPLEMENTED**, unattended package installation **HOLD**.
+
+
+### 2026-10-19 — operator Fedora V1.4 outer-FD8 integration lab PASS
+
+**Evidence provenance:** terminal output pasted by operator from Fedora 44; not CI and not assistant execution on the operator's host. This entry follows the earlier V1.4 **design-only/assistant synthetic** checkpoint and updates only the lab acceptance status, **not** the production integration gate.
+
+- Downloaded candidate SHA-256 pin verified by operator. `SELFTEST_TOTAL=12/12`, `AUDIT_RESULT=PASS_STATIC_SOURCE_ONLY`, `AUDIT_EXIT_CODE=0`; the installed RouterCloud backup and maintenance wrappers matched the narrowly recognized source FD9/UID-runtime lock patterns. Their full executable bodies were never executed by the test.
+
+- A root-supervised ephemeral fixture used a single root:root `0644` read-only-open outer lock on FD8 and reconstructed source-shaped synthetic user backup and maintenance workers retaining existing FD9 inner lock. `ROOT_USER_COOPERATION_LAB=PASS`, `LAB_EXIT_CODE=0`, root/user bidirectional contention and root reacquire PASSED for both synthetic roles. The foreground child verified FD8 **and** FD9, inode stability and fixture cleanup passed.
+
+- In synthetic tests a busy shared FD8 returned `75` to identify SKIP; this is **not** the approved production policy. A real scheduled backup must never be silently treated as successful just because a lock-contended synthetic job skipped; define fail-closed retry/timeout/alert semantics separately. Live service/cgroup descendants, SELinux and boot-time `/run` creation have not been acceptance-tested.
+
+- `LIVE_WRAPPERS_OR_UNITS_MODIFIED=NO`, `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`. Next gate: synthetic priority, timeout, scheduler conflict, crash/descendant and signal behavior, **without** production RouterCloud edits.
