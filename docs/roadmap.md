@@ -1,5 +1,12 @@
 # Roadmap
 
+### Security #235 — DNS Guard root-Cron trust checkpoint (2026-10-19; no deployment)
+
+- **Completed within scope:** validated same-UID and cross-UID DAC/transaction models on Fedora, fresh approved read-only ASUS metadata and mount observations, historical SHA-256 match of live DNS Guard, off-router verified private backup, disposable restore and rootless rollback V1.3 **32/32 PASS**. [Sanitized evidence](../evidence/2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md).
+- **Open risk:** nonroot-owned, owner-writable executable remains scheduled by root-Cron every minute. Process snapshots and hash matches do not make execution ownership trustworthy.
+- **GO/NO-GO gates:** independently recoverable verified backup; trusted path/owner/writer preflight; dispatcher and startup re-registration inhibition; in-flight Cron/open-FD/other-writer quiescence; JFFS2 publication and failure recovery; trusted root:root 0755 rollback; bounded DNS/Unbound/Pi-hole postflight; **separate operator authorization** for each mutating stage.
+- **Boundaries:** no `chown`/`chmod`, Cron disable, router reboot, installer or service restart; `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`. Do not merge this work with SSD mode [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245), RouterCloud PrivDrop/origin or Dufs upgrades. Issue #235 remains broader than DNS Guard.
+
 ### Fedora Homelab Update — 2026-10-18 (off-router, partly deployed)
 
 Completed: deployed a **check-only** daily update-watch timer and manually upgraded Grafana 13.2.3→13.2.4 after verified consistent backup, 15-rule/0-paused checks and Email+Telegram receipt. Operator-reported isolated engine/lock tests reached v0.9, including root/nonroot, cooperative job and descendant tests; **synthetic PASS is not RouterCloud production integration**. Follow-up gates before unattended AUTO: Caddy HTTP E2E, syslog-ng ASUS-specific ingestion, Restic repo/restore, verified real shared lock on backup wrappers, candidate-bearing transaction/rollback tests, individual package allowlist and explicit deployment approval. See [runbook](operations/fedora-homelab-automatic-updates.md), [worklog](worklog/2026-10-18.md). Router/SSD/Issue #235 scope unchanged.
