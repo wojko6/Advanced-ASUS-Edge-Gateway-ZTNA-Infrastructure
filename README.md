@@ -2,6 +2,8 @@
 
 [![Validation suite](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml/badge.svg?branch=main)](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml)
 
+> **First time here?** Begin with the **[15–20-minute guided tour](docs/START-HERE.md)** or **[Zacznij tutaj — po polsku](docs/pl/START-HERE.md)**. These reading routes explain what to open first, what to skip, and how to distinguish tested production state from plans or lab-only work. **No installation required.**
+
 A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. The current reference deployment combines Asuswrt-Merlin, Entware, Tailscale, Pi-hole, Unbound, syslog-ng, off-router observability, and a least-privilege firewall policy.
 
 This is an **enterprise-style lab**, not an enterprise-grade appliance. It has no high availability, redundant WAN, native VLAN microsegmentation, or vendor support.
