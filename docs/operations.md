@@ -22,6 +22,21 @@ The generic `scripts/install.sh` uses root-run `cp` followed by `chmod` without 
 
 [Full dated evidence and limitations](worklog/2026-10-18.md). `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
+## DNS Guard root-Cron: 2026-10-19 evidence and future maintenance gates (HOLD)
+
+[Dated sanitized evidence](../evidence/2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md) covers the approved **read-only** ASUS V1.2.3 checks, separate streamed SHA-256 confirmation, firmware-native tooling limitations, JFFS2 mount topology and off-router backup/restore verification. The target remains **nonroot-owned and owner-writable**, mode 0755, despite matching approved v3.2 bytes. Exactly one named Cron entry matched in one snapshot. `/` is SquashFS RO; `/jffs` is JFFS2 RW. The 147-process snapshot showed zero matching owner UIDs, **not** absence of future/open-descriptor/other writers.
+
+The verified private Fedora copy and rootless V1.3 **32/32** rollback rehearsal protect only the documented off-router bytes and test model. They do **not** establish live `root:root` rollback, full physical-storage independence, on-router filesystem crash durability or scheduler quiescence.
+
+**Proposed maintenance sequence — planning only, NOT shell commands to run:**
+
+1. Verify an independent trusted backup and separately recoverable DNS path; review parent-chain and all authorized writers.
+2. With a new explicit maintenance approval, inhibit the named Cron **dispatcher and any `services-start` re-registration**, then prove existing jobs, open writable FDs and competing writers are drained. `flock` availability alone is insufficient.
+3. Only after the previous gates, separately review and authorize a JFFS2-aware staged publish that verifies content and establishes trusted `root:root` and intended mode 0755 on both the candidate and rollback executable; fail closed on uncertain partial state.
+4. Validate bounded DNS Guard, Unbound, Pi-hole and Cron restoration postflight using an operator-held recovery path. Reboot, if ever needed, is a separate authorization.
+
+**Current prohibition remains:** do not use the generic installer or perform an ad hoc live `chown`/`chmod`, Cron change, service restart, post-mount edit or SSD mutation. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `STAGE_B_C_E_AUTHORIZATION=NOT_GRANTED`; `DEPLOYMENT_GATE=HOLD`. This is distinct from Draft PR #245 and from the separate RouterCloud/DUFS work.
+
 ## Change workflow
 
 Use this workflow for a planned maintenance window outside an active unchanged-state observation:
