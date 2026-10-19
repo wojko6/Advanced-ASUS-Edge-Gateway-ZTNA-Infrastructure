@@ -129,3 +129,12 @@ Evidence: operator-executed Fedora terminal outputs, not GitHub CI. This later c
 - Existing root Update Watch is check-only and uses UMask=0077. A future root installer cannot assume that expanding the user's UID-based lock expression yields the same pathname or inode: root UID and environment differ. Neither the user backup tasks nor root updater has deployed a shared cross-UID cooperation lock.
 
 - Next test is an isolated root-owned fixture under /run with a controlled user-group-accessible advisory lock to establish bidirectional flock contention in lab only. No live backup process, unit, timer, file, or lock should be touched. The real resolved inode/descriptor lifetime and production coordination remain HOLD. AUTO_INSTALL_GATE=HOLD.
+
+
+### 2026-10-19 cross-UID lock test V1.2 (isolated root-owned fixture)
+
+- Operator reported 8/8 policy self-tests PASS and a successful real root/user advisory flock test in a disposable /run fixture: same root-owned group-accessible lock inode, root-held/user-blocked and user-held/root-blocked, controlled directory nonreplaceability, successful reacquisition, and cleanup PASS.
+
+- This is an isolated fixture and does not execute either production backup wrapper, the check-only Update Watch, Restic or DNF. It does not demonstrate production user-manager to root-installer coordination, descendant fd9 lifetime in the live wrappers or safe reconfiguration of their locks. The root updater still lacks a live shared cooperative lock. AUTO_INSTALL_GATE=HOLD.
+
+- Follow-up synthetic Bash lifetime test planned against the observed fd9/flock -n/exit-zero-on-busy shape. A busy backup wrapper's exit 0 must not be interpreted as completed backup; collect app result markers separately.
