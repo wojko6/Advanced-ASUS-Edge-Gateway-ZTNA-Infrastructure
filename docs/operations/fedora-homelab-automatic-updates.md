@@ -177,3 +177,14 @@ The exact local Grafana pilot backup directory was removed from this public runb
 - In synthetic tests a busy shared FD8 returned `75` to identify SKIP; this is **not** the approved production policy. A real scheduled backup must never be silently treated as successful just because a lock-contended synthetic job skipped; define fail-closed retry/timeout/alert semantics separately. Live service/cgroup descendants, SELinux and boot-time `/run` creation have not been acceptance-tested.
 
 - `LIVE_WRAPPERS_OR_UNITS_MODIFIED=NO`, `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`. Next gate: synthetic priority, timeout, scheduler conflict, crash/descendant and signal behavior, **without** production RouterCloud edits.
+
+
+### 2026-10-19 — operator Fedora V1.5 synthetic lock scheduling policy PASS
+
+**Provenance:** actual operator-executed Fedora terminal output; script integrity SHA-256 was checked, `SELFTEST_TOTAL=9/9`, `LAB_RESULT=PASS_ISOLATED_POLICY` and `LAB_EXIT_CODE=0`. This is **not** a production backup/maintenance/systemd/Restic/DNF run.
+
+- In one **nonroot disposable fixture**, the root updater contender correctly deferred when a backup held the lock and subsequently progressed after release; the backup contender waited and completed; backup and maintenance timeouts were **not** misreported as successful runs. A crash without a surviving lock-holding descendant released the lock. A child inheriting the lock preserved exclusion after parent exit until the child finished.
+
+- The fixture distinguished **`DEFERRED=75` from `COMPLETE=0`**; a service exit status or lock release alone remains insufficient as evidence that a real RouterCloud backup completed. The existing production wrapper may return 0 after an inner FD9 lock conflict; independent, fresh and verified application completion evidence is required before accepting a backup prerequisite.
+
+- `PRODUCTION_LOCKS_OR_WRAPPERS_CONTACTED=NO`, `REAL_SCHEDULING_INTEGRATION=NOT_IMPLEMENTED`, `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`. Next design gate: define trustworthy per-run backup completion receipt (attempt identity, freshness, complete vs skip/timeout/error), fail-closed preflight and user notification; test entirely in synthetic fixtures before any live wrappers or timers are touched.
