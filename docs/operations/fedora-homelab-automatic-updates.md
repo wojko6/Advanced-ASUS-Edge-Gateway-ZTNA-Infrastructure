@@ -103,3 +103,18 @@ See [operational index](../operations.md), [monitoring README](../../monitoring/
 **Decision:** preserve the existing `homelab-update-check.timer` in check-only mode; continue solver transaction preview, package allowlisting, cooperative locking, per-service pre/postflight and notification design. No general unattended installer exists. **`AUTO_INSTALL_GATE=HOLD`.**
 
 See the [dated Fedora Recovery checkpoint](fedora-recovery-checkpoint-2026-10-19.md) and [October 19 sanitized worklog](../worklog/2026-10-19.md).
+
+
+## Later 2026-10-19 checkpoint — live DNF5 watcher remediation
+
+Evidence: operator-executed Fedora terminal outputs, not GitHub CI. This later checkpoint supersedes only the earlier statement that the watcher's production source was untouched on October 19.
+
+- Non-root DNF5 discovery initially failed: six libdnf5 state TOML files were root-owned mode 0600 versus installed RPM manifest 0644. A targeted operator-approved permission repair restored all six files to 0644. Subsequent DNF5 JSON discovery exited 0 with zero update candidates; no package installation occurred. Original creation cause remains unproven.
+
+- The root systemd check-only watcher retained UMask=0077. Laboratory policy tests, Bash quoted-array replay, child umask scope and static symlink trust checks passed. A v2.2.1 installer receipt-serialization error occurred AFTER backup creation but BEFORE live replacement; it did not patch production.
+
+- Operator-approved v2.2.2 production deployment changed exactly one DNF invocation line, setting umask 0022 only for the DNF child; parent service UMask=0077, timer and all backup jobs remained unchanged. Durable backup, patch checksum, Bash syntax, SELinux/xattr metadata and static postflight were accepted. Rollback receipt remains private.
+
+- The operator then ran the actual systemd check-only unit: Result=success, ExecMainStatus=0, normal oneshot inactive/dead afterwards. Post-run patch checksum, six DNF state file modes and non-root DNF5 JSON discovery all passed (zero candidates). This proves one successful live check-only invocation; it does not prove a future file recreation, live candidate-bearing DNF solver, unattended install, backup cooperation or application restore.
+
+- Next: read-only root/user-manager backup lock coordination review. Do not execute or modify backup wrappers, take a production lock, reveal credentials, alter timers, or touch ASUS, RouterCloud, Issue #235 or Fedora Recovery. AUTO_INSTALL_GATE=HOLD.
