@@ -188,3 +188,12 @@ The exact local Grafana pilot backup directory was removed from this public runb
 - The fixture distinguished **`DEFERRED=75` from `COMPLETE=0`**; a service exit status or lock release alone remains insufficient as evidence that a real RouterCloud backup completed. The existing production wrapper may return 0 after an inner FD9 lock conflict; independent, fresh and verified application completion evidence is required before accepting a backup prerequisite.
 
 - `PRODUCTION_LOCKS_OR_WRAPPERS_CONTACTED=NO`, `REAL_SCHEDULING_INTEGRATION=NOT_IMPLEMENTED`, `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`. Next design gate: define trustworthy per-run backup completion receipt (attempt identity, freshness, complete vs skip/timeout/error), fail-closed preflight and user notification; test entirely in synthetic fixtures before any live wrappers or timers are touched.
+
+
+### 2026-10-19 — receipt-freshness policy V1.6 proposal (assistant-side lab only)
+
+- **Design-only gate:** the current user backup wrapper may return exit 0 when an existing FD9 lock is busy; therefore a systemd success exit or a prior `LAST_RESULT=success` is not proof of a **new**, attributable successful backup. A future root updater needs a per-attempt completion receipt with explicit attempt identity, success state, return code, finish stage and bounded freshness; reject stale, incomplete, deferred, failed, missing or mismatched evidence.
+
+- **Assistant-side isolated V1.6 prototype:** 12/12 self-tests plus a disposable nonroot test with a private JSON fixture PASS; validates exact attempt ID, required schema, success/rc 0/complete state, timestamp ordering and bounded age, no duplicate/unknown fields, and strict refusal of deferred/timeout/error outcomes. This is *not* operator Fedora acceptance and reads/writes no live RouterCloud state.
+
+- **Critical security limitation:** a user-owned receipt file, even mode 0600, can be fabricated or replayed by the same user; V1.6 validates only semantics and disposable DAC, **not authentic provenance, binding to actual Restic results, or continuity across service restarts**. Future implementation requires independently trusted execution/receipt design and the separate RouterCloud project's authorization. `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`.
