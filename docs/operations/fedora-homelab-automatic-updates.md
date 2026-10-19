@@ -151,3 +151,16 @@ Evidence: operator-executed Fedora terminal outputs, not GitHub CI. This later c
 ### 2026-10-19 public-path sanitization correction
 
 The exact local Grafana pilot backup directory was removed from this public runbook and the Oct 18 worklog in a dated editorial correction. Operator-reported backup/upgrade checks and their original event dates are unchanged. The sanitized public path should not be treated as a recovery command. No new runtime backup, restore or package installation is asserted by this documentation edit.
+
+
+### 2026-10-19 — proposed outer cooperative lock V1.4 (design only)
+
+**Evidence class: design-only + assistant-side isolated disposable synthetic lab**, not an operator-run Fedora host result. Existing production RouterCloud backup and maintenance wrappers still use their own UID/runtime-dependent `flock -n` on FD9. Neither they nor the root updater currently participate in a shared production cross-UID lock.
+
+- Proposed additional **outer** shared FD8 lock: a root-provisioned, root-owned `/run` directory and root:root `0644` regular file opened **read-only** by all cooperating participants; Linux exclusive `flock` works on such a descriptor. Keep existing FD9 inner locks unchanged. No mount/runtime path is deployed or promised, and SELinux, boot-time provisioner and actual cross-UID service restrictions still need a Fedora acceptance gate.
+
+- The assistant ran V1.4 in a disposable synthetic fixture with 12/12 parser/self-tests and bidirectional root/user contention PASS: root lock blocks user backup+maintenance surrogates, user backup or maintenance blocks root and the other surrogate; a foreground child successfully inspected FD8 and FD9. Stable inode and cleanup PASS. Actual source on the operator's Fedora **has not yet been checked for V1.4**; the synthetic surrogates execute only statically recognized lock lines, never real network, DNF, Restic or backup work.
+
+- Synthetic global-lock busy exit `75` is a *prototype* marker, not an approved live backup policy. Backup tasks should not be silently skipped, and the existing inner-busy `exit 0` is not evidence of completed backup. Agree on backup priority, bounded wait/retry, timeouts, alerts, and explicit RouterCloud workstream authorization before touching any live unit or wrapper.
+
+- Operator V1.4 read-only source audit / disposable root-supervised lab **PENDING**; real cooperative production integration **NOT IMPLEMENTED**, unattended package installation **HOLD**.
