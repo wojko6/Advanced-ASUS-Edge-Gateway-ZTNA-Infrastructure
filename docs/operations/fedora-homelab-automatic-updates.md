@@ -138,3 +138,11 @@ Evidence: operator-executed Fedora terminal outputs, not GitHub CI. This later c
 - This is an isolated fixture and does not execute either production backup wrapper, the check-only Update Watch, Restic or DNF. It does not demonstrate production user-manager to root-installer coordination, descendant fd9 lifetime in the live wrappers or safe reconfiguration of their locks. The root updater still lacks a live shared cooperative lock. AUTO_INSTALL_GATE=HOLD.
 
 - Follow-up synthetic Bash lifetime test planned against the observed fd9/flock -n/exit-zero-on-busy shape. A busy backup wrapper's exit 0 must not be interpreted as completed backup; collect app result markers separately.
+
+
+### 2026-10-19 — isolated backup wrapper lock lifetime lab V1.3
+
+- **Evidence provenance:** operator-executed Fedora terminal output, root-supervised **synthetic Bash** fixture; no actual production backup wrapper, maintenance unit, Restic, DNF, or RouterCloud user lock executed. The local self-test reported **10/10 PASS**, including directory/lock DAC, FD 9 and nonblocking flock pattern, explicit busy-exit-zero classification, and absence of real workload.
+- **Runtime in isolated fixture:** root-held lock caused simulated user backup and maintenance contenders to skip; the test user wrapper obtained the common protected lock when free; a foreground child inherited FD 9; root remained blocked while the child was active and after a competing process exited; maintenance was blocked while the synthetic backup held the lock; root could reacquire only after release. Stable common inode and fixture cleanup passed. **LAB_RESULT=PASS_ISOLATED_WRAPPER_LIFETIME**.
+- **Critical status interpretation:** simulated backup/maintenance wrappers intentionally returned **exit code 0 when flock was busy**. This represents **SKIPPED**, not **SUCCESSFUL BACKUP**. A future update prerequisite must validate actual backup completion through independent status/receipt evidence, not infer it from the service exit code alone.
+- **Limitations:** real live wrapper FD inheritance, lock ownership across production child lifetimes, cross-UID coordination with a root updater and a shared production lock were **not tested or deployed**. Read-only audits and isolated fixtures do not authorize RouterCloud wrapper/timer modifications. **AUTO_INSTALL_GATE=HOLD**.
