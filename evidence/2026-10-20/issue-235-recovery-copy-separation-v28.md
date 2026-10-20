@@ -81,9 +81,9 @@ DEPLOYMENT_GATE=HOLD
 Earlier operator session notes documented **private Fedora backup directory naming patterns**, not exact shareable paths: `$HOME/issue235-hook-backup-*/services-start` and `$HOME/issue235-dns-guard-backup-*/dns-guard`. A local, nonprivileged, metadata-only path discovery is sufficient to find candidates for the next **read-only** run; the operator must select the correct verified copies, and no paths should be pasted into the public report.
 
 ```bash
-find "$HOME" -mindepth 2 -maxdepth 2 -type f \\
-  \\( -path "$HOME/issue235-hook-backup-*/services-start" -o \\
-     -path "$HOME/issue235-dns-guard-backup-*/dns-guard" \\) -print
+find "$HOME" -mindepth 2 -maxdepth 2 -type f \
+  \( -path "$HOME/issue235-hook-backup-*/services-start" -o \
+     -path "$HOME/issue235-dns-guard-backup-*/dns-guard" \) -print
 ```
 
 If the files are found, rerun `python3 -B issue235_recovery_separation_audit_v28.py --audit` and paste each complete local path at its appropriate hidden prompt. The secondary inputs are optional. No copy, archive or permission is to be altered merely to make the audit pass. A failing mandatory integrity check remains `HOLD`.
