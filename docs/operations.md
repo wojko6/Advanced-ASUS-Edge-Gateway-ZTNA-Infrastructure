@@ -41,6 +41,8 @@ The verified private Fedora copy and rootless V1.3 **32/32** rollback rehearsal 
 
 A [read-only V1.4–V1.7 evidence checkpoint](../evidence/2026-10-20/issue-235-services-start-trust-chain-v14-v17.md) establishes that the **firmware hook** `/jffs/scripts/services-start` is **nonroot-owned, mode 0755** and contains the exact pinned full source. The separate addon script is root:root 0755, but its local watchdog call is **later** than in the full hook. The edge config was root:root 0600. This is a point-in-time trust problem even though the bytes match a reviewed source.
 
+The operator also verified a private Fedora backup of the active full hook (`HOOK_OFFROUTER_BACKUP=PASS`, SHA-256 and 0600/0700 DAC PASS); an off-router DNS Guard backup was separately verified. Neither backup proves independently protected media or live JFFS2 rollback. [Draft two-target maintenance design](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md).
+
 The future remedial transaction therefore involves **two privileged targets**, the firmware hook and DNS Guard. Keep the **current full-hook semantics**; do not run the general installer, which generates a *different short wrapper*. Before considering any mutation, separately verify trusted, independently recoverable inputs for both targets, exclude competing writers and open descriptors, inhibit both root-Cron dispatch and Merlin startup re-entry/re-registration, review combined JFFS2 failure handling, and obtain an **explicit new maintenance authorization**. DNS Guard/Unbound/Pi-hole plus Cron startup postflight are required after an authorized change. No automatic production activation or reboot. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
 ## Change workflow
