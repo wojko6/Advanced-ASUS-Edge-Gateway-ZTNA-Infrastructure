@@ -11,6 +11,8 @@ Use the template that matches the evidence class:
 
 Both files are templates only. A template or unfilled placeholder is never validation evidence.
 
+- **2026-10-20 — Issue #235 `services-start` trust-chain source classification:** [operator-reported V1.4–V1.7 read-only evidence](2026-10-20/issue-235-services-start-trust-chain-v14-v17.md) established a nonroot-owned firmware hook byte-identical to pinned source, root-owned addon and config, and a moved watchdog call in the addon. No trusted live ownership, scheduler quiescence, or production repair; **HOLD**.
+
 ## Published validation timeline
 
 - **2026-10-19 — Issue #235 DNS Guard privileged-Cron ownership:** [sanitized operator-reported live read-only and Fedora rollback checkpoint](2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md) includes V1.2.3 metadata, SquashFS RO/JFFS2 RW topology, independent streamed SHA-256 match, private off-router backup and rootless 32/32 rollback rehearsal. **Nonroot executable ownership remains unresolved; no live Cron/owner/service change, no JFFS2 failure-recovery proof; deployment HOLD.**
