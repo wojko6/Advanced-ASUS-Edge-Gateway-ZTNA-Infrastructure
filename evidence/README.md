@@ -1,5 +1,7 @@
 # Validation evidence
 
+- **2026-10-20 — Issue #235 rootless rename/inode V2.2:** [19/19 local tests on synthetic actual filesystem objects](2026-10-20/issue-235-rootless-file-inode-publish-v22.md); old writable FD survives replacement, confirming no automatic FD revocation; no JFFS2 or root-owner proof, **HOLD**.
+
 Automated shell, configuration, mock-firewall, recovery, and evidence-redaction tests run in [GitHub Actions](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions).
 
 Live results are environment-specific and are not fabricated in this repository. Use [the collection procedure](../docs/evidence-collection.md) on the deployed router, review and sanitize the output, complete the relevant client-side checks, and then add a dated evidence directory.
