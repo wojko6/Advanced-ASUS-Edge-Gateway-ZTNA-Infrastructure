@@ -1,5 +1,10 @@
 # Roadmap
 
+### Security #235 — V2.0 two-target interruption gate (2026-10-20; offline model)
+
+- [V2.0 expected-red model](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md): 20/20 local assertions PASS (including **detecting**, not fixing, unsafe scenarios). Cron-only inhibition is insufficient; a simulated crash between two per-file publishes may re-enable privileged execution of the remaining nonroot-owned target.
+- **New blocking design gap:** demonstrate a trustworthy early-boot / power-loss strategy for the current GNUton/JFFS2 execution chain, independent protected recovery media, preserved fail-open DNS and break-glass. No real early-boot inhibit or two-file transaction verified; **NO DEPLOYMENT**.
+
 ### Security #235 — services-start source and owner trust (2026-10-20; read-only)
 
 - [Operator-reported V1.4–V1.7 results](../evidence/2026-10-20/issue-235-services-start-trust-chain-v14-v17.md): firmware full-script hook is nonroot-owned 0755 but byte-identical to pinned source; addon root:root 0755 and config root:root 0600. The addon preserves the watchdog function and Cron tokens but moves watchdog registration later, so it is **not** proven semantically interchangeable.
