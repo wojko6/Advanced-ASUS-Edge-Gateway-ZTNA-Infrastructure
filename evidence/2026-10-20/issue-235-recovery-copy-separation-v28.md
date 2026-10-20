@@ -1,6 +1,6 @@
 # Issue #235 — V2.8 off-router recovery copy and failure-domain audit (2026-10-20)
 
-> **Status:** Fedora operator READ-ONLY PREFLIGHT / isolated local synthetic suite **18/18 PASS**; operator real-backup audit **NOT PERFORMED: first replay had blank primary path inputs and expected HOLD**. Not a trusted publisher, restore test or independent-media certificate. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
+> **Status:** Fedora operator READ-ONLY PREFLIGHT / isolated local synthetic suite **18/18 PASS**; operator primary-backup audit **PASS_PRIMARY_SNAPSHOTS_ONLY** in the second replay; independent recovery and failure-domain still unproven. Not a trusted publisher, restore test or independent-media certificate. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
 
 ## Why this is the next gate
 
@@ -21,7 +21,7 @@ The audited inputs are **copies stored on Fedora**, selected locally by the oper
 
 - `issue235_recovery_separation_audit_v28.py`
 - SHA-256 of isolated source: `7541de5439a39d332d10da1b701b6cb14676d4e76b12d5b7f881883b73c440d5`
-- Run in disposable nonroot assistant environment: `--self-test` **18/18 PASS**. Synthetic private-copy tests include known matching bytes, mismatched SHA, file writable permissions, symlink and hardlink denial, writable ancestor denial, ambiguous path denial, and distinct inode / filesystem classification. The suite's `PASS` establishes only the behavior of this rootless fixture; no Fedora operator real-backup audit has yet been reported.
+- Run in disposable nonroot assistant environment: `--self-test` **18/18 PASS**. Synthetic private-copy tests include known matching bytes, mismatched SHA, file writable permissions, symlink and hardlink denial, writable ancestor denial, ambiguous path denial, and distinct inode / filesystem classification. The suite's `PASS` establishes only the behavior of this rootless fixture; a later **independent Fedora audit of the two actual primary copies PASSED**; see the replay evidence below.
 - `--audit` works **only** in the local operator's nonroot terminal. It reads **two required** local primary backups, with **two optional** secondary-copy paths, entered via hidden interactive prompts (no path-valued command-line arguments or network). A missing or inaccessible required primary copy ends in `HOLD`. Secondary copies may be absent; the checker honestly reports `NOT_ASSESSED`.
 - Fixed scoped file checks: open directory/file by descriptor with `O_NOFOLLOW`; reject ambiguous paths and group/world writable ancestors, symlinks, nonregular files, hardlinks, unexpected owner and group/other-readable modes; compare stable `fstat` identity before and after bounded checksum and fresh name lookup; exact historical hash, size <= 1 MiB.
 - The tool **does not run commands**, use `sudo`, perform SSH/network access, query the router, inspect any private approval/key store, modify copies or mount disks, perform file restore, change Cron/services/JFFS, or publish any new script.
@@ -87,6 +87,37 @@ find "$HOME" -mindepth 2 -maxdepth 2 -type f \
 ```
 
 If the files are found, rerun `python3 -B issue235_recovery_separation_audit_v28.py --audit` and paste each complete local path at its appropriate hidden prompt. The secondary inputs are optional. No copy, archive or permission is to be altered merely to make the audit pass. A failing mandatory integrity check remains `HOLD`.
+
+## Independent operator Fedora replay — second attempt, primary backups PASS (2026-10-20)
+
+The operator supplied two private input paths locally to the already hash-verified, rootless V2.8 `--audit`. Neither path nor any script bytes were published. The output was:
+
+```text
+PRIMARY_HOOK=BYTES_OWNER_MODE_PASS_AT_READ_TIME
+PRIMARY_GUARD=BYTES_OWNER_MODE_PASS_AT_READ_TIME
+SECONDARY_HOOK=NOT_PROVIDED
+SECONDARY_GUARD=NOT_PROVIDED
+FS_TOPOLOGY_HOOK=NOT_ASSESSED
+FS_TOPOLOGY_GUARD=NOT_ASSESSED
+ROOTLESS_PROTECTED_APPROVAL_STORE=NOT_ASSESSED
+INDEPENDENT_FAILURE_DOMAIN=NOT_PROVEN_BY_LOCAL_PATH_CHECKS
+ENCRYPTED_RESTIC_RESTORE_AND_OFFLINE_MEDIA=NOT_TESTED
+ACTUAL_RESTORE_ON_INDEPENDENT_DEVICE=NOT_TESTED
+TWO_SCRIPT_ROOT_OWNED_PUBLICATION=NOT_AUTHORIZED
+ASUS_CONTACTED=NO
+FILES_MODIFIED=NO
+CRON_MODIFIED=NO
+PRIVILEGED_EXECUTION_TRUST_GATE=HOLD
+DEPLOYMENT_GATE=HOLD
+RECOVERY_COPY_READONLY_CHECK=PASS_PRIMARY_SNAPSHOTS_ONLY
+V28_EXIT_CODE=0
+```
+
+**Acceptance:** `PRIMARY_BACKUP_SOURCE_BYTES_AND_BASIC_DAC_AT_READ_TIME=PASS_FOR_BOTH`. This supersedes the earlier *empty-input* run's `HOLD` for the **two actual primary loose files only**. It does not show immutable copies against a process with the same UID, backup inclusion in any other archive, independent physical failure domain, independent operator-approved manifest, genuine router recovery or root-owned publication. The optional second copies were **not supplied**, so `FS_TOPOLOGY_*=NOT_ASSESSED` is the only supported statement; **do not infer primary files are on the same filesystem or on different disks**.
+
+### Existing Restic infrastructure is a different evidence scope
+
+The existing repository's [RouterCloud versioned backup design](../../docs/routercloud-versioned-backup.md) describes an encrypted Restic repository on a separate local SSD, **for RouterCloud data**. This is not evidence that the two Issue #235 private hook/DNS Guard files appear in any Restic snapshot. Likewise, the separate Fedora Recovery workflow must not be changed or its archive coverage assumed. Before claiming an independent Issue #235 recovery copy, perform a separately scoped **read-only inclusion inventory** of an already existing verified backup profile, followed eventually by a restore into disposable storage and a check of failure-domain / credentials custody. Do not run a new backup, alter retention or policy, or reuse backup credentials as the V2.7 approval authority.
 
 ## Stage gate and next work
 
