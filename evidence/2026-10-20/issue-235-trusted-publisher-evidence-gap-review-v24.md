@@ -35,7 +35,7 @@ The V1.4 report explicitly notes that a valid FD and matching bytes do **not** p
 
 ## Gate-by-gate reconciliation### V2.5 original C/ZIP dependency attestation — operator Fedora pending
 
-The [V2.5 original Canonical C/ZIP source preflight](issue-235-original-c-zip-provenance-v25.md) establishes the **exact expected original laboratory source path**, immutable 18,074-byte C SHA-256 and bounded companion ZIP content, derived from the recovered old pinned test harness. The source and ZIP themselves were not found in available Library files; a standalone nonroot read-only tool passed 10/10 **synthetic** self-tests, but the real source/ZIP attestation remains **PENDING** on the operator's Fedora. Do not infer that the original synthetic manifest is legitimate operator authorization for active privileged scripts.
+The [V2.5 original Canonical C/ZIP source preflight](issue-235-original-c-zip-provenance-v25.md) establishes the **exact expected original laboratory source path**, immutable 18,074-byte C SHA-256 and bounded companion ZIP content, derived from the recovered old pinned test harness. The source and ZIP themselves were not found in available Library files; a standalone nonroot read-only tool passed 10/10 **synthetic** self-tests, but the operator's Fedora run now reports **original C SHA EXACT_MATCH**, **ZIP C byte EXACT_MATCH**, **unique synthetic baseline PASS**, and exit 0: historical source/ZIP identity **VERIFIED_AT_READ_TIME**, not independent two-script authorization. Do not infer that the original synthetic manifest is legitimate operator authorization for active privileged scripts.
 
 
 
