@@ -37,7 +37,7 @@ The [V2.4 archive/source cross-check](../../evidence/2026-10-20/issue-235-truste
 
 ## Three distinct failure boundaries — do not conflate### V2.5 historical C/ZIP prerequisite (scope remains PR #245)
 
-[V2.5 fixed-input read-only audit](../../evidence/2026-10-20/issue-235-original-c-zip-provenance-v25.md) records the exact original 18,074-byte Canonical Manifest C pin and its expected ZIP. A safe Fedora-only preflight has local synthetic tests 10/10 PASS but awaits operator execution against both historical files; no replacement sources will be generated to fabricate provenance. **Even verified original C bytes remain solely a PR #245 lab dependency**, not approval to modify either privileged Issue #235 script.
+[V2.5 fixed-input read-only audit](../../evidence/2026-10-20/issue-235-original-c-zip-provenance-v25.md) records the exact original 18,074-byte Canonical Manifest C pin and its expected ZIP. The operator independently ran the fixed-path Fedora-only preflight against both historic inputs: original SHA-256 **EXACT_MATCH**, ZIP C bytes **EXACT_MATCH**, unique synthetic baseline **PASS**, exit 0, with **10/10 synthetic self-tests**. This resolves only original lab source identity, not the new two-target approval/publisher trust. No substitute sources were generated. **Even verified original C bytes remain solely a PR #245 lab dependency**, not approval to modify either privileged Issue #235 script.
 
 
 
