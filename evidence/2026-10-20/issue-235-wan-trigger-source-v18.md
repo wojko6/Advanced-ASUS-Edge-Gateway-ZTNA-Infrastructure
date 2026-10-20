@@ -1,7 +1,7 @@
 # Issue #235 — WAN / emergency DNS Guard trigger source V1.8 (2026-10-20)
 
 > **Evidence class:** sanitized **operator-reported** two equal read-only SSH snapshots; no runtime WAN event trace, no proof of owner/DAC trust, no writes to ASUS or Cron.  
- > **Dated V1.8 result:** `TRIGGER_SOURCE_PREFLIGHT=SOURCE_DRIFT_OR_READ_HOLD`, audit exit `2`. **Resolved as a comparison-target mismatch in V1.10; see below.** Live owner/DAC and execution verification still HOLD. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
+> **Dated V1.8 result:** `TRIGGER_SOURCE_PREFLIGHT=SOURCE_DRIFT_OR_READ_HOLD`, audit exit `2`. **Resolved as a comparison-target mismatch in V1.10; see below.** Live owner/DAC and execution verification still HOLD. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
 
 ## Scope and verified source reference
 
