@@ -31,6 +31,10 @@ Previous limitation remains: the router's live `wan-event`, `wan-event-handler` 
 
 **Quiescence acceptance must account for all launch sources, as well as possible already-open executable/script FDs and nonroot ownership.** If a trustworthy inhibitor would break WAN DNS bootstrap or operator break-glass, the window is a **NO-GO**. A root-owned metadata marker/lock, alone, cannot prevent independent firmware-triggered child processes or cron launches.
 
+### V1.11 WAN DAC checkpoint: source-matching standard chain is root-owned at snapshot time
+
+The [same-day V1.11 read-only metadata check](../../evidence/2026-10-20/issue-235-wan-trigger-source-v18.md) observed root:root ownership, single-link regular executable files and no group/other write for the firmware WAN wrapper, addon WAN hook, addon WAN handler, and emergency break-glass helper. Ancestor JFFS directories passed root:root/no group-or-other write, while edge config was root:root mode 0600. **The observed standard WAN chain has no DAC deviation**. The optional legacy WAN file was `ABSENT_OR_UNREADABLE_UNRESOLVED` because failed `ls` alone does not distinguish nonexistence and unreadability. Do not change the config or trigger WAN simply to investigate it: first resolve presence with fixed-path, read-only metadata. Source/DAC at two separate observation times is **not** full runtime attestation and cannot prove unobserved ACL/xattr/writers are absent.
+
 ## Four independent operator approvals — not granted
 
 1. Scope and additional *read-only* evidence collection, including any necessary separately approved ASUS access.
