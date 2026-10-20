@@ -108,6 +108,17 @@ The [V2.2 isolated filesystem test](../../evidence/2026-10-20/issue-235-rootless
 
 **Important limit:** this is *not* root-owned publication and *not* JFFS2. An FD pin checked before pathname-based rename does not prove an attacker-resistant FD-to-name handoff; an intervening replacement is still a distinct risk. File/dir `fsync` calls returning in the local fixture do not prove power-loss persistence. **Operator independently replayed V2.2 on Fedora 19/19 PASS and V2.3 on Fedora 20/20 PASS.** **No reduction of production HOLD.**
 
+## V2.3 follow-up — a concrete, bounded threat-model distinction
+
+**Operator Fedora replay 20/20 PASS** reproduces an *expected-red* source-basename swap by a writer who could modify the test's staging directory. This **does not** establish that the nonroot owner of `services-start` or `dns-guard` can rename files inside a root:root, non-group/world-writable directory on the ASUS. Prior ASUS V1.4/V1.11 read-only snapshots instead found root-owned JFFS ancestor directories with no such write permission, albeit only **at observation time**. Those snapshots have not established a *dedicated immutable trusted staging area*, absence of ACL/mount bypass, or guaranteed isolation from another authorized writer.
+
+This separates two threats:
+
+1. **Source-basename swap** — requires ability to change the staged directory entry. A truly root-exclusive directory with a root-owned staged inode and independent authority would block ordinary nonroot basename swaps; V2.3 intentionally did not model that isolation.
+2. **Old-inode content write / in-flight root execution** — the old privileged target is nonroot-owned. Even without directory write access, its owner or retained writable FD may still change/execute **old inode bytes before the trusted replacement becomes visible**. A completed atomic name replacement also does **not** revoke already-open FDs or prevent a previously launched process from continuing. These require independently proven source provenance, publication process authority and process/FD quiescence.
+
+**Next acceptance work** must **reuse previous Issue #235 three-role/FD-binding/ARMv7 trust-helper lab evidence** before duplicating another same-UID Linux fixture; then explicitly identify gaps relative to the pinned active `services-start` and DNS Guard scripts: identity of the privileged publisher, unwritable source stage, pinned content-to-published inode, JFFS2 crash consistency and safe DNS/boot recovery. Existing isolated acceptance tests are not a green light for production changes. If the old source can still be modified between read and root execution, a safe post-publication result alone cannot retroactively remove that pre-existing hazard.
+
 ## Ordering and rollback constraints
 
 - Source priority: **preserve exact byte content of the currently deployed full hook** and approved DNS Guard source. Do not introduce the addon’s delayed watchdog call or a short wrapper during ownership remediation.
