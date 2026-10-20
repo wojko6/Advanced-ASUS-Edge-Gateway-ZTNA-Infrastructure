@@ -1,5 +1,10 @@
 # Roadmap
 
+### Issue #235 — V2.10 independent post-Fedora-loss recovery decision (2026-10-20)
+
+- Operator V2.9 **9/9 PASS** and both local primary copies `SAME_ST_DEV` (shared filesystem). This closes the bounded local metadata audit only, not off-host recovery.
+- [V2.10 recovery architecture options](operations/issue235-independent-script-recovery-options-v210-2026-10-20.md): prefer encrypted periodically disconnected external medium *if available*, or separately administered off-host storage. Existing local NVMe/RouterCloud Restic does not prove survival of total Fedora-host loss or archive inclusion. No new copy or secret created; independent medium and disposable restore require separate explicit approval.
+
 ### Issue #235 — V2.9 independent recovery after Fedora loss (2026-10-20)
 
 - [V2.9 failure-domain inventory](../evidence/2026-10-20/issue-235-independent-recovery-failure-domain-v29.md): local **9/9 model PASS**, bounded metadata discovery fixtures PASS, **Fedora operator audit 9/9 PASS** with exactly one local candidate per role, `SAME_ST_DEV`; no independent physical/off-host recovery proven. **No backup content read**, no source duplication. V2.8 already confirmed both private primary sources at read time.
