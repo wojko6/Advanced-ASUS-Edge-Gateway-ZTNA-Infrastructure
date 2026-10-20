@@ -69,7 +69,9 @@ The [V2.8 read-only Fedora copy audit](../../evidence/2026-10-20/issue-235-recov
 
 The [V2.9 metadata-only Fedora-loss assessment](../../evidence/2026-10-20/issue-235-independent-recovery-failure-domain-v29.md) supplements already PASS V2.8 primary-copy integrity, not real source byte attestation or restore. Local **9/9 self-tests** and disposable directory fixtures passed; operator Fedora scan pending. A second `st_dev` or separate SSD within the same computer is not sufficient evidence of independent off-host recovery. RouterCloud Restic staging is not known to include the two private script copies, while separate Fedora Recovery has **unverified #235 file coverage**. No new backup, approval authority, restore, production staging or permissions were changed.
 
-## Decision states, proof gates and next engineering action
+## Decision states, proof gates and next engineering action**V2.10 next recovery boundary:** [independent post-host-loss recovery choices](issue235-independent-script-recovery-options-v210-2026-10-20.md) are a design comparison only; no off-host medium or actual restore approved. V2.9 Fedora 9/9 PASS found both private backups on `SAME_ST_DEV`, not independent physical recovery. Trust authority, old-owner writer/FD exclusion, exact GNUton/JFFS2 publication and DNS safety gates are unchanged.
+
+
 
 1. **REUSE_REVIEW:** inventory actual earlier isolated helper/FD/importer test artifacts and **explicitly tag** each `REUSABLE_PATTERN` / `NOT_TARGET_VALIDATED` / `UNVERIFIED`. Do not claim a missing artifact passed because a worklog mentions an earlier test.
 2. **PROVENANCE:** independently protected recoverable source for *both* scripts; reviewed exact bytes and ownership expectations; cannot depend solely on SSD or local Fedora failure domain.
