@@ -1,6 +1,6 @@
 # Issue #235 — real local filesystem per-file rename/FD fixture V2.2 (2026-10-20)
 
-> **Status:** OFFLINE/FEDORA-INTENDED ROOTLESS **SYNTHETIC** fixture; executed in isolated assistant Linux environment **19/19 self-tests PASS**, **not yet replayed on the operator's Fedora**. No ASUS contact. All production security/deployment approvals **HOLD**.
+> **Status:** OFFLINE/FEDORA-INTENDED ROOTLESS **SYNTHETIC** fixture; executed in isolated assistant Linux environment **19/19 self-tests PASS**, **subsequently independently replayed on operator's Fedora (see below)**. No ASUS contact. All production security/deployment approvals **HOLD**.
 
 ## Context
 
@@ -25,6 +25,18 @@
 6. Candidate name is consumed after replacement.
 
 The model performs its digest check on a file FD **before** replacing a pathname. That is **NOT a race-free FD-to-publication handoff**: it cannot exclude an adversarial same-directory replacement between the verification and the name-based `os.replace`. Likewise, its fixture processes retain the **same nonroot UID** throughout: mode 0755 is not proof of root-controlled ownership.
+
+## Independent operator Fedora replay (2026-10-20)
+
+The operator verified the previously pinned `issue235_per_file_inode_publish_lab_v22.py` SHA-256 (`sha256sum -c` returned `DOBRZE`) and ran `python3 -B ... --self-test --matrix` on Fedora. The complete sanitized output independently reproduced **19/19 PASS** and:
+
+- `SAME_FILESYSTEM_RENAME=EXERCISED`, `FILE_AND_DIRECTORY_FSYNC=EXERCISED_NOT_CRASH_PROVEN`;
+- `OLD_FD_AFTER_RENAME=STILL_USABLE` and `OLD_W_OK_WRITE_FD=NOT_REVOKED_BY_RENAME`;
+- `OLD_FD_WRITES_NEW_PATH=NO_IN_THIS_SINGLE_USER_FIXTURE`, `TWO_PATH_ATOMIC_COMMIT=NO`;
+- `RACE_FREE_ADVERSARIAL_PUBLISH=NOT_PROVEN`, `REAL_ROOT_OWNER_BOUNDARY=NOT_TESTED`, `JFFS2_POWERLOSS_PERSISTENCE=NOT_TESTED`;
+- `ASUS_CONTACTED=NO`, `ROUTER_FILES_MODIFIED=NO`, `CRON_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD`.
+
+These are reproducible real Linux inode and rename **primitives**, not trusted privileged publication or real JFFS2 durability evidence. The previously open writer FD is a negative finding: rename does not by itself revoke a writer's access to the old inode.
 
 ## Security conclusion and blocking gaps
 
