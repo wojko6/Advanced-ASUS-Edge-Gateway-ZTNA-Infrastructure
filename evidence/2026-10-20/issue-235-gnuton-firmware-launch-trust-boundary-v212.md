@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `release/src/router/shared/scripts.c` | `be75c75b9a0b26f479bd1927f82dd32496bcc73a` | `run_custom_script`, **lines 54–88** |
 | `release/src/router/shared/shutils.c` | `8b65de2279158fd96486546441f218ff23db1916` | `_eval`, **lines 251–402**, especially `fork()` line 283 and `execvp(argv[0], argv)` line 391 |
-| `release/src/router/rc/services.c` | `c8a3bf924b625b28de0fba9600c5957a74e77225` | `run_custom_script("services-start", 0, NULL, NULL)`, **line 11506** (in reviewed start-services completion sequence) |
+| `release/src/router/rc/services.c` | `c8a3bf924b625b28de0fba9600c5957a74e77225` | `run_custom_script("services-start", 0, NULL, NULL)`, **line 11505** (in reviewed start-services completion sequence) |
 | `release/src/router/rc/init.c` | `f7a886c4f09e97a7d9912fb68c436b36ee52070e` | `run_custom_script("init-start", 0, NULL, NULL)`, **line 21144**, earlier in startup |
 | `release/src/router/others/cru` | `910c75078c5d5fe0b8d67a297a326e30f525be41` | **lines 1–36**, locks file write when adding/deleting named crontab line, not scheduling/executing process |
  
@@ -19,7 +19,7 @@ Upstream: [scripts.c](https://github.com/gnuton/asuswrt-merlin.ng/blob/3004.388.
 ## Source-level call chain and executable identity
 
 ```text
-firmware start-services path / rc/services.c:11506
+firmware start-services path / rc/services.c:11505
     |
     v
 run_custom_script("services-start", 0, NULL, NULL)
