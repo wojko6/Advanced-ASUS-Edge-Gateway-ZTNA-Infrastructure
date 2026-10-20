@@ -88,6 +88,14 @@ No repository merge, synthetic PASS, hash match, or maintenance calendar provide
 
 **Two renames are not one atomic transaction.** An interruption may leave the hook replaced while DNS Guard is not (or vice versa). The plan therefore requires a trustworthy persistent phase record and explicit detection/repair of mixed states; a stale or same-UID-writable receipt/lock is not adequate. Power-loss persistence on the real JFFS2 system has not been demonstrated. Do not infer directory `fsync` support or crash consistency from Fedora/ext4 tests.
 
+## V2.1 research alternative — monotonic *per-target* publication, NOT a two-file transaction
+
+The [offline V2.1 comparison](../../evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md) completed **19/19 synthetic local tests**. It models two independent publications of the *existing* pinned bytes as trusted root-owned files. Conditional idealized counts of **untrusted launch classes** decline from four at baseline to one when DNS Guard is hypothetically published first, versus three if the boot hook is published first. **These are Boolean exposure counts, not probabilities, actual exploited paths or production recommendations.**
+
+**Nuance relative to the strict V2.0 boot-barrier finding:** under ideal assumptions, a crash after the first trusted per-file replacement *could* leave a namespace with one *remaining pre-existing* nonroot-owned target, without introducing a new target. This is a partial security improvement, **not a completed trust repair**. V2.0's warning remains applicable to any claim of **complete power-loss-safe maintenance**: the untrusted path could execute before an after-boot recovery script. No JFFS2 crash-persistent single-file publication, old-FD/writer exclusion, or independent recovery has been proven on the reference device.
+
+Do not substitute live in-place `chown` for vetted source-to-root-owned publication; the previous owner could modify content or retain a writable FD. A one-file repair is not safe merely because a prior checksum matched. If incomplete, the procedure must stop with an explicitly untrusted target, not automatically resume or roll back to nonroot ownership. Any practical preferred publication order is subject to later independently reviewed DNS availability and firmware-specific checks; `DEPLOYMENT_GATE=HOLD`.
+
 ## Ordering and rollback constraints
 
 - Source priority: **preserve exact byte content of the currently deployed full hook** and approved DNS Guard source. Do not introduce the addon’s delayed watchdog call or a short wrapper during ownership remediation.
