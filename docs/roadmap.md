@@ -8,6 +8,11 @@
 - [V2.11 trust/inhibition review](../evidence/2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md) documents actual project source entrypoints, Cron re-registration by `services-start`, direct WAN and emergency DNS Guard calls, non-global `flock`, and **installer wrapper bytes incompatible with active full hook**. A firmware selective crash-durable pre-execution gate has not been established; root publisher and JFFS2 recovery remain **NO-GO**.
 - Do not introduce repeated synthetic parsers or attempt `cru d`, `chown`, installer, `jffs2_scripts=0` or newly written `init-start`. Next security evidence should focus on trusted firmware boot/dispatcher boundary and explicit old FD quiescence, separately coordinated if router read-only checks are ever necessary. V2.10 extra backup remains deferred.
 
+### Issue #235 — V2.12 pinned GNUton executor verification (2026-10-20)
+
+- [V2.12 upstream exact-tag source audit](../evidence/2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md) confirms `run_custom_script` does `stat()` / execute-bit checks then `_eval` uses `fork()` and `execvp()`: identity not bound to an authenticated inode; no owner/digest validation. `cru` serializes job-file mutation, not execution. This is source evidence, **not** an attested production firmware binary or exploit reproduction.
+- Existing JFFS `init-start`, in-script locks, deleting Cron and generic installer remain disallowed as comprehensive remediation. Next substantive proof is an independent root-only launcher/publisher plus firmware-level inhibition or a separately reviewed supervised-only NO-GO/risk decision, old-FD exclusion and JFFS2 fail-safety. Do not resume backup expansion or touch PR #245/RouterCloud/ASUS.
+
 # Roadmap
 
 ### Issue #235 — V2.10 independent post-Fedora-loss recovery decision (2026-10-20)
