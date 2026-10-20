@@ -11,6 +11,24 @@ The [19 October root-Cron investigation](../../evidence/2026-10-19/issue-235-dns
 
 The operator has verified **private Fedora copies of both live script byte streams**. DNS Guard had an off-router disposable restore and V1.3 32/32 isolated rollback rehearsal. The hook backup has source-byte integrity PASS, file mode 0600 and private directory mode 0700. **Neither backup yet establishes independently protected media or full on-router JFFS2 recovery**; the hook restore rehearsal and live root-owned publish have not been verified. Source hashes alone do not resolve owner trust or continuous writers.
 
+## Direct privileged execution and re-entry inventory (source-backed; live WAN not yet verified)
+
+Disabling `AsusEdgeDNSGuard` via `cru` alone **does not** inhibit every legitimate DNS Guard invocation. Each row requires separate treatment; the source repository is evidence of *possible entrypoints*, not proof that all files and settings are deployed identically:
+
+| Origin | Reviewed source path | DNS Guard impact | Required treatment |
+| --- | --- | --- | --- |
+| Merlin boot hook | `/jffs/scripts/services-start`, full approved pinned source | Calls `configure_dns_guard_watchdog` (line 325) to add/delete named cron; no direct `dns-guard auto` in this function | During future approved window, prevent new boot/manual hook invocation and rule out any active instance; do **not** assume every ordinary service restart calls this hook |
+| Named root-Cron | `AsusEdgeDNSGuard` | Runs `/jffs/addons/asus-edge/bin/dns-guard auto` every minute while registered | Only separately approved dispatcher inhibition; verify absence after applying and drain in-flight runs; deleting the entry by itself is not quiescence |
+| WAN-connected event | `router/scripts/wan-event` → `router/scripts/wan-event-handler` | `wan-event` dispatches on primary WAN `connected`; handler calls DNS Guard `auto` immediately and conditionally a second time after readiness wait | Treat as **independent re-entry**. **Do not indiscriminately disable WAN or its fail-open recovery**. A separately reviewed trusted transition mechanism or demonstrable event exclusion is required |
+| Operator emergency | `router/scripts/edge-dns-breakglass.sh` | Calls DNS Guard through checked and supervised `breakglass-on/off` and fallback paths | Preserve operator emergency channel; coordinate its use during any window. Disabling it without an independent rescue method is a NO-GO |
+| Deliberate maintenance | `scripts/uninstall.sh`, manual healthcheck and explicit DNS Guard calls | May invoke DNS Guard or change `cru` state | Never run overlapping maintenance/diagnostic operations while expecting quiescence |
+
+The official [Asuswrt-Merlin user-script reference](https://github.com/RMerl/asuswrt-merlin.ng/wiki/User-scripts) describes `services-start` **after boot services are started**. It does not document automatic execution for every ordinary service restart. The prior generic term “service-start re-entry” must be read as **boot / manually invoked hook / unverified platform-specific trigger**, not as an observed recurring service-restart behavior. A future controlled test would be needed to prove any additional GNUton-specific invocation routes.
+
+The router's live `wan-event` and `wan-event-handler` **content and DAC chain have not yet been attested in this audit**; do not claim current active WAN-specific routing solely from repository code. Do not confuse a source-level trigger map with a runtime trace.
+
+**Quiescence acceptance must account for all launch sources, as well as possible already-open executable/script FDs and nonroot ownership.** If a trustworthy inhibitor would break WAN DNS bootstrap or operator break-glass, the window is a **NO-GO**. A root-owned metadata marker/lock, alone, cannot prevent independent firmware-triggered child processes or cron launches.
+
 ## Four independent operator approvals — not granted
 
 1. Scope and additional *read-only* evidence collection, including any necessary separately approved ASUS access.
@@ -28,7 +46,7 @@ No repository merge, synthetic PASS, hash match, or maintenance calendar provide
 | Scope pin | Exact active path, file identity, link count, no symlinks, trusted ancestry, SHA-256 and intended original behavior; no unauthorized writer | Point-in-time snapshots, no race-free guarantee |
 | Identity boundary | An execution/transaction authority inaccessible to the observed nonroot owner, including its staging, receipts and lock | **NOT PROVEN** |
 | Runtime quiescence | No in-flight `services-start` or DNS Guard, no writable active FDs or cooperating/competing writer, no new privileged trigger during publish | **NOT PROVEN** |
-| Cron / startup suppression | Precise prevention of DNS Guard named root-Cron launches **and** events that execute/re-register through the firmware `services-start` hook, without losing operator recovery access or a safe DNS path | **NOT PROVEN** |
+| Scheduler + all entrypoints | Precise prevention of named root-Cron launches, boot/manual `services-start` re-registration **and** independent primary-WAN `connected` handler entry, while preserving verified bootstrap DNS and operator break-glass; verify live WAN deployed code and trusted ancestors | **SOURCE INVENTORY ONLY; LIVE WAN NOT ATTESTED; INHIBITION NOT PROVEN** |
 | Atomic file publication | Per-file trusted same-filesystem staging, root:root ownership, 0755 mode, content digest checks, directory/file publication identity constraints and safe handling of failures | Fedora fixture only, not proven on real JFFS2 |
 | Interruption semantics | Tested and documented recovery for partial publish, process crash, uncertain JFFS2 persistence and potential restart/power interruption | **NOT PROVEN** |
 | Functional recovery | Independent LAN admin access and preapproved DNS fallback; bounded DNS Guard, Unbound, Pi-hole and root-Cron verification after any change | **NOT AUTHORIZED** |
@@ -41,7 +59,7 @@ No repository merge, synthetic PASS, hash match, or maintenance calendar provide
 | --- | --- | --- |
 | `HOLD` | Normal reference services, no action. Preserve evidence only | To `PREPARED` after protected sources/recovery exist and the maintenance proposal is approved |
 | `PREPARED` | Independently authenticated immutable inputs for both scripts, no router mutation yet | To `QUIESCED` after separately approved scheduler/startup inhibition and verified drain |
-| `QUIESCED` | No new root-Cron invocation or Merlin startup re-entry; active jobs and writers drained; DNS safety path held | To `PUBLISHING` only if the trusted mutation authority and JFFS2 prerequisites are proven |
+| `QUIESCED` | No new launch through root-Cron, boot/manual startup hook, primary-WAN event or operator maintenance path; active jobs/FD writers drained; demonstrably safe DNS bootstrap and break-glass held | To `PUBLISHING` only if the trusted mutation authority and JFFS2 prerequisites are proven |
 | `PUBLISHING` | Stage both files with verified root:root 0755 and pinned bytes. Publish each path using separately checked atomic file replacements | To `VERIFYING` only after **both** paths have trusted inode identity/metadata/content |
 | `VERIFYING` | Validate both on-disk targets, independent DNS Guard/Unbound/Pi-hole health and expected watchdog schedule without unsafe duplicate registration | To `ACCEPTED` after operator approval and independently recoverable record |
 | `RECOVERY_HOLD` | Any uncertain, mixed or failed state. Keep privilege launch inhibited as safely feasible, follow a preapproved recovery path | Return to a vetted trusted state; do not automatically restore insecure ownership |
@@ -55,7 +73,7 @@ No repository merge, synthetic PASS, hash match, or maintenance calendar provide
 - Prefer a trusted startup-entrypoint replacement before Cron target reactivation, but **do not assume an execution order is safe** without proven suppression of both privileged entrypoints. The order is still subject to review.
 - Both candidate and rollback publications must be **trusted root:root, mode 0755**. Historical evidence must retain the old nonroot ownership for forensic provenance, but a rollback must **not re-introduce owner-writable nonroot privileged scripts**.
 - If safe `root:root` publication or rollback cannot be guaranteed, stay in a documented `RECOVERY_HOLD` with operator recovery rather than silently reopening the original privilege boundary.
-- DNS Guard watchdog is part of fail-open recovery. Disabling Cron without demonstrating independent DNS recovery is **not** a safe maintenance precondition. The `services-start` event can be retriggered independently of the named Cron job.
+- DNS Guard watchdog is part of fail-open recovery. Disabling Cron without demonstrating independent DNS recovery is **not** a safe maintenance precondition. The primary-WAN `connected` path calls DNS Guard directly, independent of Cron; boot/manual `services-start` hook invocation can also re-register Cron. Never suppress WAN or break-glass recovery casually.
 - No generic installer, recursive DAC changes, runtime shell sourcing of untrusted data, or blanket service restarts.
 
 ## Current operator checkpoint and next work
