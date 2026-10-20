@@ -81,6 +81,10 @@ The operator chose **not to create another backup as an immediate #235 activity*
 
 **Engineering status:** offline feasibility review can progress. `TRUSTED_ROOT_PUBLISHER=NOT_BUILT`, `EARLY_BOOT_INHIBITOR=NOT_PROVEN`, `OLD_WRITABLE_FD_QUIESCENCE=NOT_PROVEN`, `JFFS2_POWERLOSS_RECOVERY=NOT_PROVEN`. No security GO or router access.
 
+### V2.11 source-backed feasibility checkpoint
+
+[Review of pinned GNUton boot and project dispatch](../../evidence/2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md) confirms the *documented limitations* of Cron-only inhibition, cooperative `services-start` lock, independent WAN and emergency DNS Guard callers, untrusted normal JFFS `init-start`, and an installer that would turn the reviewed full firmware hook into a short wrapper. None is a root-owned publisher or crash-durable selective pre-execution gate. **Do not perform direct `chown`, Cron deletion, generic installer or name-only staging.** V2.10 additional backup remains optional/deferred. The next phase is a genuinely trusted firmware dispatcher/source identity and root publisher feasibility review, not another abstract lock/hash model.
+
 ## Decision states, proof gates and next engineering action
 
 **V2.10 next recovery boundary:** [independent post-host-loss recovery choices](issue235-independent-script-recovery-options-v210-2026-10-20.md) are a design comparison only; no off-host medium or actual restore approved. V2.9 Fedora 9/9 PASS found both private backups on `SAME_ST_DEV`, not independent physical recovery. Trust authority, old-owner writer/FD exclusion, exact GNUton/JFFS2 publication and DNS safety gates are unchanged.
