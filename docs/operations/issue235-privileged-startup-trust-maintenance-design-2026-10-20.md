@@ -134,6 +134,10 @@ This separates two threats:
 - DNS Guard watchdog is part of fail-open recovery. Disabling Cron without demonstrating independent DNS recovery is **not** a safe maintenance precondition. The primary-WAN `connected` path calls DNS Guard directly, independent of Cron; boot/manual `services-start` hook invocation can also re-register Cron. Never suppress WAN or break-glass recovery casually.
 - No generic installer, recursive DAC changes, runtime shell sourcing of untrusted data, or blanket service restarts.
 
+### V2.11 source-backed launcher review
+
+The [V2.11 GNUton dispatch/owner-repair feasibility record](../../evidence/2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md) confirms source-level constraints: `services-start` lock is in-script (too late to stop first execution), one-minute root-Cron can be re-registered by `services-start`, WAN and operator break-glass invoke Guard directly, and the generic installer would overwrite full `services-start` with the shorter managed wrapper. No verified firmware-native selective interruption-safe early gate and no root-only two-target publisher. No additional backup or lab replay performed. Continue source review only, no production authorization.
+
 ## Current operator checkpoint and next work
 
 **20 October:** fixed-path hook backup on Fedora `HOOK_OFFROUTER_BACKUP=PASS`, `BACKUP_HASH=PASS`, backup file mode 0600, directory 0700, `ASUS_MODIFIED=NO`, `CRON_MODIFIED=NO`. The off-router backup is a recovery **input**, not proof of independent resilience or live rollback.
