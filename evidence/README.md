@@ -1,5 +1,7 @@
 # Validation evidence
 
+- **2026-10-20 — Issue #235 V2.9 independent recovery-domain assessment:** [bounded metadata-only local inventory, 9/9 synthetic tests and offline restore dependency matrix](2026-10-20/issue-235-independent-recovery-failure-domain-v29.md); user Fedora replay pending, physical/off-host recovery and Restic snapshot coverage unproven. **HOLD**.
+
 - **2026-10-20 — Issue #235 V2.8 Fedora recovery copy separation:** [two-script private-copy bounded read-only preflight](2026-10-20/issue-235-recovery-copy-separation-v28.md); local **18/18 synthetic PASS**, operator's second Fedora audit **both primary copy SHA/DAC PASS_AT_READ_TIME, exit 0** (earlier blank-input HOLD superseded), distinct filesystem does not mean independent failure domain, no Restic restore or approval issuer proven. **HOLD**.
 
 - **2026-10-20 — Issue #235 V2.6 Fedora reproduction & V2.7 design:** [29/29 operator synthetic schema replay](2026-10-20/issue-235-two-script-approval-contract-v26.md); [distinct offline operator-approval authority proposal](../docs/operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md). Independent approval **NOT ISSUED**, root publisher **NOT BUILT**, production **HOLD**.
