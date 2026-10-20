@@ -53,6 +53,8 @@ The [V2.8 rootless Fedora recovery-copy audit](../../evidence/2026-10-20/issue-2
 
 ## Concrete engineering work still required
 
+**V2.9 scope update:** [independent Fedora-loss recovery review](../../evidence/2026-10-20/issue-235-independent-recovery-failure-domain-v29.md) distinguishes already verified *local* bytes from a physically independent off-host/offline restore and separate custody of authorization. A bounded read-only metadata scanner has local 9/9 model tests PASS, operator Fedora replay pending; it does not validate Restic inclusion or physical independence. Do not assume the RouterCloud Restic staging repository or the distinct Fedora Recovery project covers the two private scripts. No permission, backup schedule, publication or issuer change approved.
+
 1. **Separate the approving authority:** determine how a protected digest/approval is created and held, who can change it, which code verifies it, how generation/revocation survive loss, and how a compromised candidate/same UID cannot rewrite the approval. No real approval yet.
 2. **Reauthenticating the exact two sources:** preserve byte-for-byte the current full firmware `services-start` semantic behavior and independently reviewed DNS Guard. Private backup copies have been validated on Fedora; independent recovery *outside its failure domain* still requires evidence.
 3. **Trustworthy on-router publisher:** demonstrate who actually runs it as root, where its immutable/protected executable and staging directories live and how it binds verified source **inode and bytes** to the published name without a hostile source-basename writer, old owner FD or in-flight root process.
