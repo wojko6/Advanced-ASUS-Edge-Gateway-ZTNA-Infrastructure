@@ -2,7 +2,7 @@
 
 ### Issue #235 — V2.9 independent recovery after Fedora loss (2026-10-20)
 
-- [V2.9 failure-domain inventory](../evidence/2026-10-20/issue-235-independent-recovery-failure-domain-v29.md): local **9/9 model PASS**, bounded metadata discovery fixtures PASS, Fedora operator audit pending. **No backup content read**, no source duplication. V2.8 already confirmed both private primary sources at read time.
+- [V2.9 failure-domain inventory](../evidence/2026-10-20/issue-235-independent-recovery-failure-domain-v29.md): local **9/9 model PASS**, bounded metadata discovery fixtures PASS, **Fedora operator audit 9/9 PASS** with exactly one local candidate per role, `SAME_ST_DEV`; no independent physical/off-host recovery proven. **No backup content read**, no source duplication. V2.8 already confirmed both private primary sources at read time.
 - Need a physically independent *off-host or disconnected* recoverable copy of both full script bytes, separately available keys/instructions and disposable restore; a different local `st_dev` or encrypted RouterCloud Restic staging is insufficient. Preserve the independent V2.7 approval custody and production gates. No copying or retention changes authorized.
 
 ### Security #235 — V2.8 off-router recovery and custody evidence (2026-10-20)
