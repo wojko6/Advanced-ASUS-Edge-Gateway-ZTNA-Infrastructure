@@ -37,6 +37,12 @@ The verified private Fedora copy and rootless V1.3 **32/32** rollback rehearsal 
 
 **Current prohibition remains:** do not use the generic installer or perform an ad hoc live `chown`/`chmod`, Cron change, service restart, post-mount edit or SSD mutation. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `STAGE_B_C_E_AUTHORIZATION=NOT_GRANTED`; `DEPLOYMENT_GATE=HOLD`. This is distinct from Draft PR #245 and from the separate RouterCloud/DUFS work.
 
+## services-start hook trust: 2026-10-20 bounded discovery (HOLD)
+
+A [read-only V1.4–V1.7 evidence checkpoint](../evidence/2026-10-20/issue-235-services-start-trust-chain-v14-v17.md) establishes that the **firmware hook** `/jffs/scripts/services-start` is **nonroot-owned, mode 0755** and contains the exact pinned full source. The separate addon script is root:root 0755, but its local watchdog call is **later** than in the full hook. The edge config was root:root 0600. This is a point-in-time trust problem even though the bytes match a reviewed source.
+
+The future remedial transaction therefore involves **two privileged targets**, the firmware hook and DNS Guard. Keep the **current full-hook semantics**; do not run the general installer, which generates a *different short wrapper*. Before considering any mutation, separately verify trusted, independently recoverable inputs for both targets, exclude competing writers and open descriptors, inhibit both root-Cron dispatch and Merlin startup re-entry/re-registration, review combined JFFS2 failure handling, and obtain an **explicit new maintenance authorization**. DNS Guard/Unbound/Pi-hole plus Cron startup postflight are required after an authorized change. No automatic production activation or reboot. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
 ## Change workflow
 
 Use this workflow for a planned maintenance window outside an active unchanged-state observation:
