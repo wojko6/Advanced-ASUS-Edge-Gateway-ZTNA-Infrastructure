@@ -55,15 +55,15 @@ The [V2.0 Fedora-only state-machine exercise](../evidence/2026-10-20/issue-235-d
 
 Until a verified power-interruption-safe strategy, independent protected backups, writer/FD quiescence and independent DNS rescue are available, there is **no apply approval**. Follow the [design-only state machine](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md), not a generic installer or ad hoc `chown`/Cron edits. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
-## Issue #235 — pinned GNUton hook dispatch trust finding (2026-10-20)## Issue #235 — optional monotonic publication research (2026-10-20)## Issue #235 — V2.3 publication race evidence (2026-10-20)
+## Issue #235 — V2.3 publication race evidence (2026-10-20)
 
 [Bounded Linux synthetic study](../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md): V2.2 was reproduced by operator Fedora **19/19 PASS**; V2.3 local nonroot fixture **20/20 PASS**, independently replayed by operator Fedora **20/20 PASS**, including an expected-red attack that swaps staged basename after FD digest verification. A subsequent `rename` can publish the attacker-controlled inode. A later hash mismatch **detects** but does not guarantee prevention of transient execution. Root:root trusted stage authority and JFFS2 persistence are unproven; no production patch or temporary gate is authorized. `DEPLOYMENT_GATE=HOLD`.
 
-
+## Issue #235 — optional monotonic publication research (2026-10-20)
 
 The [V2.1 Fedora-only model](../evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md) passed **19/19 local abstract checks**: a trusted single-path replacement could reduce one target's nonroot-owner surface, but an interruption still leaves the other root-executed script untrusted. This **does not prove** actual JFFS2 atomicity/durability, old-owner FD/writer safety, service availability or production approval. No generic installer, direct `chown` or path replacement is authorized. The [maintenance design](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md) remains `HOLD`.
 
-
+## Issue #235 — pinned GNUton hook dispatch trust finding (2026-10-20)
 
 [Operator V2.0 replay and pinned GNUton source inspection](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) show 20/20 Fedora model assertions PASS and the underlying firmware `run_custom_script` checks *execute bits* but does not check `root:root` ownership or same-FD identity in the inspected function. Both `services-start` and earlier `init-start` are JFFS-dispatched scripts. A new `init-start` hook or a global `jffs2_scripts=0` switch is **not** an approved, independently trusted crash-durable protection strategy; the latter may disable necessary recovery hooks. Preserve recovery and actual hook semantics. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
