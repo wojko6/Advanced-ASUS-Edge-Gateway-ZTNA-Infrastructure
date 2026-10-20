@@ -1,0 +1,54 @@
+# Issue #235 — two privileged script targets: trusted publication authority design (2026-10-20)
+
+> **Status:** DESIGN CANDIDATE / NOT A RUNBOOK / `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD` / `DEPLOYMENT_GATE=HOLD`.
+> **Targets only:** active **full** `/jffs/scripts/services-start` and `/jffs/addons/asus-edge/bin/dns-guard`.
+> **Not authorized:** any router write, chown/chmod, Cron/NVRAM edit, hook rewrite, service restart, reboot, generic installer, or changes to the separately managed SSD/DUFS/RouterCloud tracks.
+
+## Problem and decision
+
+Both target files were observed **nonroot-owned but owner-writable** despite point-in-time matches to independently reviewed source bytes. Firmware `run_custom_script` checked execution bits but not root ownership in the reviewed GNUton tagged source, while a named root-Cron target and direct WAN/emergency code paths can invoke DNS Guard. See the [privileged trust maintenance design](issue235-privileged-startup-trust-maintenance-design-2026-10-20.md), [services-start evidence](../../evidence/2026-10-20/issue-235-services-start-trust-chain-v14-v17.md) and [DNS Guard evidence](../../evidence/2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md).
+
+**Candidate decision:** evaluate a *separately trusted* publisher that creates **new root-owned, correct-mode inodes from pinned, independently authenticated source bytes**, binds the checked object to the published pathname without exposing unverified bytes, and repairs **one target at a time**. Do not rely on an in-place `chown` of a previously writable inode or on a last-second hash of the old live pathname.
+
+This proposal requires an actual trusted identity boundary, filesystem-specific interruption proof and safe DNS recovery. It is **not accepted for production**.
+
+## Roles and trust boundaries
+
+| Role | May do | Must not do / evidence gap |
+| --- | --- | --- |
+| Off-router evidence authority | Review the precise *currently active* full hook and DNS Guard bytes; issue a versioned, authenticated digest/manifest; retain independent recovery copies | Do not treat past single-time checksums as source immutability, and do not publish private copies or security-sensitive identifiers |
+| Isolated transfer/importer | Deliver authenticated inputs to a staging area whose **identity, contents, ancestry and permissions** are verified by the trusted publisher | No untrusted-UID writable directory or mutable basename can be part of the publish handoff; a signed receipt alone does not enforce directory DAC |
+| On-router trusted publisher (**not built**) | As separate trusted/root authority, create root-owned `0755` regular single-link candidate in a private root-controlled JFFS directory; verify provenance and exact inode/bytes/mode; publish only one approved target per separately controlled transition | Cannot grant root publication to HTTP/RouterCloud user, original nonroot owner, shell snippets from unknown provenance, or generic installer; no claim of race-free handoff until mechanism reviewed |
+| Independent safety/recovery operator | Maintain LAN recovery and independently verified DNS fallback; approve every maintenance transition; verify live behavior after publication | Must not quietly disable WAN/break-glass, automatically resume after interrupted publish, silently roll back to original nonroot ownership or assume a normal-boot journal is a preboot guard |
+
+**Proof obligations:** root-exclusive staging/parent ownership must be demonstrable *during* publication; the publisher's executable and startup chain must not depend on the compromised ownership boundary; ordinary group/other mode bits alone are not proof of no ACL/xattr bypass or other authorized writers. An FD hash does **not** pin the source basename for later `rename` if any adversary can rewrite that basename; [V2.3](../../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md) reproduced this intentionally under one UID.
+
+## Reuse of prior work (without cross-project edits)
+
+- **Issue #235 previous isolated tests:** operator-reported, Fedora-only rootless / three-role UID, same-FD handoff / copy-verify, pinned source, signed offline approval, external importer Stage B, ARMv7 trust helper and negative matrices. These demonstrate *test patterns*, **not** a deployed publisher for these two targets. They must be individually matched to source artifact/version and exact target-specific assumptions before being cited as acceptance. **Not re-run in this work.**
+- **Separate [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245) / [JFFS Stage B draft](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/security/issue235-ssd-mount-mode-post-mount-lab-20261015/docs/issue235-jffs-staging-activation-rollback-runbook-draft.md):** useful review patterns include allowlisted file targets, exact source pinning, root-owned root-only staged materials, collision refusal, post-stage identity verification, and independent recovery. They address SSD root modes and **must not be installed, edited, merged or treated as direct proof of trust repair** for `services-start` / DNS Guard.
+- **V2.0–V2.3 synthetic results:** [V2.0 crash model](../../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) 20/20 operator Fedora, [V2.1 monotonic model](../../evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md) 19/19 operator Fedora, [V2.2 inode fixture](../../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md) 19/19 operator Fedora and [V2.3 FD/name race](../../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md) 20/20 operator Fedora, including expected-red exposure. They **do not** add a deployable mechanism or demonstrate real JFFS2 power-cut behavior.
+
+## Three distinct failure boundaries — do not conflate
+
+| Boundary | What is partially demonstrated | Missing real proof |
+| --- | --- | --- |
+| Before publication | Root-owned JFFS ancestor directories seen in **point-in-time** audits; reviewed source and private Fedora backup bytes | A trusted root-only publisher/stage which excludes any adversarial stage entry/content writer; stable identity and trusted source freshness |
+| During publication | Linux fixture shows one-path name replace and retained old FD; wrong source basename race reproduced | A secure object-to-published-name handoff on the exact firmware/JFFS2; absence/coordination of old owner writers, already running root scripts, open script descriptors, Cron/WAN/manual triggers |
+| After interruption/reboot | Abstract guard-first partial state leaves one untrusted boot-hook launch class; two-file atomicity **not** claimed | Persistent single-file publication durability, recoverable mixed states, ability to prevent unacceptable early-boot execution or to document/accept its **remaining** risk; safe Unbound/Pi-hole/DNS Guard/independent break-glass availability |
+
+**Crucial constraint:** an ordinary JFFS `init-start` hook cannot simply be claimed a trusted pre-boot barrier; it uses the same checked-only-for-exec firmware script dispatcher. Global `jffs2_scripts=0` or Cron deletion would break or bypass important recovery paths and is not approved. Guard-first is only a **hypothesis for evaluating fewer modeled untrusted launcher classes after interruption**, not an approved order or safety probability.
+
+## Decision states, proof gates and next engineering action
+
+1. **REUSE_REVIEW:** inventory actual earlier isolated helper/FD/importer test artifacts and **explicitly tag** each `REUSABLE_PATTERN` / `NOT_TARGET_VALIDATED` / `UNVERIFIED`. Do not claim a missing artifact passed because a worklog mentions an earlier test.
+2. **PROVENANCE:** independently protected recoverable source for *both* scripts; reviewed exact bytes and ownership expectations; cannot depend solely on SSD or local Fedora failure domain.
+3. **TRUST_ROOT:** identify how authenticated sources enter a private, root-only JFFS staging area; demonstrate that the importer/publisher executable, keys/receipts, staging directory, source basename and checked inode cannot be modified by the observed old nonroot owner or an unrelated writable service.
+4. **FD_BINDING:** independent review of the checked-byte/inode-to-publication handoff and replacement/collision semantics, including child namespace/parent path pinning. Negative race tests must fail closed *before* any unverified content is exposed to root dispatch.
+5. **INTERRUPTION:** for each target, test interrupted local same-filesystem publish, persistence boundaries and recovery **on a representative disposable JFFS2/ARMv7 environment** where feasible; ordinary Fedora ext4/Btrfs `fsync` is not sufficient to prove physical router loss behavior.
+6. **QUIESCENCE + DNS:** define independent, reliable LAN recovery and fail-open DNS plus the permitted/blocked behavior of boot `services-start`, named Cron, WAN-connected calls and operator break-glass; prove absence/drain of active writers/FDs. If no safe selective isolation exists, remain `NO-GO` rather than silently disabling all DNS recovery.
+7. **OPERATOR ACCEPTANCE:** only once every gate is supported can a *separate* reviewed, narrowly authorized production staging and apply procedure be drafted. No script, command, checkmark, synthetic pass or PR merge constitutes such approval.
+
+**Current decision:** `TRUSTED_PUBLISHER_BUILT=NO`, `JFFS2_CRASH_DURABILITY=NOT_PROVEN`, `EARLY_BOOT_INHIBITOR=NOT_PROVEN`, `RECOVERY_MEDIA_INDEPENDENCE=NOT_PROVEN`, `LIVE_DNS_RECOVERY=NOT_APPROVED_FOR_TEST`, `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
+
+Separate RouterCloud/DUFS HTTP-origin and privilege-drop issues retain their own scope and approvals; this document does **not** imply [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) overall is closed.
