@@ -46,12 +46,30 @@ The full self-test matrix includes no-follow symlink rejection, FD identity pers
 
 **Important:** `O_NOFOLLOW`, `dirfd`, `fstat`, checksums and `renameat`/Python `os.replace` are valuable primitives, but the FD checked for content is not the file named by the later rename **if an attacker can rewrite its source basename between operations**. A post-publish mismatch is only detection and may be too late. The suite does not prove that a genuinely trusted no-writer staging area or an FD-to-inode kernel publish API is available on GNUton.
 
+## Independent operator replay on Fedora (2026-10-20)
+
+The operator verified the previously pinned V2.3 artifact with `sha256sum -c` reporting `DOBRZE`, then executed `--self-test` and `--matrix` on Fedora:
+
+- `SELFTESTS=20/20`, `SELFTEST_RESULT=PASS_SYNTHETIC_LINUX_INODE_RACE_LAB_ONLY`.
+- Expected adversarial behavior reproduced: `SOURCE_NAME_SWAPPED_AFTER_CHECK=YES`, `PRECHECKED_FD_STILL_ORIGINAL_INODE=YES`, `STAGE_NAME_CHANGED_INODE=YES`, `NAME_BASED_RENAME_PUBLISHED_SWAPPED_INODE=YES`.
+- `POST_PUBLISH_HASH_MISMATCH_DETECTED=YES`, `POSTCHECK_PREVENTS_PREEXPOSURE=NO`, `DIRFD_ANCHOR_PREVENTS_SOURCE_BASENAME_SWAP=NO`.
+- `TRUSTED_ROOT_OWNER_OR_SEPARATE_UID=NOT_TESTED`, `JFFS2_POWER_LOSS_AND_DURABILITY=NOT_TESTED`, `FD_BASED_ATOMIC_PUBLISH_OF_CHECKED_INODE=NOT_PROVEN`.
+- `ASUS_CONTACTED=NO`, `ROUTER_FILES_MODIFIED=NO`, `CRON_MODIFIED=NO`; `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
+
+This confirms **reproducibility of a deliberately insecure source-name handoff** on the operator's Fedora under a same-UID attacker model. It does **not** establish that an actual firmware publisher is vulnerable to that race or that any real trusted publisher or JFFS2 recovery mechanism has been built.
+
+### Design refinement — do not repeat same-UID demonstrations
+
+Prior Issue #235 isolated labs have independently explored role separation, same-FD handoff, source pinning and signed receipts. Before proposing another rootless primitive test, **cross-reference those existing results** and identify only the unproven production boundary: a genuinely separate trusted root authority, root-controlled staging directory and inode content, writer/FD exclusion, firmware/JFFS2 interruption handling and independent DNS restoration.
+
+The race is avoidable in principle when the stage directory and its contents are controlled exclusively by trusted authority, but V2.3 **does not test that condition**. Conversely, adding a final postcheck without excluding hostile name swaps remains an invalid prevention claim.
+
 ## Operational implications and remaining gate
 
 1. **No production name-only helper should be approved** based on the V2.2 success criterion alone. Require a demonstrably trusted source and staging directory inaccessible to adversarial UIDs, and a publisher with protected process authority, stage and parent FDs.
 2. **Reject mixed states** and unexpected publication inode/content identity, but do not claim post-facto rollback makes transient exposure impossible. Block all relevant root-execution entrypoints or eliminate the writer/name-swap ability *before* publishing.
 3. A secure root-owned stage and independent root-owned rollback must be feasible on the reference GNUton / JFFS2 environment. Ext4/Btrfs/tmpfs/overlayfs fixture results do not prove durable JFFS2 semantics.
 4. Reconcile outstanding V2.0/V2.1 failure boundaries: open FDs and in-flight processes, independently protected recoverable backups for both original scripts, safe root-Cron/WAN/bootstrap DNS and break-glass coordination, physical reset/power interruption, and explicit new apply approval.
-5. Operator Fedora replay of V2.3 remains **PENDING**. Local 20/20 fixture assertions are an off-router developer result, not acceptance by the operator.
+5. **Operator Fedora replay of V2.3: COMPLETE — 20/20 PASS (operator-reported).** Local 20/20 fixture assertions are an off-router developer result, not acceptance by the operator.
 
-**Status:** V2.2 independently replayed **19/19 PASS**; V2.3 isolated nonroot **20/20 PASS with expected-red source name swap**, **production deployment remains HOLD**. No ASUS/SSD/RouterCloud/DUFS worktree changed.
+**Status:** V2.2 independently replayed **19/19 PASS**; V2.3 isolated nonroot **20/20 PASS with expected-red source name swap**, independently replayed on Fedora **20/20 PASS**, **production deployment remains HOLD**. No ASUS/SSD/RouterCloud/DUFS worktree changed.
