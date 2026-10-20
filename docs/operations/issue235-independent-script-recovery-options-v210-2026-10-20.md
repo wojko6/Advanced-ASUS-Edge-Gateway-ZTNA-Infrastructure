@@ -35,6 +35,16 @@ The two files' historical reviewed SHA-256 values are recorded in V2.8 evidence.
 6. **Approval separation** — V2.7 future independent operator approval record and protected launcher are **not** co-generated from candidate files, no same-UID writable policy/keyring and no automatic production GO after restoring files.
 7. **DNS/boot/JFFS2 gates unchanged** — even perfect source recovery does not prove safe runtime quiescence, writer FD drain, JFFS2 crash behavior or DNS continuity.
 
+## Operator decision — V2.10 is optional, not the immediate Issue #235 workstream (2026-10-20)
+
+The operator explicitly deprioritized making another backup and requested returning to the two privileged-script **owner/trust repair**. This memo remains a **contingency design**, not a prerequisite to continuing *offline security engineering*. Do not perform a new storage inventory, purchase, Restic profile change, file copy or restore rehearsal under Issue #235 without a distinct request.
+
+**Current related Fedora Recovery scope, based on the completed 2026-10-19 recovery checkpoint:** encrypted Restic copy on a separate internal physical NVMe with verified isolated restore for system root, `systemd-machines`, `/boot` and EFI; the separately mounted `/home` was outside that recovery scope. Therefore the two existing private `$HOME/issue235-*-backup-*` copies **are not established as included** in the finalized Fedora Recovery set. Do not rewrite its profile to include them and do not assume RouterCloud's separate staging backup covers them. This is a **scope finding based on prior operator evidence**, not a newly opened/revalidated live Restic snapshot.
+
+**Security gate interpretation:** source-byte integrity of both private primary copies has already passed V2.8; further external redundancy is deferred but the missing independently usable *post-host-loss* recovery remains a documented **residual risk and production-approval gap**. Design review can proceed; a root-owned staging/apply GO cannot be inferred from this decision. Future intentional acceptance of residual loss exposure must be distinct and explicit.
+
+**Active engineering priority:** [two-target trusted publisher and full execution-source isolation](issue235-two-target-trusted-publisher-design-2026-10-20.md), covering old nonroot writable file/FDs, root-Cron, primary WAN events, full `services-start` boot/manual dispatch, emergency DNS break-glass, root-only source/object binding and JFFS2 interruption. Do not duplicate V2.0–V2.9 abstract tests or reuse PR #245 SSD approvals.
+
 ## Recommended controlled next stage
 
 **V2.10 DESIGN COMPLETE; APPLY NOT APPROVED.** The highest-value next action is to **choose an independent recovery destination**, then separately approve creation of one encrypted copy and a disposable restore proof. Avoid another generic SHA self-test; V2.8/V2.9 already established current primary source and filesystem relationship. If no independent medium/host exists yet, record `OFF_HOST_RECOVERY=HOLD` and stop, rather than counting an internal SSD or current Restic instance as an external backup.
