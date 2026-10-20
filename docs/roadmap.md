@@ -1,5 +1,11 @@
 # Roadmap
 
+### Security #235 — V2.3 checked-FD vs rename-by-name race (2026-10-20)
+
+- [Isolated, nonroot synthetic adversarial test](../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md) **20/20 local PASS** (including expected-red) shows a verified FD can retain pinned bytes while a concurrent source-basename swap leads `os.replace` to publish a different inode; post-publish hash detection alone is too late to claim prevention.
+- Next: trustworthy root-owned source staging and destination authority, real writer/FD exclusion, and filesystem-specific safe publish/recovery. No extrapolation from same-UID Fedora/container semantics to JFFS2 or boot.
+- Operator replay V2.3 pending. No production apply; `HOLD`.
+
 ### Security #235 — V2.2 real inode and FD semantics (2026-10-20; isolated Linux fixture)
 
 - [Synthetic filesystem fixture](../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md) **19/19 local PASS**: `os.replace` publishes new inode/name binding, while old writable FD remains open on old inode; interrupted two-path sequence remains mixed.
