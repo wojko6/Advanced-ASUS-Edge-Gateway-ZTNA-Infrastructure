@@ -1,6 +1,6 @@
 # Issue #235 — V2.9 independent recovery failure-domain review (2026-10-20)
 
-> **Status:** documentation/design + nonroot Fedora metadata-only inventory, **not an installation or actual recovery**. Operator V2.9 replay: PENDING. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+> **Status:** documentation/design + nonroot Fedora metadata-only inventory, **not an installation or actual recovery**. Operator V2.9 replay: **9/9 operator self-tests PASS + metadata-only inventory PASS**, both primary candidates **SAME_ST_DEV**. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
 ## Accepted baseline and missing guarantee
 
@@ -17,7 +17,7 @@ Tool: `issue235_failure_domain_inventory_v29.py`; exact source SHA-256: `9eabaf8
 - Only scans **direct child directories** of `$HOME`, `$HOME/Pobrane`, `$HOME/Projekty` with preapproved prefixes `issue235-hook-backup-*` and `issue235-dns-guard-backup-*`; direct regular child names `services-start` and `dns-guard`. It will **not** search broadly or decide among multiple candidates. In case of none/multiple, returns HOLD, not an arbitrary selection.
 - `PRIMARY_COPY_DEVICE_RELATION=SAME_ST_DEV` shows one local `stat` filesystem device ID at read time. `DIFFERENT_ST_DEV_NOT_PHYSICAL_INDEPENDENCE` **never** proves different hardware/host/offline media. Btrfs subvolumes, bind mounts and layered storage make simple filesystem IDs insufficient.
 - Does not read file bytes (V2.8 already covers integrity), extract paths, expose device names/UUIDs, inspect Restic keys or repository, run `sudo`, `subprocess`, SSH, modify files, mount media or touch ASUS.
-- Operator run **PENDING**; a metadata-only PASS is never independent storage acceptance.
+- Operator **Fedora PASS_METADATA_ONLY_INDEPENDENCE_NOT_PROVEN**; this verifies only local device-ID classification and candidate discovery, never independent storage acceptance.
 
 Fedora only (nonroot), after source checksum verification:
 
@@ -30,6 +30,40 @@ python3 -B issue235_failure_domain_inventory_v29.py --self-test &&
 python3 -B issue235_failure_domain_inventory_v29.py --audit
 echo "V29_EXIT_CODE=$?"
 ```
+
+## Independent operator Fedora replay — V2.9 accepted as metadata-only (2026-10-20)
+
+The operator checked the source SHA-256 (`sha256sum -c` yielded `DOBRZE`) and independently ran the fixed-path source in the ordinary Fedora user session. Sanitized results:
+
+```text
+SELFTESTS=9/9
+SELFTEST_RESULT=PASS_BOUNDED_METADATA_MODEL_ONLY
+SEARCH_SCOPE=HOME_POBRANE_PROJEKTY_FIXED_PATTERNS_ONLY
+SEARCH_ERRORS_PRESENT=NO
+HOOK_LOCATED=ONE_REGULAR_NONSYMLINK_CANDIDATE
+GUARD_LOCATED=ONE_REGULAR_NONSYMLINK_CANDIDATE
+PRIMARY_COPY_DEVICE_RELATION=SAME_ST_DEV
+FILES_CONTENT_READ=NO
+FILE_PATHS_OR_VOLUME_IDENTIFIERS_PRINTED=NO
+RESTIC_REPOSITORY_OPENED=NO
+RESTIC_ISSUE235_SNAPSHOT_INCLUSION=NOT_VERIFIED
+FEDORA_RECOVERY_ISSUE235_SNAPSHOT_INCLUSION=NOT_VERIFIED
+EXTERNAL_OFF_HOST_COPY=NOT_VERIFIED
+INDEPENDENT_RECOVERY_ACCESS_AFTER_FEDORA_LOSS=NOT_PROVEN
+APPROVAL_STORE_INDEPENDENCE=NOT_PROVEN
+PHYSICAL_FAILURE_DOMAIN=NOT_PROVEN_FROM_ST_DEV
+ASUS_CONTACTED=NO
+FILES_MODIFIED=NO
+CRON_MODIFIED=NO
+PRIVILEGED_EXECUTION_TRUST_GATE=HOLD
+DEPLOYMENT_GATE=HOLD
+V29_INVENTORY_RESULT=PASS_METADATA_ONLY_INDEPENDENCE_NOT_PROVEN
+V29_EXIT_CODE=0
+```
+
+**Interpretation:** the two uniquely located local backup candidates share the same kernel `st_dev` filesystem ID at inspection. This does **not** imply same inode, and the tool did not assess physical drives or backup redundancy. The hash/DAC proof from V2.8 remains a **separate** at-read-time acceptance; V2.9 did not read or rehash either file. No production scripts or existing backups were changed.
+
+**Completed:** `V29_LOCAL_DISCOVERY=PASS`, `V29_PRIMARY_FILESYSTEM_RELATION=SAME_ST_DEV`. **Outstanding:** external/off-host backup evidence, independent access to decryption material and restore tooling after Fedora loss, and disposable restore of both scripts. In particular, a second NVMe in the *same computer* can be a valuable disk-failure tier but is **not an off-host disaster-recovery tier**.
 
 ## Recovery dependency and acceptance table
 
@@ -49,7 +83,7 @@ echo "V29_EXIT_CODE=$?"
 
 ```text
 V28_PRIMARY_BACKUPS=PASS_AT_READ_TIME
-V29_OPERATOR_INVENTORY=PENDING
+V29_OPERATOR_INVENTORY=PASS_METADATA_ONLY_INDEPENDENCE_NOT_PROVEN
 V29_PHYSICAL_FAILURE_DOMAIN=NOT_PROVEN
 V29_RESTIC_ISSUE235_INCLUSION=NOT_VERIFIED
 V29_OFF_HOST_RECOVERY=NOT_TESTED
