@@ -1,6 +1,6 @@
 # Issue #235 — V2.8 off-router recovery copy and failure-domain audit (2026-10-20)
 
-> **Status:** Fedora operator READ-ONLY PREFLIGHT / isolated local synthetic suite **18/18 PASS**; operator real-backup audit **PENDING**. Not a trusted publisher, restore test or independent-media certificate. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
+> **Status:** Fedora operator READ-ONLY PREFLIGHT / isolated local synthetic suite **18/18 PASS**; operator real-backup audit **NOT PERFORMED: first replay had blank primary path inputs and expected HOLD**. Not a trusted publisher, restore test or independent-media certificate. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
 
 ## Why this is the next gate
 
@@ -53,6 +53,40 @@ echo "V28_EXIT_CODE=$?"
 ```
 
 On `--audit`, enter the primary full-hook backup location, primary DNS Guard backup location, and optionally one further separately held *loose-file* backup per role. **Do not paste private paths into the chat/repository.** Hidden prompts are optional for secondary copies. Do not use `sudo` or offer mounted encrypted sources to a script that cannot independently validate the archive/restore process.
+
+## Independent operator Fedora replay — first attempt, expected HOLD (2026-10-20)
+
+The operator hash-verified the pinned V2.8 Python file (`sha256sum -c`: `DOBRZE`) and independently replayed **18/18 synthetic self-tests PASS**. The subsequent actual-copy `--audit` received **blank input for all four interactive paths**; therefore it did **not read either existing private backup**:
+
+```text
+SELFTESTS=18/18
+SELFTEST_RESULT=PASS_ROOTLESS_SYNTHETIC_COPY_GATE_ONLY
+PRIMARY_HOOK=NOT_PROVIDED
+PRIMARY_GUARD=NOT_PROVIDED
+SECONDARY_HOOK=NOT_PROVIDED
+SECONDARY_GUARD=NOT_PROVIDED
+FS_TOPOLOGY_HOOK=NOT_ASSESSED
+FS_TOPOLOGY_GUARD=NOT_ASSESSED
+INDEPENDENT_FAILURE_DOMAIN=NOT_PROVEN_BY_LOCAL_PATH_CHECKS
+RECOVERY_COPY_READONLY_CHECK=HOLD
+V28_EXIT_CODE=2
+ASUS_CONTACTED=NO
+FILES_MODIFIED=NO
+CRON_MODIFIED=NO
+DEPLOYMENT_GATE=HOLD
+```
+
+**Classification:** `INPUT_MISSING / AUDIT_NOT_PERFORMED`, **not** `HASH_MISMATCH`, missing or corrupt backup, failed filesystem separation, or actual restore failure. No backup paths or contents have been shared.
+
+Earlier operator session notes documented **private Fedora backup directory naming patterns**, not exact shareable paths: `$HOME/issue235-hook-backup-*/services-start` and `$HOME/issue235-dns-guard-backup-*/dns-guard`. A local, nonprivileged, metadata-only path discovery is sufficient to find candidates for the next **read-only** run; the operator must select the correct verified copies, and no paths should be pasted into the public report.
+
+```bash
+find "$HOME" -mindepth 2 -maxdepth 2 -type f \\
+  \\( -path "$HOME/issue235-hook-backup-*/services-start" -o \\
+     -path "$HOME/issue235-dns-guard-backup-*/dns-guard" \\) -print
+```
+
+If the files are found, rerun `python3 -B issue235_recovery_separation_audit_v28.py --audit` and paste each complete local path at its appropriate hidden prompt. The secondary inputs are optional. No copy, archive or permission is to be altered merely to make the audit pass. A failing mandatory integrity check remains `HOLD`.
 
 ## Stage gate and next work
 
