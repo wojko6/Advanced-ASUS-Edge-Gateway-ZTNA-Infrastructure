@@ -3,6 +3,11 @@
 - **No further backup/media preflight by default.** V2.8 verified both primary script copies, V2.9 Fedora **9/9 PASS / SAME_ST_DEV**; extra [V2.10](operations/issue235-independent-script-recovery-options-v210-2026-10-20.md) off-host recovery is deferred design only. Completed separate Fedora Recovery covers root/`systemd-machines`/`/boot`/EFI, not separate `/home`; no proof it includes the private #235 backups. Retain independent recovery as an open **production** approval risk, not a reason to block offline publisher research.
 - Resume concrete [two-target publisher and trusted-dispatch review](operations/issue235-two-target-trusted-publisher-design-2026-10-20.md): independent source authority and root staging, old writable-FD/active-process quiescence, selective root-Cron/WAN/boot and emergency DNS continuity, JFFS2 interrupted owner repair. No source/SSD/RouterCloud worktree changes or router operations without explicit authorization.
 
+### Issue #235 — V2.11 source-backed GNUton security feasibility (2026-10-20)
+
+- [V2.11 trust/inhibition review](../evidence/2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md) documents actual project source entrypoints, Cron re-registration by `services-start`, direct WAN and emergency DNS Guard calls, non-global `flock`, and **installer wrapper bytes incompatible with active full hook**. A firmware selective crash-durable pre-execution gate has not been established; root publisher and JFFS2 recovery remain **NO-GO**.
+- Do not introduce repeated synthetic parsers or attempt `cru d`, `chown`, installer, `jffs2_scripts=0` or newly written `init-start`. Next security evidence should focus on trusted firmware boot/dispatcher boundary and explicit old FD quiescence, separately coordinated if router read-only checks are ever necessary. V2.10 extra backup remains deferred.
+
 # Roadmap
 
 ### Issue #235 — V2.10 independent post-Fedora-loss recovery decision (2026-10-20)
