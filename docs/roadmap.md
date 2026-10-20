@@ -1,5 +1,11 @@
 # Roadmap
 
+### Security #235 — V2.1 monotonic owner-trust candidate (2026-10-20; Fedora only)
+
+- [Abstract one-path-at-a-time model](../evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md) **19/19 local PASS**; neither initial publication ordering resolves both privileged targets after interruption. Conditional guard-first sequence leaves one abstract untrusted launch class instead of three for hook-first, **not a probability-based ranking**.
+- Investigate a *trusted fresh-inode / pinned-byte / root-owned* publisher and independent recovery rather than assuming a two-file crash-atomic rename, `chown`-only remediation or JFFS `init-start` barrier.
+- **Blocking:** real JFFS2 per-file interruption semantics, writer/open-FD exclusion, trusted publication identity, independent DNS recovery and explicit operator authorization. No live changes, `HOLD`.
+
 ### Security #235 — V2.0 two-target interruption gate (2026-10-20; offline model)
 
 - [V2.0 expected-red model](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md): 20/20 local assertions PASS (including **detecting**, not fixing, unsafe scenarios). Cron-only inhibition is insufficient; a simulated crash between two per-file publishes may re-enable privileged execution of the remaining nonroot-owned target.
