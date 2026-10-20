@@ -49,6 +49,12 @@ The operator also verified a private Fedora backup of the active full hook (`HOO
 
 The future remedial transaction therefore involves **two privileged targets**, the firmware hook and DNS Guard. Keep the **current full-hook semantics**; do not run the general installer, which generates a *different short wrapper*. Before considering any mutation, separately verify trusted, independently recoverable inputs for both targets, exclude competing writers and open descriptors, inhibit both root-Cron dispatch and Merlin startup re-entry/re-registration, review combined JFFS2 failure handling, and obtain an **explicit new maintenance authorization**. DNS Guard/Unbound/Pi-hole plus Cron startup postflight are required after an authorized change. No automatic production activation or reboot. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
+## Issue #235 dual privileged target recovery — V2.0 expected-red model (no apply)
+
+The [V2.0 Fedora-only state-machine exercise](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) passed 20/20 local assertions while intentionally exposing unsafe scenarios. Named Cron-only suppression cannot inhibit direct WAN/emergency DNS Guard calls or firmware boot/manual `services-start`. A simulated crash after one of two per-file trusted-owner publishes may restore volatile triggers before the other file is secured. A **hypothetical** earlier-than-hook persistent inhibition barrier was modeled but **has not been implemented or demonstrated** on GNUton/JFFS2. Do not equate this with an atomic two-file transaction or with a successful live recovery exercise.
+
+Until a verified power-interruption-safe strategy, independent protected backups, writer/FD quiescence and independent DNS rescue are available, there is **no apply approval**. Follow the [design-only state machine](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md), not a generic installer or ad hoc `chown`/Cron edits. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
 ## Change workflow
 
 Use this workflow for a planned maintenance window outside an active unchanged-state observation:
