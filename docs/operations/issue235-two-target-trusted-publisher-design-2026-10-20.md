@@ -59,7 +59,11 @@ The [V2.7 approval authority design](issue235-two-script-offline-approval-author
 
 **Crucial constraint:** an ordinary JFFS `init-start` hook cannot simply be claimed a trusted pre-boot barrier; it uses the same checked-only-for-exec firmware script dispatcher. Global `jffs2_scripts=0` or Cron deletion would break or bypass important recovery paths and is not approved. Guard-first is only a **hypothesis for evaluating fewer modeled untrusted launcher classes after interruption**, not an approved order or safety probability.
 
-## Decision states, proof gates and next engineering action
+## Decision states, proof gates and next engineering action## V2.8 independent recovery audit checkpoint
+
+The [V2.8 read-only Fedora copy audit](../../evidence/2026-10-20/issue-235-recovery-copy-separation-v28.md) examines the existing off-router `services-start` and DNS Guard bytes under hidden operator-supplied local paths. Local **18/18** synthetic tests passed, but no actual Fedora backup-path replay or independent restore has been reported. Matching SHA and private file modes constitute point-in-time **input integrity only**. The script explicitly reports `INDEPENDENT_FAILURE_DOMAIN=NOT_PROVEN_BY_LOCAL_PATH_CHECKS` even if an optional second loose-file copy resides on a different filesystem. Independent Restic/offline restore, external credentials, approval custody, old-FD writer exclusion and JFFS2 crash recovery still require distinct evidence and approvals.
+
+
 
 1. **REUSE_REVIEW:** inventory actual earlier isolated helper/FD/importer test artifacts and **explicitly tag** each `REUSABLE_PATTERN` / `NOT_TARGET_VALIDATED` / `UNVERIFIED`. Do not claim a missing artifact passed because a worklog mentions an earlier test.
 2. **PROVENANCE:** independently protected recoverable source for *both* scripts; reviewed exact bytes and ownership expectations; cannot depend solely on SSD or local Fedora failure domain.
