@@ -1,6 +1,6 @@
 # Validation evidence
 
-- **2026-10-20 — Issue #235 adversarial FD-to-name V2.3:** [20/20 rootless local synthetic tests](2026-10-20/issue-235-fd-to-name-publication-race-v23.md). Expected-red basename swap after correct FD hash can publish another inode; late postcheck is detection, not pre-execution prevention. Operator Fedora V2.2 **19/19 independently replayed**; V2.3 replay pending. All production gates **HOLD**.
+- **2026-10-20 — Issue #235 adversarial FD-to-name V2.3:** [20/20 rootless local synthetic tests](2026-10-20/issue-235-fd-to-name-publication-race-v23.md). Expected-red basename swap after correct FD hash can publish another inode; late postcheck is detection, not pre-execution prevention. Operator Fedora V2.2 **19/19 independently replayed** and V2.3 **20/20 independently replayed**; both are rootless synthetic primitives. All production gates **HOLD**.
 
 - **2026-10-20 — Issue #235 rootless rename/inode V2.2:** [19/19 local tests on synthetic actual filesystem objects](2026-10-20/issue-235-rootless-file-inode-publish-v22.md); old writable FD survives replacement, confirming no automatic FD revocation; no JFFS2 or root-owner proof, **HOLD**.
 
