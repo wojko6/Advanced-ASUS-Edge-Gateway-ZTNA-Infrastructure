@@ -43,7 +43,13 @@ Any policy state which authorizes old generation or silently clears `REVOKED`/`C
 
 **Decision invariants:** `operator approval != file publication permission`; `same UID trust store == NOT INDEPENDENT`; `C accepts FD == NOT FD provenance`; `post-publish hash == detection, not transient pre-execution protection`; `per-target rename != two-file atomic transaction`; `root-owned replacement != old FD revocation`. For a safer design see [V2.0–V2.3 evidence](../../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md).
 
-## Concrete engineering work still required
+## Concrete engineering work still required## V2.8 — recovery copies and separate failure domains (read-only only)
+
+The [V2.8 rootless Fedora recovery-copy audit](../../evidence/2026-10-20/issue-235-recovery-copy-separation-v28.md) is limited to independent historical byte integrity and DAC snapshot checks of **operator-selected private Fedora backup copies**. It does not read any approval material, treat the source checksum as a real approval, use Restic or prove physical storage separation. Local synthetic self-tests passed **18/18**; the operator's real-backup audit is **PENDING**. A distinct `st_dev` proves at most a different filesystem reported by the kernel, not independent disk/host failure resilience.
+
+**V2.7 approval authority and V2.8 recovery copies are intentionally separate evidence streams.** Never create operator approval automatically from backup bytes, claim a file owner/mode of `0600` protects it against the same UID, or reuse a PR #245 approval pin. Root-owned publisher and DNS/JFFS2 recovery remain independent unproven GO gates.
+
+
 
 1. **Separate the approving authority:** determine how a protected digest/approval is created and held, who can change it, which code verifies it, how generation/revocation survive loss, and how a compromised candidate/same UID cannot rewrite the approval. No real approval yet.
 2. **Reauthenticating the exact two sources:** preserve byte-for-byte the current full firmware `services-start` semantic behavior and independently reviewed DNS Guard. Private backup copies have been validated on Fedora; independent recovery *outside its failure domain* still requires evidence.
