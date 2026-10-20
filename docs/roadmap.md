@@ -1,5 +1,11 @@
 # Roadmap
 
+### Security #235 — V2.2 real inode and FD semantics (2026-10-20; isolated Linux fixture)
+
+- [Synthetic filesystem fixture](../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md) **19/19 local PASS**: `os.replace` publishes new inode/name binding, while old writable FD remains open on old inode; interrupted two-path sequence remains mixed.
+- **Next barrier:** same-FD trusted source-to-publication binding, actual root-owned publisher, adversarial writer/FD exclusion and JFFS2 interruption behavior. Neither Linux directory `fsync` nor Btrfs/ext4 semantics transfer automatically to production JFFS2.
+- No ASUS contact, no owner repair, no Cron/NVRAM changes, `HOLD`.
+
 ### Security #235 — V2.1 monotonic owner-trust candidate (2026-10-20; Fedora only)
 
 - [Abstract one-path-at-a-time model](../evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md) **19/19 local PASS**; neither initial publication ordering resolves both privileged targets after interruption. Conditional guard-first sequence leaves one abstract untrusted launch class instead of three for hook-first, **not a probability-based ranking**.
