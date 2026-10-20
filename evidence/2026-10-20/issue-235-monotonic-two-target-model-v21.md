@@ -15,7 +15,7 @@ This *could* avoid assuming a magical four-entrypoint crash-durable boot barrier
 
 ## Artifact and local tests
 
-Standalone off-router Python model: `issue235_monotonic_publish_model_v21.py`. SHA-256: `2218762f4c9519cde7db0664f132e70e4adc658c3eaa7cc0da18b2bb9de57fa1`. Created in isolated assistant runtime; executed `--self-test` **19/19 PASS** and `--matrix` with seven synthetic scenarios. It has **no** subprocess/SSH/OS filesystem mutation surface. User's independent Fedora replay is **not yet reported**.
+Standalone off-router Python model: `issue235_monotonic_publish_model_v21.py`. SHA-256: `2218762f4c9519cde7db0664f132e70e4adc658c3eaa7cc0da18b2bb9de57fa1`. Created in isolated assistant runtime; executed `--self-test` **19/19 PASS** and `--matrix` with seven synthetic scenarios. It has **no** subprocess/SSH/OS filesystem mutation surface. The operator subsequently reproduced all 19/19 assertions and seven scenarios independently on Fedora (see below).
 
 | Synthetic state | Untrusted root-executed targets | Model launch classes still reaching an untrusted target |
 | --- | ---: | ---: |
@@ -30,6 +30,12 @@ Standalone off-router Python model: `issue235_monotonic_publish_model_v21.py`. S
 Tests intentionally refuse idealized publication when any assumed precondition is false: independently retrievable backup, source pin verification, root-owned trusted staging/mode, trusted ancestor binding, writer exclusion or drained execution. They also refuse automatic resumption after an incomplete operation.
 
 **Counts are abstract classes, not probabilities, measured attack paths or a production risk score**. The model assumes, rather than proves, that a path replaced with a trusted inode stays trusted after power failure; it cannot represent JFFS2 power-loss persistence, torn state, open FDs, post-check replacement races or external invocation timing.
+
+## Independent Fedora replay (operator-reported, 2026-10-20)
+
+The operator downloaded and hash-verified the pinned V2.1 script (`sha256sum -c` reported `DOBRZE`), then ran `python3 -B ... --self-test && python3 -B ... --matrix` on Fedora. **All 19/19 self-tests PASS** and all seven expected scenarios appeared, including guard-first/hook-first interruption, rejected unpinned candidate, incorrect owner/mode, unverified parent, unavailable independent recovery, active writable FD and undrained execution. Model printed `ASUS_CONTACTED=NO`, `ASUS_MODIFIED=NO`, `CRON_MODIFIED=NO` and retained both `HOLD` gates.
+
+This validates **repeatability of the same abstract model** in the operator's Fedora environment. It does **not** demonstrate actual root ownership, filesystem atomic rename or durability, independent recovery, JFFS2 behavior, process/FD quiescence, or WAN/DNS readiness. This local replay **must not** be interpreted as production readiness.
 
 ## Alternatives and current assessment
 
