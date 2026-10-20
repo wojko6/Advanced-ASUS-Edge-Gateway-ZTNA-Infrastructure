@@ -11,6 +11,7 @@ Use the template that matches the evidence class:
 
 Both files are templates only. A template or unfilled placeholder is never validation evidence.
 
+- **2026-10-20 — Issue #235 WAN recovery entrypoint source drift:** [bounded V1.8 operator-reported source snapshot](2026-10-20/issue-235-wan-trigger-source-v18.md): live WAN hook differs and lexical triggers incomplete, but WAN handler and break-glass helper match pinned bytes; real WAN dispatch untraced, no changes, **HOLD**.
 - **2026-10-20 — Issue #235 `services-start` trust-chain source classification:** [operator-reported V1.4–V1.7 read-only evidence](2026-10-20/issue-235-services-start-trust-chain-v14-v17.md) established a nonroot-owned firmware hook byte-identical to pinned source, root-owned addon and config, and a moved watchdog call in the addon. No trusted live ownership, scheduler quiescence, or production repair; **HOLD**.
 
 ## Published validation timeline
