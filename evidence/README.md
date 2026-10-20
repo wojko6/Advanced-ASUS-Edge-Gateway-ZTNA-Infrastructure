@@ -1,6 +1,6 @@
 # Validation evidence
 
-- **2026-10-20 — Issue #235 V2.5 original C + ZIP provenance:** [read-only original Canonical C/ZIP source preflight](2026-10-20/issue-235-original-c-zip-provenance-v25.md), local synthetic 10/10 PASS; real Fedora audit **PENDING**. These files are SSD PR #245 lab prerequisites, not two-target publication authorization. **HOLD**.
+- **2026-10-20 — Issue #235 V2.5 original C + ZIP provenance:** [read-only original Canonical C/ZIP source preflight](2026-10-20/issue-235-original-c-zip-provenance-v25.md), local synthetic 10/10 PASS; operator Fedora C/ZIP source attestation **EXACT_MATCH/PASS**, 10/10 self-tests; independent approval remains **NOT PROVEN**. These files are SSD PR #245 lab prerequisites, not two-target publication authorization. **HOLD**.
 
 - **2026-10-20 — Issue #235 V2.4 recovered historical artifacts:** [source SHA-256 cross-check for selected Stage B v1.3–v1.5 C/Python files, with three-role PR #245 scope warning](2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md). Library source bytes recovered; original C/ZIP dependency and two-script production authorization unproven. **HOLD**.
 
