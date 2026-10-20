@@ -96,7 +96,13 @@ The [offline V2.1 comparison](../../evidence/2026-10-20/issue-235-monotonic-two-
 
 Do not substitute live in-place `chown` for vetted source-to-root-owned publication; the previous owner could modify content or retain a writable FD. A one-file repair is not safe merely because a prior checksum matched. If incomplete, the procedure must stop with an explicitly untrusted target, not automatically resume or roll back to nonroot ownership. Any practical preferred publication order is subject to later independently reviewed DNS availability and firmware-specific checks; `DEPLOYMENT_GATE=HOLD`.
 
-## Ordering and rollback constraints
+## Ordering and rollback constraints## V2.2 rootless Linux filesystem fixture — real inode and stale-FD behavior
+
+The [V2.2 isolated filesystem test](../../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md) ran **19/19 local self-tests** with *real* user-owned disposable files and same-filesystem `os.replace`. New pathname reads saw the new inode and expected synthetic bytes, while a previously open writable FD continued to access the **old inode** after rename. It also demonstrated mixed states when stopping after only one of two path replacements. Its negative checks rejected symlinks, a hardlinked stage, changed candidate bytes and unsafe stage modes.
+
+**Important limit:** this is *not* root-owned publication and *not* JFFS2. An FD pin checked before pathname-based rename does not prove an attacker-resistant FD-to-name handoff; an intervening replacement is still a distinct risk. File/dir `fsync` calls returning in the local fixture do not prove power-loss persistence. The operator's Fedora replay of V2.2 has not yet been reported. **No reduction of production HOLD.**
+
+
 
 - Source priority: **preserve exact byte content of the currently deployed full hook** and approved DNS Guard source. Do not introduce the addon’s delayed watchdog call or a short wrapper during ownership remediation.
 - Prefer a trusted startup-entrypoint replacement before Cron target reactivation, but **do not assume an execution order is safe** without proven suppression of both privileged entrypoints. The order is still subject to review.
