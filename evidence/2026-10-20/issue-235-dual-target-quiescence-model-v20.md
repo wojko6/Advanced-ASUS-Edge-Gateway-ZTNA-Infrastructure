@@ -36,6 +36,21 @@ This model addresses **privileged execution during a two-target owner-trust reme
 
 PASS in this self-test means the assertions **correctly detect expected unsafe cases** as well as conditional model behavior. It does **not** mean the unsafe cases are fixed.
 
+## Independent operator replay — Fedora, 2026-10-20
+
+The operator independently re-ran the hash-pinned `issue235_dual_target_quiescence_model_v20.py` tool on Fedora using `python3 -B ... --self-test && python3 -B ... --matrix` and provided the entire sanitized terminal output:
+
+- `sha256sum -c` reported **DOBRZE** for the expected local script.
+- `SELFTESTS=20/20` and `ALL_TESTS=PASS_OFFLINE_MODEL_ONLY`.
+- All eight expected scenarios reproduced: baseline (four unsafe trigger classes); Cron only (three); all hypothetical launchers gated (zero **under assumption**); partial trusted hook followed by reset (three); partial trusted DNS Guard followed by reset (one); reset before first publish (four); assumed persistent barrier (zero **under assumption**); both trusted in abstract model (zero).
+- `ASUS_CONTACTED=NO`, `ROUTER_FILES_MODIFIED=NO`, `CRON_MODIFIED=NO`, both privileged-execution and deployment gates `HOLD`.
+
+**Important interpretation:** these are successful **reproductions of the model**, not a live scheduler barrier, physical power-fail test, secure root-ownership transition, real WAN fail-open validation, or evidence of JFFS2 durability. In particular, the `HYPOTHETICAL_DURABLE_BOOT_GATE` scenario **assumes all four launch classes remain blocked** across reboot. That includes **operator break-glass**, which is unacceptable unless an independent, proven DNS recovery mechanism remains usable. The model declares such independent recovery as a Boolean precondition; the operator has **not** proved it exists on the router.
+
+**Ordering observation, not deployment advice:** publishing DNS Guard first leaves one abstract untrusted boot-hook trigger upon a crash, whereas publishing the hook first leaves three untrusted DNS Guard triggers. This supports evaluating **guard-first** as a possible narrower exposure interval *only after* all real quiescence, independent recovery, early-boot and JFFS2 requirements are proven. Trigger counts are not vulnerability probabilities or a production risk score; neither ordering is currently authorized.
+
+The next useful test is **not another repetition of these model assertions**. It is source-backed evaluation of an actual firmware-compatible pre-execution barrier and recovery path; failing that, keep production `NO-GO` and distinguish explicitly between the operator-accepted pre-existing risk and any claimed new safety guarantee.
+
 ## New decisive readiness gap
 
 **Even perfect in-memory quiescence is insufficient for safe interruption handling.** If a power failure or reboot occurs between two single-path publishes, firmware may dispatch the still-nonroot-owned privileged target **before** a later recovery controller can run. A conventional journal placed alongside those scripts does not automatically protect the early-boot execution boundary, and a `flock` or named Cron deletion does not gate WAN-connected or break-glass invocations.
