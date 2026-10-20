@@ -1,5 +1,11 @@
 # Roadmap
 
+### Security #235 — V2.8 off-router recovery and custody evidence (2026-10-20)
+
+- [Read-only Fedora recovery-copy preflight](../evidence/2026-10-20/issue-235-recovery-copy-separation-v28.md) local synthetic **18/18 PASS**. Operator's private copy audit pending. Hash matching and file mode are *at-read-time* evidence only.
+- Need **actual independent storage + a disposable restore rehearsal**, independently protected V2.7 approval authority and credentials, and separate JFFS2/boot/DNS publication proof before any production GO.
+- Even different `st_dev` is **not** proof of independent physical media. ASUS and parallel PR #245 remain untouched; **HOLD**.
+
 ### Security #235 — V2.7 independent approval authority design (2026-10-20)
 
 - [V2.6 Fedora synthetic test](../evidence/2026-10-20/issue-235-two-script-approval-contract-v26.md) **29/29 operator PASS**. Confirms schema/deny rules only; source remains synthetic and the old SSD PR #245 authority is not reused.
