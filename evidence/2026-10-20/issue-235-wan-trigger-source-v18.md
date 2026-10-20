@@ -49,6 +49,23 @@ The emergency `/jffs/scripts/edge-dns-breakglass.sh` was separately byte-verifie
 
 **Current conclusion:** `WAN_SOURCE_CHAIN=EXACT_MATCH_AT_READ_TIME`; `WAN_RUNTIME_DISPATCH=NOT_TRACED`; `OWNER_TRUST=NOT_PROVEN`; `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
+## V1.11 — fixed-path WAN source-chain DAC check (operator-reported, 2026-10-20)
+
+A Fedora-hosted read-only metadata reader executed **only `/bin/ls -ldn`** for allowlisted router filesystem objects; it did **not** read script/config contents, source config, execute target scripts, edit Cron or alter ASUS files. Local negative/control self-tests **13/13 PASS**. This is a **point-in-time DAC snapshot**, not full privilege or runtime execution attestation.
+
+- `/jffs`, `/jffs/scripts`, `/jffs/addons`, `/jffs/addons/asus-edge`, `.../bin`, `.../legacy` and `/jffs/configs` passed root:root directory type and no group/other write checks.
+- The firmware `wan-event` wrapper, addon `wan-event`, addon `wan-event-handler`, and `edge-dns-breakglass.sh` were **regular root:root executable files**, single link and no group/other write, all `PASS_POINT_IN_TIME`.
+- `/jffs/configs/asus-edge.conf` was **root:root, mode 0600** and a regular single-link file, `PASS_POINT_IN_TIME`. Its contents and effective `EDGE_RUN_LEGACY_HOOKS` value were **not checked**, nor should private config contents be published.
+- The **optional** `/jffs/addons/asus-edge/legacy/wan-event` was `ABSENT_OR_UNREADABLE_UNRESOLVED` because V1.11's single `ls` error branch intentionally did **not distinguish absence from inability to read it**. This is **not evidence that the legacy hook exists or is malicious**.
+- `WAN_METADATA_SNAPSHOT=HOLD_OR_UNRESOLVED` and exit code 2 reflect the unresolved optional path and non-authorization gate, **not a failed DAC check of the standard WAN chain**.
+- ACLs/xattrs, effective permissions beyond ordinary DAC, trusted writers and continuously safe ownership, actual WAN invocation and open descriptors remain **NOT PROVEN**.
+  
+**Engineering conclusion:** the **standard WAN source bytes** (V1.8/V1.10) and the **standard WAN pathname DAC/parent snapshot** (V1.11) now match our reviewed trust expectations **at observation time**, but the optional legacy branch and actual runtime dispatch remain unproven. This **does not remove the independent nonroot-owner defects** on `services-start` and DNS Guard and **does not authorize deployment**.
+
+**Narrow next action:** a read-only fixed-path `test -L` / `test -f` / `test -x` check on the optional legacy file under its already-confirmed trusted directory. **If it is absent, the wrapper's `-x` condition cannot run it regardless of the config flag; no private config read is then required.** If the file exists or cannot be classified, keep `HOLD` and review the legacy content, ownership and config setting separately, with no use of the production installer or WAN event triggering.
+
+`PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
 ## Historical V1.8 initial interpretation and proposed follow-up (superseded by V1.9–V1.10)
 
 The reviewed repository's `wan-event` is a short managed hook matching WAN unit 0, connected event and an `exec` handoff to the addon handler. The **live hook is not byte-identical** and lacks at least one expected lexical marker. This cannot yet be classified as a broken or compromised WAN recovery path: possible causes include a generated wrapper, older hook, a different implementation or a site-specific edit. **Do not infer that all independent DNS Guard paths have been mapped or that WAN recovery is currently broken.**
