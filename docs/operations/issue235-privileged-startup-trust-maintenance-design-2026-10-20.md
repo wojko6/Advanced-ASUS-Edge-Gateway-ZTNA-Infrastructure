@@ -25,7 +25,7 @@ Disabling `AsusEdgeDNSGuard` via `cru` alone **does not** inhibit every legitima
 
 The official [Asuswrt-Merlin user-script reference](https://github.com/RMerl/asuswrt-merlin.ng/wiki/User-scripts) describes `services-start` **after boot services are started**. It does not document automatic execution for every ordinary service restart. The prior generic term “service-start re-entry” must be read as **boot / manually invoked hook / unverified platform-specific trigger**, not as an observed recurring service-restart behavior. A future controlled test would be needed to prove any additional GNUton-specific invocation routes.
 
-The router's live `wan-event` and `wan-event-handler` **content and DAC chain have not yet been attested in this audit**; do not claim current active WAN-specific routing solely from repository code. Do not confuse a source-level trigger map with a runtime trace.
+The router's live `wan-event`, `wan-event-handler` and emergency `edge-dns-breakglass.sh` **content and DAC chain have not yet been attested in this audit**; do not claim current active WAN-specific routing solely from repository code. Do not confuse a source-level trigger map with a runtime trace.
 
 **Quiescence acceptance must account for all launch sources, as well as possible already-open executable/script FDs and nonroot ownership.** If a trustworthy inhibitor would break WAN DNS bootstrap or operator break-glass, the window is a **NO-GO**. A root-owned metadata marker/lock, alone, cannot prevent independent firmware-triggered child processes or cron launches.
 
