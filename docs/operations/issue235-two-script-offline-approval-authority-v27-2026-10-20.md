@@ -53,6 +53,8 @@ The [V2.8 rootless Fedora recovery-copy audit](../../evidence/2026-10-20/issue-2
 
 ## Concrete engineering work still required
 
+[V2.10 recovery architecture](issue235-independent-script-recovery-options-v210-2026-10-20.md) recommends reviewing an encrypted *normally disconnected* recovery medium or separately administered second host before any backup or restore execution. Its purpose is recovering both script byte copies after Fedora-host loss; it **does not issue** the V2.7 independent operator approval and cannot validate or substitute the trusted publisher. V2.9 operator Fedora confirmed one backup candidate per role, both on the same filesystem. Off-host copy and independent decryption credential custody remain **NOT VERIFIED**.
+
 **V2.9 scope update:** [independent Fedora-loss recovery review](../../evidence/2026-10-20/issue-235-independent-recovery-failure-domain-v29.md) distinguishes already verified *local* bytes from a physically independent off-host/offline restore and separate custody of authorization. A bounded read-only metadata scanner has local 9/9 model tests PASS, operator Fedora independently obtained **9/9 PASS**, found exactly one local candidate for each role and `SAME_ST_DEV`; it does **not** validate Restic inclusion or physical independence. Do not assume the RouterCloud Restic staging repository or the distinct Fedora Recovery project covers the two private scripts. No permission, backup schedule, publication or issuer change approved.
 
 1. **Separate the approving authority:** determine how a protected digest/approval is created and held, who can change it, which code verifies it, how generation/revocation survive loss, and how a compromised candidate/same UID cannot rewrite the approval. No real approval yet.
