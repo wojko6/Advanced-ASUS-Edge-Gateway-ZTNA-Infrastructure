@@ -33,7 +33,11 @@ The V1.4 report explicitly notes that a valid FD and matching bytes do **not** p
 
 **Updated decision:** individual Stage B source artifacts **RECOVERED_AND_HASH_MATCHED**; end-to-end provenance/real three-role runtime execution and two-target production applicability **NOT VERIFIED**. No new synthetic rerun needed at this stage, and **no transfer** from SSD branch / PR #245 to active DNS Guard and startup hooks. Both issue gates **HOLD**.
 
-## Gate-by-gate reconciliation
+## Gate-by-gate reconciliation### V2.5 original C/ZIP dependency attestation — operator Fedora pending
+
+The [V2.5 original Canonical C/ZIP source preflight](issue-235-original-c-zip-provenance-v25.md) establishes the **exact expected original laboratory source path**, immutable 18,074-byte C SHA-256 and bounded companion ZIP content, derived from the recovered old pinned test harness. The source and ZIP themselves were not found in available Library files; a standalone nonroot read-only tool passed 10/10 **synthetic** self-tests, but the real source/ZIP attestation remains **PENDING** on the operator's Fedora. Do not infer that the original synthetic manifest is legitimate operator authorization for active privileged scripts.
+
+
 
 | Critical boundary | Evidence available | Missing acceptance proof |
 | --- | --- | --- |
