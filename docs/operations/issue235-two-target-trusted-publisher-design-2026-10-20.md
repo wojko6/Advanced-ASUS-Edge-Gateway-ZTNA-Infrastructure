@@ -35,7 +35,7 @@ The [V2.4 archive/source cross-check](../../evidence/2026-10-20/issue-235-truste
 
 **Nontransferable approval scope:** the recovered Stage B contract concerns *three synthetic roles for SSD PR #245*, with a literal policy scope `pr245-ssd-mount-roots`. Neither the V1.4 independently held synthetic approval FD nor the V1.5 synthetic signer/keyring tests authorize a different, **two privileged-script** deployment. V1.5 explicitly demonstrates that a same-UID process that controls policy and keyring can subvert the simulated approval. A new independently reviewed operator authority and target-specific content/provenance map would be required; old PR #245/SSD inputs must remain untouched.
 
-## Three distinct failure boundaries — do not conflate### V2.6 — target-specific scope contract (no inherited SSD authority)
+## V2.6 — target-specific scope contract (no inherited SSD authority)
 
 The [V2.6 synthetic contract](../../evidence/2026-10-20/issue-235-two-script-approval-contract-v26.md) establishes a **distinct schema** `ISSUE235-TWO-SCRIPT-APPROVAL/1` with exact scope `issue235-privileged-scripts-owner-repair`, and only two fixed ordered roles: the **existing full** `/jffs/scripts/services-start` plus `/jffs/addons/asus-edge/bin/dns-guard`. Mode `0755`, owner `root:root`, regular/single-link, source hashes and target paths must be independently authenticated by a new protected offline authority before any production consideration.
 
