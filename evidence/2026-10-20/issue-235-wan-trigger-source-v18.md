@@ -1,7 +1,7 @@
 # Issue #235 — WAN / emergency DNS Guard trigger source V1.8 (2026-10-20)
 
 > **Evidence class:** sanitized **operator-reported** two equal read-only SSH snapshots; no runtime WAN event trace, no proof of owner/DAC trust, no writes to ASUS or Cron.  
-> **Result:** `TRIGGER_SOURCE_PREFLIGHT=SOURCE_DRIFT_OR_READ_HOLD`, audit exit `2`. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
+ > **Dated V1.8 result:** `TRIGGER_SOURCE_PREFLIGHT=SOURCE_DRIFT_OR_READ_HOLD`, audit exit `2`. **Resolved as a comparison-target mismatch in V1.10; see below.** Live owner/DAC and execution verification still HOLD. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`.
 
 ## Scope and verified source reference
 
@@ -25,7 +25,31 @@ Read-only follow-up V1.9 observed the production `/jffs/scripts/wan-event` as **
 
 **Next test:** two bounded read-only SSH `/bin/cat` streams with off-router SHA-256 comparison against these two pins; no source content printing and no router mutation. Do not probe or expose config content unless separately necessary. All gates **HOLD**.
 
-## Interpretation and next bounded diagnostic
+## V1.10 — exact off-router source verification (operator-reported; 2026-10-20)
+
+The operator completed a narrowly scoped Fedora SHA-256 comparison of **both missing live WAN paths** against the approved immutable references. The tool used `/bin/cat` via read-only SSH and kept the received bytes in memory; no production script execution, router write or Cron modification was reported.
+
+| Production location | Pinned source | Operator result |
+| --- | --- | --- |
+| `/jffs/scripts/wan-event` | Installer-generated **8-line, 324-byte wrapper** (SHA-256 `8ae4a6eaddd5fa2c1a6a2beb85f34a3ccaf9111bedac23bdd0827ca4ddc4212c`) | `WAN_HOOK_SOURCE=EXACT_MATCH` |
+| `/jffs/addons/asus-edge/bin/wan-event` | Pinned full `router/scripts/wan-event` (SHA-256 `bdb83a63a1e7fda35d313abca33f326580ea0219475472b32050b8649bd36f79`) | `WAN_ADDON_SOURCE=EXACT_MATCH` |
+
+`WAN_HOOK_READ=PASS`; `WAN_ADDON_READ=PASS`; `SOURCE_VERIFICATION=PASS`; `SOURCE_VERIFICATION_EXIT_CODE=0`. This resolves the V1.8 `SOURCE_DRIFT` **as a mistaken comparison of a generated wrapper against the full addon script**. It is **not** evidence of compromised code or a broken hook.
+
+Combined with V1.8's two exact source matches, the **four-hop standard WAN source chain** is byte-verified at the respective observation points:
+
+1. firmware `/jffs/scripts/wan-event` wrapper,
+2. addon `/jffs/addons/asus-edge/bin/wan-event`,
+3. addon `/jffs/addons/asus-edge/bin/wan-event-handler`,
+4. addon `/jffs/addons/asus-edge/bin/dns-guard` (the latter independently source-pinned in the prior DNS Guard investigation).
+
+The emergency `/jffs/scripts/edge-dns-breakglass.sh` was separately byte-verified during V1.8. **These are source identities, not owner/DAC trust, a complete runtime invocation trace, or a guarantee the user config doesn't enable the wrapper's optional legacy branch.**
+
+**Next non-mutating readiness gap:** verify ownership, modes, link types and trusted parent paths for **all four WAN launch-chain scripts**, plus the operator emergency hook and any *existing* legacy WAN hook. Determine the effective `EDGE_RUN_LEGACY_HOOKS` setting separately without printing private config values or sourcing that file. No WAN event should be triggered to conduct a source/DAC preflight.
+
+**Current conclusion:** `WAN_SOURCE_CHAIN=EXACT_MATCH_AT_READ_TIME`; `WAN_RUNTIME_DISPATCH=NOT_TRACED`; `OWNER_TRUST=NOT_PROVEN`; `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
+## Historical V1.8 initial interpretation and proposed follow-up (superseded by V1.9–V1.10)
 
 The reviewed repository's `wan-event` is a short managed hook matching WAN unit 0, connected event and an `exec` handoff to the addon handler. The **live hook is not byte-identical** and lacks at least one expected lexical marker. This cannot yet be classified as a broken or compromised WAN recovery path: possible causes include a generated wrapper, older hook, a different implementation or a site-specific edit. **Do not infer that all independent DNS Guard paths have been mapped or that WAN recovery is currently broken.**
 
