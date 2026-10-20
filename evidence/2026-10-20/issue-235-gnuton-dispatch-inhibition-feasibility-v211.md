@@ -36,6 +36,10 @@ Source claims from prior GNUton review correspond specifically to tag `3004.388.
 
 **Recommended stop/review point:** avoid coding another synthetic approval parser or running user `chown` commands. The next useful technical evidence would be a bounded, exact-version **firmware dispatcher/launcher trust source and deployed binary equivalence** review, and then selecting either proven selective inhibition or a formally reviewed manual-only path with explicit residual risk and independent LAN/DNS recovery. Any live read-only ASUS probe would require separate coordination. Do not create backup/media work now.
 
+## V2.12 follow-up — upstream `_eval` code actually retrieved
+
+The [V2.12 exact-tag source report](issue-235-gnuton-firmware-launch-trust-boundary-v212.md) resolves V2.11's previously unverified **implementation** of `_eval`: GNUton `release/src/router/shared/shutils.c` at `3004.388.11_1-gnuton1` uses `fork()` then `execvp(argv[0], argv)`. The dispatcher checks `stat` on the target pathname before the fork; no same-FD execution or source digest/owner binding appears in the inspected chain. The tagged `cru` file locks crontab writes, not runtime dispatch. This is a source-only completion of a narrow V2.11 evidence gap; not a deployable fix or live binary verification.
+
 ## Explicit cross-project / production isolation
 
 - Issue #235's separate RouterCloud HTTP origin / privilege-drop work remains independent; this subreport addresses only the **two privileged JFFS scripts** and does not close the main security issue.
