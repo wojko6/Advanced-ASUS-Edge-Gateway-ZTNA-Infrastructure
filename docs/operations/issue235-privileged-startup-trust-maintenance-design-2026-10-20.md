@@ -121,6 +121,8 @@ This separates two threats:
 
 ## Ordering and rollback constraints## V2.4 prior-lab evidence reconciliation (docs-only)
 
+**Source recovery update:** five v1.3/v1.4/v1.5 Stage B C/Python files were independently byte-hashed from the operator's file Library and matched exact earlier review SHA-256 pins; several other Stage B scripts were found and hashed. The original Canonical Manifest C/ZIP dependency was not reconstructed in this checkpoint. These recovered helpers were written for **three-role SSD PR #245** with explicit scope `pr245-ssd-mount-roots`, **not** startup hook/DNS Guard publication. The trust/approval records cannot be reinterpreted as authorizing a different production operation. [Provenance and limitation matrix](../../evidence/2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md).
+
 [V2.4 trust-boundary matrix](../../evidence/2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md) distinguishes prior reported separate-UID/three-role/same-FD/Stage B tests from a **reproducible, source-pinned firmware-compatible publisher**. The exact artifacts and target-specific role contract still require retrieval and verification; no previous synthetic PASS demonstrates the live root authority, protected stage inode, old-owner FD exclusion, JFFS2 crash durability or independently usable DNS recovery. **Do not start a new same-UID fixture until the earlier source artifacts are reconciled.** No change to any GO/NO-GO.
 
 
