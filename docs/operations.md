@@ -55,6 +55,10 @@ The [V2.0 Fedora-only state-machine exercise](../evidence/2026-10-20/issue-235-d
 
 Until a verified power-interruption-safe strategy, independent protected backups, writer/FD quiescence and independent DNS rescue are available, there is **no apply approval**. Follow the [design-only state machine](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md), not a generic installer or ad hoc `chown`/Cron edits. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
+## Issue #235 — pinned GNUton hook dispatch trust finding (2026-10-20)
+
+[Operator V2.0 replay and pinned GNUton source inspection](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) show 20/20 Fedora model assertions PASS and the underlying firmware `run_custom_script` checks *execute bits* but does not check `root:root` ownership or same-FD identity in the inspected function. Both `services-start` and earlier `init-start` are JFFS-dispatched scripts. A new `init-start` hook or a global `jffs2_scripts=0` switch is **not** an approved, independently trusted crash-durable protection strategy; the latter may disable necessary recovery hooks. Preserve recovery and actual hook semantics. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
 ## Change workflow
 
 Use this workflow for a planned maintenance window outside an active unchanged-state observation:
