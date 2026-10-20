@@ -79,6 +79,10 @@ V29_EXIT_CODE=0
 
 ## Decision and next action
 
+**Next linked design gate:** [V2.10 full-host-loss recovery options](../../docs/operations/issue235-independent-script-recovery-options-v210-2026-10-20.md) compares a normally disconnected encrypted medium with independently administered off-host storage; existing local same-host backups are supporting tiers only. No copy, Restic change, restore or production action has been performed.
+
+
+
 **Do not create a new Restic profile, change retention/passwords, enable a timer, move private backup copies, alter Fedora Recovery, or install/change any ASUS/SSD/RouterCloud service.** The next decision is *where* an independent off-host or disconnected recoverable copy and recovery credentials can be kept, and how to test a disposable restore without depending on the lost Fedora. Do not count distinct `st_dev` or a synthetic V2.9 PASS as proof of this. Separate operator authorization required for any copy or restore execution.
 
 ```text
