@@ -1,5 +1,7 @@
 # Validation evidence
 
+- **2026-10-20 — Issue #235 V2.6 Fedora reproduction & V2.7 design:** [29/29 operator synthetic schema replay](2026-10-20/issue-235-two-script-approval-contract-v26.md); [distinct offline operator-approval authority proposal](../docs/operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md). Independent approval **NOT ISSUED**, root publisher **NOT BUILT**, production **HOLD**.
+
 - **2026-10-20 — Issue #235 V2.6 distinct two-script approval contract:** [29/29 local and 29/29 independently replayed Fedora synthetic schema negative tests](2026-10-20/issue-235-two-script-approval-contract-v26.md). Owner/mode/path role pinning, revocation denial and explicit refusal of PR #245 SSD scope; no live script byte verification, no root publisher, no JFFS2 test. **HOLD**.
 
 - **2026-10-20 — Issue #235 V2.5 original C + ZIP provenance:** [read-only original Canonical C/ZIP source preflight](2026-10-20/issue-235-original-c-zip-provenance-v25.md), local synthetic 10/10 PASS; operator Fedora C/ZIP source attestation **EXACT_MATCH/PASS**, 10/10 self-tests; independent approval remains **NOT PROVEN**. These files are SSD PR #245 lab prerequisites, not two-target publication authorization. **HOLD**.
