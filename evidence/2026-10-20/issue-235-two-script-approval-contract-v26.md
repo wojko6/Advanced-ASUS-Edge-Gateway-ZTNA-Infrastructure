@@ -1,6 +1,6 @@
 # Issue #235 — new two-script approval-scope contract V2.6 (2026-10-20)
 
-> **Status:** Fedora-compatible, *entirely synthetic/in-memory* approval-contract model. **29/29 local self-tests PASS**; independent operator Fedora replay PENDING. No real root authority, no target file reads, no router connection and no JFFS publication. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+> **Status:** Fedora-compatible, *entirely synthetic/in-memory* approval-contract model. **29/29 local self-tests PASS**; independent operator Fedora replay **29/29 PASS** (see below). No real root authority, no target file reads, no router connection and no JFFS publication. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
 ## Trigger and achieved dependency
 
@@ -39,6 +39,19 @@ Versioned prototype manifest header: `ISSUE235-TWO-SCRIPT-APPROVAL/1`. Exact sco
 - No production root credentials, secure signed approval, independently protected trust store, policy anti-rollback durability, process/FD confinement, live JFFS behavior or executable publisher.
 
 **Important interpretation:** a model that uses synthetic source bytes and an in-script expected SHA-256 **proves a rigid grammar and fail-closed comparisons only**. It does *not* prove that an attacker cannot change the checker/source/authority at the same UID, that a real target matches a recorded manifest, or that approval came from a separate reviewer.
+
+## Independent operator Fedora replay (2026-10-20)
+
+The operator verified the local script's SHA-256 (`sha256sum -c` returned `DOBRZE`) and ran `--self-test && --matrix`:
+
+- `SELFTESTS=29/29`, `MODEL_SELFTEST=PASS_SYNTHETIC_CONTRACT_ONLY`, `V26_EXIT_CODE=0`.
+- `ROLE_COUNT=2`, `EXPECTED_SCOPE=issue235-privileged-scripts-owner-repair`, `ORIGINAL_PR245_APPROVAL_REUSABLE=NO`.
+- `SCENARIO=SYNTHETIC_EXACT_PAIR MODEL_REVIEW=ACCEPT_SYNTHETIC_ONLY`; bad SSD PR #245 scope, missing root owner, mutated source, and revoked approval each yielded `DENY`.
+- `AUTHORITY_ANCHOR=SYNTHETIC_PRECOMMITTED_DIGEST_NOT_PRODUCTION_SIGNER`, `SOURCE_CONTENT=ONLY_SYNTHETIC_FIXTURES`, `PATH_FIELDS=ALLOWLIST_STRING_ONLY_NO_REAL_IO`.
+- `REAL_UID_GID_DAC=NOT_TESTED`, `REAL_INDEPENDENT_APPROVAL=NOT_IMPLEMENTED`, `JFFS2_PUBLICATION=NOT_IMPLEMENTED`, `PRODUCTION_APPLY=NEVER_AVAILABLE_IN_TOOL`.
+- `ASUS_CONTACTED=NO`, `PRODUCTION_FILES_READ=NO`, `PRODUCTION_FILES_MODIFIED=NO`, `CRON_MODIFIED=NO`; both deployment and privileged-execution gates `HOLD`.
+
+This **closes V2.6 repeatability on operator Fedora**, not actual approvals for either live target. No existing PR #245 authority, manifest or signing material was reused.
 
 ## Required independent acceptance gates (not met)
 
