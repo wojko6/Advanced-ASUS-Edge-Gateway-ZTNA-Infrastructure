@@ -59,6 +59,18 @@ A **hypothetical** persistent, privileged, earlier-than-hook boot dispatcher blo
 
 **Design decision / HOLD:** before any live apply, either prove a specific interruption-safe maintenance approach for *both* privileged targets that does not rely on an unverified pre-boot gate, or explicitly rule out automated rollout and document an operator-mediated recovery strategy with its residual power-loss risk. Do **not** infer that a crash-safe two-file transaction exists on JFFS2; there is no general two-path atomic rename.
 
+## Pinned GNUton firmware source review — trust boundary and potential boot gate
+
+**Source only, no router contact:** inspected the precise GNUton tag `3004.388.11_1-gnuton1` rather than relying on generic Merlin lore.
+
+- [`release/src/router/shared/scripts.c`](https://github.com/gnuton/asuswrt-merlin.ng/blob/3004.388.11_1-gnuton1/release/src/router/shared/scripts.c#L54-L88), `run_custom_script`: builds the pathname `/jffs/scripts/%s`, calls `stat`, checks global `jffs2_scripts` not being the literal `0` and checks that **any** user/group/other execute bit is set; then calls `_eval` with the pathname. The reviewed function does **not** check `st_uid == 0`, `st_gid == 0`, group/other writability, regular-file type, link identity, a pinned digest, or a same-FD execution binding. `stat` is a separate lookup before `_eval`, leaving a potential replacement window. **This is a source-level absence of checks in that function, not an exploitation test or full firmware security audit.**
+- [`release/src/router/rc/services.c`](https://github.com/gnuton/asuswrt-merlin.ng/blob/3004.388.11_1-gnuton1/release/src/router/rc/services.c#L11489-L11510) invokes `run_custom_script("services-start", 0, NULL, NULL)` near its startup completion path. This substantiates the full-hook root-execution design risk. It does **not** prove the exact production invocation timing or rule out platform-specific other callers.
+- [`release/src/router/rc/init.c`](https://github.com/gnuton/asuswrt-merlin.ng/blob/3004.388.11_1-gnuton1/release/src/router/rc/init.c#L21139-L21151) invokes `run_custom_script("init-start", 0, NULL, NULL)` earlier in the boot sequence. The [upstream Merlin user-script specification](https://github.com/RMerl/asuswrt-merlin.ng/wiki/User-scripts) places `init-start` after JFFS mounting and before regular services.
+- **Crucial design consequence:** adding another ordinary `init-start` hook is *not by itself* a proven trusted durable gate: it, too, is a script in writable JFFS dispatched by the same `run_custom_script` policy without an owner check. A new wrapper/guard may merely relocate the trusted-origin problem; using the global `jffs2_scripts=0` switch is not a selective two-target inhibitor and would impact unrelated recovery hooks. Neither modification is approved.
+- `_eval` implementation, permission checks elsewhere in the kernel/process tree, and actual live firmware binary equivalence have **not** been exhaustively verified by this focused review. No root-owned firmware-level owner enforcement or safe pre-boot barrier was established.
+
+**Go/no-go conclusion:** no verified firmware-native, selective, crash-durable early-boot inhibition mechanism has been found by this source review. The V2.0 hypothetical gate must remain hypothetical. Do **not** turn this source review into instructions to disable JFFS script execution, add an `init-start` guard, change NVRAM, or publish either owner repair.
+
 ## Remaining no-go requirements
 
 1. Independently protected, recoverable copies for **both** scripts and a trusted source-to-root-owned publish authority.
