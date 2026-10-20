@@ -119,7 +119,11 @@ This separates two threats:
 
 **Next acceptance work** must **reuse previous Issue #235 three-role/FD-binding/ARMv7 trust-helper lab evidence** before duplicating another same-UID Linux fixture; then explicitly identify gaps relative to the pinned active `services-start` and DNS Guard scripts: identity of the privileged publisher, unwritable source stage, pinned content-to-published inode, JFFS2 crash consistency and safe DNS/boot recovery. Existing isolated acceptance tests are not a green light for production changes. If the old source can still be modified between read and root execution, a safe post-publication result alone cannot retroactively remove that pre-existing hazard.
 
-## Ordering and rollback constraints
+## Ordering and rollback constraints## V2.4 prior-lab evidence reconciliation (docs-only)
+
+[V2.4 trust-boundary matrix](../../evidence/2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md) distinguishes prior reported separate-UID/three-role/same-FD/Stage B tests from a **reproducible, source-pinned firmware-compatible publisher**. The exact artifacts and target-specific role contract still require retrieval and verification; no previous synthetic PASS demonstrates the live root authority, protected stage inode, old-owner FD exclusion, JFFS2 crash durability or independently usable DNS recovery. **Do not start a new same-UID fixture until the earlier source artifacts are reconciled.** No change to any GO/NO-GO.
+
+
 
 - Source priority: **preserve exact byte content of the currently deployed full hook** and approved DNS Guard source. Do not introduce the addon’s delayed watchdog call or a short wrapper during ownership remediation.
 - Prefer a trusted startup-entrypoint replacement before Cron target reactivation, but **do not assume an execution order is safe** without proven suppression of both privileged entrypoints. The order is still subject to review.
