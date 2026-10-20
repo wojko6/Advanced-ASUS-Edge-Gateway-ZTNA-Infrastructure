@@ -140,6 +140,10 @@ This separates two threats:
 
 The [V2.11 GNUton dispatch/owner-repair feasibility record](../../evidence/2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md) confirms source-level constraints: `services-start` lock is in-script (too late to stop first execution), one-minute root-Cron can be re-registered by `services-start`, WAN and operator break-glass invoke Guard directly, and the generic installer would overwrite full `services-start` with the shorter managed wrapper. No verified firmware-native selective interruption-safe early gate and no root-only two-target publisher. No additional backup or lab replay performed. Continue source review only, no production authorization.
 
+### V2.12 implementation-backed source dispatch gap
+
+In contrast to V2.11's previously pinned summary, [V2.12](../../evidence/2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md) newly opened **the exact upstream GNUton tag** and checked `shared/shutils.c`: `_eval` forks then calls `execvp(argv[0], argv)` on a pathname. The preceding `run_custom_script` only checks `stat`, global enablement and execute bits. This is a documented TOCTOU source-level gap with no owner/digest/inode-execution binding. Exact `others/cru` similarly locks only cron-file write activity. A live target firmware binary equivalence and any firmware-native selective durable inhibitor are **NOT PROVEN**; project scripts and ASUS are unchanged. Do not run an ad-hoc owner repair or Cron-disable maneuver.
+
 ## Current operator checkpoint and next work
 
 **20 October:** fixed-path hook backup on Fedora `HOOK_OFFROUTER_BACKUP=PASS`, `BACKUP_HASH=PASS`, backup file mode 0600, directory 0700, `ASUS_MODIFIED=NO`, `CRON_MODIFIED=NO`. The off-router backup is a recovery **input**, not proof of independent resilience or live rollback.
