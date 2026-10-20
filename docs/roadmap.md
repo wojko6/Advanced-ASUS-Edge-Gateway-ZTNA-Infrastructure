@@ -1,5 +1,11 @@
 # Roadmap
 
+### Security #235 — services-start source and owner trust (2026-10-20; read-only)
+
+- [Operator-reported V1.4–V1.7 results](../evidence/2026-10-20/issue-235-services-start-trust-chain-v14-v17.md): firmware full-script hook is nonroot-owned 0755 but byte-identical to pinned source; addon root:root 0755 and config root:root 0600. The addon preserves the watchdog function and Cron tokens but moves watchdog registration later, so it is **not** proven semantically interchangeable.
+- **Priority:** design a **single reviewed ownership/trusted-publication plan** for the firmware hook and DNS Guard, preserving current bytes and startup behavior. First establish protected hook recovery material, startup and Cron quiescence, writer exclusion and JFFS2 failure handling. Do **not** run the generic installer or convert the live hook to a wrapper as a side effect.
+- **Gate:** no production edit, Cron disable, service restart or reboot; `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
 ### Security #235 — DNS Guard root-Cron trust checkpoint (2026-10-19; no deployment)
 
 - **Completed within scope:** validated same-UID and cross-UID DAC/transaction models on Fedora, fresh approved read-only ASUS metadata and mount observations, historical SHA-256 match of live DNS Guard, off-router verified private backup, disposable restore and rootless rollback V1.3 **32/32 PASS**. [Sanitized evidence](../evidence/2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md).
