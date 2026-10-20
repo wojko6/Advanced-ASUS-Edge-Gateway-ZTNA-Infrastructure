@@ -1,5 +1,11 @@
 # Roadmap
 
+### Security #235 — V2.7 independent approval authority design (2026-10-20)
+
+- [V2.6 Fedora synthetic test](../evidence/2026-10-20/issue-235-two-script-approval-contract-v26.md) **29/29 operator PASS**. Confirms schema/deny rules only; source remains synthetic and the old SSD PR #245 authority is not reused.
+- [V2.7 separate operator-approved manifest authority](operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md) is **design-review only**: distinguish candidate source/pin from independently protected operator decision and code/provenance, revocation and separate apply approval.
+- Actual authority/launcher protection, root publisher, old writable-FD/process exclusion, representative JFFS2 interruption and independent DNS recovery remain **NO-GO**. No production activity authorized.
+
 ### Issue #235 — V2.6 independent two-script approval schema (2026-10-20)
 
 - [V2.6 two-target manifest model](../evidence/2026-10-20/issue-235-two-script-approval-contract-v26.md) **29/29 local synthetic PASS**, explicitly rejects SSD PR #245 scope and keeps a fixed two-role `services-start` / `dns-guard` allowlist. The operator separately confirmed historical C/ZIP provenance V2.5 with exact matches.
