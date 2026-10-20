@@ -69,6 +69,18 @@ The [V2.8 read-only Fedora copy audit](../../evidence/2026-10-20/issue-235-recov
 
 The [V2.9 metadata-only Fedora-loss assessment](../../evidence/2026-10-20/issue-235-independent-recovery-failure-domain-v29.md) supplements already PASS V2.8 primary-copy integrity, not real source byte attestation or restore. Local **9/9 self-tests** and disposable directory fixtures passed; operator Fedora scan pending. A second `st_dev` or separate SSD within the same computer is not sufficient evidence of independent off-host recovery. RouterCloud Restic staging is not known to include the two private script copies, while separate Fedora Recovery has **unverified #235 file coverage**. No new backup, approval authority, restore, production staging or permissions were changed.
 
+### V2.10 workstream correction and immediate security priorities
+
+The operator chose **not to create another backup as an immediate #235 activity**. V2.8 verified the existing primary Fedora copies point-in-time; V2.9 found both on `SAME_ST_DEV`. The completed Fedora Recovery set from 2026-10-19 covers root, `systemd-machines`, `/boot`, EFI and not a separately mounted `/home`; script backup inclusion there is therefore **not established**. The [V2.10 optional recovery choices](issue235-independent-script-recovery-options-v210-2026-10-20.md) remain deferred. The residual independent disaster-recovery gap is **not accepted as safe production deployment**.
+
+**Focus instead on three real trust boundaries, not more synthetic hash/copy checks:**
+
+1. **Execution suppression proof:** determine whether the actual GNUton firmware exposes a *separate, trusted, selective* mechanism to prevent all privileged boot/manual `services-start` and root-Cron/WAN/break-glass executions while maintaining effective DNS, before any potentially interrupted transition. Prior pinned source review found no such early-boot guard. Do not claim an ordinary JFFS `init-start` or global `jffs2_scripts=0` is one.
+2. **Publisher authority and source identity:** establish a separately authorized, root-controlled importer and stage which bind independently authenticated two-script bytes to the **same inode published**. The previously observed nonroot owner or another same-UID process must not be able to modify the candidate basename, trust store, stage, policy or already opened old source FD. V2.3's expected-red stage basename swap remains a fail-closed gate.
+3. **Failure/recovery mechanism:** precisely specify who can enter while Cron/WAN/boot hooks are inhibited; model a hard power cut after either individual publication on real compatible JFFS2 or explicitly retain a manually supervised NO-GO. Never present two single-name changes as one atomic transaction, or restore original nonroot owner-writable entrypoints.
+
+**Engineering status:** offline feasibility review can progress. `TRUSTED_ROOT_PUBLISHER=NOT_BUILT`, `EARLY_BOOT_INHIBITOR=NOT_PROVEN`, `OLD_WRITABLE_FD_QUIESCENCE=NOT_PROVEN`, `JFFS2_POWERLOSS_RECOVERY=NOT_PROVEN`. No security GO or router access.
+
 ## Decision states, proof gates and next engineering action
 
 **V2.10 next recovery boundary:** [independent post-host-loss recovery choices](issue235-independent-script-recovery-options-v210-2026-10-20.md) are a design comparison only; no off-host medium or actual restore approved. V2.9 Fedora 9/9 PASS found both private backups on `SAME_ST_DEV`, not independent physical recovery. Trust authority, old-owner writer/FD exclusion, exact GNUton/JFFS2 publication and DNS safety gates are unchanged.
