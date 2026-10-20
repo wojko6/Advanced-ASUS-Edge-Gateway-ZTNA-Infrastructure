@@ -36,11 +36,17 @@ Earlier [19 October DNS Guard root-Cron trust and rollback evidence](../2026-10-
 4. Identical SHA-256 at audit time does not establish a trusted owner, exclude same-UID writers or make script use race-free. Likewise, a named Cron deletion alone does not drain active DNS Guard runs or prevent new `services-start` event invocations.
 5. **Do not overwrite or standardize the live addon** simply to remove the three small differences; its later watchdog call deserves separate release review if the addon is promoted to an entrypoint.
 
+## Operator checkpoint — off-router hook backup (2026-10-20)
+
+The operator made a **private Fedora copy of the active full firmware hook**, only after an immutable source comparison and two equal point-in-time SSH reads. Output: `REFERENCE=VERIFIED_GIT_BLOB_AND_SHA256`, `HOOK_READ=TWO_EQUAL_READS_POINT_IN_TIME`, `BACKUP_CREATED=YES`, `BACKUP_HASH=PASS`, `BACKUP_MODE=0600`, `BACKUP_PRIVATE_DIR=PASS`, `HOOK_OFFROUTER_BACKUP=PASS`, `BACKUP_EXIT_CODE=0`. No ASUS file or root-Cron modification was made. Private copy path and bytes are not published.
+
+This establishes **a second verified off-router recovery input** alongside the existing verified DNS Guard backup. It does **not** establish off-site/independently protected media, durable JFFS2 write/rollback, hook owner repair, or future file invariance. See the [draft two-target maintenance design](../../docs/operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md).
+
 ## Remaining maintenance-readiness gates (DESIGN ONLY)
 
 | Gate | Required evidence before approval | Current decision |
 | --- | --- | --- |
-| Independent inputs and backups | Trusted, immutable or separately protected source bytes and verified, recoverable off-router snapshots **for both live privileged targets**, preserving applicable metadata | DNS Guard copy verified; **hook independent recovery not attested** |
+| Independent inputs and backups | Trusted, immutable or separately protected source bytes and verified, recoverable off-router snapshots **for both live privileged targets**, preserving applicable metadata | DNS Guard and hook private Fedora copies **verified**; separately protected failure-domain recovery **NOT PROVEN** |
 | Dispatcher / runtime quiescence | Suppress named root-Cron re-scheduling **and** Merlin `services-start` re-entry/re-registration; identify in-flight runs and writable FDs; ensure no same-UID writers | **NOT PROVEN** |
 | Byte-preserving least-change remediation | Review an isolated two-target trusted-owner publishing plan that preserves the **exact active hook behavior** and vetted DNS Guard bytes, establishes intended `root:root 0755` and rejects partial/mixed state | **NOT PROVEN ON JFFS2** |
 | Failure handling | Independent recovery channel and bounded fail-closed rollback before publishing, including uncertain partial commit and JFFS2 interruption limitations | Fedora fixture PASS only; **router not validated** |
