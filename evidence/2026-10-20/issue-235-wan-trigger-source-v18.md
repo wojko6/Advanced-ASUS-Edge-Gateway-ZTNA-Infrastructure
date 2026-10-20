@@ -66,6 +66,16 @@ A Fedora-hosted read-only metadata reader executed **only `/bin/ls -ldn`** for a
 
 `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
+## V1.12 — optional legacy WAN hook absent (operator-reported, 2026-10-20)
+
+The operator ran a bounded **read-only** firmware `/bin/sh` predicate check (no script contents read or executed) against one fixed candidate under the already inspected legacy directory: `/jffs/addons/asus-edge/legacy/wan-event`. Result: **`LEGACY_WAN=ABSENT_POINT_IN_TIME`** and `LEGACY_PROBE_EXIT_CODE=0`; `CONFIG_FILE_READ=NO`, `SCRIPT_CONTENT_READ=NO`, `ROUTER_FILES_MODIFIED=NO`. This **resolves V1.11's ambiguous `ABSENT_OR_UNREADABLE_UNRESOLVED`** for the observation instant. It is not a filesystem-wide search, continuous attestation or proof the candidate cannot later be created.
+
+The source-verified installed wrapper runs the legacy hook only if the configured `EDGE_RUN_LEGACY_HOOKS` flag is 1 **and** the fixed legacy path passes `-x`. Since the observed legacy candidate is **absent**, that optional branch cannot execute it at this point irrespective of the uninspected flag value. **There is no need to read or source the private config** merely to resolve the legacy WAN uncertainty.
+
+**Scoped completion:** standard four-hop WAN script contents `EXACT_MATCH_AT_READ_TIME` (V1.8/V1.10), inspected WAN/root ancestry ownership and base DAC `PASS_POINT_IN_TIME` (V1.11), optional legacy candidate `ABSENT_POINT_IN_TIME` (V1.12). This closes the *bounded source/DAC/presence inventory only*. It does **not** prove actual WAN runtime dispatch, absence of ACL/xattrs or writers, crash/race safety, nor privileged owner repair for the independent `services-start` and `dns-guard` execution paths.
+
+**Next priority:** return to two-target privileged execution trust and quiescence design. No more repeat WAN source-hash tests absent new drift or a separate justified acceptance requirement. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
 ## Historical V1.8 initial interpretation and proposed follow-up (superseded by V1.9–V1.10)
 
 The reviewed repository's `wan-event` is a short managed hook matching WAN unit 0, connected event and an `exec` handoff to the addon handler. The **live hook is not byte-identical** and lacks at least one expected lexical marker. This cannot yet be classified as a broken or compromised WAN recovery path: possible causes include a generated wrapper, older hook, a different implementation or a site-specific edit. **Do not infer that all independent DNS Guard paths have been mapped or that WAN recovery is currently broken.**
