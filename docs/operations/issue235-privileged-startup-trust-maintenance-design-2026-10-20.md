@@ -46,6 +46,10 @@ The [standalone off-router model evidence](../../evidence/2026-10-20/issue-235-d
 
 **New hard NO-GO:** a plan that only deletes Cron, holds a `flock` or writes a transaction log after normal boot is **not an interruption-safe two-file trust repair**. First prove a concrete safe strategy across restart/power interruption, or accept an explicit *unautomated, operator-driven recovery* proposal with documented residual risks — never claim the model itself authorizes either strategy. A root-owned rollback must not recreate previously observed nonroot-owned privileged entrypoints.
 
+### Firmware-native bootstrap gating — inspected source, NOT PROVEN
+
+The [V2.0 operator-replay and pinned GNUton source investigation](../../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) directly reviewed `run_custom_script` at tag `3004.388.11_1-gnuton1`: it checks global user-script enablement and any execute bit before path-based `_eval`, **not root ownership, trusted parent chain or pinned same-FD content** in that function. `services-start` and earlier `init-start` are both invoked via this mechanism from writable JFFS. Installing another JFFS `init-start` wrapper alone cannot be assumed to provide a trusted crash-durable guard, and global `jffs2_scripts=0` is not an approved targeted mitigation because it could disable recovery hooks. An early-boot barrier remains **NOT PROVEN**, not a feature we can claim on the reference firmware.
+
 ## Four independent operator approvals — not granted
 
 1. Scope and additional *read-only* evidence collection, including any necessary separately approved ASUS access.
