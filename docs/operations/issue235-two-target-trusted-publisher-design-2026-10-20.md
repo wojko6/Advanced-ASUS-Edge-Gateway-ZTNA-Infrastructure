@@ -35,7 +35,11 @@ The [V2.4 archive/source cross-check](../../evidence/2026-10-20/issue-235-truste
 
 **Nontransferable approval scope:** the recovered Stage B contract concerns *three synthetic roles for SSD PR #245*, with a literal policy scope `pr245-ssd-mount-roots`. Neither the V1.4 independently held synthetic approval FD nor the V1.5 synthetic signer/keyring tests authorize a different, **two privileged-script** deployment. V1.5 explicitly demonstrates that a same-UID process that controls policy and keyring can subvert the simulated approval. A new independently reviewed operator authority and target-specific content/provenance map would be required; old PR #245/SSD inputs must remain untouched.
 
-## Three distinct failure boundaries — do not conflate
+## Three distinct failure boundaries — do not conflate### V2.5 historical C/ZIP prerequisite (scope remains PR #245)
+
+[V2.5 fixed-input read-only audit](../../evidence/2026-10-20/issue-235-original-c-zip-provenance-v25.md) records the exact original 18,074-byte Canonical Manifest C pin and its expected ZIP. A safe Fedora-only preflight has local synthetic tests 10/10 PASS but awaits operator execution against both historical files; no replacement sources will be generated to fabricate provenance. **Even verified original C bytes remain solely a PR #245 lab dependency**, not approval to modify either privileged Issue #235 script.
+
+
 
 | Boundary | What is partially demonstrated | Missing real proof |
 | --- | --- | --- |
