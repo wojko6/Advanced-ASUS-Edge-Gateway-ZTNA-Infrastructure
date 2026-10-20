@@ -57,7 +57,7 @@ Until a verified power-interruption-safe strategy, independent protected backups
 
 ## Issue #235 — pinned GNUton hook dispatch trust finding (2026-10-20)## Issue #235 — optional monotonic publication research (2026-10-20)## Issue #235 — V2.3 publication race evidence (2026-10-20)
 
-[Bounded Linux synthetic study](../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md): V2.2 was reproduced by operator Fedora **19/19 PASS**; V2.3 local nonroot fixture **20/20 PASS**, including an expected-red attack that swaps staged basename after FD digest verification. A subsequent `rename` can publish the attacker-controlled inode. A later hash mismatch **detects** but does not guarantee prevention of transient execution. Root:root trusted stage authority and JFFS2 persistence are unproven; no production patch or temporary gate is authorized. `DEPLOYMENT_GATE=HOLD`.
+[Bounded Linux synthetic study](../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md): V2.2 was reproduced by operator Fedora **19/19 PASS**; V2.3 local nonroot fixture **20/20 PASS**, independently replayed by operator Fedora **20/20 PASS**, including an expected-red attack that swaps staged basename after FD digest verification. A subsequent `rename` can publish the attacker-controlled inode. A later hash mismatch **detects** but does not guarantee prevention of transient execution. Root:root trusted stage authority and JFFS2 persistence are unproven; no production patch or temporary gate is authorized. `DEPLOYMENT_GATE=HOLD`.
 
 
 
