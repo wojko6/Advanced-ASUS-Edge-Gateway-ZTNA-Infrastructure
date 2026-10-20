@@ -20,7 +20,7 @@ The audited inputs are **copies stored on Fedora**, selected locally by the oper
 ## V2.8 tool and local evidence
 
 - `issue235_recovery_separation_audit_v28.py`
-- SHA-256 of isolated source: `6512f73451ed6e9e566f9f6c059f8f0634b2aa0c2e7c77481d71ff8f1199cbd1`
+- SHA-256 of isolated source: `7541de5439a39d332d10da1b701b6cb14676d4e76b12d5b7f881883b73c440d5`
 - Run in disposable nonroot assistant environment: `--self-test` **18/18 PASS**. Synthetic private-copy tests include known matching bytes, mismatched SHA, file writable permissions, symlink and hardlink denial, writable ancestor denial, ambiguous path denial, and distinct inode / filesystem classification. The suite's `PASS` establishes only the behavior of this rootless fixture; no Fedora operator real-backup audit has yet been reported.
 - `--audit` works **only** in the local operator's nonroot terminal. It reads **two required** local primary backups, with **two optional** secondary-copy paths, entered via hidden interactive prompts (no path-valued command-line arguments or network). A missing or inaccessible required primary copy ends in `HOLD`. Secondary copies may be absent; the checker honestly reports `NOT_ASSESSED`.
 - Fixed scoped file checks: open directory/file by descriptor with `O_NOFOLLOW`; reject ambiguous paths and group/world writable ancestors, symlinks, nonregular files, hardlinks, unexpected owner and group/other-readable modes; compare stable `fstat` identity before and after bounded checksum and fresh name lookup; exact historical hash, size <= 1 MiB.
@@ -45,7 +45,7 @@ The audited inputs are **copies stored on Fedora**, selected locally by the oper
 ```bash
 cd ~/Pobrane
 printf '%s  %s\n' \
-  '6512f73451ed6e9e566f9f6c059f8f0634b2aa0c2e7c77481d71ff8f1199cbd1' \
+  '7541de5439a39d332d10da1b701b6cb14676d4e76b12d5b7f881883b73c440d5' \
   'issue235_recovery_separation_audit_v28.py' | sha256sum -c - && \
 python3 -B issue235_recovery_separation_audit_v28.py --self-test && \
 python3 -B issue235_recovery_separation_audit_v28.py --audit
