@@ -1,5 +1,10 @@
 # Roadmap
 
+### Issue #235 — V2.6 independent two-script approval schema (2026-10-20)
+
+- [V2.6 two-target manifest model](../evidence/2026-10-20/issue-235-two-script-approval-contract-v26.md) **29/29 local synthetic PASS**, explicitly rejects SSD PR #245 scope and keeps a fixed two-role `services-start` / `dns-guard` allowlist. The operator separately confirmed historical C/ZIP provenance V2.5 with exact matches.
+- Real independent signer/approval, pinned current live source bytes bound to root-owned inode publication, original old FD/writer exclusion, JFFS2 power loss and DNS recovery remain blocking. V2.6 has no production apply API; `HOLD`.
+
 ### Security #235 — V2.3 checked-FD vs rename-by-name race (2026-10-20)
 
 - [Isolated, nonroot synthetic adversarial test](../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md) **20/20 local PASS** (including expected-red) shows a verified FD can retain pinned bytes while a concurrent source-basename swap leads `os.replace` to publish a different inode; post-publish hash detection alone is too late to claim prevention.
