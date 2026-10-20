@@ -96,7 +96,13 @@ The [offline V2.1 comparison](../../evidence/2026-10-20/issue-235-monotonic-two-
 
 Do not substitute live in-place `chown` for vetted source-to-root-owned publication; the previous owner could modify content or retain a writable FD. A one-file repair is not safe merely because a prior checksum matched. If incomplete, the procedure must stop with an explicitly untrusted target, not automatically resume or roll back to nonroot ownership. Any practical preferred publication order is subject to later independently reviewed DNS availability and firmware-specific checks; `DEPLOYMENT_GATE=HOLD`.
 
-## Ordering and rollback constraints## V2.2 rootless Linux filesystem fixture — real inode and stale-FD behavior
+## Ordering and rollback constraints## V2.3 — FD-to-rename source-name race (rootless expected-red proof)
+
+After [V2.2 operator Fedora replay, 19/19 PASS](../../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md), the [isolated nonroot V2.3 test](../../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md) ran **20/20 local assertions PASS**. A checked/pinned FD retained good synthetic bytes while an injected same-UID name swap replaced `stage` before `os.replace`. Rename by basename published unapproved bytes; a post-publish hash detected that but could not guarantee no transient exposure. Pinning a directory FD protects against certain parent-path replacements, **not against adversarial rewriting of a basename inside that directory**.
+
+**Security-design requirement:** before any root-owned single-path publish, the source directory and staged inode must be genuinely inaccessible to competing writers; the actual publication must bind trusted bytes/metadata to the object being made executable. Pre-check + name-based `rename` + postcheck alone is **NO-GO** as a race-free algorithm. Real GNUton/JFFS2 publication authority, writer exclusion, physical crash durability and safe DNS recovery remain unproven. V2.3 is not a production patch.
+
+## V2.2 rootless Linux filesystem fixture — real inode and stale-FD behavior
 
 The [V2.2 isolated filesystem test](../../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md) ran **19/19 local self-tests** with *real* user-owned disposable files and same-filesystem `os.replace`. New pathname reads saw the new inode and expected synthetic bytes, while a previously open writable FD continued to access the **old inode** after rename. It also demonstrated mixed states when stopping after only one of two path replacements. Its negative checks rejected symlinks, a hardlinked stage, changed candidate bytes and unsafe stage modes.
 
