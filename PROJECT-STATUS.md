@@ -1,5 +1,7 @@
 # Project status
 
+**Issue #235 V2.2 rootless inode fixture (2026-10-20):** [isolated local Linux test](evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md) **19/19 PASS** on disposable synthetic files. Verified a single-path rename changes inode/name binding, but a previously open writable FD remains bound to the old inode. Stopping after one of two renames leaves a mixed state. Not Fedora operator replay yet; no root-owned publication, live writer exclusion or JFFS2 crash semantics tested. **HOLD**.
+
 **Issue #235 V2.1 offline alternative (2026-10-20):** local **19/19 PASS** in [abstract monotonic per-target publication model](evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md). Under *assumed* trusted individual publication, guard-first leaves one abstract untrusted boot-hook launch class after interruption; hook-first leaves three classes targeting the still-untrusted guard. Neither path is proof of JFFS2 crash durability, safe old-owner FD exclusion or DNS availability; this is research only and **does not supersede HOLD**. Generic installer and ad hoc in-place `chown` remain unauthorized.
 
 **Status date:** 2026-10-20 — latest **scoped** ASUS Issue #235 services-start/DNS Guard read-only source and owner-trust classification, on top of the separate 2026-10-19 off-router DNS Guard backup/rollback checkpoint. **Neither live owner repair nor Cron/service change is authorized.** The Fedora Homelab Update and Recovery workstreams are recorded separately; historical broad ASUS live acceptance dates remain unchanged.
