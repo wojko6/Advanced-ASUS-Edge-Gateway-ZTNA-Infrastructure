@@ -1,5 +1,7 @@
 - **2026-10-20 — Issue #235 V2.11 GNUton root-script owner-repair feasibility:** [source-backed firmware dispatch and project launcher graph, per-entrypoint inhibition gaps and NO-GO decision](2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md). No new live test, no installer, no extra backups, no ASUS/SSD modifications. **HOLD**.
 
+- **2026-10-20 — Issue #235 V2.12 pinned GNUton firmware source:** [freshly fetched tag `3004.388.11_1-gnuton1` `stat`→`fork`→`execvp` and writer-only `cru` review](2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md); Git source verified, production binary not inspected, no deployable trusted execution boundary proven. **HOLD**.
+
 # Validation evidence
 
 - **2026-10-20 — Issue #235 V2.10 recovery architecture after V2.9:** [design-only encrypted detached medium vs second off-host storage comparison](../docs/operations/issue235-independent-script-recovery-options-v210-2026-10-20.md), operator V2.9 9/9 PASS with both existing copies on the same filesystem. No new backup/restore, independent storage not validated. **HOLD**.
