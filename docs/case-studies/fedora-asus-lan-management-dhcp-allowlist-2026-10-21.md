@@ -2,20 +2,22 @@
 
 **Incident date:** 2026-10-21  
 **Reference environment:** Fedora 44 (KDE/NetworkManager/systemd-resolved), ASUS TUF-AX5400 with GNUton Asuswrt-Merlin, Pi-hole/Unbound, Tailscale and project-managed firewall  
-**Case state:** **INVESTIGATION OPEN — probable DHCP reservation / source allowlist mismatch, not yet proven or remediated**  
+**Case state:** **INVESTIGATION OPEN — operator identifies intentional 5 GHz-only router administration; A/B validation still pending**  
 **Evidence:** operator-provided terminal output and photographs, compared with earlier dated router security evidence. No new privileged live-router shell capture was available during this incident.
 
 ## Executive summary
 
-The Fedora administrative workstation retained Internet access and could ping the ASUS gateway but could no longer connect to the router's LAN HTTPS panel or nondefault SSH port. An Android phone on the **same Wi-Fi** could open the router's HTTPS panel. A Fedora packet capture showed TCP SYN attempts and retransmissions without any router SYN-ACK or RST in the captured window.
+The Fedora administrative workstation retained Internet access and could ping the ASUS gateway but could no longer connect to the router's LAN HTTPS panel or nondefault SSH port. An Android phone connected to ASUS Wi-Fi could open the router's HTTPS panel; the phone's exact radio/band was not established. A Fedora packet capture showed TCP SYN attempts and retransmissions without any router SYN-ACK or RST in the captured window.
 
-The most likely explanation is that the Fedora host's **current DHCP-assigned IPv4 address no longer matches the permitted LAN management source address(es)**. On 2026-09-29, the team deliberately created a DHCP reservation for the Fedora workstation and enabled a stock ASUS `ACCESS_RESTRICTION` chain, which limits HTTPS/SSH to authorized LAN sources and ends in DROP. On 2026-09-30, a dated router snapshot listed two allowed LAN-admin addresses. Neither was the current address observed during this incident. However, **neither the live October 21 DHCP reservation/MAC mapping nor the live `ACCESS_RESTRICTION` rules/counters have yet been inspected**. A reservation mismatch is therefore a leading hypothesis, **not a confirmed root cause**.
+**Operator correction after the packet-capture review:** router administration was intentionally permitted on the **5 GHz Wi-Fi network** but blocked for clients on the **2.4 GHz network**. Fedora was connected to the 2.4 GHz SSID during the failure. This is now the leading operator-identified explanation, pending a controlled 5 GHz reconnect and positive HTTPS/SSH test. The exact enforcement mechanism (per-SSID isolation/firewall policy versus source-IP allowlisting) remains to be verified.
+
+A **separate relevant fact** emerged from the live DHCP WebUI screenshot: an existing `fedora-admin` manual reservation still maps a previously configured locally administered MAC to a historically approved LAN-admin IP, while Fedora's current 2.4 GHz connection uses a different locally administered MAC and received a different IP. This mismatch is real, but does **not** establish that DHCP drift independently caused the timeout; the access boundary may intentionally be based on the Wi-Fi/SSID path. On 2026-09-29 the team had installed an admin reservation and an ASUS `ACCESS_RESTRICTION` chain; its dated 2026-09-30 allowlist includes the reserved Fedora address. Do not override the active MAC or router reservation to fix a network-segmentation policy.
 
 The incident coincided with a **separate Fedora DNS failure**, which the operator resolved by disabling acceptance of Tailscale-supplied DNS. Restored web browsing did not restore router administration. These are two observed symptoms with different demonstrated fixes/diagnostic boundaries; neither is established as a regression caused by the ASUS Tailscale 1.104.2 rollout.
 
 ## 1. Intended security and addressing model
 
-The reference topology places the administrative Fedora laptop and Android phone on the ASUS LAN/Wi-Fi. Fedora ordinarily obtains an address from router DHCP. The router runs a local HTTPS management service and SSH restricted to LAN on a nondefault port.
+The reference topology places the administrative Fedora laptop and Android phone on ASUS Wi-Fi. The operator reports that only the intended 5 GHz administrative WLAN path grants router management; the 2.4 GHz WLAN intentionally does not. Fedora ordinarily obtains an address from router DHCP. The router runs a local HTTPS management service and SSH restricted to LAN on a nondefault port.
 
 The security hardening from [Issue #127](../../evidence/2026-09-29/issue-127-lan-management-wan-exposure-hardening.md) intentionally:
 - confirmed that Fedora's NetworkManager Wi-Fi MAC policy should remain stable for the configured SSID;
@@ -23,9 +25,9 @@ The security hardening from [Issue #127](../../evidence/2026-09-29/issue-127-lan
 - enabled the platform LAN `ACCESS_RESTRICTION` policy, allowing the selected client WebUI and SSH (access type `3`) and denying other LAN source addresses;
 - retained separate source-scoped Tailscale management restrictions.
 
-A later [2026-09-30 configuration snapshot](../../evidence/2026-09-30/webui-security-policy-drift-validation.md) recorded `ACCESS_RESTRICTION=1`, a nonempty rule list, and two explicitly allowed administrative LAN source addresses. Those addresses are intentionally **not recopied** into this public case study. As of 2026-10-21, the actual permitted source set and reserved MAC-to-IP associations are **not yet directly observed**.
+A later [2026-09-30 configuration snapshot](../../evidence/2026-09-30/webui-security-policy-drift-validation.md) recorded `ACCESS_RESTRICTION=1`, a nonempty rule list, and two explicitly allowed administrative LAN source addresses. Those addresses are intentionally **not recopied** into this public case study. On 2026-10-21, the phone's DHCP management screenshot **did** show a saved `fedora-admin` reservation to a historically approved administration IP and a locally administered MAC distinct from the current 2.4 GHz MAC. The exact live router-management rule set and how the two WLANs are distinguished have **not** been inspected.
 
-This design is safe only while **address reservation, active client MAC identity, current DHCP lease and the firewall's authorized source addresses remain consistent**.
+Both controls matter: **administrative-WLAN admission policy** determines which Wi-Fi path may reach the router management plane, while **MAC → DHCP reservation → active lease → any applicable source-IP allowlist** must remain consistent for source-scoped administration. They should not be conflated.
 
 ## 2. First symptom: Internet by IP works, DNS fails on Fedora
 
@@ -56,10 +58,12 @@ A read-only attempt to query syslog-ng on the ASUS via Fedora SSH failed with a 
 | Gateway IPv4 ICMP | 3/3 replies, average 1.42 ms | Basic bidirectional IP reachability |
 | `ip neigh` | Gateway neighbor `REACHABLE` | Working local L2 neighbor discovery; not TCP acceptance |
 | TCP/80, /443, /8443, /SSH-port | No successful connection | Does **not** prove every port is filtered: some may not listen |
-| Router HTTPS from Android | Successful on same Wi-Fi when the URL explicitly used `https://` | Router HTTPS service is reachable from at least one other client |
+| Router HTTPS from Android | Successful over ASUS Wi-Fi when the URL explicitly used `https://`; Android radio/band not recorded | Router HTTPS service is reachable from at least one other client |
 | Fedora TCP/443 + SSH-port | Connection timeout | Likely silent discard or absent reply; exact reason remains open |
 
 The prior phone test that returned `ERR_CONNECTION_REFUSED` was not equivalent to the later explicit **HTTPS** test. The router UI screenshot reported an HTTPS LAN listener on port 443 and SSH enabled for LAN on the configured nondefault port. Historical references to HTTPS port 8443 correspond to **earlier dated** settings; they are not evidence of today's port-443 listener configuration.
+
+The Fedora NetworkManager active connection was the operator-identified **2.4 GHz SSID** during the timeout. The operator subsequently confirmed the intended policy: administrative access is only permitted from **5 GHz Wi-Fi**. This operator explanation fits the TCP symptom but has not yet been confirmed by a 5 GHz control test.
 
 The screenshot also showed a setting about allowing particular IP addresses under **remote/WAN administration**, apparently disabled. That must **not** be interpreted as proof that the independently documented platform **LAN `ACCESS_RESTRICTION`** policy is inactive. The successful Tailscale 1.104.2 rollout healthcheck earlier on 2026-10-21 separately reported the router management access restriction enabled and its rule list present, though it did **not** list authorized addresses.
 
@@ -86,50 +90,44 @@ This supports the narrower conclusion that **Fedora transmitted the TCP connecti
 
 The client capture used port-name resolution, rendering port 1122 with a service name; that display label is not protocol proof. Repeating with `tcpdump -nn` would show numeric ports directly.
 
-## 5. Why a DHCP reservation mismatch is the leading hypothesis
+## 5. Operator-identified WLAN administration boundary, with a separate DHCP discrepancy
 
-This installation already had a **deliberate** policy of mapping one administrative workstation to a predictable address before enabling a source-IP-based administrative allowlist.
+The Fedora active profile was the **2.4 GHz** SSID. After looking at the earlier tests, the operator pointed out that the deployment **deliberately restricts router administration to 5 GHz Wi-Fi**, keeping management unavailable to 2.4 GHz clients. That control, rather than an unexpected failure, may account for the observed no-response SYN pattern. **A switch-to-5 GHz confirmation test has not yet been submitted.**
 
-The October 21 Fedora interface snapshot showed a **currently leased IP outside the earlier recorded administrative source addresses**. This is consistent with both the HTTPS and SSH timeouts and with the deliberately denied negative tests previously performed for Issue #127. The fact that Android HTTPS still worked makes a system-wide httpd outage less likely.
+The phone's DHCP WebUI screenshot showed the original `fedora-admin` manual reservation **still present**, contradicting the earlier suggestion that it was necessarily lost. The reserved MAC differs from both the Fedora's current locally administered Wi-Fi MAC and the factory hardware MAC. Fedora on the 2.4 GHz profile received a different lease. Those are factual observations, but do not prove which condition enforced the rejection. A 5 GHz profile can legitimately use a distinct, stable MAC/lease; source-IP and WLAN policy may coexist.
 
-The discrepancy could be caused by **any** of the following; none is verified:
-- a DHCP reservation lost or altered after a settings reset/import or later reconfiguration;
-- a client MAC-address change (for example NetworkManager Wi-Fi cloned/stable MAC settings or a different adapter/profile);
-- a mismatch between the saved reservation and the actual active Wi-Fi MAC;
-- a manual change to the management allowlist not reflected in older public evidence;
-- a separate firewall/policy issue that happens to produce the same TCP symptoms.
+Do **not** infer that 2.4 GHz is inherently insecure, or that the radio band itself enforces authorization. The implementation could be SSID isolation, a guest-network rule, VLAN/firewall restrictions, or source-IP policy. Determine it from validated settings only if the access result is unexpected.
 
-A normal **router reboot** should not itself erase a persistently saved DHCP reservation; a factory reset or restoration of different NVRAM settings can change it. In the absence of MAC and live DHCP/NVRAM evidence, do not assert which event occurred.
+## 6. Safe validation and recovery — **5 GHz test pending**
 
-## 6. Safe recovery workflow — **planned, not yet executed**
+No router or Fedora security settings need to change to test the operator-identified policy.
 
-The next operator action should use the still-working HTTPS management session on the phone (or equivalent independent local management path), **without disabling all security rules**:
+1. On Fedora, connect to the **already configured authorized 5 GHz SSID** (use the appropriate known Wi-Fi profile). Do not force a different MAC, assign a historical IP alias, or edit router DHCP/firewall rules.
+2. Check the active SSID/profile, Wi-Fi MAC and IP lease. Confirm the local route to the ASUS router.
+3. Test the router's currently configured LAN HTTPS service and the existing nondefault SSH port. A successful authenticated management session on **5 GHz** compared with the recorded 2.4 GHz timeouts would strongly support an intentional WLAN-specific access boundary.
+4. If 5 GHz still times out, then inspect the existing `fedora-admin` DHCP reservation and the active `ACCESS_RESTRICTION` source allowlist (through an independently authorized management path). Do not assume the reserved MAC was lost: the operator's screenshot confirms the reservation is present.
+5. Once access is restored, verify that 2.4 GHz still cannot administer the router, as an intentional **negative** security check. Do not loosen the policy to fix an access failure caused by selecting the wrong WLAN.
 
-1. On Fedora, collect only the active Wi-Fi MAC identity, NetworkManager connection/profile name and current DHCP address using `nmcli`. Do not post a full MAC address to public issue text or evidence.
-2. On ASUS, review **LAN → DHCP Server → manually assigned addresses**. Match the real current Fedora Wi-Fi MAC against the reservation. Review the **actual LAN management access restriction rule list** using the authorized router management interface; do not infer it from the remote/WAN controls screenshot.
-3. If a mismatch is proven, reconcile the **one** reservation/MAC binding with the intended administrative IP. Verify the target address is free and is not another device's reservation. Preserve existing administrator rules; make the narrowest change possible. Have local recovery access before applying a firewall change.
-4. Renew/reconnect only Fedora's affected Wi-Fi connection **after** saving the corrected reservation. Revalidate current address and direct route before retrying SSH.
-5. From Fedora, test HTTPS on the *current* configured LAN port, and SSH on the configured nondefault port. Confirm at least one authenticated administrative session and check that an unauthorized client is still denied. Do not call the incident fixed until **both** expected positive management paths return.
-6. If the source/IP mapping was already correct, proceed with authorized **read-only** inspection of `iptables -nvL ACCESS_RESTRICTION`, NVRAM access-restriction state and management listeners; do not flush the firewall, change `iptables` from another service or reset router configuration by guesswork.
-
-Temporary aliases or forcibly assigning a historically allowed IPv4 address without first identifying its reserved owner can create an IP conflict and obscure the real failure. Do not use this as a blind workaround.
+Only append a confirmed remediation and closed status after both positive 5 GHz and negative 2.4 GHz behavior are validated. Distinguish this incident from the separately resolved Tailscale DNS client issue.
 
 ## 7. Case outcome and evidence boundaries
 
 **Confirmed:**
 - Fedora's public DNS problem resolved after it stopped accepting Tailscale DNS; stable browsing was explicitly reported.
 - Fedora reached the router at ICMP/L2 and had correct LAN routing, but captured management TCP attempts had no response.
-- Android on the same Wi-Fi opened the ASUS HTTPS panel.
+- Android on ASUS Wi-Fi opened the HTTPS panel; the phone's exact Wi-Fi band was not established.
 - Historical project evidence establishes a designed DHCP-reservation-plus-source-allowlist protection model and earlier negative tests exhibiting management timeouts.
+- The phone's LAN DHCP settings show the original `fedora-admin` reservation is still present, while the current 2.4 GHz Fedora MAC and lease differ.
+- The operator identifies intentional **5 GHz-only administration** as the previously overlooked network access constraint.
 - The 2026-10-21 Tailscale installation healthcheck reported an enabled restriction and a populated rule list.
 
 **Still unproven / OPEN:**
-- Live 2026-10-21 DHCP reservation, Wi-Fi MAC mapping, and exact permitted management IPs.
+- Actual 5 GHz re-association and successful management tests, plus the current router rule that enforces the 2.4 GHz denial.
 - Router-side `ACCESS_RESTRICTION` packet counters matching the Fedora failed attempts.
-- Whether the problem began at a reboot, firmware NVRAM import, client MAC change, or other event.
+- Whether the relevant rule uses per-SSID policy, guest isolation, VLAN separation, source-IP restrictions, or a combination.
 - Successful SSH/HTTPS restoration from Fedora; post-remediation healthcheck and persistence.
 - Any causal link between the ASUS Tailscale 1.104.2 upgrade and administrative connectivity.
 
-**Engineering lesson:** A successful router service healthcheck, functional gateway ping and even a phone-accessible GUI do **not** prove that the intended administrative workstation can still reach the management plane. Source-IP-based security requires a maintained **MAC → DHCP reservation → active lease → management allowlist** invariant; testing this invariant prevents an apparently healthy gateway from becoming unmanageable from its primary workstation.
+**Engineering lesson:** A working gateway ping, healthy services and a phone-accessible GUI do **not** prove the intended operator workstation is on an authorized *management network*. Before assuming failed services or lost DHCP reservations, inspect the active SSID/segment and the intentionally designed management boundary. If source-IP permissions are also used, keep the **MAC → DHCP reservation → lease → allowlist** mapping consistent. Do not weaken a functioning network boundary just to make tests pass.
 
-This is an intentionally open incident report. Append a dated **resolution addendum** only after the actual reservation/allowlist mismatch and restored Fedora access are demonstrated.
+This is an intentionally open incident report. Append a dated **resolution addendum** only after reconnection to authorized 5 GHz Wi-Fi, positive Fedora management tests, and preservation of the intended 2.4 GHz deny policy are demonstrated.
