@@ -46,11 +46,7 @@ Running daemon SHA-256 reported post-deployment:
 5ab9a22ccf8422fe92e9994427023a02420e2508c4b575eab91efb96ae811ecb
 ```
 
-Private local rollback snapshot (retain on router, not checked into the public repo):
-
-```text
-/opt/var/backups/asus-edge/tailscale-update/20261021-182937-26404-pre-1.104.2
-```
+A dated rollback snapshot was retained in router-private storage. Its exact deployment-local path is intentionally omitted from this public report; the original operational recovery record remains outside the repository.
 
 A project-owned controlled service restart and post-deployment healthcheck succeeded. The update did **not** run `opkg upgrade` and did not intentionally replace the existing Tailscale identity/state file. Do not infer that the prior version's package metadata tracks the live custom binaries.
 
