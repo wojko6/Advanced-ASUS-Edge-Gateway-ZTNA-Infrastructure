@@ -292,22 +292,21 @@ The case demonstrates a full vulnerability-remediation lifecycle: detection,
 risk analysis, upstream coordination, reproducible build engineering, staged
 deployment, rollback readiness and bounded post-change claims.
 
-## 15. Fedora DHCP reservation and ASUS LAN management lockout — OPEN
+## 15. Fedora Wi-Fi management boundary and ASUS HTTPS/SSH timeouts — OPEN
 
-**File:** [Fedora administrative access timeouts after DHCP/allowlist drift (2026-10-21)](case-studies/fedora-asus-lan-management-dhcp-allowlist-2026-10-21.md)
+**File:** [Fedora administrative access blocked from 2.4 GHz Wi-Fi (2026-10-21)](case-studies/fedora-asus-lan-management-dhcp-allowlist-2026-10-21.md)
 
 An ongoing LAN-management incident covering:
 
-- Internet and ICMP reachability continuing even though router HTTPS and SSH time out from Fedora;
-- comparison with an Android phone on the same Wi-Fi which can still open the HTTPS panel;
-- source-interface packet capture confirming repeated TCP SYN requests without observed replies;
-- documented project history of a fixed Fedora Wi-Fi MAC/DHCP reservation and source-based ASUS `ACCESS_RESTRICTION`;
-- the difference between historical authorized LAN addresses and the workstation's present DHCP lease;
-- a **probable but not yet demonstrated** reservation/allowlist mismatch;
-- a separate Fedora Tailscale DNS routing issue resolved using `--accept-dns=false`;
-- a safe, narrow recovery workflow with live MAC/reservation checks and positive/negative management tests before declaring closure.
+- normal Internet, LAN route and ICMP gateway connectivity while router HTTPS/SSH time out;
+- 2.4 GHz Fedora Wi-Fi profile during the failure and an Android HTTPS-positive comparison;
+- SYN retransmissions without observed replies in a Fedora Wi-Fi packet capture;
+- the operator's correction: router management was intentionally restricted to **5 GHz Wi-Fi**, with 2.4 GHz blocked;
+- the surviving Fedora manual DHCP reservation and a different current 2.4 GHz MAC/lease as a **secondary** discrepancy, not a proven failure cause;
+- a separately resolved Fedora Tailscale/systemd-resolved DNS issue;
+- a no-policy-change **5 GHz positive / 2.4 GHz negative** confirmation plan.
 
-**Status: INVESTIGATION OPEN.** Neither the exact October 21 router-side rule/mapping nor restoration of Fedora SSH/HTTPS has yet been proven. No production ASUS setting was changed by publication of the case.
+**Status: INVESTIGATION OPEN.** The 5 GHz re-test has not yet been supplied; actual rule enforcement and restored SSH/HTTPS remain to be verified. The documented Wi-Fi policy must not be disabled or bypassed to recover access.
 
 ## How to read these cases
 
