@@ -292,21 +292,20 @@ The case demonstrates a full vulnerability-remediation lifecycle: detection,
 risk analysis, upstream coordination, reproducible build engineering, staged
 deployment, rollback readiness and bounded post-change claims.
 
-## 15. Fedora Wi-Fi management boundary and ASUS HTTPS/SSH timeouts — OPEN
+## 15. Fedora Wi-Fi profile and ASUS management access recovery — RESOLVED
 
-**File:** [Fedora administrative access blocked from 2.4 GHz Wi-Fi (2026-10-21)](case-studies/fedora-asus-lan-management-dhcp-allowlist-2026-10-21.md)
+**File:** [Fedora HTTPS/SSH recovery after switching to the authorized 5 GHz Wi-Fi profile (2026-10-21)](case-studies/fedora-asus-lan-management-dhcp-allowlist-2026-10-21.md)
 
-An ongoing LAN-management incident covering:
+A resolved operational LAN-management incident covering:
 
-- normal Internet, LAN route and ICMP gateway connectivity while router HTTPS/SSH time out;
-- 2.4 GHz Fedora Wi-Fi profile during the failure and an Android HTTPS-positive comparison;
-- SYN retransmissions without observed replies in a Fedora Wi-Fi packet capture;
-- the operator's correction: router management was intentionally restricted to **5 GHz Wi-Fi**, with 2.4 GHz blocked;
-- the surviving Fedora manual DHCP reservation and a different current 2.4 GHz MAC/lease as a **secondary** discrepancy, not a proven failure cause;
-- a separately resolved Fedora Tailscale/systemd-resolved DNS issue;
-- a no-policy-change **5 GHz positive / 2.4 GHz negative** confirmation plan.
+- successful Internet/ICMP gateway connectivity despite ASUS HTTPS/SSH timeouts from Fedora's 2.4 GHz Wi-Fi profile;
+- Wi-Fi packet capture showing repeated unanswered SYNs for the management ports;
+- a still-present DHCP reservation for the administrative workstation and **distinct MAC/IP identities across its 2.4 and 5 GHz profiles**;
+- the operator's identification of 5 GHz as the intended management Wi-Fi path;
+- real 5 GHz reconnection restoring the historically reserved admin IP, **HTTPS HTTP 200** and **SSH_ACCESS_OK**, without modifying router settings;
+- a separate, earlier Fedora Tailscale-DNS issue resolved independently of router administration.
 
-**Status: INVESTIGATION OPEN.** The 5 GHz re-test has not yet been supplied; actual rule enforcement and restored SSH/HTTPS remain to be verified. The documented Wi-Fi policy must not be disabled or bypassed to recover access.
+**Status: OPERATIONALLY RESOLVED.** The 2.4 GHz timeout and 5 GHz positive test are verified, but they changed both source IP/MAC and the Wi-Fi profile. The **exact router-side enforcement mechanism** (SSID/segment policy versus source-IP allowlist, or both) and post-reboot persistence were not separately tested. No production firewall or DHCP settings were changed.
 
 ## How to read these cases
 
