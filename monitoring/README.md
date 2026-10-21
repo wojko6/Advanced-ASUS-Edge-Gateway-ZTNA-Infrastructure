@@ -85,6 +85,10 @@ Never commit the Caddy CA private key or other files from the live Caddy storage
 directory.
 
 
+## Fedora VictoriaMetrics manual upgrade (2026-10-21)
+
+**Operator-reported production acceptance:** VictoriaMetrics was upgraded from the previously recorded `1.153.0` baseline to **`1.154.1`** on Fedora 44. A backup and isolated `vmrestore` trial returned `RESTORE_TEST=PASS` (17,100,289 bytes restored); the installer then returned `DEPLOYMENT=PASS`, `SERVICE=ACTIVE`, `HTTP_HEALTH=PASS`, `QUERY_API=PASS`, `DATA_CONFIG_CHANGED=NO` and `OTHER_SERVICES_RESTARTED=NO`. A rollback/data directory was retained on Fedora. No router runtime or other monitoring service was intentionally modified by this VictoriaMetrics installer. This does not prove a cold-boot return or long-term scrape freshness. See [dated evidence](../evidence/2026-10-21/fedora-victoriametrics-1.154.1-live-upgrade.md).
+
 ## Grafana alerting
 
 **2026-10-18 Fedora controlled-update checkpoint (operator-reported):** manually upgraded Grafana from 13.2.3 to **13.2.4** via Pilot v2.3 after verified offline SQLite/archive backup. Postflight returned Grafana HTTP 200, 15 rules / 0 paused, five active services and zero error-priority Grafana journal records in the checked hour; the operator confirmed receipt of Email and Telegram notifications. **This is not proof of delivery from all 15 rules, configuration parity after an unrelated future provisioning reload or automatic rollback.** A check-only package-update timer is active, but unattended installation is **not**. Caddy TLS 1.3/SNI passed 3/3 local probes; HTTP-over-HTTPS remains untested in the new update gate. See [Fedora update operations](../docs/operations/fedora-homelab-automatic-updates.md), [18 October worklog](../docs/worklog/2026-10-18.md) and [operator evidence](../evidence/2026-10-18/fedora-update-operator-validation.md). Existing 2026-10-15 and 2026-10-13 passages below remain dated history; the checked-in Email-only Grafana contact source is **not** a safe live Email+Telegram replacement.
