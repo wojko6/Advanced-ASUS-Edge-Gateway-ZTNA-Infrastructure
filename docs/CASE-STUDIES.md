@@ -292,6 +292,23 @@ The case demonstrates a full vulnerability-remediation lifecycle: detection,
 risk analysis, upstream coordination, reproducible build engineering, staged
 deployment, rollback readiness and bounded post-change claims.
 
+## 15. Fedora DHCP reservation and ASUS LAN management lockout — OPEN
+
+**File:** [Fedora administrative access timeouts after DHCP/allowlist drift (2026-10-21)](case-studies/fedora-asus-lan-management-dhcp-allowlist-2026-10-21.md)
+
+An ongoing LAN-management incident covering:
+
+- Internet and ICMP reachability continuing even though router HTTPS and SSH time out from Fedora;
+- comparison with an Android phone on the same Wi-Fi which can still open the HTTPS panel;
+- source-interface packet capture confirming repeated TCP SYN requests without observed replies;
+- documented project history of a fixed Fedora Wi-Fi MAC/DHCP reservation and source-based ASUS `ACCESS_RESTRICTION`;
+- the difference between historical authorized LAN addresses and the workstation's present DHCP lease;
+- a **probable but not yet demonstrated** reservation/allowlist mismatch;
+- a separate Fedora Tailscale DNS routing issue resolved using `--accept-dns=false`;
+- a safe, narrow recovery workflow with live MAC/reservation checks and positive/negative management tests before declaring closure.
+
+**Status: INVESTIGATION OPEN.** Neither the exact October 21 router-side rule/mapping nor restoration of Fedora SSH/HTTPS has yet been proven. No production ASUS setting was changed by publication of the case.
+
 ## How to read these cases
 
 Where applicable, case studies separate:
