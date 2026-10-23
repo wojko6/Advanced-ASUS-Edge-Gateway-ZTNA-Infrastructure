@@ -2,7 +2,7 @@
 
 **Status:** LABORATORY / REVIEW ONLY — `DEPLOYMENT_GATE=HOLD`  
 **Evidence date:** 2026-10-23  
-**Source:** operator-provided Fedora regression output for the named laboratory packages, plus separately described disposable assistant-side local checks. No production-ASUS measurements were taken for the tests below.  
+**Source:** operator-provided Fedora regression output for the named laboratory packages, plus separately described disposable assistant-side local checks. The cited V0.7p–V0.7v regressions did not contact ASUS. An earlier, separately scoped **read-only router preflight** is distinguished below; no production change is claimed.  
 **Scope:** [Issue #287](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/287), **not** Issue #235 / Draft PR #245 / RouterCloud / Dufs. This is a sanitized, bounded checkpoint, not a source-code commit or production acceptance.
 
 ## 1. Original finding and acceptance boundary
@@ -67,7 +67,7 @@ The laboratory Ed25519 **private signing key was not packaged**. Its public trus
 
 **Next action:** consolidate a minimal, separately reviewable `native_bounded_exec()` process-lifetime regression/patch proposal, preserving the existing timeout and DNS Guard semantics. Keep the signed-worker/privilege research as a distinct exploratory track instead of silently expanding Issue #287 acceptance.
 
-**Change boundary:** Fedora/QEMU disposable research only. **ASUS contacted during these test stages: NO.** No JFFS, SSD, firmware, DNS, Cron, Tailscale, RouterCloud, Issue #235 or Draft PR #245 mutation or deployment. `ISSUE287_DEPLOYMENT_GATE=HOLD`.
+**Change boundary:** Fedora/QEMU disposable research only. **ASUS contact for V0.7p–V0.7v Fedora regressions: NO; previous separately scoped read-only preflight: YES.** No JFFS, SSD, firmware, DNS, Cron, Tailscale, RouterCloud, Issue #235 or Draft PR #245 mutation or deployment. `ISSUE287_DEPLOYMENT_GATE=HOLD`.
 
 ## References
 
