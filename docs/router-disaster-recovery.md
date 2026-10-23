@@ -31,6 +31,14 @@ In a **network-disabled, rootless ARMv7 Podman** container, actual `opkg --offli
 
 This proves a **Pi-hole package-level offline installation candidate**, not a full Entware inventory closure, manager integration, native ASUS CFG restore or bare-metal acceptance. See [sanitized offline Pi-hole package reconstruction evidence](../evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md) and [the step-gated runbook](pihole-dr-rebuild-runbook.md). All IPKs and detailed private logs remain off-repository; #129 stays OPEN.
 
+## 2026-10-23 — scoped rollback fix and recovery toolchain gate
+
+The [Issue #276](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/276) legacy `post-mount` rollback defect was fixed in merged [PR #290](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/290). The verified applicable manifest is shared by pre-restore snapshots and rollback, excluding the review-only legacy hook. GitHub Actions and a subsequent **exact-merged-source Fedora** disposable-root mutation/rollback regression passed. The utility is used manually from the repository; the generic `scripts/install.sh` does not install `scripts/restore.sh` into the router. This is **source correctness evidence**, not evidence of a real recovery on the reference ASUS.
+
+A separate **read-only 2026-10-23 ASUS capability probe** showed required `find` options, AWK and SHA-256 working under the `restore.sh` effective PATH **with mounted Entware**. A *firmware-only PATH simulation* lacked the needed `find` options and any SHA-256 provider, so the recovery toolchain cannot be assumed available if `/opt` or the SSD is lost. The stock BusyBox was 1.25.1; an optional separately installed 1.36.1 binary is not part of the CORE backup or the stock firmware and cannot be presumed present after a blank-device rebuild. The check did **not** unmount `/opt`, open private backup archives or execute restore. Results and scope: [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129) and [the recovery index](disaster-recovery-index.md).
+
+**STOP / no deployment authorization:** do not run `restore.sh --apply` on a healthy production device to validate this fix. Before an isolated recovery rehearsal, independently stage a trusted and version-verified toolchain and archive source on a compatible disposable target, prove exact command availability and data integrity, and preserve the safety gates of the [Polish operator adaptation](router-bare-metal-recovery-pl.md). `#129` remains OPEN; full blank-device recovery has **NOT** passed.
+
 ## Reference-state inventory findings
 
 The original clean-room DR inventory was captured on 2026-09-27. The

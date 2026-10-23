@@ -32,6 +32,7 @@ recovery and documentation checks:
 
 ```sh
 python3 tests/test-doc-links.py
+python3 tests/test-doc-language-policy.py
 python3 tests/test-asus-webui-pl-overlay.py
 python3 tests/test-recovery.py
 python3 tests/test-pihole-dns-collector.py
@@ -53,6 +54,7 @@ sh tests/test-healthcheck-lan-dot-contract.sh
 sh tests/test-update-tailscale-static.sh
 sh tests/test-restore-validation.sh
 sh tests/test-cleanroom-restore.sh
+python3 -B tests/test-restore-postmount-rollback.py
 sh tests/test-uninstall.sh
 sh tests/test-fedora-dr-restore.sh
 sh tests/test-wan-event-handler.sh
@@ -61,6 +63,10 @@ sh tests/test-install-preflight-static.sh
 sh tests/test-install-rollback.sh
 sh tests/test-wan-prevalidation-static.sh
 ```
+
+The [Issue #276 rollback regression](../evidence/2026-10-22/issue-276-legacy-post-mount-rollback-review.md) includes a synthetic negative mutation control and positive rollback cases against a disposable alternate root. The verified shared applicable-manifest behavior prevents an archived legacy `post-mount` from entering rollback. This CI/Fedora evidence is **not** a production-router restore and does not validate a firmware-only recovery toolchain without Entware (tracked in [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)).
+
+The documentation-language policy check verifies declared EN/PL indexes and cross-references, but cannot detect every language inconsistency in GitHub discussion comments or prove semantic translation equivalence.
 
 The Markdown-link test checks repository-local links and image targets across
 all Markdown documents so renamed or removed files fail CI instead of silently
