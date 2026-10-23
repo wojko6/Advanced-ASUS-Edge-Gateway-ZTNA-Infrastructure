@@ -1,5 +1,89 @@
 # Roadmap
 
+### Issue #235 — restore security engineering as immediate priority (2026-10-20)
+
+- **No further backup/media preflight by default.** V2.8 verified both primary script copies, V2.9 Fedora **9/9 PASS / SAME_ST_DEV**; extra [V2.10](operations/issue235-independent-script-recovery-options-v210-2026-10-20.md) off-host recovery is deferred design only. Completed separate Fedora Recovery covers root/`systemd-machines`/`/boot`/EFI, not separate `/home`; no proof it includes the private #235 backups. Retain independent recovery as an open **production** approval risk, not a reason to block offline publisher research.
+- Resume concrete [two-target publisher and trusted-dispatch review](operations/issue235-two-target-trusted-publisher-design-2026-10-20.md): independent source authority and root staging, old writable-FD/active-process quiescence, selective root-Cron/WAN/boot and emergency DNS continuity, JFFS2 interrupted owner repair. No source/SSD/RouterCloud worktree changes or router operations without explicit authorization.
+
+### Issue #235 — V2.11 source-backed GNUton security feasibility (2026-10-20)
+
+- [V2.11 trust/inhibition review](../evidence/2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md) documents actual project source entrypoints, Cron re-registration by `services-start`, direct WAN and emergency DNS Guard calls, non-global `flock`, and **installer wrapper bytes incompatible with active full hook**. A firmware selective crash-durable pre-execution gate has not been established; root publisher and JFFS2 recovery remain **NO-GO**.
+- Do not introduce repeated synthetic parsers or attempt `cru d`, `chown`, installer, `jffs2_scripts=0` or newly written `init-start`. Next security evidence should focus on trusted firmware boot/dispatcher boundary and explicit old FD quiescence, separately coordinated if router read-only checks are ever necessary. V2.10 extra backup remains deferred.
+
+### Issue #235 — V2.12 pinned GNUton executor verification (2026-10-20)
+
+- [V2.12 upstream exact-tag source audit](../evidence/2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md) confirms `run_custom_script` does `stat()` / execute-bit checks then `_eval` uses `fork()` and `execvp()`: identity not bound to an authenticated inode; no owner/digest validation. `cru` serializes job-file mutation, not execution. This is source evidence, **not** an attested production firmware binary or exploit reproduction.
+- Existing JFFS `init-start`, in-script locks, deleting Cron and generic installer remain disallowed as comprehensive remediation. Next substantive proof is an independent root-only launcher/publisher plus firmware-level inhibition or a separately reviewed supervised-only NO-GO/risk decision, old-FD exclusion and JFFS2 fail-safety. Do not resume backup expansion or touch PR #245/RouterCloud/ASUS.
+
+### Issue #235 — V2.10 independent post-Fedora-loss recovery decision (2026-10-20)
+
+- Operator V2.9 **9/9 PASS** and both local primary copies `SAME_ST_DEV` (shared filesystem). This closes the bounded local metadata audit only, not off-host recovery.
+- [V2.10 recovery architecture options](operations/issue235-independent-script-recovery-options-v210-2026-10-20.md): prefer encrypted periodically disconnected external medium *if available*, or separately administered off-host storage. Existing local NVMe/RouterCloud Restic does not prove survival of total Fedora-host loss or archive inclusion. No new copy or secret created; independent medium and disposable restore require separate explicit approval.
+
+### Issue #235 — V2.9 independent recovery after Fedora loss (2026-10-20)
+
+- [V2.9 failure-domain inventory](../evidence/2026-10-20/issue-235-independent-recovery-failure-domain-v29.md): local **9/9 model PASS**, bounded metadata discovery fixtures PASS, **Fedora operator audit 9/9 PASS** with exactly one local candidate per role, `SAME_ST_DEV`; no independent physical/off-host recovery proven. **No backup content read**, no source duplication. V2.8 already confirmed both private primary sources at read time.
+- Need a physically independent *off-host or disconnected* recoverable copy of both full script bytes, separately available keys/instructions and disposable restore; a different local `st_dev` or encrypted RouterCloud Restic staging is insufficient. Preserve the independent V2.7 approval custody and production gates. No copying or retention changes authorized.
+
+### Security #235 — V2.8 off-router recovery and custody evidence (2026-10-20)
+
+- [Read-only Fedora recovery-copy preflight](../evidence/2026-10-20/issue-235-recovery-copy-separation-v28.md) local synthetic **18/18 PASS**. Operator's **second** read-only Fedora audit supplied both primary files: `PRIMARY_HOOK` and `PRIMARY_GUARD` **BYTES_OWNER_MODE_PASS_AT_READ_TIME**, `RECOVERY_COPY_READONLY_CHECK=PASS_PRIMARY_SNAPSHOTS_ONLY`, exit 0. First empty-input HOLD superseded; no optional secondaries, topology or independent restore assessed. Hash matching and file mode are *at-read-time* evidence only.
+- Need **actual independent storage + a disposable restore rehearsal**, independently protected V2.7 approval authority and credentials, and separate JFFS2/boot/DNS publication proof before any production GO.
+- Even different `st_dev` is **not** proof of independent physical media. ASUS and parallel PR #245 remain untouched; **HOLD**.
+
+### Security #235 — V2.7 independent approval authority design (2026-10-20)
+
+- [V2.6 Fedora synthetic test](../evidence/2026-10-20/issue-235-two-script-approval-contract-v26.md) **29/29 operator PASS**. Confirms schema/deny rules only; source remains synthetic and the old SSD PR #245 authority is not reused.
+- [V2.7 separate operator-approved manifest authority](operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md) is **design-review only**: distinguish candidate source/pin from independently protected operator decision and code/provenance, revocation and separate apply approval.
+- Actual authority/launcher protection, root publisher, old writable-FD/process exclusion, representative JFFS2 interruption and independent DNS recovery remain **NO-GO**. No production activity authorized.
+
+### Issue #235 — V2.6 independent two-script approval schema (2026-10-20)
+
+- [V2.6 two-target manifest model](../evidence/2026-10-20/issue-235-two-script-approval-contract-v26.md) **29/29 local synthetic PASS**, explicitly rejects SSD PR #245 scope and keeps a fixed two-role `services-start` / `dns-guard` allowlist. The operator separately confirmed historical C/ZIP provenance V2.5 with exact matches.
+- Real independent signer/approval, pinned current live source bytes bound to root-owned inode publication, original old FD/writer exclusion, JFFS2 power loss and DNS recovery remain blocking. V2.6 has no production apply API; `HOLD`.
+
+### Security #235 — V2.3 checked-FD vs rename-by-name race (2026-10-20)
+
+- [Isolated, nonroot synthetic adversarial test](../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md) **20/20 local PASS** (including expected-red) shows a verified FD can retain pinned bytes while a concurrent source-basename swap leads `os.replace` to publish a different inode; post-publish hash detection alone is too late to claim prevention.
+- Next: trustworthy root-owned source staging and destination authority, real writer/FD exclusion, and filesystem-specific safe publish/recovery. No extrapolation from same-UID Fedora/container semantics to JFFS2 or boot.
+- **Operator Fedora V2.3 replay: 20/20 PASS** on intentionally vulnerable synthetic handoff. Next concrete gap is a separately trusted publisher/root-owned stage, not another same-UID primitive replay. No production apply; `HOLD`.
+
+### Security #235 — V2.2 real inode and FD semantics (2026-10-20; isolated Linux fixture)
+
+- [Synthetic filesystem fixture](../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md) **19/19 local PASS**: `os.replace` publishes new inode/name binding, while old writable FD remains open on old inode; interrupted two-path sequence remains mixed.
+- **Next barrier:** same-FD trusted source-to-publication binding, actual root-owned publisher, adversarial writer/FD exclusion and JFFS2 interruption behavior. Neither Linux directory `fsync` nor Btrfs/ext4 semantics transfer automatically to production JFFS2.
+- No ASUS contact, no owner repair, no Cron/NVRAM changes, `HOLD`.
+
+### Security #235 — V2.1 monotonic owner-trust candidate (2026-10-20; Fedora only)
+
+- [Abstract one-path-at-a-time model](../evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md) **19/19 local PASS**; neither initial publication ordering resolves both privileged targets after interruption. Conditional guard-first sequence leaves one abstract untrusted launch class instead of three for hook-first, **not a probability-based ranking**.
+- Investigate a *trusted fresh-inode / pinned-byte / root-owned* publisher and independent recovery rather than assuming a two-file crash-atomic rename, `chown`-only remediation or JFFS `init-start` barrier.
+- **Blocking:** real JFFS2 per-file interruption semantics, writer/open-FD exclusion, trusted publication identity, independent DNS recovery and explicit operator authorization. No live changes, `HOLD`.
+
+### Security #235 — V2.0 two-target interruption gate (2026-10-20; offline model)
+
+- [V2.0 expected-red model](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md): 20/20 local assertions PASS (including **detecting**, not fixing, unsafe scenarios). Cron-only inhibition is insufficient; a simulated crash between two per-file publishes may re-enable privileged execution of the remaining nonroot-owned target.
+- **New blocking design gap:** demonstrate a trustworthy early-boot / power-loss strategy for the current GNUton/JFFS2 execution chain, independent protected recovery media, preserved fail-open DNS and break-glass. No real early-boot inhibit or two-file transaction verified; **NO DEPLOYMENT**.
+
+### Security #235 — V2.0 dual-target crash gate and GNUton dispatcher review (2026-10-20)
+
+- Operator replay of the hash-verified Fedora-only model: **20/20 PASS**; Cron-only mitigation insufficient, and either publication ordering leaves an untrusted privileged target after early interruption.
+- Pinned GNUton `3004.388.11_1-gnuton1` source: `run_custom_script` does **not enforce root owner** or same-FD pinned execution in its examined script dispatch function; earlier `init-start` is another JFFS hook, **not a proven independent pre-boot security boundary**.
+- [V2.0 report and firmware source citations](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md). Next gate: **evidence-backed** recovery and actual early-boot execution protection, not additional replay of abstract assumptions. No owner repair, new hook, NVRAM change or merge approved; deployment HOLD.
+
+### Security #235 — services-start source and owner trust (2026-10-20; read-only)
+
+- [Operator-reported V1.4–V1.7 results](../evidence/2026-10-20/issue-235-services-start-trust-chain-v14-v17.md): firmware full-script hook is nonroot-owned 0755 but byte-identical to pinned source; addon root:root 0755 and config root:root 0600. The addon preserves the watchdog function and Cron tokens but moves watchdog registration later, so it is **not** proven semantically interchangeable.
+- **Priority:** private Fedora source/backup copies for **both** targets now verify correctly; independently protected recovery media still remains unproven. Review the [two-target maintenance design](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md), preserving current bytes and startup behavior. Establish safe startup, **WAN-direct invocation, break-glass and Cron** quiescence/coordination, writer exclusion and JFFS2 failure handling. [V1.10](../evidence/2026-10-20/issue-235-wan-trigger-source-v18.md) has now byte-verified the live WAN wrapper and intermediate addon, with downstream handler and break-glass helper pinned separately. V1.11 confirmed root:root/no group/other write for standard WAN files and ancestors; **V1.12 identified the optional legacy WAN hook as absent at the read-only check**. This closes bounded WAN source/DAC/legacy-presence classification, **not** continuous owner/writer trust, live invocation or a safe method to inhibit all entrypoints. Do **not** run the generic installer or convert the live hook to a wrapper as a side effect.
+- **Gate:** no production edit, Cron disable, service restart or reboot; `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
+
+### Security #235 — DNS Guard root-Cron trust checkpoint (2026-10-19; no deployment)
+
+- **Completed within scope:** validated same-UID and cross-UID DAC/transaction models on Fedora, fresh approved read-only ASUS metadata and mount observations, historical SHA-256 match of live DNS Guard, off-router verified private backup, disposable restore and rootless rollback V1.3 **32/32 PASS**. [Sanitized evidence](../evidence/2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md).
+- **Open risk:** nonroot-owned, owner-writable executable remains scheduled by root-Cron every minute. Process snapshots and hash matches do not make execution ownership trustworthy.
+- **GO/NO-GO gates:** independently recoverable verified backup; trusted path/owner/writer preflight; dispatcher and startup re-registration inhibition; in-flight Cron/open-FD/other-writer quiescence; JFFS2 publication and failure recovery; trusted root:root 0755 rollback; bounded DNS/Unbound/Pi-hole postflight; **separate operator authorization** for each mutating stage.
+- **Boundaries:** no `chown`/`chmod`, Cron disable, router reboot, installer or service restart; `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`, `DEPLOYMENT_GATE=HOLD`. Do not merge this work with SSD mode [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245), RouterCloud PrivDrop/origin or Dufs upgrades. Issue #235 remains broader than DNS Guard.
+
 ### Fedora Homelab Update — 2026-10-18 (off-router, partly deployed)
 
 Completed: deployed a **check-only** daily update-watch timer and manually upgraded Grafana 13.2.3→13.2.4 after verified consistent backup, 15-rule/0-paused checks and Email+Telegram receipt. Operator-reported isolated engine/lock tests reached v0.9, including root/nonroot, cooperative job and descendant tests; **synthetic PASS is not RouterCloud production integration**. Follow-up gates before unattended AUTO: Caddy HTTP E2E, syslog-ng ASUS-specific ingestion, Restic repo/restore, verified real shared lock on backup wrappers, candidate-bearing transaction/rollback tests, individual package allowlist and explicit deployment approval. See [runbook](operations/fedora-homelab-automatic-updates.md), [worklog](worklog/2026-10-18.md). Router/SSD/Issue #235 scope unchanged.
