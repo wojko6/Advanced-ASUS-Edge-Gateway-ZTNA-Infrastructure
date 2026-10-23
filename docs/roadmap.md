@@ -1,5 +1,10 @@
 # Roadmap
 
+### Unbound 1.26.2 — 2026-10-23 (Fedora-only release readiness; rollout HOLD)
+
+- The five intended Unbound 1.26.2 ARMv7 IPKs and five rollback IPKs for 1.26.1 passed checksums, bounded QEMU/DNS and isolated real-`opkg` file/database upgrade/rollback tests. **Production still runs 1.26.1**, and release staging exists **only on Fedora**.
+- Neither independent direct recursion nor uninterrupted DNS through a planned resolver stop has been demonstrated. Protect the package-owned Unbound Manager `S61unbound`; its start action restarts dnsmasq. Router staging/installation require separate authorization and a maintenance window. **`DEPLOYMENT_GATE=HOLD`**. [Release readiness and limits](operations/unbound-1.26.2-armv7-release-readiness-2026-10-23.md).
+
 ### Fedora Homelab Update — 2026-10-18 (off-router, partly deployed)
 
 Completed: deployed a **check-only** daily update-watch timer and manually upgraded Grafana 13.2.3→13.2.4 after verified consistent backup, 15-rule/0-paused checks and Email+Telegram receipt. Operator-reported isolated engine/lock tests reached v0.9, including root/nonroot, cooperative job and descendant tests; **synthetic PASS is not RouterCloud production integration**. Follow-up gates before unattended AUTO: Caddy HTTP E2E, syslog-ng ASUS-specific ingestion, Restic repo/restore, verified real shared lock on backup wrappers, candidate-bearing transaction/rollback tests, individual package allowlist and explicit deployment approval. See [runbook](operations/fedora-homelab-automatic-updates.md), [worklog](worklog/2026-10-18.md). Router/SSD/Issue #235 scope unchanged.
@@ -26,11 +31,10 @@ Completed: deployed a **check-only** daily update-watch timer and manually upgra
 - **PR #227 was merged to `main`** on 2026-10-13 as dated RC13J evidence, not implementation acceptance. Older draft-PR mentions in historical 2026-10-12 checkpoints retain their point-in-time meaning.
 - Benchmark [methodology](benchmarks/asus-opnsense-comparison-methodology.md) is preserved for measured current ASUS baseline and a future independent OPNsense/x86 firewall, only when obtained/approved; no RT-BE88U purchase or new performance result.
 
-### Current reference router checkpoint — 2026-10-10 (documentation review; last broad live gate 2026-10-09)
+### Historical reference router checkpoint — 2026-10-10 (last broad live gate 2026-10-09)
 
 - Current router: ASUS TUF-AX5400 / GNUton 3004.388.11_1.
-- Current live Tailscale: **1.103.375 unstable/dev**; earlier 1.102.3 evidence
-  is historical pre-upgrade state.
+- At this 2026-10-10 checkpoint, live Tailscale was **1.103.375 unstable/dev** and 1.102.3 was already historical. **Superseded on 2026-10-21** by the controlled live ARMv7 **1.104.2** upgrade ([evidence](../evidence/2026-10-21/tailscale-1.104.2-armv7-live-validation.md)); a cold reboot of 1.104.2 remained unverified.
 - **Current DNS Guard v3.2** (PR #197 merged): bounded manual ON/OFF and power-cycle acceptance passed on 2026-10-08. An additional controlled reboot of the **existing router** on 2026-10-09 recovered the Pi-hole-aware DNS stack with healthcheck 0/0; no blank-device restore is claimed. v3.1 remains historical.
 - **2026-10-12 superseding decision:** there is **NO planned RT-BE88U migration**. Maintain current TUF-AX5400 in production while completing CORE v1.0. OPNsense/x86 is an **optional future replacement**, with no date, purchase or production approval; explore only as an isolated Windows 11 VM lab when ready. See [platform decision](architecture/platform-direction-2026-10-12.md).
 

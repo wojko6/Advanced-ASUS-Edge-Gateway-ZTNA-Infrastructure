@@ -6,6 +6,14 @@ The reference deployment completed its SSD migration and controlled reboot valid
 
 Routine router changes may now proceed only as deliberate maintenance with backup, rollback planning, repository/CI validation and post-change live verification. Read-only inspection remains preferred when it can answer the question without changing the reference state.
 
+## Unbound 1.26.2 pending maintenance — Fedora-only readiness (2026-10-23)
+
+The current live ASUS resolver remains Unbound `1.26.1-1` (five packages). Verified `1.26.2-1` ARMv7 IPKs, original `1.26.1-1` rollback IPKs and the Manager start-script restore source are staged **only on Fedora**. An isolated rootless QEMU/`opkg` lab reproduced successful real-package installation, upgrade and downgrade as **file/db transactions** with stubbed external dependencies; no router/runtime acceptance or independent direct DNS recursion is claimed.
+
+**Hard precondition:** Package operations replace the non-conffile `/opt/etc/init.d/S61unbound` on both upgrade and rollback. Restore and verify the Manager script **before** restarting Unbound. Its `rc.func` start path invokes a dnsmasq restart; do not use a blind service `restart` as an atomic maintenance operation. The active trust anchor is separate from the legacy package root key. DNS Guard Cron registration and live service listeners were observed, but watchdog last execution and uninterrupted DNS during a resolver stop remain **unproven**. A separately approved maintenance window must explicitly accept possible DNS interruption and include tested off-router rollback materials.
+
+**Router staging:** NOT PERFORMED. **Installation:** NOT PERFORMED. **`DEPLOYMENT_GATE=HOLD`.** Full [readiness evidence, limitations and maintenance sequencing](operations/unbound-1.26.2-armv7-release-readiness-2026-10-23.md).
+
 ## SSD root mode after boot — Issue #235 HOLD (2026-10-16)
 
 A read-only ASUS observation on 2026-10-15 found both physical ext4 mount roots (`ROUTER_DATA` and `ENTWARE`) root-owned and mode `0777` again after mount/reboot; this does **not** invalidate the prior one-time, bounded 2026-10-14 Stage 1 acceptance of the `ROUTER_DATA` `0755` change. It **does** show mount-root mode persistence was not achieved. Installed GNUton firmware source includes `chmod(mountpoint, 0777)` before `post-mount`. Private RouterCloud state-directory `0700` remained a separately observed condition.

@@ -13,6 +13,10 @@ Both files are templates only. A template or unfilled placeholder is never valid
 
 ## Published validation timeline
 
+- **2026-10-23 — Issue #287 ARMv7 bounded-exec research (Fedora-only, HOLD):** a [sanitized, bounded process-lifetime/FD/capability and signed-worker checkpoint](2026-10-23/issue287-native-bounded-exec-fedora-lab-checkpoint.md) records V0.7p–V0.7v, an inherited `memfd` in the earlier V0.7u fixture, and a separate `FD_CLOEXEC` candidate. It does **not** demonstrate a PID-reuse attack, complete descendant cleanup, or a production DNS Guard patch. [Dated engineering worklog](../docs/worklog/2026-10-23.md). `ISSUE287_DEPLOYMENT_GATE=HOLD`.
+
+
+
 - **2026-10-21 — Tailscale 1.104.2 ARMv7 live rollout:** operator-reported locally compiled ARMv7 binaries upgraded the reference ASUS from live 1.103.375; controlled daemon restart, connected state, configured exit-node/DNS/firewall prerequisites, and project healthcheck **0 failures / 0 warnings** passed. Previous binaries preserved for rollback. Full router reboot and independent external-client dataplane retest were **not** performed. See [bounded live evidence](2026-10-21/tailscale-1.104.2-armv7-live-validation.md).
 
 - **2026-10-21 — Issue #235 read-only ASUS privilege evidence + Fedora rootless/browser labs:** an operator-authorized read-only V2.30R2 audit identified UID 0 / broad process capabilities and `0777` SSD mount roots/backup parent, while root-owned asset files remained mode `0644`. Fedora-only V2.30M–V negative tests were bounded; cached-credential CSRF tests P/P1 were **SKIP** and **V2.30W was NOT RUN**. No RouterCloud/DUFS/SSD/JFFS remediation was deployed; `DEPLOYMENT_GATE=HOLD`. [Evidence and limits](2026-10-21/issue235-readonly-privileges-and-fedora-rootless-lab.md), [dated worklog](../docs/worklog/2026-10-21.md).
