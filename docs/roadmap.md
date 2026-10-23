@@ -1,3 +1,5 @@
+# Roadmap
+
 ### Issue #235 — restore security engineering as immediate priority (2026-10-20)
 
 - **No further backup/media preflight by default.** V2.8 verified both primary script copies, V2.9 Fedora **9/9 PASS / SAME_ST_DEV**; extra [V2.10](operations/issue235-independent-script-recovery-options-v210-2026-10-20.md) off-host recovery is deferred design only. Completed separate Fedora Recovery covers root/`systemd-machines`/`/boot`/EFI, not separate `/home`; no proof it includes the private #235 backups. Retain independent recovery as an open **production** approval risk, not a reason to block offline publisher research.
@@ -12,8 +14,6 @@
 
 - [V2.12 upstream exact-tag source audit](../evidence/2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md) confirms `run_custom_script` does `stat()` / execute-bit checks then `_eval` uses `fork()` and `execvp()`: identity not bound to an authenticated inode; no owner/digest validation. `cru` serializes job-file mutation, not execution. This is source evidence, **not** an attested production firmware binary or exploit reproduction.
 - Existing JFFS `init-start`, in-script locks, deleting Cron and generic installer remain disallowed as comprehensive remediation. Next substantive proof is an independent root-only launcher/publisher plus firmware-level inhibition or a separately reviewed supervised-only NO-GO/risk decision, old-FD exclusion and JFFS2 fail-safety. Do not resume backup expansion or touch PR #245/RouterCloud/ASUS.
-
-# Roadmap
 
 ### Issue #235 — V2.10 independent post-Fedora-loss recovery decision (2026-10-20)
 
