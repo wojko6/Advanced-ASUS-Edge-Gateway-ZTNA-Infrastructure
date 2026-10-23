@@ -1,6 +1,6 @@
 # Project status
 
-**Status date:** 2026-10-21 — additional bounded live Tailscale 1.104.2 ARMv7 update (service restart and project healthcheck PASS 0/0). The prior 2026-10-18 ASUS DNS Guard / Issue #235 and Fedora Homelab Update checkpoints retain their separately dated and constrained scopes. No production DNS Guard ownership repair, automatic package installer, RouterCloud wrapper deployment, or Issue #235/PR #245 SSD hook activation is claimed. Earlier broad live router acceptance remains separately dated.
+**Status date:** 2026-10-23 — documentation and read-only/laboratory Unbound 1.26.2 release-readiness checkpoint, **not a live Unbound deployment**. Latest bounded live Tailscale 1.104.2 ARMv7 update remains dated 2026-10-21 (service restart and project healthcheck PASS 0/0). The prior 2026-10-18 ASUS DNS Guard / Issue #235 and Fedora Homelab Update checkpoints retain their separately dated and constrained scopes. No production DNS Guard ownership repair, automatic package installer, RouterCloud wrapper deployment, or Issue #235/PR #245 SSD hook activation is claimed. Earlier broad live router acceptance remains separately dated.
 
 ## 2026-10-23 — Unbound 1.26.2 Fedora-only readiness; production unchanged
 
