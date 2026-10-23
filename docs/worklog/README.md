@@ -4,7 +4,7 @@ This directory records dated engineering sessions for the ASUS Edge Gateway / ZT
 
 The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deeper troubleshooting case studies. Entries are based on repository history and published evidence. When a date has no repository-backed engineering change, the worklog says so instead of reconstructing activity from memory.
 
-**Publication boundary (2026-10-18):** This is a curated, *sanitized public chronology*, not a verbatim mirror of the operator's private diary. Historical retrospective entries are labeled as such, and separate Android/workstation activities are operator-reported unless public evidence is linked. Never transfer raw private worklogs, keys, sensitive paths, user data or credentials. Compare date coverage weekly and publish only reviewed, documentation-only changes. [October 1–18 coverage and publication audit](../audits/2026-10-18-public-worklog-coverage-audit.md).
+**Publication boundary (2026-10-18):** This is a curated, *sanitized public chronology*, not a verbatim mirror of the operator's private diary. Historical retrospective entries are labeled as such, and separate Android/workstation activities are operator-reported unless public evidence is linked. Never transfer raw private worklogs, keys, sensitive paths, user data or credentials. Compare date coverage weekly and publish only reviewed, documentation-only changes. [October 1–18 coverage and publication audit](../audits/2026-10-18-public-worklog-coverage-audit.md). [Full Markdown-tree link and consistency audit (2026-10-23)](../audits/2026-10-23-full-documentation-consistency-review.md) records the Oct 23 and missing Sep 30 index reconciliation.
 
 ## Timeline
 
@@ -22,8 +22,8 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 - [2026-09-26](2026-09-26.md) — Wi-Fi 6 HE80/HE160 MT7922 interoperability investigation, driver A/B comparison, Android HE160 reference validation, sanitized case-study publication and deferred Fedora Live follow-up.
 - [2026-09-27](2026-09-27.md) — current-firmware DNS/Diversion/startup/Android validation closure, canonical Mermaid architecture set, and completed router disaster-recovery baseline with clean-room restore.
 - [2026-09-28](2026-09-28.md) — Pi-hole main-LAN cutover, DNS analytics/Loki pipeline, reboot persistence, two-client validation and initial Grafana GitHub/CI dashboard.
-- [2026-09-30](2026-09-30.md) — router-management split-DNS/HTTPS certificate-name resolution and Personal Cloud #136 secure rsync, forced-command SSH and systemd path/timer live/reboot acceptance.
 - [2026-09-29](2026-09-29.md) — Engineering/CI Grafana closure; #127/#128 security hardening; project-native Edge Gateway WebUI; final eight-resource Polish WebUI persistence; CI-fixture and documentation reconciliation.
+- [2026-09-30](2026-09-30.md) — router-management split-DNS/HTTPS certificate-name resolution and Personal Cloud #136 secure rsync, forced-command SSH and systemd path/timer live/reboot acceptance.
 - [2026-10-01](2026-10-01.md) — existing RouterCloud versioned backup and Fedora syslog-ng resilience checkpoint (previously unindexed).
 - [2026-10-02](2026-10-02.md) — existing ASUS WebUI localization and DNS Director deployment checkpoint (previously unindexed).
 - [2026-10-03](2026-10-03.md) — RouterCloud UI/Favorites, restricted backup status and password-recovery production acceptance; links to original evidence.
