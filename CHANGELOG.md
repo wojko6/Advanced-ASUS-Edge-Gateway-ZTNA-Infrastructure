@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **2026-10-23 Unbound 1.26.2 release-readiness documentation (no deployment):** published bounded Fedora ARMv7/IPK/QEMU test outcomes, independent-recursion and DNS Guard continuity limitations, real-opkg file-transaction downgrade/rollback lab evidence, protected Unbound Manager start-script collision, off-router staging checkpoint and maintenance HOLD. Production remains on five Unbound 1.26.1-1 packages; no files staged or installed on ASUS.
 ### Added
 - **2026-10-18 Fedora Homelab Update documentation:** record production check-only update-watch timer and operator-approved Grafana 13.2.4 pilot with verified backup and bounded postflight; publish sanitized v0.1–v0.9 engine/lock laboratory results and outstanding unattended-installation HOLD gates. Add runbook, worklog, operator evidence and cross-links. No ASUS/RouterCloud production change or automatic installer enabled by this documentation change.
 - **2026-10-12 strategic platform direction:** cancelled the formerly planned ASUS RT-BE88U purchase/migration; TUF-AX5400 remains the production gateway with a CORE v1.0 stability/recovery milestone. OPNsense/x86 is undated future research only, starting with an optional isolated Windows 11 VM lab (not installed). Reconciled canonical architecture, status, requirements, compatibility, roadmap and documentation audit; historic dated PDFs and plans remain history. No router changes or firmware deployment.
