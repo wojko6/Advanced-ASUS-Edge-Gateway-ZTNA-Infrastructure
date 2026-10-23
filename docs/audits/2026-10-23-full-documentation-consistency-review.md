@@ -21,6 +21,7 @@
 | Stale current-state wording | `docs/roadmap.md` used `Current live Tailscale: 1.103.375` under its older Oct 10 snapshot. | Explicitly labeled the 10 Oct record historical and cross-linked the superseding 1.104.2 evidence from 21 Oct. |
 | Inaccurate management-path generalization | Current Tailscale management flow said router SSH was disabled, while Oct 23 read-only operator access used ASUS SSH TCP/1122 from Fedora. | Distinguished the documented HTTPS Tailscale management DNAT from separately observed authorized SSH; no unverified WAN/tailnet SSH exposure claim. |
 | Missing current roadmap release reference | `docs/roadmap.md` did not summarize the pending Unbound 1.26.2 maintenance staging. | Added a prominent 2026-10-23 Fedora-only checkpoint, rollback limits and `DEPLOYMENT_GATE=HOLD`; linked the detailed release-readiness report. |
+| Installation metadata guard | Fedora release-staged Manager start script has restricted file mode `0600`; the original ASUS init script has executable mode `0755`. A checksum does **not** restore permissions. | Added an explicit future-restore requirement to check file bytes, executable mode and owner/group before any service start; no deployment script was enabled. |
 
 ## Key current-state contracts retained
 
@@ -41,4 +42,4 @@
 
 Review the current PR diff, check that the date index covers all dated worklogs including **2026-09-30** and **2026-10-23**, await a successful CI conclusion on the final head and merge *documentation only* if approved. A maintenance decision for Unbound on October 24 is separate and requires explicit operator authorization, including acceptance of a possible DNS interruption.
 
-**Review result:** local navigation/file-presence PASS within parser scope; three current-state text problems corrected; two index/coverage gaps corrected; no new production acceptance.
+**Review result:** local navigation/file-presence PASS within parser scope; three current-state text problems corrected; two index/coverage gaps corrected; an additional executable-mode restoration gate documented; no new production acceptance.
