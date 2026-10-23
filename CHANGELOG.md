@@ -79,6 +79,7 @@
 - Closed the unchanged-state observation on 2026-09-22 after continuous operation from 2026-09-11 through 2026-09-22; current documentation now treats later router changes as controlled maintenance rather than an active Stability Gate.
 
 ### Fixed
+- **2026-10-23 #276 recovery rollback:** merged [PR #290](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/290), making snapshot and rollback use the same verified applicable manifest and keeping legacy `jffs/scripts/post-mount` review-only. GitHub CI and exact-merged Fedora mutation-control regressions passed. This was a **repository code fix only**, not a live ASUS restore or blank-device DR acceptance; missing-Entware recovery remains #129.
 - Fixed a cold-boot DNS dependency cycle where the router system resolver could depend on Pi-hole before Unbound was allowed to start behind hostname-based NTP bootstrap; WAN-event resolver selection now delegates to DNS Guard instead of hard-coding the local resolver.
 - Fixed DNS Guard fallback idempotency so an already-correct bootstrap resolver is treated as a successful no-op rather than an error.
 - Corrected Tailscale router HTTPS management from an invalid `8443 -> 8443` assumption to external TCP/8443 -> router LAN TCP/443, matching the live ASUS httpds listener.

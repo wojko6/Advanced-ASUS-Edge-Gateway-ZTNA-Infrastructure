@@ -292,6 +292,21 @@ The case demonstrates a full vulnerability-remediation lifecycle: detection,
 risk analysis, upstream coordination, reproducible build engineering, staged
 deployment, rollback readiness and bounded post-change claims.
 
+## 15. Fedora Wi-Fi profile and ASUS management access recovery — RESOLVED
+
+**File:** [Fedora HTTPS/SSH recovery after switching to the authorized 5 GHz Wi-Fi profile (2026-10-21)](case-studies/fedora-asus-lan-management-dhcp-allowlist-2026-10-21.md)
+
+A resolved operational LAN-management incident covering:
+
+- successful Internet/ICMP gateway connectivity despite ASUS HTTPS/SSH timeouts from Fedora's 2.4 GHz Wi-Fi profile;
+- Wi-Fi packet capture showing repeated unanswered SYNs for the management ports;
+- a still-present DHCP reservation for the administrative workstation and **distinct MAC/IP identities across its 2.4 and 5 GHz profiles**;
+- the operator's identification of 5 GHz as the intended management Wi-Fi path;
+- real 5 GHz reconnection restoring the historically reserved admin IP, **HTTPS HTTP 200** and **SSH_ACCESS_OK**, without modifying router settings;
+- a separate, earlier Fedora Tailscale-DNS issue resolved independently of router administration.
+
+**Status: OPERATIONALLY RESOLVED.** The 2.4 GHz timeout and 5 GHz positive test are verified, but they changed both source IP/MAC and the Wi-Fi profile. The **exact router-side enforcement mechanism** (SSID/segment policy versus source-IP allowlist, or both) and post-reboot persistence were not separately tested. No production firewall or DHCP settings were changed.
+
 ## How to read these cases
 
 Where applicable, case studies separate:

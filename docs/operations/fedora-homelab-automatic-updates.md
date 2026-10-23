@@ -35,7 +35,7 @@ This does **not** change the 2026-10-18 claim about absence of a packaged `victo
 - `homelab-update-check.timer` is enabled/active and invokes `homelab-update-check.service`; `OnCalendar=*-*-* 13:00:00`, `RandomizedDelaySec=15min`, `Persistent=true`. It checks **syslog-ng, Grafana, Loki, Alloy, Caddy and Restic** with `dnf5 check-upgrade`, but **installs nothing**.
 - On 2026-10-18 Update Watch v1 detected the `grafana` 13.2.4 candidate. Later manual Grafana Pilot **v2.3** performed the approved single-package upgrade. No separate unattended installer/timer or background update-agent deployment is evidenced.
 - Production effects of the manual pilot: temporary Grafana stop/start for a consistent backup, DNF transaction of **Grafana only**, package upgrade and service restart. The operator installed the prerequisite `sqlite` package manually. These are real Fedora changes, not a read-only lab.
-- The backup at `/var/backups/grafana/pilot-v2.3-20261018-195224-243712` was marked `COMPLETE` with SQLite integrity and archive verification PASS. **Never publish archive contents, environment values or private host paths beyond the sanitized evidence needed for recovery.** Backup presence does not prove a full restore.
+- The operator-reported local Grafana Pilot v2.3 backup was marked `COMPLETE`, with SQLite integrity and archive verification PASS; its exact host directory is withheld from this public runbook. **Never publish archive contents, environment values or private host paths beyond sanitized recovery evidence.** Backup presence does not prove a full restore.
 - Post-upgrade: RPM `grafana-13.2.4-1.x86_64`; API HTTP 200; Grafana, syslog-ng, Loki, Alloy, Caddy active; 15 Grafana rules in SQLite, 0 paused; Grafana error-priority journal lines in the checked hour: 0; email and Telegram test messages operator-confirmed. **Per-rule delivery, all direct receiver mappings, provisioning reload persistence and rollback after schema migration were not independently revalidated.**
 
 **Laboratory only (2026-10-18, no production integration):**
@@ -93,3 +93,122 @@ The v0.6 first static parser failed to recognize `%h` entrypoints (`STATIC_AUDIT
 - Only then design and authorize an unattended `systemd` installer service/timer. **None is deployed as of this evidence date.**
 
 See [operational index](../operations.md), [monitoring README](../../monitoring/README.md), [worklog](../worklog/2026-10-18.md), and [audit](../audits/2026-10-18-fedora-update-documentation-review.md).
+
+---
+
+## 2026-10-19 addendum — Fedora Recovery validation and return to service-scoped updates
+
+> **Later operator-reported checkpoint, not a retroactive change to the 2026-10-18 evidence above.** The operator verified a separate **Fedora host Recovery** mechanism through a real isolated Btrfs receive. This does **not** prove that the **RouterCloud backup repository** was restored or that its `flock` mechanism is coordinated with a root updater.
+
+- User-space RouterCloud backup/maintenance units and persistent timers were verified in the **user** systemd manager. Journals and bounded application markers for recent scheduled runs were successful. System-manager `not-found` and initial script-path lookup failures were **diagnostic context/specifier errors**, not failures of the real user units. Static Bash/DAC/Restic/flock checks passed; actual shared cross-UID lock lifetime and RouterCloud restore remain unproven.
+- The host recovery baseline includes read-only Btrfs snapshots of Fedora's system root and separately managed nested machines volume, with separate boot/EFI archives. The operator reported successful independent integrity checks, representative file restoration, a second physical NVMe encrypted Restic repository, full `restic check --read-data`, and **successful real `btrfs receive` of both exported subvolumes into an isolated disposable image**.
+- **Strict limits:** This recovery repository is separate from RouterCloud application backups. It is on a second NVMe **inside the same workstation**, not off-site; live databases are not asserted application-consistent, separate `/home` is not included, and complete Live USB recovery / a booted restored Fedora are **NOT TESTED**. The operator deferred V21A Live USB testing and chose to retain/refresh the baseline later.
+- The declared main goal is **automatic installation of explicitly allowed individual homelab service updates only**. The historical Fedora Recovery work is a completed prerequisite/checkpoint, not authorization for unattended OS-wide `dnf upgrade` or automatic kernel/NVIDIA changes. Grafana, Loki, Alloy and other higher-risk components still require separate approvals and verified service-specific recovery paths.
+- No 2026-10-19 package installation, production RouterCloud wrapper edit, ASUS mutation, firmware change or service reboot was reported in this update/recovery workstream. The previous-day manually approved Grafana pilot remains dated 2026-10-18.
+
+**Decision:** preserve the existing `homelab-update-check.timer` in check-only mode; continue solver transaction preview, package allowlisting, cooperative locking, per-service pre/postflight and notification design. No general unattended installer exists. **`AUTO_INSTALL_GATE=HOLD`.**
+
+See the [dated Fedora Recovery checkpoint](fedora-recovery-checkpoint-2026-10-19.md) and [October 19 sanitized worklog](../worklog/2026-10-19.md).
+
+
+## Later 2026-10-19 checkpoint — live DNF5 watcher remediation
+
+Evidence: operator-executed Fedora terminal outputs, not GitHub CI. This later checkpoint supersedes only the earlier statement that the watcher's production source was untouched on October 19.
+
+- Non-root DNF5 discovery initially failed: six libdnf5 state TOML files were root-owned mode 0600 versus installed RPM manifest 0644. A targeted operator-approved permission repair restored all six files to 0644. Subsequent DNF5 JSON discovery exited 0 with zero update candidates; no package installation occurred. Original creation cause remains unproven.
+
+- The root systemd check-only watcher retained UMask=0077. Laboratory policy tests, Bash quoted-array replay, child umask scope and static symlink trust checks passed. A v2.2.1 installer receipt-serialization error occurred AFTER backup creation but BEFORE live replacement; it did not patch production.
+
+- Operator-approved v2.2.2 production deployment changed exactly one DNF invocation line, setting umask 0022 only for the DNF child; parent service UMask=0077, timer and all backup jobs remained unchanged. Durable backup, patch checksum, Bash syntax, SELinux/xattr metadata and static postflight were accepted. Rollback receipt remains private.
+
+- The operator then ran the actual systemd check-only unit: Result=success, ExecMainStatus=0, normal oneshot inactive/dead afterwards. Post-run patch checksum, six DNF state file modes and non-root DNF5 JSON discovery all passed (zero candidates). This proves one successful live check-only invocation; it does not prove a future file recreation, live candidate-bearing DNF solver, unattended install, backup cooperation or application restore.
+
+- Next: read-only root/user-manager backup lock coordination review. Do not execute or modify backup wrappers, take a production lock, reveal credentials, alter timers, or touch ASUS, RouterCloud, Issue #235 or Fedora Recovery. AUTO_INSTALL_GATE=HOLD.
+
+
+### 2026-10-19 later backup runtime mapping audit (static only)
+
+- Operator-run non-root V1.0 coordination audit: 10/10 self-tests passed. The two live user-manager backup/maintenance units and timers were loaded/active as appropriate; both installed wrapper shapes used the same XDG_RUNTIME_DIR-or-/tmp and UID-based advisory lock name with fd 9 and nonblocking flock. User lock file was absent at the sampled instant. This supports source-level similarity only, not same runtime inode or root-user coordination.
+
+- Operator-run V1.1 user-manager runtime mapping audit: 8/8 self-tests passed; manager and login XDG_RUNTIME_DIR resolved to the same standard owner-0700 location. Both backup services use PrivateTmp=yes, UMask=0077 and were inactive at the instant sampled. Fallback /tmp separation risk was not needed under the observed manager environment, but actual service-process environment was not observed.
+
+- Existing root Update Watch is check-only and uses UMask=0077. A future root installer cannot assume that expanding the user's UID-based lock expression yields the same pathname or inode: root UID and environment differ. Neither the user backup tasks nor root updater has deployed a shared cross-UID cooperation lock.
+
+- Next test is an isolated root-owned fixture under /run with a controlled user-group-accessible advisory lock to establish bidirectional flock contention in lab only. No live backup process, unit, timer, file, or lock should be touched. The real resolved inode/descriptor lifetime and production coordination remain HOLD. AUTO_INSTALL_GATE=HOLD.
+
+
+### 2026-10-19 cross-UID lock test V1.2 (isolated root-owned fixture)
+
+- Operator reported 8/8 policy self-tests PASS and a successful real root/user advisory flock test in a disposable /run fixture: same root-owned group-accessible lock inode, root-held/user-blocked and user-held/root-blocked, controlled directory nonreplaceability, successful reacquisition, and cleanup PASS.
+
+- This is an isolated fixture and does not execute either production backup wrapper, the check-only Update Watch, Restic or DNF. It does not demonstrate production user-manager to root-installer coordination, descendant fd9 lifetime in the live wrappers or safe reconfiguration of their locks. The root updater still lacks a live shared cooperative lock. AUTO_INSTALL_GATE=HOLD.
+
+- Follow-up synthetic Bash lifetime test planned against the observed fd9/flock -n/exit-zero-on-busy shape. A busy backup wrapper's exit 0 must not be interpreted as completed backup; collect app result markers separately.
+
+
+### 2026-10-19 — isolated backup wrapper lock lifetime lab V1.3
+
+- **Evidence provenance:** operator-executed Fedora terminal output, root-supervised **synthetic Bash** fixture; no actual production backup wrapper, maintenance unit, Restic, DNF, or RouterCloud user lock executed. The local self-test reported **10/10 PASS**, including directory/lock DAC, FD 9 and nonblocking flock pattern, explicit busy-exit-zero classification, and absence of real workload.
+- **Runtime in isolated fixture:** root-held lock caused simulated user backup and maintenance contenders to skip; the test user wrapper obtained the common protected lock when free; a foreground child inherited FD 9; root remained blocked while the child was active and after a competing process exited; maintenance was blocked while the synthetic backup held the lock; root could reacquire only after release. Stable common inode and fixture cleanup passed. **LAB_RESULT=PASS_ISOLATED_WRAPPER_LIFETIME**.
+- **Critical status interpretation:** simulated backup/maintenance wrappers intentionally returned **exit code 0 when flock was busy**. This represents **SKIPPED**, not **SUCCESSFUL BACKUP**. A future update prerequisite must validate actual backup completion through independent status/receipt evidence, not infer it from the service exit code alone.
+- **Limitations:** real live wrapper FD inheritance, lock ownership across production child lifetimes, cross-UID coordination with a root updater and a shared production lock were **not tested or deployed**. Read-only audits and isolated fixtures do not authorize RouterCloud wrapper/timer modifications. **AUTO_INSTALL_GATE=HOLD**.
+
+
+### 2026-10-19 public-path sanitization correction
+
+The exact local Grafana pilot backup directory was removed from this public runbook and the Oct 18 worklog in a dated editorial correction. Operator-reported backup/upgrade checks and their original event dates are unchanged. The sanitized public path should not be treated as a recovery command. No new runtime backup, restore or package installation is asserted by this documentation edit.
+
+
+### 2026-10-19 — proposed outer cooperative lock V1.4 (design only)
+
+**Evidence class: design-only + assistant-side isolated disposable synthetic lab**, not an operator-run Fedora host result. Existing production RouterCloud backup and maintenance wrappers still use their own UID/runtime-dependent `flock -n` on FD9. Neither they nor the root updater currently participate in a shared production cross-UID lock.
+
+- Proposed additional **outer** shared FD8 lock: a root-provisioned, root-owned `/run` directory and root:root `0644` regular file opened **read-only** by all cooperating participants; Linux exclusive `flock` works on such a descriptor. Keep existing FD9 inner locks unchanged. No mount/runtime path is deployed or promised, and SELinux, boot-time provisioner and actual cross-UID service restrictions still need a Fedora acceptance gate.
+
+- The assistant ran V1.4 in a disposable synthetic fixture with 12/12 parser/self-tests and bidirectional root/user contention PASS: root lock blocks user backup+maintenance surrogates, user backup or maintenance blocks root and the other surrogate; a foreground child successfully inspected FD8 and FD9. Stable inode and cleanup PASS. Actual source on the operator's Fedora **has not yet been checked for V1.4**; the synthetic surrogates execute only statically recognized lock lines, never real network, DNF, Restic or backup work.
+
+- Synthetic global-lock busy exit `75` is a *prototype* marker, not an approved live backup policy. Backup tasks should not be silently skipped, and the existing inner-busy `exit 0` is not evidence of completed backup. Agree on backup priority, bounded wait/retry, timeouts, alerts, and explicit RouterCloud workstream authorization before touching any live unit or wrapper.
+
+- Operator V1.4 read-only source audit / disposable root-supervised lab **PENDING**; real cooperative production integration **NOT IMPLEMENTED**, unattended package installation **HOLD**.
+
+
+### 2026-10-19 — operator Fedora V1.4 outer-FD8 integration lab PASS
+
+**Evidence provenance:** terminal output pasted by operator from Fedora 44; not CI and not assistant execution on the operator's host. This entry follows the earlier V1.4 **design-only/assistant synthetic** checkpoint and updates only the lab acceptance status, **not** the production integration gate.
+
+- Downloaded candidate SHA-256 pin verified by operator. `SELFTEST_TOTAL=12/12`, `AUDIT_RESULT=PASS_STATIC_SOURCE_ONLY`, `AUDIT_EXIT_CODE=0`; the installed RouterCloud backup and maintenance wrappers matched the narrowly recognized source FD9/UID-runtime lock patterns. Their full executable bodies were never executed by the test.
+
+- A root-supervised ephemeral fixture used a single root:root `0644` read-only-open outer lock on FD8 and reconstructed source-shaped synthetic user backup and maintenance workers retaining existing FD9 inner lock. `ROOT_USER_COOPERATION_LAB=PASS`, `LAB_EXIT_CODE=0`, root/user bidirectional contention and root reacquire PASSED for both synthetic roles. The foreground child verified FD8 **and** FD9, inode stability and fixture cleanup passed.
+
+- In synthetic tests a busy shared FD8 returned `75` to identify SKIP; this is **not** the approved production policy. A real scheduled backup must never be silently treated as successful just because a lock-contended synthetic job skipped; define fail-closed retry/timeout/alert semantics separately. Live service/cgroup descendants, SELinux and boot-time `/run` creation have not been acceptance-tested.
+
+- `LIVE_WRAPPERS_OR_UNITS_MODIFIED=NO`, `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`. Next gate: synthetic priority, timeout, scheduler conflict, crash/descendant and signal behavior, **without** production RouterCloud edits.
+
+
+### 2026-10-19 — operator Fedora V1.5 synthetic lock scheduling policy PASS
+
+**Provenance:** actual operator-executed Fedora terminal output; script integrity SHA-256 was checked, `SELFTEST_TOTAL=9/9`, `LAB_RESULT=PASS_ISOLATED_POLICY` and `LAB_EXIT_CODE=0`. This is **not** a production backup/maintenance/systemd/Restic/DNF run.
+
+- In one **nonroot disposable fixture**, the root updater contender correctly deferred when a backup held the lock and subsequently progressed after release; the backup contender waited and completed; backup and maintenance timeouts were **not** misreported as successful runs. A crash without a surviving lock-holding descendant released the lock. A child inheriting the lock preserved exclusion after parent exit until the child finished.
+
+- The fixture distinguished **`DEFERRED=75` from `COMPLETE=0`**; a service exit status or lock release alone remains insufficient as evidence that a real RouterCloud backup completed. The existing production wrapper may return 0 after an inner FD9 lock conflict; independent, fresh and verified application completion evidence is required before accepting a backup prerequisite.
+
+- `PRODUCTION_LOCKS_OR_WRAPPERS_CONTACTED=NO`, `REAL_SCHEDULING_INTEGRATION=NOT_IMPLEMENTED`, `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`. Next design gate: define trustworthy per-run backup completion receipt (attempt identity, freshness, complete vs skip/timeout/error), fail-closed preflight and user notification; test entirely in synthetic fixtures before any live wrappers or timers are touched.
+
+
+### 2026-10-19 — receipt-freshness policy V1.6 proposal (assistant-side lab only)
+
+- **Design-only gate:** the current user backup wrapper may return exit 0 when an existing FD9 lock is busy; therefore a systemd success exit or a prior `LAST_RESULT=success` is not proof of a **new**, attributable successful backup. A future root updater needs a per-attempt completion receipt with explicit attempt identity, success state, return code, finish stage and bounded freshness; reject stale, incomplete, deferred, failed, missing or mismatched evidence.
+
+- **Assistant-side isolated V1.6 prototype:** 12/12 self-tests plus a disposable nonroot test with a private JSON fixture PASS; validates exact attempt ID, required schema, success/rc 0/complete state, timestamp ordering and bounded age, no duplicate/unknown fields, and strict refusal of deferred/timeout/error outcomes. This is *not* operator Fedora acceptance and reads/writes no live RouterCloud state.
+
+- **Critical security limitation:** a user-owned receipt file, even mode 0600, can be fabricated or replayed by the same user; V1.6 validates only semantics and disposable DAC, **not authentic provenance, binding to actual Restic results, or continuity across service restarts**. Future implementation requires independently trusted execution/receipt design and the separate RouterCloud project's authorization. `PRODUCTION_SHARED_LOCK=NOT_DEPLOYED`, `AUTO_INSTALL_GATE=HOLD`.
+
+
+### 2026-10-19 — V1.6 operator check: isolated backup receipt semantics PASS
+
+The operator verified the V1.6 script hash and ran its nonroot, disposable fixture on Fedora: `SELFTEST_TOTAL_12_OF_12=PASS`, `LAB_RESULT=PASS_ISOLATED_RECEIPT_SEMANTICS`, `FIXTURE_CLEANUP=PASS`, `LAB_EXIT_CODE=0`. A fresh, complete attempt was accepted. Wrong-attempt replay, stale or future results, deferred, timeout, failed, absent, duplicate-field, unknown-field, boolean-RC and invalid-time cases were rejected. Private fixture directory and file tests passed.
+
+**Evidence limit:** schema and freshness checks do not establish trustworthy origin or a real Restic backup. `PRODUCTION_BACKUP_RECEIPT=NOT_CREATED`, `PROVENANCE_AUTHENTICATION=NOT_IMPLEMENTED`, `TRUSTED_PRODUCTION_RECEIPT=NOT_IMPLEMENTED`, `INTEGRATION_WITH_ROUTERCLOUD=NOT_DEPLOYED`. Real backup and DNF were not run by V1.6.
+
+**End of 2026-10-19 Fedora session:** the previously repaired production Update Watch remains check-only, and backup coordination V1.4, scheduling V1.5 and receipt validation V1.6 remain isolated-lab findings only. No further deployment was approved. Production cross-UID cooperation and trustworthy backup completion remain unproven. `AUTO_INSTALL_GATE=HOLD`.
