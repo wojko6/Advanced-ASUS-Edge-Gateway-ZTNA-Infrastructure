@@ -2,6 +2,8 @@
 
 [![Validation suite](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml/badge.svg?branch=main)](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml)
 
+> **First time here?** Begin with the **[15–20-minute guided tour](docs/START-HERE.md)** or **[Zacznij tutaj — po polsku](docs/pl/START-HERE.md)**. These reading routes explain what to open first, what to skip, and how to distinguish tested production state from plans or lab-only work. **No installation required.**
+
 A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. The current reference deployment combines Asuswrt-Merlin, Entware, Tailscale, Pi-hole, Unbound, syslog-ng, off-router observability, and a least-privilege firewall policy.
 
 This is an **enterprise-style lab**, not an enterprise-grade appliance. It has no high availability, redundant WAN, native VLAN microsegmentation, or vendor support.
@@ -9,6 +11,8 @@ This is an **enterprise-style lab**, not an enterprise-grade appliance. It has n
 **Current reference Tailscale runtime:** `1.103.375` on the unstable/dev track. Earlier dated evidence that records `1.102.3` is a historical pre-upgrade checkpoint, not the current live router state.
 
 **Platform direction (decision 2026-10-12):** the ASUS TUF-AX5400 **remains the production gateway**; the previously planned RT-BE88U purchase/migration is **cancelled**, not deferred as an active target. We are bringing the existing ASUS CORE toward an evidence-backed v1.0. **OPNsense/x86 is a possible replacement only in an unspecified future**, with an optional isolated Windows 11 virtual lab and **no current production migration or hardware purchase**. See the [2026-10-12 platform decision](docs/architecture/platform-direction-2026-10-12.md). Historical RT-BE88U benchmark plans and dated records are not current purchase plans.
+
+**Later Flint 4 architecture study (2026-10-15; conditional, not purchased):** [Flint 4 + ASUS services-node design v2.0](docs/architecture/Flint4-ASUS-Future-Architecture-2026-10-15.md) proposes **GL.iNet Flint 4 (GL-BE14000)** as a single WAN/firewall/Wi-Fi 7/VLAN/DHCP gateway, retaining the existing **TUF-AX5400** as a Wi-Fi-off/DHCP-off Pi-hole, Unbound, RouterCloud, Entware and SSD services node. A managed switch is **optional** for the initial topology. Independent Flint-side DNS fallback and VLAN enforcement are **not implemented or accepted**; [#212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212) remains **PAUSED**. No purchase, cutover or production change is approved, and this design is **not a prerequisite for CORE v1.0**. See the [future-architecture PDF v2.0](docs/architecture/ASUS-Edge-Gateway-Future-Flint4-ASUS-2026-10-15-v2.0.pdf) and [current status](PROJECT-STATUS.md).
 
 **Production maintenance boundaries (last broad live gate 2026-10-09):** DNS Guard v3.2 was production-validated within the separate [2026-10-08 break-glass/power-cycle gate](docs/dns-guard-v3.2-recovery-audit-live-validation.md); the existing reference router then passed a [controlled 2026-10-09 Pi-hole-aware reboot](evidence/2026-10-09/issue-129-pihole-dr-reboot-persistence.md), **not** a clean-device restoration. Deployed self-built Unbound `1.26.1-1` is current; [PR #202](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/202) is an **open draft, workstation-only reproducibility/recovery candidate**, not an upgrade. [Issue #200](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/200) is **closed** after an operator-provided 698-entry permission audit, retained Pi-hole owner exception, zero group/world-writable entries, and merged [isolated regression PR #209](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/209) (8/8 CI). No live emergency rollback is claimed. The Pi-hole-aware **full Disaster Recovery [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129) remains OPEN**. See [current status](PROJECT-STATUS.md), [9 October worklog](docs/worklog/2026-10-09.md) and [#200 final evidence](evidence/2026-10-09/issue-200-final-permissions-acceptance.md).
 
@@ -59,6 +63,8 @@ Core architecture documents now include:
 - [Boot & Service Dependency Flow](docs/architecture/boot-service-dependency-flow.md)
 - [Availability / Redundancy / SPOF](docs/architecture/availability-and-redundancy.md)
 - [L2 and Network-Access Security Applicability](docs/architecture/l2-security-applicability.md)
+
+**Separate future architecture — design only, NOT the deployed reference:** [Flint 4 + ASUS services-node v2.0](docs/architecture/Flint4-ASUS-Future-Architecture-2026-10-15.md) ([companion PDF](docs/architecture/ASUS-Edge-Gateway-Future-Flint4-ASUS-2026-10-15-v2.0.pdf)). The production-reference diagram and dated validation above remain authoritative for the current router.
 
 The previous `docs/images/Architecture.png` is retained only as a historical/illustrative artifact and is no longer the source of truth.
 
