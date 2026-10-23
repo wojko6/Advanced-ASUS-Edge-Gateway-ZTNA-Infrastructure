@@ -2,11 +2,11 @@
 
 > **Scope:** evidence-backed, operator-reported Fedora 44 / rootless Podman / QEMU tests and bounded **read-only** ASUS checks. **Not a deployment or go-live approval.** Production continues on Unbound **1.26.1-1** (five Entware packages); target is **1.26.2-1**. `DEPLOYMENT_GATE=HOLD`.
 >
-> This documentation is a new workstream separate from [Issue #235](../../issues/235), installer Issue #278 and Draft [PR #245](../../pull/245). No ASUS package installation, service restart, configuration change, or router staging occurred as part of the 1.26.2 work on this date.
+> This documentation is a new workstream separate from [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235), installer Issue #278 and Draft [PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245). No ASUS package installation, service restart, configuration change, or router staging occurred as part of the 1.26.2 work on this date.
 
 ## Source and package provenance
 
-- Existing [Draft PR #202](../../pull/202) supplies the **1.26.1** Entware ARMv7 recoverable build recipe; it remains a draft. The 1.26.2 candidate was built separately on Fedora from a locally modified, pinned copy. **It has not been merged or deployed.**
+- Existing [Draft PR #202](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/202) supplies the **1.26.1** Entware ARMv7 recoverable build recipe; it remains a draft. The 1.26.2 candidate was built separately on Fedora from a locally modified, pinned copy. **It has not been merged or deployed.**
 - Target Entware `armv7-3.2`, ARM EABI5 **soft-float**, glibc 2.27, Entware `/opt` layout. The source archive was hash-checked prior to the local build.
 - Seven `1.26.2-1` packages built and metadata/hash-checked. Exactly **five** match the already-installed production package set: `libunbound`, `unbound-daemon`, `unbound-anchor`, `unbound-checkconf`, `unbound-control`. `unbound-host` and `unbound-control-setup` are **not** part of the intended upgrade.
 - Five original `1.26.1-1` rollback IPKs were recovered and checked against their historical checksum manifest. A final Fedora-only release staging check verified the **5+5** intended IPKs and the protected Manager start script: `RELEASE_STAGING=PASS_FEDORA_ONLY`. Router staging was **not performed**.
