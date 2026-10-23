@@ -153,6 +153,16 @@ fi
 ROLLBACK_DIR="$TMP_DIR/pre-restore"
 mkdir "$ROLLBACK_DIR" || exit 1
 
+# The verified manifest may include legacy review-only hooks. Use one
+# applicable path set for both snapshots and rollback: restoring a file
+# for which no pre-restore snapshot exists must never be attempted.
+APPLICABLE_MANIFEST="$TMP_DIR/applicable-manifest-paths"
+if ! awk '$0 != "jffs/scripts/post-mount" && ($0 ~ /^jffs\// || $0 ~ /^opt\//) { print }' \
+    "$TMP_DIR/manifest-paths" >"$APPLICABLE_MANIFEST"; then
+    echo "ERROR: cannot construct applicable restore manifest" >&2
+    exit 1
+fi
+
 # Snapshot every live path that the archive can overwrite. An absent marker is
 # recorded for paths that do not exist so rollback can remove newly created data.
 while IFS= read -r relative_path; do
@@ -174,7 +184,7 @@ while IFS= read -r relative_path; do
     else
         : >"$marker" || exit 1
     fi
-done <"$TMP_DIR/manifest-paths"
+done <"$APPLICABLE_MANIFEST"
 
 rollback_restore() {
     echo "ERROR: restore failed; rolling back pre-restore state" >&2
@@ -195,7 +205,7 @@ rollback_restore() {
             mkdir -p "$(dirname "$live_path")" || rollback_failed=1
             cp -Rp "$rollback_path" "$live_path" || rollback_failed=1
         fi
-    done <"$TMP_DIR/manifest-paths"
+    done <"$APPLICABLE_MANIFEST"
     if [ "$rollback_failed" -ne 0 ]; then
         echo "ERROR: rollback encountered errors; manual recovery may be required" >&2
         return 1

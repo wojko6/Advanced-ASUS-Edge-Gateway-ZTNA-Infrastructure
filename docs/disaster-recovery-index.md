@@ -1,7 +1,7 @@
 # Disaster Recovery — navigation and current validation boundary
 
 **Status:** CURRENT navigation only (not a separate restore procedure).  
-**Reviewed:** 2026-10-10 (read-only BusyBox update; existing-router DR gate unchanged)  
+**Reviewed:** 2026-10-23 (merged #276 source regression and read-only router toolchain preflight; full DR gate unchanged)  
 **Tracking:** [#129 — Pi-hole-aware Disaster Recovery](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129) **OPEN**; [#100 — historical router DR baseline](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/100) completed.
 
 For **current deployment status**, start at [PROJECT-STATUS](../PROJECT-STATUS.md). For the hierarchy of evidence and instructions, use the [documentation model](documentation-model.md). This page is a **reading map**: it does not replace the manuals or repeat shell commands.
@@ -18,6 +18,7 @@ For **current deployment status**, start at [PROJECT-STATUS](../PROJECT-STATUS.m
 | Review 2026-10-09 actual router reboot | [Controlled reboot evidence](../evidence/2026-10-09/issue-129-pihole-dr-reboot-persistence.md) | Existing-router startup and DNS Guard persistence **PASS**, not a fresh restore |
 | Review 2026-10-09 package rebuild | [65-package offline clean-room evidence](../evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md) | Recursive 65-IPK closure and real `opkg --offline-root` ARMv7 container installation **PASS**, not router boot/DNS |
 | Review 2026-10-10 optional BusyBox persistence | [Read-only reboot-persistence follow-up](../evidence/2026-10-10/issue-129-custom-busybox-reboot-persistence.md) | Existing reference router `BUSYBOX_REBOOT_PERSISTENCE=PASS`, not a clean-device restore or rollback |
+| Review 2026-10-23 rollback fix | [Merged #276 regression evidence](../evidence/2026-10-22/issue-276-legacy-post-mount-rollback-review.md) and [Issue #276](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/276) | PR #290 merged; exact-source Fedora negative/positive regression PASS; no live router restore or new JFFS hook |
 | Follow the engineering chronology | [Worklog 2026-10-09](worklog/2026-10-09.md) and [2026-10-10](worklog/2026-10-10.md) | Historical sessions and newly reported lab activity, distinct from acceptance evidence |
 
 The [Polish documentation index](pl/README.md) groups translated/adapted operator guides. **English** is the canonical recovery contract; the Polish bare-router guide is a reviewed operator adaptation, not a certified literal translation. If safety gates differ, stop and reconcile with dated evidence.
@@ -33,6 +34,8 @@ The [Polish documentation index](pl/README.md) groups translated/adapted operato
 | Pi-hole package-manager reconstruction | PASS: offline, rootless ARMv7 Podman `opkg` install, **65 installed status records** and FTL SHA-256 |
 | Existing production router restart | PASS (2026-10-09): services persisted and project healthcheck had **0 failures / 0 warnings** |
 | Optional JFFS BusyBox latest-reboot persistence | **PASS (2026-10-10, read-only):** file timestamp predates boot, explicit execution and hash check; **not** a restored target or removal test |
+| `restore.sh` toolchain on a healthy ASUS with Entware (2026-10-23 read-only V2) | Required `find` options, AWK, and SHA-256 provider PASS under effective PATH; **no archive or restore executed** |
+| Firmware-only PATH simulation without Entware (2026-10-23 read-only V2) | Required `find` options FAIL; no SHA-256 provider. **STOP:** bootstrap a separately verified recovery toolchain; physical `/opt` loss was not simulated |
 | **Full replacement router/blank SSD firmware → restored DNS/DHCP/API** | **NOT TESTED** |
 
 **Next recovery gate:** on a disposable rebuilt target, validate service account **999:999**, restored modes and the seven FTL `security.capability` bits, deferred maintainer-script effects, Gravity restoration, Unbound → Pi-hole DNS, DHCP/reverse lookup, DNS Guard and post-recovery reboot. Maintain physical fallback management access. **Do not run `restore.sh --apply`, `setcap`, CFG import, formatting or experimental reboot on the healthy production router.**
