@@ -34,7 +34,7 @@ flowchart LR
 ## Validated scope and limitations
 
 - Tailscale is configured with **netfilter-mode=off**; project-owned EDGE_TS_* chains provide local firewall enforcement.
-- Router-management access is source-scoped. In the reference policy, authorized Tailscale clients use external TCP/8443 while the ASUS httpds target listener is TCP/443; router SSH is disabled.
+- Router-management access is source-scoped. In the reference policy, authorized Tailscale clients use external TCP/8443 while the ASUS httpds target listener is TCP/443; The management DNAT documented here is scoped to HTTPS; it does **not** describe all router SSH access. An authorized Fedora-to-router SSH session over TCP/1122 was observed on 2026-10-23 during a read-only Unbound preflight. This does not establish SSH exposure from WAN or the tailnet.
 - The HTTPS management DNAT rule in EDGE_TS_PREROUTING is created only for configured admin Tailscale sources and translates the external port to the configured target listener. EDGE_TS_INPUT independently requires the allowed source plus the post-DNAT destination/target port, then ends in DROP. The healthcheck also verifies that the target listener actually exists.
 - A 2026-09-23 negative test confirmed that a distinct tailnet client outside the admin source set retained peer reachability but could not establish TCP/8443 management access.
 - EDGE_TS_FORWARD permits only explicit selected-LAN rules plus the optional exit-node rule to the detected WAN interface; unmatched forwarded traffic reaches the default DROP.
@@ -42,7 +42,7 @@ flowchart LR
 - Exit-node source NAT is **platform-owned**. Current-firmware live evidence correlated the Tailscale-side flow with ppp0 egress after platform source translation.
 - Return traffic relies on the platform established/related path and the EDGE_TS_FORWARD ESTABLISHED,RELATED rule.
 - DNS interception is documented separately in [DNS Enforcement Flow](dns-enforcement-flow.md).
-- The reference router's current live Tailscale runtime is 1.103.375 on the unstable/dev track. The forwarding model remains `netfilter-mode=off`; the runtime upgrade did not change firewall ownership.
+- The latest documented live Tailscale runtime is **1.104.2** (controlled ARMv7 update on 2026-10-21; [dated evidence](../../evidence/2026-10-21/tailscale-1.104.2-armv7-live-validation.md)). The earlier 1.103.375 unstable/dev is historical. The forwarding model remains `netfilter-mode=off`; this version update did not itself establish new router-side firewall source scoping.
 
 ## Traceability
 
