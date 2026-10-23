@@ -510,6 +510,12 @@ and relevant documentation. Keep #212 LAN/Tailscale client DNS failover
 OFF-ROUTER and OPEN: synthetic v0.41 pass had a direct-gateway bypass,
 and v0.42 did not prove ASUS netns/veth/TPROXY support. No production trial.
 
+**Platform sequence (planning only; no hardware purchase or cutover authorized):**
+
+1. **Now — complete ASUS CORE v1.0 on TUF-AX5400.** Keep the existing gateway and production services unchanged; close the documented recovery, security and observability gates before declaring CORE accepted. No new router is required for this milestone.
+2. **Conditional future option — GL.iNet Flint 4 (GL-BE14000) + ASUS services node.** Flint 4 could become the *single* WAN/firewall/Wi-Fi 7/VLAN/DHCP gateway, while the existing ASUS (Wi-Fi/DHCP off) retains Pi-hole, Unbound, RouterCloud, Entware and SSD. Initial connections do **not require** a standalone managed switch; a switch is optional for expansion. An independent Flint-side DNS resolver/failover and client VLAN policy are **design goals, not deployed features**. [#212](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/212) stays **PAUSED**, and the ASUS SSD/RouterCloud security gates under [#235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) and Pi-hole-aware DR [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129) remain applicable. Use an isolated Flint lab, backup/rollback, DNS UDP/TCP failure tests and a separately approved WAN/ONT cutover before any deployment. See the [detailed conditional design](architecture/Flint4-ASUS-Future-Architecture-2026-10-15.md) and [future PDF v2.0](architecture/ASUS-Edge-Gateway-Future-Flint4-ASUS-2026-10-15-v2.0.pdf).
+3. **Independent future research — OPNsense/x86.** Keep optional virtual evaluation separate from Flint 4; it is neither installed nor a committed purchase or automatic successor to the current ASUS.
+
 **OPNsense/x86:** possible future platform, with no committed date or purchase.
 A **separate Windows 11 laptop** (16 GiB RAM, one physical USB Ethernet
 adapter; no current virtualization deployment) may host an isolated VM
