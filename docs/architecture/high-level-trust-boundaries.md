@@ -34,7 +34,7 @@ flowchart LR
 
 - **Tailscale Grants** are the first authorization boundary. The router firewall is a second, independent boundary for router management and selected-LAN forwarding. Exit-node forwarding is locally WAN-egress scoped but not yet source-scoped; issue #176 tracks parity with the management model.
 - Tailscale runs with **netfilter-mode=off** in this design; ASUS Edge owns the EDGE_TS_* iptables policy.
-- The reference router currently runs Tailscale 1.103.375 on the unstable/dev track; the runtime upgrade did not change local firewall ownership.
+- **2026-10-21 bounded update:** the operator reported a controlled ASUS runtime upgrade to Tailscale **1.104.2** (see [documentation PR #273](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/273)). This update did not transfer ownership of local firewall policy to Tailscale. Cold-reboot persistence and sustained external exit-node dataplane checks remain separate acceptance gates; the earlier 1.103.375 state is historical.
 - EDGE_TS_INPUT and EDGE_TS_FORWARD are attached ahead of competing parent rules for traffic arriving on tailscale0 and terminate in unconditional DROP after explicit allow rules.
 - Router service authentication still applies after network access is allowed.
 - The exit-node path uses project-owned forwarding policy but **platform-owned WAN NAT**; the project does not create a separate exit-node MASQUERADE rule.

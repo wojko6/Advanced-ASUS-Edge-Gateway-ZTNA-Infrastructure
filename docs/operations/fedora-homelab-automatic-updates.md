@@ -22,6 +22,12 @@ This workflow keeps package **discovery**, operator-approved **installation**, a
 
 Version numbers are a **dated observation**, not a standing assertion of what is installed later. `victoria-metrics` was not identified as an RPM package under that exact name and the probed `victoria-metrics.service` was inactive; **no claim about its full runtime packaging or current operation is made**.
 
+### 2026-10-21 VictoriaMetrics manual update (later, separate checkpoint)
+
+The 2026-10-18 inventory above was time-bounded. On 2026-10-21 the operator reported a **separate manual Fedora VictoriaMetrics upgrade** to `1.154.1` from the earlier known `1.153.0` baseline. The installer reported an isolated `vmrestore` restore check `PASS` (17,100,289 bytes), `DEPLOYMENT=PASS`, service active, HTTP health and query API `PASS`, no data-configuration change and no other service restarts. The rollback/data-backup directory was retained. See [2026-10-21 evidence](../../evidence/2026-10-21/fedora-victoriametrics-1.154.1-live-upgrade.md).
+
+This does **not** change the 2026-10-18 claim about absence of a packaged `victoria-metrics` RPM or the then-probed inactive service; no new packaging/service-discovery inventory was published. Manual VictoriaMetrics deployment does not add it to the unattended updater allowlist and does not authorize RouterCloud backup-wrapper changes. Long-running scrape continuity and cold boot remain outside this checkpoint.
+
 ## Production versus laboratory boundary
 
 **Production (operator-confirmed on Fedora):**
