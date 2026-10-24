@@ -28,6 +28,12 @@ The 2026-10-18 inventory above was time-bounded. On 2026-10-21 the operator repo
 
 This does **not** change the 2026-10-18 claim about absence of a packaged `victoria-metrics` RPM or the then-probed inactive service; no new packaging/service-discovery inventory was published. Manual VictoriaMetrics deployment does not add it to the unattended updater allowlist and does not authorize RouterCloud backup-wrapper changes. Long-running scrape continuity and cold boot remain outside this checkpoint.
 
+### 2026-10-24 DNS-dependent alert delivery limitation (separate from package updates)
+
+A later read-only reconstruction of the **first, failed ASUS Unbound maintenance incident** found direct router dnsmasq DNS probe failures while IP/HTTPS monitoring checks passed. Grafana 13.2.4 logged **14** notifier failures associated with DNS lookup, timeout and exhausted retries. The `dns_guard_sustained_failopen` FIRING email was delivered around 30m33s after its *reported observation timestamp*. The exact per-transport cause and the historical Fedora upstream resolver selection at incident time remain unproven; a current snapshot using ASUS Pi-hole is not conclusive historical evidence.
+
+This is **monitoring reliability**, not an observed failed Fedora package update or evidence that the approved Grafana 13.2.4 version is broken. Do not interpret successful Grafana HTTP 200 and 15 active rules as proof that all notification paths remain prompt during DNS failure. Any independently resolved alert delivery or controlled DNS failover needs a **separate approved** design and #236 end-to-end receiver checks; this document does **not** authorize public DNS substitutions, resolver edits, SMTP/Telegram changes, or restarting Grafana. [Case study](../case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md) · [DNS failure domains](../architecture/availability-and-redundancy.md).
+
 ## Production versus laboratory boundary
 
 **Production (operator-confirmed on Fedora):**
