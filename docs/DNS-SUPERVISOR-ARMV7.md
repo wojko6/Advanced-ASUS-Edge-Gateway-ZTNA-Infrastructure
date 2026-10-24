@@ -6,6 +6,18 @@ executable. The reviewed executable is `router/bin/edge-dns-supervisor`, install
 as `/jffs/addons/asus-edge/bin/edge-dns-supervisor`. Do not execute the PR
 artifact on the production router during development.
 
+## Current status and distinct timers — 2026-10-24
+
+**Historical lifecycle:** this is the source/build/rollback reference for the PR #197 **ARMv7 external supervisor binary** used by supervised break-glass operations. PR #197 was merged and the bounded production DNS Guard v3.2/break-glass validation passed on 2026-10-08. The original "before any deployment" section below is therefore an archival **gate for reproducing or replacing this binary**, not a claim that v3.2 is still awaiting installation.
+
+**Do not confuse separate primitives:**
+
+- The `edge-dns-supervisor` C binary is responsible for bounded external commands within the supervised recovery procedure; its tested process-tree behavior must not be generalized to every DNS Guard command.
+- The current `router/scripts/dns-guard` **shell function** `native_bounded_exec()` uses firmware BusyBox 1.25.1 `sleep` and PID-targeted `kill` to bound individual commands during early bootstrap, before Entware is available. It is a **different** implementation. Fedora-only [#287](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/287) reproduced an external timer `sleep` left behind by cancelled timer subshells, but did **not** prove unrelated PID-reuse kills, and no replacement was accepted on ASUS.
+- October 24 logs also recorded repeated `dig` wrapper failures that **skipped the optional DNS Guard TCP readiness probe**. Direct Unbound TCP checks passing cannot prove that optional Guard probe executed. [Current DNS Guard limits](dns-guard-v3.2-recovery-audit.md) · [incident analysis](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md).
+
+**No further production supervisor/timer/cron modification is approved**; separate #235 privileged-cron trust work is still HOLD.
+
 ## Local verification (Fedora)
 
 ```sh
