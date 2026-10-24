@@ -307,6 +307,21 @@ A resolved operational LAN-management incident covering:
 
 **Status: OPERATIONALLY RESOLVED.** The 2.4 GHz timeout and 5 GHz positive test are verified, but they changed both source IP/MAC and the Wi-Fi profile. The **exact router-side enforcement mechanism** (SSID/segment policy versus source-IP allowlist, or both) and post-reboot persistence were not separately tested. No production firewall or DHCP settings were changed.
 
+## 16. DNS Guard fail-open and delayed Grafana alerts during the Unbound incident
+
+**File:** [DNS Guard Fail-open and Delayed Grafana Alert Delivery — 2026-10-24](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md)
+
+A separate production-incident forensics case covering:
+
+- spontaneous WAN/bootstrap selection by DNS Guard at 10:25:02 and local Pi-hole promotion at 11:08:01 during the earlier, unsuccessful Unbound upgrade;
+- client-facing firmware dnsmasq probe **83/121 FAIL** while independent HTTPS and ICMP each remained **121/121 PASS**;
+- Grafana alert metadata, delayed FIRING/RESOLVED delivery and **14** notifier DNS lookup/timeout/retry errors;
+- limits of the historical Fedora resolver and delivery-channel attribution; no claim of proven `tuf_probe_failed` Firing state;
+- an independent pre-existing `dig -v` wrapper anomaly that skips the optional DNS Guard TCP health probe;
+- the difference between router system DNS recovery, LAN/Tailscale client DNS failover and independent alert delivery.
+
+**Status:** historical failure/recovery and notification forensics documented; controlled fault-injection, independent monitoring DNS and the TCP-probe fix **remain open**. This complements rather than duplicates the [Unbound trust-anchor/opkg recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+
 ## How to read these cases
 
 Where applicable, case studies separate:
@@ -319,3 +334,9 @@ Where applicable, case studies separate:
 These case studies are intended to demonstrate troubleshooting methodology, evidence handling, least-privilege/security reasoning, and disciplined distinction between observation and inference.
 
 Raw deployment-specific evidence is intentionally excluded from the public repository when it contains private infrastructure identifiers.
+
+## Incident and successful recovery — Unbound DNSSEC trust-anchor permissions (2026-10-24)
+
+**Incident documented; Draft PR under review:** [Unbound DNSSEC trust-anchor outage, opkg metadata and controlled R2 recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+
+The case preserves an initial failed 1.26.2 upgrade, package-only rollback that did not immediately restore DNS, targeted writable-anchor remediation and an isolated real-ARMv7 opkg directory-reset reproduction. **Later that day**, full-dependency V6–V9 validation supported a separate successful, operator-authorized five-package production R2 upgrade to **Unbound 1.26.2-1**. Direct real-router DNSSEC good AD / bogus SERVFAIL through **UDP and TCP**, dnsmasq and Pi-hole client DNS passed. [Read the bounded R2 production acceptance](operations/unbound-1.26.2-production-deployment-2026-10-24.md). Historical pre-upgrade chroot metadata remain unknown. Subsequent read-only log forensics confirmed **unplanned** DNS Guard system-resolver fail-open/failback; **controlled** failover injection, LAN client DNS continuity, router reboot persistence and long soak remain untested. See the [separate monitoring consequence case study](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md).
