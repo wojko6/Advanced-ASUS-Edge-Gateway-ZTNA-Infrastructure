@@ -166,3 +166,15 @@ V4_RESULT=FAIL:REAL_ARMV7_RUNTIME_OR_PID_DAC
 A separate Fedora-only V4.1 script was prepared without touching the original V4 or pinned V9. It moves directory creation to the **initial disposable-container setup**, before config validation, with `0:0 0755`, symlink and ordering checks. Local `bash -n`, V4.1 self-test/pinned V9 **26/26**, generated-copy syntax and static PID-directory-before-checkconf assertion: **PASS**. **Full ARMv7 runtime V4.1 remains NOT TESTED by the operator**, so the predicted real daemon PID `0600` and negative unprivileged-read regression are *not* recorded as PASS.
 
 **Gate:** `V4_RUNTIME=FAIL_LAB_PIDDIR_PRECHECK`; `V4_1_PATCH_SELFTEST=PASS`; `V4_1_ARMV7_RUNTIME=PENDING`; `PRODUCTION_MANAGER_VERIFIED=NO`; `PRODUCTION_CHANGES=NO`; `DEPLOYMENT_GATE=HOLD`.
+
+## 10. V4.1 actual ARMv7 daemon PID compatibility
+
+**Operator-run Fedora-only V4.1:** all three modes (`--self-test`, `--inspect`, `--run`) passed; the prior missing PID directory was prepared before `unbound-checkconf` (`V41_PIDDIR_BEFORE_CHECKCONF=PASS_ROOT_0755`). Pinned V9 passed 26/26 self-tests.
+
+Real Unbound 1.26.2 ARMv7, using the exact verified IPK library, created its **own** PID file with `root:root 0600` under a child-scoped `umask 077` in both modeled launch paths. UID 65534 could not read that PID file. The RFC 5011 anchor was `65534:65534 0600` after the initial launch and daemon restart. Synthetic old/new root KSK `VALID/ADDPEND` state survived restart. Parent-created log and helper PID remained `root:root 0644`, with no parent umask leakage.
+
+Result: `V41_RESULT=PASS_REAL_ARMV7_PID_0600_REPRODUCED_WITH_SCOPED_077`; `V41_COMPATIBILITY=HOLD_PRODUCTION_PID_PERMISSION_REGRESSION_CANDIDATE`; `V4_PRODUCTION_PID_0644_COMPATIBILITY=NOT_MET_IN_FRESH_077_CASE`.
+
+**Risk boundary:** This is a demonstrated **file-mode change**, not yet a demonstrated failure of a particular ASUS component. Repository search found `unbound.pid` references in `services-start` and configuration, while DNS Guard, web UI, WAN handler and healthcheck use process presence checks such as `pidof unbound`. The actual firmware/Entware PID consumers, startup Manager behavior, and need for world-readable PID have not been established. V4.1 modeled two launch paths but **did not execute** production `S61unbound`, `rc.func`, or `services-start`.
+
+**Decision:** do not change live PID permissions, patch firmware, adjust daemon umask on ASUS or restart DNS. Complete a read-only inventory of actual PID readers before choosing whether `0600` is acceptable or whether a separate PID mode mechanism is necessary. `ASUS_CONTACTED=NO`; `PRODUCTION_CHANGES=NO`; `DEPLOYMENT_GATE=HOLD`.
