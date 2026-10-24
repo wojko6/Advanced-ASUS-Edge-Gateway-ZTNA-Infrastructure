@@ -2,7 +2,7 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-10-24 (current navigation and status reconciliation; documentation-only, not a router acceptance run). See [October 24 closeout](audits/2026-10-24-current-navigation-closeout.md) and the [earlier source-of-truth audit](audits/2026-10-16-repository-documentation-review.md).
+**Last reviewed:** 2026-10-24 (current navigation and status reconciliation; documentation-only, not a router acceptance run). See [October 24 navigation closeout](audits/2026-10-24-current-navigation-closeout.md), the [post-audit DR/Unbound correction](audits/2026-10-24-unbound-dr-post-audit-reconciliation.md) and the [earlier source-of-truth audit](audits/2026-10-16-repository-documentation-review.md).
 
 **Applies to:** `main`
 

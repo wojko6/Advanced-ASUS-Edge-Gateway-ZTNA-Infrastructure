@@ -1,6 +1,6 @@
 # Unbound DNSSEC Trust-Anchor Permission Outage and Controlled Recovery
 
-> **Status:** incident + subsequent successful Unbound 1.26.2 R2 production redeployment documented on 2026-10-24; **Draft PR review remains pending**. Historical incident details below are preserved as observed.
+> **Status:** incident + subsequent successful Unbound 1.26.2 R2 production redeployment documented on 2026-10-24; the publication [PR #297](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/297) **was merged on 2026-10-24**. Historical incident details below are preserved as observed.
 > **Environment:** ASUS TUF-AX5400, GNUton Asuswrt-Merlin, Entware ARMv7, Unbound + dnsmasq + Pi-hole.
 > **Evidence:** operator-reported production terminal outputs; independently executed rootless Fedora/ARMv7 package laboratory reported by the operator; verified backup/package metadata. No production execution is implied by publication.
 > **Final operator-reported production state (later October 24):** five packages **1.26.2-1**, D1/D2 PASS and direct UDP/TCP positive/bogus DNSSEC PASS; **controlled** DNS Guard fault injection, cold power-loss reboot and long soak **not tested**; an **actual post-R2 reboot later passed bounded runtime/DNSSEC/client checks**, with an unresolved `0666` RFC 5011 anchor-file mode; later read-only incident forensics confirmed real spontaneous DNS Guard WAN fail-open at 10:25:02 and local promotion at 11:08:01 (router-system resolver only). Earlier 1.26.1 recovery/HOLD below is a **historical interim checkpoint**.
@@ -110,6 +110,8 @@ Remaining evidence gaps: the direct resolver DNSSEC *UDP query* was not executed
 
 ## Historical open items at the interim incident checkpoint
 
+> **Historical checklist only, not the current open-work register:** this captures questions remaining at the *first* failed attempt. The later V6–V9 tests, R2 production upgrade and one actual ASUS functional reboot occurred afterwards. Full bare-metal recovery, controlled failover, pre-incident metadata uncertainty, RFC 5011 hardening #298 and manager/PID compatibility #299 remain separate. Later documentation reconciled the public example and DR guide; this does not imply any new configuration was deployed.
+
 - [ ] Execute full ARMv7 Unbound 1.26.2 runtime test with real dependencies in isolation, covering DNS TCP/UDP, positive/negative DNSSEC and permission-failure injection.
 - [ ] Review/update the actual controlled D1/D2 maintenance and rollback gates to require stable post-start identity and DNSSEC queries; test before deployment.
 - [ ] Obtain separate operator authorization and successfully update the **production** router to 1.26.2; record package state, active config, DNSSEC and client DNS validation.
@@ -142,7 +144,7 @@ The early HOLD shown throughout the incident investigation was correct **at the 
 | Historical pre-incident chroot directory owner/mode | **UNKNOWN** |
 | RFC 5011 real 30-day KSK acceptance | **NOT TESTED** |
 
-**Conclusion:** close the authorized Unbound **package-update and bounded DNSSEC/client-path acceptance** task as a successful production R2 deployment. The earlier incident, recovery and initial rollback remain historically true; preserving them matters. The Draft PR still requires documentation review/CI before merging. Do not turn the remaining independent DNS Guard/reboot items into retroactive production validation.
+**Conclusion:** close the authorized Unbound **package-update and bounded DNSSEC/client-path acceptance** task as a successful production R2 deployment. The earlier incident, recovery and initial rollback remain historically true; preserving them matters. PR #297 was subsequently reviewed and merged; publication state is separate from the operational evidence. Do not turn the remaining independent DNS Guard/reboot items into retroactive production validation.
 
 For the complete sanitized production timeline and raw pass markers, see [the October 24 R2 deployment acceptance](../operations/unbound-1.26.2-production-deployment-2026-10-24.md).
 
@@ -177,4 +179,4 @@ This confirms scoped masking in the **isolated laboratory**, not the real Entwar
 - [NLnet Labs Unbound configuration reference](https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html) — automatic trust-anchor file behavior.
 - [OpenWrt packages issue #3624](https://github.com/openwrt/packages/issues/3624) — historical analogous package-driven directory ownership change; **not** proof of the 2026 production timeline.
 
-> **Publication gate:** draft-document review/CI pending. The initial incident, 1.26.1 recovery, isolated laboratory, and later successful R2 production 1.26.2 deployment are **different dated claims**. **Controlled** DNS Guard fault injection, cold power-loss reboot and long-soak tests remain untested; one actual post-R2 reboot passed functional DNSSEC/client checks, but RFC 5011 file-mode hardening remains open. Real unplanned DNS Guard fail-open/failback was separately observed.
+> **Publication update:** [PR #297](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/297) **was merged on 2026-10-24**; this editorial status change is not a new production acceptance. The initial incident, 1.26.1 recovery, isolated laboratory, and later successful R2 production 1.26.2 deployment are **different dated claims**. **Controlled** DNS Guard fault injection, cold power-loss reboot and long-soak tests remain untested; one actual post-R2 reboot passed functional DNSSEC/client checks, but RFC 5011 file-mode hardening remains open. Real unplanned DNS Guard fail-open/failback was separately observed.
