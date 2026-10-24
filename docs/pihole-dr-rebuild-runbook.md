@@ -35,9 +35,9 @@ For the **fully blank firmware/JFFS/SSD scenario**, use the detailed Polish [bar
 2. Rehearse a restore using the **disposable** `EDGE_RESTORE_ROOT` target. The alternate root must pre-exist, be an absolute nonsymlink non-`/` directory, and be isolated from live firmware paths.
 3. Review the manifest/allowlist and compare project-owned JFFS/opt state to the target. Only after formal recovery authorization consider production `--apply`; the default target without `EDGE_RESTORE_ROOT` is **live router paths**.
 4. Reinstall/verify AMTM and Unbound Manager ownership. Project archives do not authorize blind overwrite of manager-managed startup hooks. The restore implementation excludes archived live `post-mount` even for old backup layouts.
-5. Recreate the Unbound runtime directory ownership contract (reference `/opt/var/lib/unbound`: uid 65534, gid 0, mode 0755) on the **rebuild target**; validate the actual generated configuration with `unbound-checkconf`. Do not preserve world-writable historical modes as a security requirement.
+5. Apply the updated [Unbound reconstruction and STOP gate](router-disaster-recovery.md#unbound-runtime-ownership-reconstruction) only on an **isolated rebuild target**: five `1.26.2-1` IPKs, package-managed `root:root 0755` chroot root, writable `65534:65534 0700` child `dnssec-auto`, and **one active** trust-anchor directive. Verify manager `S61unbound`, generated config, DNSSEC AD/SERVFAIL over UDP/TCP and downstream resolvers. The observed post-reboot `root.key 0666` is a **HOLD finding**, not an accepted restore mode; #298/#299 are OPEN. **Do not** apply the previous top-level `chown 65534:0` instruction or overwrite the active anchor with the old copy.
 
-**Gate 2:** core file-manifest integrity, project-owned scripts present, no unintended AMTM hook replacement, Unbound manager/runtime ownership and config validated. If inconsistent, roll back the candidate restore and review.
+**Gate 2:** core file-manifest integrity, project-owned scripts present, no unintended AMTM hook replacement, **current Unbound version/manager and separate chroot/anchor-directory metadata validated**. No empty-device execution has passed. If active trust-anchor sibling writes or rollback cannot be established, **STOP** and review.
 
 ## Phase 3 — reinstall Pi-hole package and reconstruct state
 
