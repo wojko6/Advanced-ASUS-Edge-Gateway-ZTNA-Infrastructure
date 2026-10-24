@@ -2,6 +2,14 @@
 
 **Status date:** 2026-10-24 — latest specific production change: **Unbound 1.26.2-1 R2 deployment and DNSSEC UDP/TCP acceptance PASS**. Older sections below are date-scoped snapshots; they do not override this newer live version. Unplanned router-system DNS Guard fail-open/failback was OBSERVED in the October 24 incident-log audit. Controlled fault injection, LAN-client DNS failover, cold reboot persistence and long soak remain NOT TESTED. Unrelated #235/#278/#287, RouterCloud/DUFS and Fedora production gates remain unchanged.
 
+## Current DNS Guard / monitoring checkpoint — 2026-10-24
+
+**Unbound R2 production: accepted in bounded version/DNSSEC/client scope** (5/5 `1.26.2-1`, TCP/UDP and one observed router reboot); no need to repeat the upgrade for unrelated hardening. **DNS Guard v3.2 production remains unchanged.** During the earlier, unplanned resolver incident, the router **actually** selected independent WAN bootstrap at **10:25:02** and local Pi-hole at **11:08:01**, without establishing client DNS failover or full controlled fault-injection acceptance. Observed direct dnsmasq DNS Blackbox failures and delayed Grafana notification delivery remain separate monitoring/redundancy findings. [Incident and alert-delivery analysis](docs/case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md) · [DNS Guard operational limits](docs/dns-guard-v3.2-recovery-audit.md).
+
+**Open DNS Guard gaps:** the active TCP probe logged **565** optional-query-skip warnings (`bounded_exec dig -v` failed), while a later direct `dig -v` worked; cause not established. Fedora-only #287 reproduced a surviving timer-child BusyBox `sleep`, **not** an unrelated PID-kill exploit; no new supervisor was installed. Root-Cron script ownership remains separately held in #235. **Unbound RFC5011 mode 0666** and potential `umask 077` PID compatibility remain separate **#298/#299 HOLD**; production patch not deployed. [Updated operations](docs/operations.md) · [#287](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/287).
+
+**Scope:** this is a source/evidence-based documentation reconciliation only; no autonomous router DNS recovery feature, independent Fedora monitoring DNS, new service, restart, firewall policy, production script repair or customer DNS continuity guarantee was added.
+
 ## Post-R2 router reboot audited on October 24 — functional PASS, RFC5011 DAC exception
 
 A later actual ASUS reboot was followed by read-only checks: five Unbound `1.26.2-1` packages, live Unbound/Pi-hole processes and loopback sockets, DNSSEC valid AD / bogus SERVFAIL directly over **UDP and TCP**, router dnsmasq and Pi-hole client DNS, and DNS Guard selected local resolver with watchdog present and break-glass inactive: all **PASS**. This establishes bounded **functional persistence after the observed reboot**; it does not prove a power-loss cold boot, uninterrupted DNS during startup or long soak.
