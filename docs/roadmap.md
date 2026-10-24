@@ -1,9 +1,21 @@
 # Roadmap
 
+### Current DNS stack — 2026-10-24 (Unbound 1.26.2 operational; separate hardening HOLD)
+
+- **Completed production version change:** authorized 5/5 Unbound `1.26.2-1` ARMv7 packages, restored custom `S61unbound`, direct DNSSEC good AD/bogus SERVFAIL over UDP and TCP, both Pi-hole and dnsmasq client paths, and one **actual post-R2 router reboot** with bounded PASS. The initial failure and rollback before successful R2 are retained in the [incident case study](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md); this is **not** an outstanding 1.26.2 rollout. [Production acceptance](operations/unbound-1.26.2-production-deployment-2026-10-24.md).
+- **Open #298 / #299:** post-reboot RFC5011 `root.key` mode `0666` under private `0700` directory; real ARMv7 `umask 077` yields `0600` but creates a `root:root 0600` PID. Source-pinned V5 manager inspection PASS; V6 `--inspect` returned `HOLD_SOURCE_UNEXPECTED_OPERATION` and **did not run the manager**. Any production `umask` hardening stays **HOLD**.
+- **DNS Guard v3.2 live:** during the **unplanned** October 24 outage the router system resolver switched to WAN bootstrap (10:25:02) and later local Pi-hole (11:08:01). The event **does not** demonstrate client-side automatic failover (#212, PAUSED) or full deliberate fault-injection. DNS Guard optional TCP health probe produced repeated `dig` wrapper-skip warnings; cause unknown. [Incident/alert-delivery case study](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md), [#196](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/196), [#287](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/287).
+- **Monitoring resilience:** Grafana FIRING email was delayed, 14 notifier error events recorded, direct DNS Blackbox failed while ICMP/HTTPS stayed healthy. Independent monitoring-DNS and complete delivery/fallback proof still need separate review (#236); no blanket public-DNS change.
+- **No operational work authorized by roadmap edits:** #235 security, #287 supervision and #298/#299 remain their own gated workstreams. No scripts, services or router state modified.
+
+<details><summary>Historical 2026-10-23 Fedora-only Unbound readiness checkpoint</summary>
+
 ### Unbound 1.26.2 — 2026-10-23 (Fedora-only release readiness; rollout HOLD)
 
 - The five intended Unbound 1.26.2 ARMv7 IPKs and five rollback IPKs for 1.26.1 passed checksums, bounded QEMU/DNS and isolated real-`opkg` file/database upgrade/rollback tests. **Production still runs 1.26.1**, and release staging exists **only on Fedora**.
 - Neither independent direct recursion nor uninterrupted DNS through a planned resolver stop has been demonstrated. Protect the package-owned Unbound Manager `S61unbound`; its start action restarts dnsmasq. Router staging/installation require separate authorization and a maintenance window. **`DEPLOYMENT_GATE=HOLD`**. [Release readiness and limits](operations/unbound-1.26.2-armv7-release-readiness-2026-10-23.md).
+
+</details>
 
 ### Fedora Homelab Update — 2026-10-18 (off-router, partly deployed)
 
