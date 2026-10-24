@@ -94,3 +94,30 @@ The later read-only metadata audit found `root.key` to be a nonsymlink regular f
 **Safety decision:** no `chmod`, daemon restart, startup-mask change or key-content read was performed. Functionality and bounded restart persistence are **PASS**, but **file-mode hardening remains unresolved** and might revert upon subsequent atomic anchor replacement. Assess a process-level `umask 077` change in an isolated Fedora/ARMv7 lab and evaluate effects on other daemon-created files *before* any separately approved router deployment.
 
 **Updated gate:** `ASUS_REBOOT_2026_10_24_FUNCTIONAL=PASS`; `RFC5011_ANCHOR_PARENT_DAC=PASS`; `RFC5011_ANCHOR_FILE_MODE_0600=NOT_MET_CURRENT_0666`; `REBOOT_PERSISTENCE_REPEATED_COLD_BOOT=NOT_TESTED`; `PRODUCTION_CHANGES_DURING_POSTBOOT_AUDIT=NO`.
+
+
+## 6. Fedora-only actual ARMv7 RFC 5011 umask comparison — V1/V2
+
+**New post-reboot hardening investigation (operator-run October 24; no ASUS contact):** a synthetic `fopen("w")` + atomic `rename()` model V1 passed **3/3**: with a prepared `0600` initial anchor and a newly created replacement inode, `umask 000` produced `0666`, `022` produced `0644`, and `077` produced `0600`. Corresponding new-file/new-directory modes were `0666/0777`, `0644/0755`, `0600/0700`. V1 ran an unprivileged Fedora-only synthetic writer; it is not a daemon runtime result.
+
+**V2 used the previously hash-pinned V9 Fedora rootless Podman/QEMU fixture and real Unbound 1.26.2 ARMv7, with the exact verified IPK libunbound and staged real ARM dependencies.** `--self-test` passed the pinned V9 26/26 fixture checks and both patch contracts; `--inspect` confirmed local staging, no pull and the rootless container prerequisites; `--run` executed two separately patched, disposable V9 cases, inserting `umask 000` or `umask 077` immediately before **both** real daemon launch commands. Original V9 was not modified.
+
+| V2 production-independent runtime check | `umask 000` | `umask 077` |
+| --- | --- | --- |
+| Initial synthetic trust-anchor mode | `0600` | `0600` |
+| Actual Unbound RFC 5011 auto-trust-anchor replacement | **0666 PASS** | **0600 PASS** |
+| Different inode after atomic rewrite | **PASS** | **PASS** |
+| Existing synthetic root KSK `VALID`, new root KSK `ADDPEND` | **PASS** | **PASS** |
+| RFC 5011 state survives daemon **process restart** | **PASS** | **PASS** |
+| Anchor mode after second actual daemon launch | **0666 PASS** | **0600 PASS** |
+| Private trust-anchor parent remains `65534:65534 0700` | **PASS** | **PASS** |
+| Newly created launcher log mode (demonstrates wider mask effect) | `0666` | `0600` |
+| Chroot/UID and exact Unbound 1.26.2 ARMv7 runtime dependency checks | **PASS** | **PASS** |
+
+Run verdict: `V2_FEDORA_REAL_ARMV7_UMASK=PASS_000_AND_077`; `V2_RFC5011_ADDPEND_AND_RESTART=PASS_BOTH_UMASKS`; `V2_RESULT=PASS_TWO_REAL_ARMV7_RFC5011_CASES`. `ASUS_CONTACTED=NO`, `PRODUCTION_CHANGES=NO`, `DEPLOYMENT_GATE=HOLD`.
+
+**What this proves:** the observed `0666` post-reboot mode is reproduced by the **real** ARMv7 Unbound with `umask 000` in a controlled chroot; changing its startup mask to `077` causes real RFC 5011 atomic replacements to use `0600` and preserves the tested KSK transition and daemon-restart behavior. The test additionally shows a **potential compatibility impact**: all newly created files inherit the stricter mask, not just the anchor. The launcher log was `0600` in the `077` case.
+
+**What remains unproven:** the actual effective `umask` of ASUS production Unbound at the moment of its 15:48:55 anchor rewrite; the identity of the production writer; full impact of `umask 077` on live router logs/sockets/PID files and startup orchestration; real 30-day RFC 5011 promotion; router persistence after changing a launcher; cold-power reboot after any prospective hardening. **Do not modify `S61unbound`, perform a router restart or set production chmod/umask on the basis of V2 alone.** A separately approved candidate would require static launch-chain review, isolated compatibility/negative regression tests, an explicit rollback plan and a post-change production acceptance window.
+
+**Status:** `ARMV7_UMASK_MODEL_V1=PASS_3_OF_3`; `ARMV7_UMASK_REAL_V2=PASS_BOTH_MASKS`; `RFC5011_PRODUCTION_FILE_0600=OPEN`; `PRODUCTION_DEPLOYMENT_GATE=HOLD`.
