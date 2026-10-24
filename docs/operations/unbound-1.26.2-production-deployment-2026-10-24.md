@@ -203,3 +203,20 @@ Calculated SHA-256 of public `router/scripts/services-start` matches the operato
 **Potential maintenance-path consequence, identified from source:** `scripts/update-tailscale.sh` defines `SERVICES_START=/jffs/addons/asus-edge/bin/services-start` and invokes that path for recovery after a Tailscale package upgrade. `docs/tailscale-maintenance.md` also names the add-on path in manual recovery instructions. Therefore calling the add-on copy simply 'inactive' would overstate the evidence; it is not the primary firmware boot hook, yet it is a **source-defined recovery dependency**. We have not proved the updater was executed or that its live router version is identical to repository source.
 
 **Classification:** `FIRMWARE_BOOT_HOOK_SOURCE_MATCH=PASS`; `ADDON_COPY_DIFFERS=CONFIRMED_EXISTING_DRIFT`; `TAILSCALE_RECOVERY_PATH_REFERENCE=CONFIRMED_IN_REPO_SOURCE`; `ACTUAL_ADDON_RUNTIME_AND_UNBOUND_BEHAVIOR=NOT_VERIFIED`; `PRODUCTION_UMASK_PATCH=NOT_DEPLOYED`; `DEPLOYMENT_GATE=HOLD`. No copying, `chmod`, service restart, or path switch is approved. Compare the two versions' launch semantics off-router or by strictly bounded read-only probes before designing a single-source solution.
+
+## 14. Scoped Unbound functions match in both actual startup copies
+
+**Real ASUS read-only structural comparison, 2026-10-24:** the firmware hook `/jffs/scripts/services-start` and the add-on copy `/jffs/addons/asus-edge/bin/services-start` differ as whole files (SHA-256 `026b3c18...` versus `51af014c...`; sizes 21046 versus 20834 bytes), but both returned `sh -n=PASS`. The operator calculated SHA-256 over the exact AWK-delimited function text and reported identical digests for the two Unbound-related functions:
+
+| Function | Lines in each copy | Function SHA-256 in both copies |
+| --- | ---: | --- |
+| `remove_stale_process_pidfile()` | 5 | `c20fe27c888d43960324381218671b86d6509519812c5f4600a36574337ae509` |
+| `start_unbound_direct_if_stopped()` | 24 | `2126241490fcfd991fb4ea23c79a48f518def5442f28041623c6be599761f0da` |
+
+The selected literal token counts also matched between copies: `unbound.pid=1`, `EDGE_UNBOUND_PIDFILE=2`, `pidof unbound=2`, `unbound-checkconf=2`, `restart_dnsmasq=1`, `umask=0`, `rc.unslung=1`. Active hook UID/GID `1000:1000 0755`; add-on copy UID/GID `0:0 0755`. Audit had `FILES_MODIFIED=NO` and `SERVICES_RESTARTED=NO`.
+
+**Bounded conclusion:** both actual copies have **byte-identical Unbound direct-recovery and stale-PID function bodies** under this extraction method; the original observed split-path drift remains true for the other script bytes. This does not establish identical top-level behavior, shell environment, variable values, call ordering, security ownership or full runtime compatibility. It also does not establish firmware and Entware readers beyond the previously scoped search.
+
+**Separate security boundary (Issue #235, not changed here):** the live firmware hook has owner UID 1000 and mode `0755`, allowing that account to write its content if DAC permits. Root execution of a non-root-writable hook is a distinct trust concern; do not silently `chown`, overwrite, or change either copy during the Unbound umask/RFC5011 investigation. The add-on copy remains a potential Tailscale recovery dependency.
+
+**Status:** `UNBOUND_FUNCTION_CROSS_COPY_MATCH=PASS_TWO_FUNCTION_SHA256`; `FULL_STARTUP_CHAIN_EQUIVALENCE=NOT_PROVEN`; `ACTIVE_HOOK_OWNER_TRUST=SEPARATE_ISSUE235_HOLD`; `PRODUCTION_UMASK_PATCH=NOT_DEPLOYED`; `DEPLOYMENT_GATE=HOLD`.
