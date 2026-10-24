@@ -240,3 +240,10 @@ Operator-run Fedora V5: Python syntax and self-test PASS. The offline inspect ve
 ## 17. Exact upstream rc.func source found, byte identity verified
 
 GitHub source lookup identified `Entware/rtndev`, `entware-opt/files/rc.func`, default branch `master`. The content SHA-256 was independently computed as `5f5730cb58527c74f5da95f0cb37cde68426e25176ca34c34f9e8e3b4fe49f6d`, **identical to the earlier live ASUS read-only rc.func SHA**. This resolves the source provenance blocker without requiring an ASUS connection. A user-controlled HTTPS retrieval onto Fedora with a strict SHA-256 and `sh -n` check is sufficient to present this exact source to V5 (`--rcfunc`); no remote source is ever executed. **The operator has not yet run V5 with the retrieved source; runtime still PENDING.** `ASUS_CONTACTED=NO`; `PRODUCTION_CHANGES=NO`; `DEPLOYMENT_GATE=HOLD`.
+
+
+## 18. V5 exact manager source gate passed; V6 pending
+
+Operator ran V5 on Fedora. Both exact production-pinned inputs were verified: `V5_MANAGER_SHA256=PASS_PRODUCTION_PIN` and `V5_RCFUNC_SHA256=PASS_PRODUCTION_PIN`. Static scan reported no literal `umask` in either source and six `pidof` references in `rc.func`. Both `--inspect` and `--run` completed: `V5_RESULT=PASS_OFFLINE_SOURCE_GATE_AND_SYNTHETIC_DAC_ONLY`. V5 did not execute either real script or actual ARMv7 daemon.
+
+A separate V6 **Fedora-only** harness is now prepared for an isolated rootless Podman execution of the exact `S61unbound` + `rc.func` `start`/`check` code using a *synthetic sleep daemon and pidof shim*; neither manager `stop`/`restart` nor actual ARMv7 are exercised. `V6_SELFTEST=PASS_STATIC_SOURCE_GATES_AND_GUEST_SHIMS_SYNTAX` was verified locally; **V6 FULL RUNTIME NOT YET RUN**. It uses a pre-existing image, no pull, `--network=none`, `--read-only`, ephemeral `/opt`/`/tmp` and no host bind mounts. The real ARMv7 result is separately evidenced by V4.1, not by V6. `PRODUCTION_UMASK_PATCH=NOT_DEPLOYED`; `DEPLOYMENT_GATE=HOLD`.
