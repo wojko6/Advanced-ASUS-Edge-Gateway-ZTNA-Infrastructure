@@ -121,3 +121,30 @@ Run verdict: `V2_FEDORA_REAL_ARMV7_UMASK=PASS_000_AND_077`; `V2_RFC5011_ADDPEND_
 **What remains unproven:** the actual effective `umask` of ASUS production Unbound at the moment of its 15:48:55 anchor rewrite; the identity of the production writer; full impact of `umask 077` on live router logs/sockets/PID files and startup orchestration; real 30-day RFC 5011 promotion; router persistence after changing a launcher; cold-power reboot after any prospective hardening. **Do not modify `S61unbound`, perform a router restart or set production chmod/umask on the basis of V2 alone.** A separately approved candidate would require static launch-chain review, isolated compatibility/negative regression tests, an explicit rollback plan and a post-change production acceptance window.
 
 **Status:** `ARMV7_UMASK_MODEL_V1=PASS_3_OF_3`; `ARMV7_UMASK_REAL_V2=PASS_BOTH_MASKS`; `RFC5011_PRODUCTION_FILE_0600=OPEN`; `PRODUCTION_DEPLOYMENT_GATE=HOLD`.
+
+
+## 7. Scoped umask: real ARMv7 V3 launcher and permission regression
+
+**Date/evidence:** October 24, operator-run Fedora rootless Podman/QEMU test output, `--self-test`, `--inspect` and `--run`. V3 script checksum as supplied in the validated run workflow: `4b6f55b407325b870b38afca5bd2639f95f9acd4350eb51b52aa91a3cda4b51c`. The operator output confirms execution of the script's three modes; do not infer a new production deployment.
+
+V3 patched a disposable copy of the same SHA-256-pinned **V9** source for both daemon launches. The **parent shell** used `umask 022` for the launcher-created artifacts, while a **subshell invoking the real Unbound 1.26.2 ARMv7** used `umask 077`. V9 original remained unchanged. Self-test: original V9 fixture **26/26 PASS**, source pin and patch-contract checks PASS. Inspect: staging hash, rootless Podman, locally available container image without pull, ARM32 NSS dependency and source gates PASS. Runtime:
+
+| Scoped V3 check | Observed result |
+| --- | --- |
+| Real ARMv7 Unbound, exact verified IPK library and staged dependencies | **PASS** |
+| RFC 5011 old root KSK `VALID` / new root KSK `ADDPEND` | **PASS** |
+| First auto-trust-anchor mode (child `umask 077`) | **0600 PASS** |
+| Parent launcher log, PID file and synthetic marker (parent `umask 022`) | **0644 PASS** |
+| Read access for a separate UID 65534 to lab PID/log; no write to PID | **PASS** |
+| RFC 5011 state preserved after **process** restart | **PASS** |
+| Anchor mode after second launch | **0600 PASS** |
+| Parent launcher log and PID file after second launch | **0644 PASS** |
+| No parent `umask` leak in tested shell context | **PASS** |
+
+Final marker: `V3_RESULT=PASS_SCOPED_CHILD_077_PARENT_022_ACTUAL_ARMV7`. `ASUS_CONTACTED=NO`, `PRODUCTION_CHANGES=NO`, `DEPLOYMENT_GATE=HOLD`.
+
+**Important scope boundary:** V3's PID file is **written by its laboratory shell**, not the production `S61unbound` process manager. The test does **not** confirm the effective production daemon mask, startup orchestration, PID/log ownership, `rc.func` compatibility, full pre-/post-chroot FD behavior or watchdog recovery. The public `router/scripts/services-start` also has a separate **direct Unbound recovery** path which invokes the daemon without `S61unbound`; reviewing only the Entware Manager would be incomplete. Parent file modes observed in the disposable container are not a blanket recommendation to expose production logs/PID files.
+
+**Next gate (read only):** inventory exact production Manager file and hash, `rc.func` start path, live PID file/daemon/diagnostic log DAC, and all startup paths including direct recovery; compare privately against staged rollback Manager. Then run Fedora-only static and runtime negative regressions for both paths before proposing any patch. No authorized `S61unbound` edit, no DNS Guard changes, no router service restart or further deployment at this stage.
+
+**Status:** `RFC5011_SCOPED_UMASK_ARMV7_V3=PASS`; `PRODUCTION_MANAGER_VERIFIED=NO`; `PRODUCTION_UMASK_PATCH=NOT_DEPLOYED`; `DEPLOYMENT_GATE=HOLD`.
