@@ -235,3 +235,8 @@ First proposed `diff -u` command could not execute on the router (`DIFF_TOOL=NOT
 ## 16. V5 offline source gate: missing rc.func
 
 Operator-run Fedora V5: Python syntax and self-test PASS. The offline inspect verified production-pinned `S61unbound` SHA-256 but returned `V5_RESULT=HOLD_RCFUNC_NO_PINNED_OFFLINE_COPY_IN_FIXED_LOCATIONS`. The exact live `rc.func` SHA-256 required is `5f5730cb58527c74f5da95f0cb37cde68426e25176ca34c34f9e8e3b4fe49f6d`. No `--run` followed because the operator chained commands with `&&`. No actual manager script execution, network access or ASUS changes occurred. Next step is to inspect the existing Fedora verified backup for the correct file. Deployment HOLD.
+
+
+## 17. Exact upstream rc.func source found, byte identity verified
+
+GitHub source lookup identified `Entware/rtndev`, `entware-opt/files/rc.func`, default branch `master`. The content SHA-256 was independently computed as `5f5730cb58527c74f5da95f0cb37cde68426e25176ca34c34f9e8e3b4fe49f6d`, **identical to the earlier live ASUS read-only rc.func SHA**. This resolves the source provenance blocker without requiring an ASUS connection. A user-controlled HTTPS retrieval onto Fedora with a strict SHA-256 and `sh -n` check is sufficient to present this exact source to V5 (`--rcfunc`); no remote source is ever executed. **The operator has not yet run V5 with the retrieved source; runtime still PENDING.** `ASUS_CONTACTED=NO`; `PRODUCTION_CHANGES=NO`; `DEPLOYMENT_GATE=HOLD`.
