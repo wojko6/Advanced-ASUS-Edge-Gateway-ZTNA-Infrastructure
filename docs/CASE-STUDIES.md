@@ -322,6 +322,13 @@ A separate production-incident forensics case covering:
 
 **Status:** historical failure/recovery and notification forensics documented; controlled fault-injection, independent monitoring DNS and the TCP-probe fix **remain open**. This complements rather than duplicates the [Unbound trust-anchor/opkg recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
 
+
+## 17. Unbound DNSSEC trust-anchor permission incident and successful R2 recovery (2026-10-24)
+
+**Status: DOCUMENTED / PR [#297](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/297) MERGED; bounded production R2 acceptance PASS:** [Unbound DNSSEC trust-anchor outage, opkg metadata and controlled R2 recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+
+The case preserves an initial failed 1.26.2 upgrade, package-only rollback that did not immediately restore DNS, targeted writable-anchor remediation and an isolated real-ARMv7 opkg directory-reset reproduction. **Later that day**, full-dependency V6–V9 validation supported a separate successful, operator-authorized five-package production R2 upgrade to **Unbound 1.26.2-1**. Direct real-router DNSSEC good AD / bogus SERVFAIL through **UDP and TCP**, dnsmasq and Pi-hole client DNS passed. [Read the bounded R2 production acceptance](operations/unbound-1.26.2-production-deployment-2026-10-24.md). Historical pre-upgrade chroot metadata remain unknown. Subsequent read-only log forensics confirmed **unplanned** DNS Guard system-resolver fail-open/failback; **controlled** failover injection, LAN client DNS continuity, power-loss cold boot, uninterrupted startup DNS and long soak remain untested. A later real ASUS reboot **did** pass bounded package/service/DNSSEC/client-path checks, but found the RFC 5011 `root.key` mode `0666` inside a restricted `0700` parent. Follow-up [#298](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/298) / [#299](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/299) remains **OPEN / production hardening HOLD**. See the [separate monitoring consequence case study](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md).
+
 ## How to read these cases
 
 Where applicable, case studies separate:
@@ -334,9 +341,3 @@ Where applicable, case studies separate:
 These case studies are intended to demonstrate troubleshooting methodology, evidence handling, least-privilege/security reasoning, and disciplined distinction between observation and inference.
 
 Raw deployment-specific evidence is intentionally excluded from the public repository when it contains private infrastructure identifiers.
-
-## Incident and successful recovery — Unbound DNSSEC trust-anchor permissions (2026-10-24)
-
-**Incident documented; Draft PR under review:** [Unbound DNSSEC trust-anchor outage, opkg metadata and controlled R2 recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
-
-The case preserves an initial failed 1.26.2 upgrade, package-only rollback that did not immediately restore DNS, targeted writable-anchor remediation and an isolated real-ARMv7 opkg directory-reset reproduction. **Later that day**, full-dependency V6–V9 validation supported a separate successful, operator-authorized five-package production R2 upgrade to **Unbound 1.26.2-1**. Direct real-router DNSSEC good AD / bogus SERVFAIL through **UDP and TCP**, dnsmasq and Pi-hole client DNS passed. [Read the bounded R2 production acceptance](operations/unbound-1.26.2-production-deployment-2026-10-24.md). Historical pre-upgrade chroot metadata remain unknown. Subsequent read-only log forensics confirmed **unplanned** DNS Guard system-resolver fail-open/failback; **controlled** failover injection, LAN client DNS continuity, router reboot persistence and long soak remain untested. See the [separate monitoring consequence case study](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md).
