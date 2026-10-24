@@ -220,3 +220,13 @@ The selected literal token counts also matched between copies: `unbound.pid=1`, 
 **Separate security boundary (Issue #235, not changed here):** the live firmware hook has owner UID 1000 and mode `0755`, allowing that account to write its content if DAC permits. Root execution of a non-root-writable hook is a distinct trust concern; do not silently `chown`, overwrite, or change either copy during the Unbound umask/RFC5011 investigation. The add-on copy remains a potential Tailscale recovery dependency.
 
 **Status:** `UNBOUND_FUNCTION_CROSS_COPY_MATCH=PASS_TWO_FUNCTION_SHA256`; `FULL_STARTUP_CHAIN_EQUIVALENCE=NOT_PROVEN`; `ACTIVE_HOOK_OWNER_TRUST=SEPARATE_ISSUE235_HOLD`; `PRODUCTION_UMASK_PATCH=NOT_DEPLOYED`; `DEPLOYMENT_GATE=HOLD`.
+
+## 15. BusyBox awk bounded startup-copy comparison
+
+**Operator-run read-only comparison (real ASUS):** BusyBox `awk` compared both current startup files without exposing their contents or changing router state. Active firmware hook: **456** lines; add-on maintenance-path copy: **453** lines. Both share an **identical prefix of 310 lines** and an **identical suffix of 10 lines**. The broad first-to-last differing interval is **active lines 311–446 (136 lines)** versus **add-on lines 311–443 (133 lines)**; `LINE_CONTENT=DIFFERENT`. These are *bounding spans*, **not counts of individually changed lines**.
+
+The corresponding source-matched active file has DNS Guard scheduling around line 311, Entware/AMTM coordination and Tailscale handling in the middle, the two previously hash-matched Unbound functions at lines 391–426, and final service-start orchestration before its identical suffix. No inference can yet be made about the actual changed lines beyond this bound. The two Unbound function SHA-256 matches remain independent PASS evidence.
+
+First proposed `diff -u` command could not execute on the router (`DIFF_TOOL=NOT_AVAILABLE`); it did **not** mean scripts were invalid. The alternate bounded `awk` comparison succeeded. Further analysis should report only exact bounded line-range changes using a **read-only four-consecutive-line resynchronization heuristic**, which must return `HOLD_AMBIGUOUS_ALIGN` when a short safe anchor cannot be found. It is not a full diff or proof of complete semantics.
+
+**Status:** `SCRIPT_PREFIX_MATCH=310`; `SCRIPT_SUFFIX_MATCH=10`; `DIFFERENCE_SPANS_KNOWN=YES`; `EXACT_CHANGE_HUNKS=PENDING`; `PRODUCTION_FILES_MODIFIED=NO`; `SERVICES_RESTARTED=NO`; `DEPLOYMENT_GATE=HOLD`.
