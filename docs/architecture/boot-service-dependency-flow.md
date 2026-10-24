@@ -61,6 +61,16 @@ flowchart TD
     GA -->|"unhealthy / break-glass"| WA
 ```
 
+## 2026-10-24 read-only startup-path reconciliation
+
+The actual ASUS live **`/jffs/scripts/services-start`** and the separate add-on maintenance-path **`/jffs/addons/asus-edge/bin/services-start`** were compared **without editing or restarting either copy**. Both passed `sh -n`, but their **whole-file hashes and lengths differ** (456 versus 453 lines). An exact bounded comparison found matching 310-line prefixes and matching 10-line suffixes; the central spans differ. The two extracted Unbound-specific functions `remove_stale_process_pidfile()` and `start_unbound_direct_if_stopped()` matched byte-for-byte by SHA-256 across both copies. That is **not** proof of identical top-level call ordering, startup semantics or ownership.
+
+The live hook's observed UID/GID was `1000:1000` and mode `0755`, whereas the add-on copy was `root:root 0755`. A root-executed hook writable by a nonroot owner requires separately gated trust remediation **#235**; no change to it is authorized here. This distinction affects future recovery design and must **not** be silently "resolved" by overwriting either existing script.
+
+The active source registers `AsusEdgeDNSGuard` before waiting for `/opt` (shown above). Bounded October 24 post-reboot runtime verified that the watchdog was present with DNS Guard local and break-glass inactive. A real earlier same-day *unplanned* incident showed router-system WAN fail-open and return to Pi-hole. Neither observation proves complete scheduler self-healing or a boot with Entware permanently absent ([#214](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/214), [DNS Guard event analysis](../case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md)).
+
+The package-owned `S61unbound` manager and Entware `rc.func` are **not equivalent to the project's direct Unbound recovery path**: their service start/check behavior requires independent testing before a proposed child-scoped `umask 077` change. Real ARMv7 laboratory Unbound created `root.key` at `0600` but also a new daemon PID at `root:root 0600`; no manager compatibility proof or new production mask is present ([#298](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/298), [#299](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/299)). Existing swap-before-AMTM and watchdog-before-/opt ordering remain mandatory.
+
 ## Validated scope and limitations
 
 - The 2026-09-27 #66 evidence found that the original reference post-mount order could start Entware services before its AMTM-added swapon line was reached.
