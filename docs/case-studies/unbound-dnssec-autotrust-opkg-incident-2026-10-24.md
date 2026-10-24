@@ -164,6 +164,12 @@ Source inspection of Unbound release-1.26.2 identified `autr_write_file()` as us
 
 The [R2 operations report](../operations/unbound-1.26.2-production-deployment-2026-10-24.md) contains the exact post-reboot and V1/V2 observations with explicit PASS/HOLD boundaries.
 
+### Scoped V3 Fedora-only follow-up (no production change)
+
+An additional operator-run V3 test scoped `umask 077` to the **actual Unbound 1.26.2 ARMv7 child process** while retaining parent launcher `umask 022` in two starts of the hash-pinned V9 Podman/QEMU fixture. V9 self-tests **26/26 PASS**; the real daemon retained RFC 5011 `ADDPEND` across process restart, and its rewritten anchor was **0600** before/after the restart. The parent-created laboratory logs and PID file were **0644**, independently readable by UID 65534, with no observed parent-mask leakage: `V3_RESULT=PASS_SCOPED_CHILD_077_PARENT_022_ACTUAL_ARMV7`.
+
+This confirms scoped masking in the **isolated laboratory**, not the real Entware process manager: the V3 PID file was shell-created. Source-controlled `router/scripts/services-start` also offers a direct recovery launch outside `S61unbound`. Therefore `PRODUCTION_MANAGER_VERIFIED=NO` and `DEPLOYMENT_GATE=HOLD` remain. The complete bounded evidence appears in [R2 operations report section 7](../operations/unbound-1.26.2-production-deployment-2026-10-24.md#7-scoped-umask-real-armv7-v3-launcher-and-permission-regression).
+
 ## References
 
 - [October 23 Unbound 1.26.2 release-readiness checkpoint](../operations/unbound-1.26.2-armv7-release-readiness-2026-10-23.md) — historical pre-upgrade state, not the current runtime claim.
