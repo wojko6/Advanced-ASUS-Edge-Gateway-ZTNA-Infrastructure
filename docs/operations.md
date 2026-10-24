@@ -6,6 +6,22 @@ The reference deployment completed its SSD migration and controlled reboot valid
 
 Routine router changes may now proceed only as deliberate maintenance with backup, rollback planning, repository/CI validation and post-change live verification. Read-only inspection remains preferred when it can answer the question without changing the reference state.
 
+## Current Unbound 1.26.2 and DNS Guard operations — 2026-10-24
+
+**Current production:** the operator-authorized R2 upgrade installed all five ARMv7 Unbound `1.26.2-1` packages on the ASUS. The preserved custom Entware Manager `S61unbound` was restored and verified; direct Unbound DNSSEC validated signed answers (`AD=1`) and deliberately invalid answers (`SERVFAIL`) over **UDP and TCP**, and router dnsmasq/Pi-hole DNS paths passed bounded checks. **An actual later router reboot** retained all five packages, the listeners and the same DNSSEC/client-path results. This does not prove power-loss cold-boot reliability, continuous client DNS through the upgrade, an extended soak or full disaster recovery.
+
+**Incident retained:** the first maintenance attempt caused Unbound to exit when its unprivileged chroot could not create the RFC5011 trust-anchor temporary file. Merely restoring the previous 1.26.1 packages did not recover the daemon; a dedicated service-owned `dnssec-auto` directory fixed the write-boundary problem. The later R2 upgrade succeeded independently. [Production acceptance and rollback boundaries](operations/unbound-1.26.2-production-deployment-2026-10-24.md) · [incident and recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+
+**Open security hardening, not an outstanding package upgrade:** after the successful reboot the active `root.key` was owned by UID/GID 65534 under a private `0700` directory but had mode **0666**, not the desired `0600`. Fedora-only real ARMv7 tests confirmed child-scoped `umask 077` produces `0600`, but also a newly created Unbound PID file of `root:root 0600`, requiring separate manager compatibility assessment. [#298 — RFC5011 anchor permissions](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/298) and [#299 — PID/Manager compatibility](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/299) remain **OPEN / DEPLOYMENT HOLD**. No production `umask`, `chmod`, `chown` or service-launch modification is authorized.
+
+**DNS Guard v3.2 remains in production unchanged.** During the first, unplanned resolver outage, read-only log analysis found genuine **router-system** WAN bootstrap selection at **10:25:02** and return to Pi-hole at **11:08:01**. This was not a controlled outage test and does **not** establish LAN/Tailscale client DNS continuity: both Pi-hole and firmware dnsmasq still depend on the same Unbound. Monitoring showed **83/121 failed direct router-DNS Blackbox samples**, while tested IP/HTTPS probes stayed healthy. Grafana recorded **14 notifier errors** associated with DNS/timeout/retries, and its FIRING email arrived around **30m33s** after the alert-observation timestamp stated in that email; the exact per-channel cause remains unproven.
+
+**DNS Guard residuals:** a scoped same-day log analysis counted **565 `dig is installed but not runnable; skipping active TCP DNS query probe`** warnings. Direct `dig -v` later worked, so the wrapper/execution-context reason and true optional TCP-probe coverage remain **unresolved**. Fedora-only #287 reproduced a timer-child `sleep` survivor and researched cancellation alternatives; an unrelated PID-reuse kill was **not demonstrated**. The root-Cron target and startup-file trust concerns remain separately **#235 HOLD**. Independent monitor DNS, full notification-delivery matrix, full controlled local/bootstrap failure injection and automatic client failover have **not** been deployed or proved. [DNS Guard incident and delayed alerts](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md) · [v3.2 validation and waivers](dns-guard-v3.2-recovery-audit-live-validation.md) · [#287](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/287).
+
+**Safety:** historical test commands that stop resolvers, manipulate `iptables`, invoke manual break-glass or restart WAN are **not** ordinary maintenance instructions. Run such tests only with separately approved supervised recovery and rollback. This update changes documentation only.
+
+<details><summary>Historical 2026-10-23 Fedora-only release-readiness plan (superseded by R2)</summary>
+
 ## Unbound 1.26.2 pending maintenance — Fedora-only readiness (2026-10-23)
 
 The current live ASUS resolver remains Unbound `1.26.1-1` (five packages). Verified `1.26.2-1` ARMv7 IPKs, original `1.26.1-1` rollback IPKs and the Manager start-script restore source are staged **only on Fedora**. An isolated rootless QEMU/`opkg` lab reproduced successful real-package installation, upgrade and downgrade as **file/db transactions** with stubbed external dependencies; no router/runtime acceptance or independent direct DNS recursion is claimed.
@@ -13,6 +29,8 @@ The current live ASUS resolver remains Unbound `1.26.1-1` (five packages). Verif
 **Hard precondition:** Package operations replace the non-conffile `/opt/etc/init.d/S61unbound` on both upgrade and rollback. Restore and verify the Manager script **before** restarting Unbound. Its `rc.func` start path invokes a dnsmasq restart; do not use a blind service `restart` as an atomic maintenance operation. The active trust anchor is separate from the legacy package root key. DNS Guard Cron registration and live service listeners were observed, but watchdog last execution and uninterrupted DNS during a resolver stop remain **unproven**. A separately approved maintenance window must explicitly accept possible DNS interruption and include tested off-router rollback materials.
 
 **Router staging:** NOT PERFORMED. **Installation:** NOT PERFORMED. **`DEPLOYMENT_GATE=HOLD`.** Full [readiness evidence, limitations and maintenance sequencing](operations/unbound-1.26.2-armv7-release-readiness-2026-10-23.md).
+
+</details>
 
 ## SSD root mode after boot — Issue #235 HOLD (2026-10-16)
 

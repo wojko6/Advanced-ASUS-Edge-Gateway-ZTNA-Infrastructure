@@ -1,13 +1,21 @@
 # Availability, redundancy and single points of failure
 
 **Status:** CURRENT  
-**Last reviewed:** 2026-10-13 (DNS failure-domain clarification; no live changes)
+**Last reviewed:** 2026-10-24 (incorporates the October 24 incident evidence; documentation only)
 
 ## Purpose
 
 Separate **high availability** from **recoverability**. The project has strong
 backup, validation and recovery engineering, but the current reference
 deployment is not a redundant gateway architecture.
+
+## New operational evidence — 2026-10-24
+
+The single-Unbound DNS failure domain is no longer just a hypothetical availability warning. During an **unplanned**, initially failed Unbound upgrade, DNS Guard v3.2 selected independent **router-system** WAN bootstrap DNS at 10:25:02 and restored Pi-hole at 11:08:01, while a separate Blackbox probe of firmware dnsmasq failed 83/121 selected samples. This does **not** show that LAN/Tailscale client DNS followed the system-resolver failover, nor that every client was continuously offline. The later, separate Unbound 1.26.2 R2 upgrade and an ordinary router reboot passed bounded DNSSEC/client tests.
+
+**Monitoring is not a fully independent failure domain either.** Fedora's current resolver snapshot used Pi-hole, and historical Grafana recorded 14 DNS/timeout/retry-related notifier errors plus delayed FIRING delivery during the incident. The historical resolver configuration and full per-channel cause were **not conclusively established**. A future independent alert-transport resolution/fallback policy requires a separate reviewed design; it is not currently deployed. [Case study with chronology and evidence](../case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md).
+
+Open DNS Guard concerns include optional TCP-query skip when `bounded_exec dig -v` fails, limited wrapper-timer descendant cleanup (#287), root-Cron trust (#235), full missing-watchdog recovery (#214), fresh-recursion cache oracle (#213), client failover (#212 PAUSED) and full Pi-hole-aware DR (#129). No additional redundancy, alternative resolver, firewall change or failure-injection test was activated by this documentation update.
 
 ## Current availability model
 

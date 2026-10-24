@@ -8,6 +8,16 @@ This runbook validates recovery behavior introduced by the post-v3.2 audit. It
 does not replace the original
 [`dns-guard-v3.2-live-validation.md`](dns-guard-v3.2-live-validation.md).
 
+## Current deployment and incident addendum — 2026-10-24
+
+**This is the historical October 8 live-validation runbook, not an instruction to repeat disruptive exercises.** The production DNS Guard v3.2 and the PR #197 merge were already accepted under the limited-waiver matrix at the end of this document. The phrase "before merging" there refers to the **then-pending merge**, now historical. The October 24 Unbound 1.26.2 R2 maintenance/reboot **did not deploy new DNS Guard code**.
+
+During the **unplanned** first Unbound upgrade failure, read-only log/metric reconstruction documented router-system DNS Guard fail-open to WAN DNS at **10:25:02** and return to Pi-hole at **11:08:01**. This supplements, but does **not replace**, the original production waiver decisions: there was no authorized deliberate outage injection, no proof that LAN/Tailscale clients had continuous filtered DNS, and no fresh all-failure-modes exercise. Blackbox samples captured the tested router dnsmasq path failing while IP reachability remained intact.
+
+**Additional findings still open:** (1) the optional DNS Guard active TCP query was skipped repeatedly after `bounded_exec dig -v` failed, despite a separate direct `dig -v` later succeeding; (2) Fedora-only Issue #287 timer-child cancellation tests found a surviving BusyBox `sleep` descendant, with **no production replacement** and no demonstrated unrelated PID reuse kill; (3) Grafana's DNS-dependent notifier logged errors and delivered a FIRING email late. For the exact evidence, read [October 24 incident chronology](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md), [current DNS Guard design limits](dns-guard-v3.2-recovery-audit.md), and [operational state](operations.md).
+
+**Safety:** tests below may inject DNS blocks, alter WAN conditions, activate manual break-glass or require reboot. Do **not** execute them without a separate approval, current backup/rollback and attended local recovery. This documentation update is read-only with respect to infrastructure.
+
 ## Preconditions
 
 Before fault injection:
