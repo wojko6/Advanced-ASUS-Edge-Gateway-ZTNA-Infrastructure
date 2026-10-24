@@ -320,8 +320,8 @@ These case studies are intended to demonstrate troubleshooting methodology, evid
 
 Raw deployment-specific evidence is intentionally excluded from the public repository when it contains private infrastructure identifiers.
 
-## Draft / in-progress investigation — Unbound DNSSEC trust-anchor permissions (2026-10-24)
+## Incident and successful recovery — Unbound DNSSEC trust-anchor permissions (2026-10-24)
 
-**DRAFT — not a completed upgrade:** [Unbound DNSSEC trust-anchor and opkg directory-metadata incident](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+**Incident documented; Draft PR under review:** [Unbound DNSSEC trust-anchor outage, opkg metadata and controlled R2 recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
 
-This ongoing case records an authorized 1.26.2 upgrade attempt, production resolver outage, unsuccessful package-only rollback, a narrowly scoped DNSSEC trust-anchor recovery under 1.26.1, and an isolated reproduction of directory-ownership normalization by the real ARMv7 opkg binary using original IPKs. The before-upgrade production directory mode is unknown; full-runtime 1.26.2 and reboot-persistence acceptance remain open. **Production upgrade HOLD.**
+The case preserves an initial failed 1.26.2 upgrade, package-only rollback that did not immediately restore DNS, targeted writable-anchor remediation and an isolated real-ARMv7 opkg directory-reset reproduction. **Later that day**, full-dependency V6–V9 validation supported a separate successful, operator-authorized five-package production R2 upgrade to **Unbound 1.26.2-1**. Direct real-router DNSSEC good AD / bogus SERVFAIL through **UDP and TCP**, dnsmasq and Pi-hole client DNS passed. [Read the bounded R2 production acceptance](operations/unbound-1.26.2-production-deployment-2026-10-24.md). Historical pre-upgrade chroot metadata remain unknown; DNS Guard live failover, router reboot persistence and long soak remain untested.
