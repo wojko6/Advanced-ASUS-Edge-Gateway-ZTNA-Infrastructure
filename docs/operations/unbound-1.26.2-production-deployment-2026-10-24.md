@@ -193,3 +193,13 @@ Bounded literal keyword counts: live `S61unbound` had `pidfile=0`, `PIDFILE=0`, 
 ## 12. Production services-start source match
 
 Calculated SHA-256 of public `router/scripts/services-start` matches the operator-reported SHA-256 of actual `/jffs/scripts/services-start`: `026b3c18a950abd70ec86046b04c0015832289ec3ec886bcf4d25298aebf5616`. The active startup script is therefore byte-identical to the inspected repo source. Its stale-PID handler uses `-f`, `pidof` and `rm -f`; it does not read the PID content. The separately located add-on copy was not hash-compared. The effective caller UID and other firmware PID readers remain unverified. Production unmodified; deployment HOLD.
+
+## 13. Two services-start copies: already-known split-path drift
+
+**Real-router read-only comparison on 2026-10-24:** `/jffs/scripts/services-start` SHA-256 `026b3c18a950abd70ec86046b04c0015832289ec3ec886bcf4d25298aebf5616`; `/jffs/addons/asus-edge/bin/services-start` SHA-256 `51af014caa8675e3997aa2a6be4df0ab033d80a71b8ca6aeb0f229cf9a0271d4`; `cmp -s` returned **DIFFERENT**. No writes or restarts occurred.
+
+**This divergence predates the current Unbound incident.** The October DNS Guard v3.2 recovery validation explicitly documented the active Merlin hook matching the reviewed source while a separate older add-on copy did not; no overwrite was done. Do not portray this as newly introduced by Unbound R2 or its reboot. The active `/jffs/scripts/services-start` remains SHA-256 identical to the reviewed repo file, but **that establishes no equivalence with the add-on copy**.
+
+**Potential maintenance-path consequence, identified from source:** `scripts/update-tailscale.sh` defines `SERVICES_START=/jffs/addons/asus-edge/bin/services-start` and invokes that path for recovery after a Tailscale package upgrade. `docs/tailscale-maintenance.md` also names the add-on path in manual recovery instructions. Therefore calling the add-on copy simply 'inactive' would overstate the evidence; it is not the primary firmware boot hook, yet it is a **source-defined recovery dependency**. We have not proved the updater was executed or that its live router version is identical to repository source.
+
+**Classification:** `FIRMWARE_BOOT_HOOK_SOURCE_MATCH=PASS`; `ADDON_COPY_DIFFERS=CONFIRMED_EXISTING_DRIFT`; `TAILSCALE_RECOVERY_PATH_REFERENCE=CONFIRMED_IN_REPO_SOURCE`; `ACTUAL_ADDON_RUNTIME_AND_UNBOUND_BEHAVIOR=NOT_VERIFIED`; `PRODUCTION_UMASK_PATCH=NOT_DEPLOYED`; `DEPLOYMENT_GATE=HOLD`. No copying, `chmod`, service restart, or path switch is approved. Compare the two versions' launch semantics off-router or by strictly bounded read-only probes before designing a single-source solution.
