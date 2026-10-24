@@ -68,3 +68,29 @@ UNBOUND_1262_DIRECT_UDP_SERVFAIL=PASS
 **Final classification:** `PRODUCTION_UNBOUND=1.26.2-1`; `D1=PASS`; `D2_TCP_DNSSEC_AND_CLIENT_DNS=PASS`; `DIRECT_UDP_DNSSEC=PASS`; `DNS_GUARD_UNPLANNED_FAILOPEN_FAILBACK=OBSERVED_POSTHOC`; `DNS_GUARD_CONTROLLED_FAULT_INJECTION=NOT_TESTED`; `ASUS_REBOOT_PERSISTENCE=NOT_TESTED`; `ROLLBACK_REQUIRED=NO`.
 
 This document closes **the authorized Unbound package-upgrade and bounded DNSSEC/client acceptance task**, not the separate recovery/failover or reboot-validation tasks.
+
+
+## 5. Later actual ASUS reboot: functional persistence with an RFC 5011 file-mode exception
+
+**Evidence collected after the earlier R2 D1/D2 acceptance:** the operator subsequently rebooted the real router. The following was measured after the new boot (initial post-boot test at approximately 3 minutes of uptime, October 24 CEST). It **changes** the historical `ASUS_REBOOT_PERSISTENCE=NOT_TESTED` acceptance boundary for the **specific restart observed**, but is not evidence of a cold power-loss boot, repeated boots, uninterrupted DNS during restart, or long soak.
+
+| Actual post-reboot test | Observation |
+| --- | --- |
+| Five Entware Unbound packages still report `1.26.2-1` | **5/5 PASS** |
+| Unbound and Pi-hole FTL process presence; checkconf; Unbound TCP/UDP loopback listener | **PASS** |
+| Active automatic trust-anchor directive points once to `dnssec-auto/root.key` | **PASS** |
+| DNSSEC good `NOERROR` with `AD` vs bogus `SERVFAIL` via direct Unbound **UDP** | **PASS / PASS** |
+| Same positive/negative DNSSEC via direct Unbound **TCP** | **PASS / PASS** |
+| Router dnsmasq and dedicated Pi-hole client-path DNS | **PASS / PASS** |
+| Router system DNS selected local Pi-hole; DNS Guard watchdog registered; break-glass inactive | **PASS / PASS / INACTIVE** |
+| Chroot root `root:root 0755`, private anchor subdirectory `65534:65534 0700` | **PASS** |
+| Active RFC 5011 `root.key` file owner `65534:65534` | **PASS** |
+| Active RFC 5011 `root.key` file **mode** | **0666, NOT the expected 0600 — HARDENING CHECK OPEN** |
+
+The later read-only metadata audit found `root.key` to be a nonsymlink regular file, owned by UID/GID 65534, **mode 0666**, 1,251 bytes; `mtime` **15:48:55.133 +0200**, `ctime` **15:48:55.140 +0200**. The estimated boot time, derived from the collected clock and `/proc/uptime`, was **15:48:03 CEST**: file modification and metadata changes occurred roughly **52 seconds after boot**. The data do not individually prove whether the original inode was replaced or which process set the mode. The startup Manager contained no literal `umask`, `unbound-anchor`, `chmod` or `chown` keyword in the bounded scan; the running daemon's reported UID was 65534, but the router's `/proc/<pid>/status` did not provide a `Umask` field.
+
+**Independent source-level explanation:** upstream Unbound **release-1.26.2** function `validator/autotrust.c:autr_write_file()` writes the automatic trust-anchor state to a temporary sibling via `fopen(tempf, "w")`, then replaces the original through `rename(tempf, fname)`. The function does not preserve the prior file's `0600` mode or call `chmod/fchmod`. Newly created files are therefore governed by the effective process creation mask (and any inherited pre-existing temporary-file state); a fresh regular file at `0666` is *consistent with* `umask 000`, **not proof of the daemon's actual umask**. Upstream code: [Unbound 1.26.2 autotrust.c](https://github.com/NLnetLabs/unbound/blob/release-1.26.2/validator/autotrust.c). Public root DNSSEC trust-anchor material is not a secret; unauthorized modification is the concern. The parent directory `0700` owned by the daemon UID prevents ordinary other users from traversing to the file, materially limiting exposure despite its `0666` bits.
+
+**Safety decision:** no `chmod`, daemon restart, startup-mask change or key-content read was performed. Functionality and bounded restart persistence are **PASS**, but **file-mode hardening remains unresolved** and might revert upon subsequent atomic anchor replacement. Assess a process-level `umask 077` change in an isolated Fedora/ARMv7 lab and evaluate effects on other daemon-created files *before* any separately approved router deployment.
+
+**Updated gate:** `ASUS_REBOOT_2026_10_24_FUNCTIONAL=PASS`; `RFC5011_ANCHOR_PARENT_DAC=PASS`; `RFC5011_ANCHOR_FILE_MODE_0600=NOT_MET_CURRENT_0666`; `REBOOT_PERSISTENCE_REPEATED_COLD_BOOT=NOT_TESTED`; `PRODUCTION_CHANGES_DURING_POSTBOOT_AUDIT=NO`.
