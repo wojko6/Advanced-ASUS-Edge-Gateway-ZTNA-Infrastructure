@@ -319,3 +319,9 @@ Where applicable, case studies separate:
 These case studies are intended to demonstrate troubleshooting methodology, evidence handling, least-privilege/security reasoning, and disciplined distinction between observation and inference.
 
 Raw deployment-specific evidence is intentionally excluded from the public repository when it contains private infrastructure identifiers.
+
+## Draft / in-progress investigation — Unbound DNSSEC trust-anchor permissions (2026-10-24)
+
+**DRAFT — not a completed upgrade:** [Unbound DNSSEC trust-anchor and opkg directory-metadata incident](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+
+This ongoing case records an authorized 1.26.2 upgrade attempt, production resolver outage, unsuccessful package-only rollback, a narrowly scoped DNSSEC trust-anchor recovery under 1.26.1, and an isolated reproduction of directory-ownership normalization by the real ARMv7 opkg binary using original IPKs. The before-upgrade production directory mode is unknown; full-runtime 1.26.2 and reboot-persistence acceptance remain open. **Production upgrade HOLD.**
