@@ -3,7 +3,7 @@
 > **Status:** incident + subsequent successful Unbound 1.26.2 R2 production redeployment documented on 2026-10-24; **Draft PR review remains pending**. Historical incident details below are preserved as observed.
 > **Environment:** ASUS TUF-AX5400, GNUton Asuswrt-Merlin, Entware ARMv7, Unbound + dnsmasq + Pi-hole.
 > **Evidence:** operator-reported production terminal outputs; independently executed rootless Fedora/ARMv7 package laboratory reported by the operator; verified backup/package metadata. No production execution is implied by publication.
-> **Final operator-reported production state (later October 24):** five packages **1.26.2-1**, D1/D2 PASS and direct UDP/TCP positive/bogus DNSSEC PASS; DNS Guard live failover, full cold reboot and long soak **not tested**. Earlier 1.26.1 recovery/HOLD below is a **historical interim checkpoint**.
+> **Final operator-reported production state (later October 24):** five packages **1.26.2-1**, D1/D2 PASS and direct UDP/TCP positive/bogus DNSSEC PASS; **controlled** DNS Guard fault injection, full cold reboot and long soak **not tested**; later read-only incident forensics confirmed real spontaneous DNS Guard WAN fail-open at 10:25:02 and local promotion at 11:08:01 (router-system resolver only). Earlier 1.26.1 recovery/HOLD below is a **historical interim checkpoint**.
 
 ## Executive summary
 
@@ -134,7 +134,8 @@ The early HOLD shown throughout the incident investigation was correct **at the 
 | D1 controlled install, custom Manager and daemon start | **PASS** |
 | D2 direct TCP DNSSEC + router and Pi-hole DNS | **PASS** |
 | Additional direct UDP DNSSEC positive AD / negative SERVFAIL | **PASS** |
-| Real DNS Guard failover during deliberate outage | **NOT TESTED** |
+| Real DNS Guard failover during deliberate outage | **NOT TESTED** — no intentional fault injection |
+| Real DNS Guard fail-open and local return in earlier unplanned production incident | **OBSERVED AFTER THE FACT** in router syslog and time-series; client continuity not proven |
 | ASUS reboot / post-upgrade persistence / extended soak | **NOT TESTED** |
 | Historical pre-incident chroot directory owner/mode | **UNKNOWN** |
 | RFC 5011 real 30-day KSK acceptance | **NOT TESTED** |
@@ -143,6 +144,14 @@ The early HOLD shown throughout the incident investigation was correct **at the 
 
 For the complete sanitized production timeline and raw pass markers, see [the October 24 R2 deployment acceptance](../operations/unbound-1.26.2-production-deployment-2026-10-24.md).
 
+## Monitoring and alert-delivery aftermath — later October 24 forensic addendum
+
+A separate read-only review of the production ASUS syslog archive, Fedora VictoriaMetrics/Blackbox series, Grafana journal, SQLite rule configuration and received alert e-mails established that DNS Guard **did** select independent WAN/bootstrap DNS at **10:25:02** and later promoted back to local Pi-hole at **11:08:01** during the **unplanned** initial Unbound outage. These observations were discovered **after** the original D1/D2 deployment acceptance. The earlier phrase `DNS Guard live failover not tested` referred specifically to the absence of a **controlled fault-injection acceptance test**; it should not erase the newly established historical transitions.
+
+A source-controlled router-DNS Blackbox probe returned **83 failures / 121 samples** in the 10:20–11:20 interval, while separate HTTPS and ICMP probes reported **121/121 PASS** each. The monitoring host experienced **14** Grafana notifier errors classified with DNS lookup/timeout/retry signals; the DNS Guard FIRING e-mail was received only at **11:07:03** and RESOLVED at **11:12:02**. The precise historical Fedora DNS upstream, transport-specific channel attribution and history of the separate router-DNS-probe alert remain **unproven**. No Fedora DNS or alert configuration was changed.
+
+See the distinct [DNS Guard and delayed Grafana alert delivery case study](dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md) for the full chronology, sanitized evidence and proposed independent monitoring DNS follow-up. That analysis does **not** change the R2 Unbound 1.26.2-1 PASS verdict or claim client-DNS continuity.
+
 ## References
 
 - [October 23 Unbound 1.26.2 release-readiness checkpoint](../operations/unbound-1.26.2-armv7-release-readiness-2026-10-23.md) — historical pre-upgrade state, not the current runtime claim.
@@ -150,4 +159,4 @@ For the complete sanitized production timeline and raw pass markers, see [the Oc
 - [NLnet Labs Unbound configuration reference](https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html) — automatic trust-anchor file behavior.
 - [OpenWrt packages issue #3624](https://github.com/openwrt/packages/issues/3624) — historical analogous package-driven directory ownership change; **not** proof of the 2026 production timeline.
 
-> **Publication gate:** draft-document review/CI pending. The initial incident, 1.26.1 recovery, isolated laboratory, and later successful R2 production 1.26.2 deployment are **different dated claims**. Independent DNS Guard failover and reboot persistence remain untested.
+> **Publication gate:** draft-document review/CI pending. The initial incident, 1.26.1 recovery, isolated laboratory, and later successful R2 production 1.26.2 deployment are **different dated claims**. **Controlled** DNS Guard failover injection and post-R2 reboot persistence remain untested; real unplanned DNS Guard fail-open/failback was subsequently observed.
