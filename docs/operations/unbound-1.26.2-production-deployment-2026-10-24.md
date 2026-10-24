@@ -148,3 +148,21 @@ Final marker: `V3_RESULT=PASS_SCOPED_CHILD_077_PARENT_022_ACTUAL_ARMV7`. `ASUS_C
 **Next gate (read only):** inventory exact production Manager file and hash, `rc.func` start path, live PID file/daemon/diagnostic log DAC, and all startup paths including direct recovery; compare privately against staged rollback Manager. Then run Fedora-only static and runtime negative regressions for both paths before proposing any patch. No authorized `S61unbound` edit, no DNS Guard changes, no router service restart or further deployment at this stage.
 
 **Status:** `RFC5011_SCOPED_UMASK_ARMV7_V3=PASS`; `PRODUCTION_MANAGER_VERIFIED=NO`; `PRODUCTION_UMASK_PATCH=NOT_DEPLOYED`; `DEPLOYMENT_GATE=HOLD`.
+
+
+## 9. V4 real daemon PID: preflight failure and Fedora-only V4.1 correction
+
+**Operator report, October 24:** V4 `--self-test` PASS (pinned V9 **26/26**) and `--inspect` PASS. Full `--run` **FAILED** before Unbound daemon PID-mode assertions. In the disposable Podman/QEMU guest, adding `pidfile: "/opt/var/run/unbound.pid"` caused `unbound-checkconf` to abort:
+
+```text
+/opt/var/run: No such file or directory
+unbound-checkconf: fatal error: pidfile directory does not exist
+LAB_RESULT=FAIL_PRECHECK_OR_RUNTIME:QEMU_CHECKCONF_FAILED
+V4_RESULT=FAIL:REAL_ARMV7_RUNTIME_OR_PID_DAC
+```
+
+**Root cause in test harness:** the V4 patch created the directory `/opt/var/run` alongside the **first daemon launch**, which occurs **after** the earlier V9 `unbound-checkconf` step. This is a lab staging-order error, **not evidence of a router Unbound regression**. `RUNTIME_TREE_LIBUNBOUND_MATCH_IPK=NO` was also displayed, but V9 correctly reported `CONTAINER_EXACT_IPK_LIBUNBOUND=PASS` because it deliberately replaces the build-tree library with the verified IPK library in the container.
+
+A separate Fedora-only V4.1 script was prepared without touching the original V4 or pinned V9. It moves directory creation to the **initial disposable-container setup**, before config validation, with `0:0 0755`, symlink and ordering checks. Local `bash -n`, V4.1 self-test/pinned V9 **26/26**, generated-copy syntax and static PID-directory-before-checkconf assertion: **PASS**. **Full ARMv7 runtime V4.1 remains NOT TESTED by the operator**, so the predicted real daemon PID `0600` and negative unprivileged-read regression are *not* recorded as PASS.
+
+**Gate:** `V4_RUNTIME=FAIL_LAB_PIDDIR_PRECHECK`; `V4_1_PATCH_SELFTEST=PASS`; `V4_1_ARMV7_RUNTIME=PENDING`; `PRODUCTION_MANAGER_VERIFIED=NO`; `PRODUCTION_CHANGES=NO`; `DEPLOYMENT_GATE=HOLD`.
