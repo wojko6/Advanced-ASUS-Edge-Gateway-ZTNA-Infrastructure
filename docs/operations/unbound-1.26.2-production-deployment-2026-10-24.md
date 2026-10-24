@@ -230,3 +230,8 @@ The corresponding source-matched active file has DNS Guard scheduling around lin
 First proposed `diff -u` command could not execute on the router (`DIFF_TOOL=NOT_AVAILABLE`); it did **not** mean scripts were invalid. The alternate bounded `awk` comparison succeeded. Further analysis should report only exact bounded line-range changes using a **read-only four-consecutive-line resynchronization heuristic**, which must return `HOLD_AMBIGUOUS_ALIGN` when a short safe anchor cannot be found. It is not a full diff or proof of complete semantics.
 
 **Status:** `SCRIPT_PREFIX_MATCH=310`; `SCRIPT_SUFFIX_MATCH=10`; `DIFFERENCE_SPANS_KNOWN=YES`; `EXACT_CHANGE_HUNKS=PENDING`; `PRODUCTION_FILES_MODIFIED=NO`; `SERVICES_RESTARTED=NO`; `DEPLOYMENT_GATE=HOLD`.
+
+
+## 16. V5 offline source gate: missing rc.func
+
+Operator-run Fedora V5: Python syntax and self-test PASS. The offline inspect verified production-pinned `S61unbound` SHA-256 but returned `V5_RESULT=HOLD_RCFUNC_NO_PINNED_OFFLINE_COPY_IN_FIXED_LOCATIONS`. The exact live `rc.func` SHA-256 required is `5f5730cb58527c74f5da95f0cb37cde68426e25176ca34c34f9e8e3b4fe49f6d`. No `--run` followed because the operator chained commands with `&&`. No actual manager script execution, network access or ASUS changes occurred. Next step is to inspect the existing Fedora verified backup for the correct file. Deployment HOLD.
