@@ -3,7 +3,7 @@
 > **Status:** incident + subsequent successful Unbound 1.26.2 R2 production redeployment documented on 2026-10-24; **Draft PR review remains pending**. Historical incident details below are preserved as observed.
 > **Environment:** ASUS TUF-AX5400, GNUton Asuswrt-Merlin, Entware ARMv7, Unbound + dnsmasq + Pi-hole.
 > **Evidence:** operator-reported production terminal outputs; independently executed rootless Fedora/ARMv7 package laboratory reported by the operator; verified backup/package metadata. No production execution is implied by publication.
-> **Final operator-reported production state (later October 24):** five packages **1.26.2-1**, D1/D2 PASS and direct UDP/TCP positive/bogus DNSSEC PASS; **controlled** DNS Guard fault injection, full cold reboot and long soak **not tested**; later read-only incident forensics confirmed real spontaneous DNS Guard WAN fail-open at 10:25:02 and local promotion at 11:08:01 (router-system resolver only). Earlier 1.26.1 recovery/HOLD below is a **historical interim checkpoint**.
+> **Final operator-reported production state (later October 24):** five packages **1.26.2-1**, D1/D2 PASS and direct UDP/TCP positive/bogus DNSSEC PASS; **controlled** DNS Guard fault injection, cold power-loss reboot and long soak **not tested**; an **actual post-R2 reboot later passed bounded runtime/DNSSEC/client checks**, with an unresolved `0666` RFC 5011 anchor-file mode; later read-only incident forensics confirmed real spontaneous DNS Guard WAN fail-open at 10:25:02 and local promotion at 11:08:01 (router-system resolver only). Earlier 1.26.1 recovery/HOLD below is a **historical interim checkpoint**.
 
 ## Executive summary
 
@@ -136,7 +136,9 @@ The early HOLD shown throughout the incident investigation was correct **at the 
 | Additional direct UDP DNSSEC positive AD / negative SERVFAIL | **PASS** |
 | Real DNS Guard failover during deliberate outage | **NOT TESTED** — no intentional fault injection |
 | Real DNS Guard fail-open and local return in earlier unplanned production incident | **OBSERVED AFTER THE FACT** in router syslog and time-series; client continuity not proven |
-| ASUS reboot / post-upgrade persistence / extended soak | **NOT TESTED** |
+| ASUS reboot after R2 / functional persistence | **PASS after one observed actual reboot**, direct DNSSEC UDP/TCP and dnsmasq/Pi-hole client DNS |
+| RFC 5011 anchor-file DAC after reboot | **CHECK:** owner/parent directory correct, file mode `0666` versus intended `0600` |
+| Cold power-loss reboot / extended soak | **NOT TESTED** |
 | Historical pre-incident chroot directory owner/mode | **UNKNOWN** |
 | RFC 5011 real 30-day KSK acceptance | **NOT TESTED** |
 
@@ -152,6 +154,16 @@ A source-controlled router-DNS Blackbox probe returned **83 failures / 121 sampl
 
 See the distinct [DNS Guard and delayed Grafana alert delivery case study](dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md) for the full chronology, sanitized evidence and proposed independent monitoring DNS follow-up. That analysis does **not** change the R2 Unbound 1.26.2-1 PASS verdict or claim client-DNS continuity.
 
+## Afterward: successful reboot and real ARMv7 file-mode reproducer
+
+After the successful R2 upgrade, the operator completed **one actual router reboot**, followed by read-only verification: installed Unbound 1.26.2 packages **5/5 PASS**, Unbound/Pi-hole processes and sockets PASS, direct DNSSEC valid AD and invalid SERVFAIL over **UDP and TCP PASS**, router dnsmasq and Pi-hole DNS PASS, and DNS Guard back on its local DNS path with watchdog registered. This establishes bounded **functional restart persistence**, not an uninterrupted start, full power-loss cold boot or long soak.
+
+The only reported file-mode exception was the active RFC 5011 auto-trust-anchor file: owner `65534:65534` and private parent directory `0700` remained correct, but `root.key` itself was **0666**, not the previously provisioned `0600`; its `mtime` and `ctime` changed around 52 seconds after router start. The protected directory limits ordinary users' access to that file. The actual production daemon's effective `umask` at the write event was **not measured**.
+
+Source inspection of Unbound release-1.26.2 identified `autr_write_file()` as using `fopen(tempf, "w")` and atomic `rename()`, without preserving the original file mode. On Fedora, a synthetic V1 writer reproduced replacement modes `umask 000 → 0666`, `022 → 0644`, `077 → 0600` (**3/3 PASS**). V2 went beyond the model: **real Unbound 1.26.2 ARMv7** with verified IPK libunbound and real staged dependencies executed RFC 5011 writes in rootless QEMU/Podman. Both `000` and `077` variants passed inode replacement, KSK `VALID/ADDPEND` and daemon-process restart retention; their actual post-write and post-restart modes were **0666** and **0600**, respectively. Newly created launcher log-file modes changed with the mask too. Therefore `umask 077` is an **isolated-lab candidate**, not an authorized production patch. The existing ASUS service-manager launch chain, other file permissions and full compatibility remain to be reviewed. No router chmod, edit or restart was performed in the hardening investigation.
+
+The [R2 operations report](../operations/unbound-1.26.2-production-deployment-2026-10-24.md) contains the exact post-reboot and V1/V2 observations with explicit PASS/HOLD boundaries.
+
 ## References
 
 - [October 23 Unbound 1.26.2 release-readiness checkpoint](../operations/unbound-1.26.2-armv7-release-readiness-2026-10-23.md) — historical pre-upgrade state, not the current runtime claim.
@@ -159,4 +171,4 @@ See the distinct [DNS Guard and delayed Grafana alert delivery case study](dns-g
 - [NLnet Labs Unbound configuration reference](https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html) — automatic trust-anchor file behavior.
 - [OpenWrt packages issue #3624](https://github.com/openwrt/packages/issues/3624) — historical analogous package-driven directory ownership change; **not** proof of the 2026 production timeline.
 
-> **Publication gate:** draft-document review/CI pending. The initial incident, 1.26.1 recovery, isolated laboratory, and later successful R2 production 1.26.2 deployment are **different dated claims**. **Controlled** DNS Guard failover injection and post-R2 reboot persistence remain untested; real unplanned DNS Guard fail-open/failback was subsequently observed.
+> **Publication gate:** draft-document review/CI pending. The initial incident, 1.26.1 recovery, isolated laboratory, and later successful R2 production 1.26.2 deployment are **different dated claims**. **Controlled** DNS Guard fault injection, cold power-loss reboot and long-soak tests remain untested; one actual post-R2 reboot passed functional DNSSEC/client checks, but RFC 5011 file-mode hardening remains open. Real unplanned DNS Guard fail-open/failback was separately observed.
