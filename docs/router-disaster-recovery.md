@@ -2,7 +2,7 @@
 
 **Tracking:** #100 (historical), #129 (Pi-hole recovery)
 
-**Status (2026-10-09):** verified private recovery archives and disposable restore components; **production reboot persistence PASS** with Entware present; full end-to-end router rebuild pending
+**Status (updated 2026-10-24):** the 2026-10-09 evidence validates the already provisioned router, not bare-metal recovery. Separately, Unbound `1.26.2-1` R2 and one later actual ASUS reboot passed bounded DNSSEC/service checks. **Empty-router/SSD restoration remains NOT TESTED and #129 OPEN.** [R2 operations evidence](operations/unbound-1.26.2-production-deployment-2026-10-24.md).
 
 ## Goal
 
@@ -117,11 +117,11 @@ Restore procedure:
 6. reboot only in a controlled maintenance window;
 7. verify swap-before-Entware evidence and project health.
 
-### Unbound runtime ownership
+### Unbound runtime ownership — historical assumption superseded
 
-The live reference `/opt/var/lib/unbound` directory is owned by the resolver runtime account rather than root. File-content backup alone does not prove that a clean restore recreates this ownership correctly.
+Older guidance described the chroot root as owned by the resolver account. **That is superseded by actual October 24 production evidence**: the package-managed chroot root was `root:root 0755`; the separate writable `dnssec-auto` child directory was `65534:65534 0700`. The historical directory metadata **before** the first unsuccessful upgrade remain UNKNOWN. Do not use old ownership assumptions as evidence of the original configuration, or apply the old top-level `chown` on a new target.
 
-The project must not claim full resolver recovery until a safe restore test proves the required owner/mode contract or the restore procedure recreates it explicitly.
+The [current reconstruction and STOP gate](#unbound-runtime-ownership-reconstruction) and [R2 acceptance](operations/unbound-1.26.2-production-deployment-2026-10-24.md) take precedence. Rebuilding from empty firmware/JFFS/SSD is still unproven.
 
 ### 2026-10-08 issue #200 directory-mode checkpoint
 
@@ -259,21 +259,20 @@ The alternate root must already exist, be writable, be absolute, must not be `/`
 
 ## Unbound runtime ownership reconstruction
 
-The live reference router uses this directory ownership contract for the manager-generated runtime tree:
+**Observed actual ASUS reference after the 2026-10-24 Unbound R2 deployment and one functional reboot (five `1.26.2-1` ARMv7 packages):**
 
-```text
-/opt/var/lib/unbound  uid=65534 gid=0 mode=0755
-```
+| Object | Observed metadata | Future restore gate |
+| --- | --- | --- |
+| Manager-owned chroot root `/opt/var/lib/unbound` | `root:root 0755` | Package-managed; **do not reuse the historical `chown 65534:0` instruction** |
+| Dedicated writable automatic trust-anchor child `dnssec-auto` | `65534:65534 0700` | Check the *single active* `auto-trust-anchor-file` points here and the daemon can create a temporary sibling file |
+| Active `dnssec-auto/root.key` | `65534:65534 0666` after reboot | **UNRESOLVED HARDENING EXCEPTION, not a safe target mode.** `0600` is intended but not proven durable |
+| Older chroot-root `root.key` | Historical no-longer-active key | **Do not overwrite the active RFC 5011 state with the legacy copy** |
 
-The project backup preserves the runtime configuration file but does not treat the whole runtime directory as an opaque payload. On a clean rebuild, recreate the runtime directory before starting/recovering Unbound:
+The old top-level `uid=65534,gid=0,mode=0755` recipe is now **superseded** for this observed reference. The pre-incident chroot owner/mode remain **UNKNOWN**. The archive stores reviewed file content; it cannot establish missing directory metadata or restore a Manager-created environment on its own.
 
-```sh
-mkdir -p /opt/var/lib/unbound
-chown 65534:0 /opt/var/lib/unbound
-chmod 0755 /opt/var/lib/unbound
-```
+Before any **separately authorized, isolated** empty-device restore, validate exact five-IPK `1.26.2-1` provenance, dependencies, `opkg` directory-metadata effects, and the trusted/custom `S61unbound` executable owner/mode/hash. On the disposable rebuild target inspect the real generated config, chroot root, writable anchor child and active path; confirm `unbound-checkconf`, stable daemon identity, direct UDP/TCP DNSSEC valid `AD` and bogus `SERVFAIL`, and downstream dnsmasq/Pi-hole resolution. Prepare independent rollback and physical recovery access. This is an **acceptance plan**, not a proven procedure or permission-change authorization.
 
-Do not treat the currently observed world-writable modes on `unbound.conf`, `root.key` or `dnsmasq.conf.add` as a required recovery contract. Those modes require a separate compatibility/hardening review. The trust-anchor file remains manager/runtime-owned and is not a primary project-backup payload.
+**STOP:** if the exact packages/Manager are unavailable, the daemon cannot write the active anchor's sibling, the directory metadata conflict, or DNSSEC tests fail. Do not use blanket `chmod/chown`, change production `umask`, deploy experimental startup hooks or copy the legacy anchor as a workaround. [#298 anchor file-mode hardening](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/298) and [#299 manager/PID compatibility](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/299) are **OPEN/HOLD**. Production daemon umask was not measured. [Incident chronology](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md) · [reboot report](operations/unbound-1.26.2-production-deployment-2026-10-24.md).
 
 ## Post-restore validation checklist
 

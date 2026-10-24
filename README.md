@@ -193,7 +193,10 @@ The current reference deployment uses split local DNS ownership. Pi-hole FTL own
 
 Issue #152 adds an opt-in exception for selected Tailscale IPv4 sources: their TCP/UDP 53 traffic can be DNATed to the dedicated Pi-hole listener before the generic Tailscale REDIRECT. The 2026-10-06 reference-client validation confirmed that selected path over LTE/5G with Tailscale enabled and the exit node disabled. Non-matching Tailscale clients continue through `dnsmasq -> Unbound`. The 2026-09-28 main-LAN DHCP Pi-hole result remains valid, while arbitrary hard-coded external classic-DNS on LAN still follows its separately documented interception path.
 
-For a standard Entware deployment:
+For a **standalone** Entware deployment (not the reference manager-owned Unbound):
+
+> **Example scope (2026-10-24):** `config/unbound.conf.example` retains a standalone `root.key` path; it is **not** the active ASUS R2 Manager RFC 5011 anchor. Never transplant it or old chroot ownership into manager-generated production configuration. [Current DR gate](docs/router-disaster-recovery.md#unbound-runtime-ownership-reconstruction) · [R2 report](docs/operations/unbound-1.26.2-production-deployment-2026-10-24.md).
+
 
 ```sh
 cp config/unbound.conf.example /opt/etc/unbound/unbound.conf

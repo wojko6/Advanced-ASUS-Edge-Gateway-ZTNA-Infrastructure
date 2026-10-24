@@ -1,7 +1,7 @@
 # Disaster Recovery — navigation and current validation boundary
 
 **Status:** CURRENT navigation only (not a separate restore procedure).  
-**Reviewed:** 2026-10-23 (merged #276 source regression and read-only router toolchain preflight; full DR gate unchanged)  
+**Reviewed:** 2026-10-24 (Unbound 1.26.2 R2 and trust-anchor DR contract reconciliation; no fresh recovery test; full DR gate unchanged)  
 **Tracking:** [#129 — Pi-hole-aware Disaster Recovery](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129) **OPEN**; [#100 — historical router DR baseline](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/100) completed.
 
 For **current deployment status**, start at [PROJECT-STATUS](../PROJECT-STATUS.md). For the hierarchy of evidence and instructions, use the [documentation model](documentation-model.md). This page is a **reading map**: it does not replace the manuals or repeat shell commands.
@@ -18,6 +18,7 @@ For **current deployment status**, start at [PROJECT-STATUS](../PROJECT-STATUS.m
 | Review 2026-10-09 actual router reboot | [Controlled reboot evidence](../evidence/2026-10-09/issue-129-pihole-dr-reboot-persistence.md) | Existing-router startup and DNS Guard persistence **PASS**, not a fresh restore |
 | Review 2026-10-09 package rebuild | [65-package offline clean-room evidence](../evidence/2026-10-09/issue-129-offline-pihole-opkg-cleanroom.md) | Recursive 65-IPK closure and real `opkg --offline-root` ARMv7 container installation **PASS**, not router boot/DNS |
 | Review 2026-10-10 optional BusyBox persistence | [Read-only reboot-persistence follow-up](../evidence/2026-10-10/issue-129-custom-busybox-reboot-persistence.md) | Existing reference router `BUSYBOX_REBOOT_PERSISTENCE=PASS`, not a clean-device restore or rollback |
+| Review 2026-10-24 Unbound R2 upgrade and actual reboot | [Unbound 1.26.2 production report](operations/unbound-1.26.2-production-deployment-2026-10-24.md) | Five-IPK / DNSSEC UDP+TCP / one reboot functional **PASS**; `root.key 0666` open exception; **not** a blank-router restoration |
 | Review 2026-10-23 rollback fix | [Merged #276 regression evidence](../evidence/2026-10-22/issue-276-legacy-post-mount-rollback-review.md) and [Issue #276](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/276) | PR #290 merged; exact-source Fedora negative/positive regression PASS; no live router restore or new JFFS hook |
 | Follow the engineering chronology | [Worklog 2026-10-09](worklog/2026-10-09.md) and [2026-10-10](worklog/2026-10-10.md) | Historical sessions and newly reported lab activity, distinct from acceptance evidence |
 
@@ -25,20 +26,21 @@ The [Polish documentation index](pl/README.md) groups translated/adapted operato
 
 ## What is proved, and what is not?
 
-| Tested scope | Status through 2026-10-10 (older DR evidence dated 2026-10-09) |
+| Tested scope | Date-bound result / missing acceptance |
 |---|---|
 | Three private encrypted backups and their SHA-256 sidecars | PASS for integrity/decryption checks; **CFG import not tested** |
 | CORE alternate-root file restore | PASS in disposable Fedora `tmpfs`: **39 restored files**, not the unrelated 41-entry manifest stream check |
 | Pi-hole archive / Gravity / private file restoration | PASS for selected offline checks and staged files; target UID/GID/xattr reapplication not validated in the same exercise |
 | Pi-hole package availability | PASS: **65 exact-version IPKs** with SHA-256, **340** declared dependency groups, none missing |
 | Pi-hole package-manager reconstruction | PASS: offline, rootless ARMv7 Podman `opkg` install, **65 installed status records** and FTL SHA-256 |
-| Existing production router restart | PASS (2026-10-09): services persisted and project healthcheck had **0 failures / 0 warnings** |
+| Existing production router restart | **PASS 2026-10-09:** healthcheck 0/0; **separately PASS 2026-10-24:** Unbound R2 one actual post-reboot functional DNSSEC/client-path check. Neither is an empty-router restore or cold power-loss test |
+| Unbound 1.26.2 reconstruction from empty storage | **NOT TESTED:** R2 production chroot `root:root 0755`, writable `dnssec-auto` `65534:65534 0700`; `root.key 0666` is an unaccepted hardening exception under #298/#299 |
 | Optional JFFS BusyBox latest-reboot persistence | **PASS (2026-10-10, read-only):** file timestamp predates boot, explicit execution and hash check; **not** a restored target or removal test |
 | `restore.sh` toolchain on a healthy ASUS with Entware (2026-10-23 read-only V2) | Required `find` options, AWK, and SHA-256 provider PASS under effective PATH; **no archive or restore executed** |
 | Firmware-only PATH simulation without Entware (2026-10-23 read-only V2) | Required `find` options FAIL; no SHA-256 provider. **STOP:** bootstrap a separately verified recovery toolchain; physical `/opt` loss was not simulated |
 | **Full replacement router/blank SSD firmware → restored DNS/DHCP/API** | **NOT TESTED** |
 
-**Next recovery gate:** on a disposable rebuilt target, validate service account **999:999**, restored modes and the seven FTL `security.capability` bits, deferred maintainer-script effects, Gravity restoration, Unbound → Pi-hole DNS, DHCP/reverse lookup, DNS Guard and post-recovery reboot. Maintain physical fallback management access. **Do not run `restore.sh --apply`, `setcap`, CFG import, formatting or experimental reboot on the healthy production router.**
+**Next recovery gate:** first on a disposable rebuilt target verify Unbound five-package `1.26.2-1` provenance, trusted Manager/`rc.func`, [distinct chroot and anchor-directory permissions](router-disaster-recovery.md#unbound-runtime-ownership-reconstruction) and working RFC 5011 sibling writes; then validate service account **999:999**, restored modes and the seven FTL `security.capability` bits, deferred maintainer-script effects, Gravity restoration, Unbound → Pi-hole DNS, DHCP/reverse lookup, DNS Guard and post-recovery reboot. Maintain physical fallback management access. **Do not run `restore.sh --apply`, `setcap`, CFG import, formatting or experimental reboot on the healthy production router.**
 
 ## Private materials and change control
 

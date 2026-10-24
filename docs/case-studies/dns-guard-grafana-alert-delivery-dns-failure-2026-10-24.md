@@ -153,4 +153,4 @@ The same diagnostic's `command -v dig` output reported `NOT_FOUND`, while the im
 - [Grafana provisioning](../../monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml) and [source Blackbox probes](../../monitoring/config/prometheus.yml).
 - [October 24 public worklog](../worklog/2026-10-24.md).
 
-> **Publication/closure boundary:** documentation only in Draft PR #297; no router, Fedora DNS, Grafana alert rules, notification integrations or service restarts were modified by this historical analysis. Final document review, sanitization and CI are pending. The successful Unbound R2 deployment is **not** undone by these separate monitoring findings.
+> **Publication/closure boundary (post-merge update):** documentation was published in merged [PR #297](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/297) on 2026-10-24; that publication made **no router/Fedora DNS, Grafana alerting, notification or service change**. Controlled fault-injection, monitoring independence and optional probe remediation remain **OPEN**. The separate successful Unbound R2 upgrade is **not** undone by these findings.
