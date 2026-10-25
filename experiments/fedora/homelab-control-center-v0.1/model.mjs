@@ -4,7 +4,7 @@ const valid = new Set(STATUSES);
 const parseTime = (s) => {
   if(typeof s!=='string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(s)) return NaN;
   const t=Date.parse(s);
-  return Number.isFinite(t) && new Date(t).toISOString()===s ? t : NaN;
+  return Number.isFinite(t) && new Date(t).toISOString().replace('.000Z','Z')===s ? t : NaN;
 };
 export function evaluate(signal, generatedAt) {
   const fallback = {status:'UNKNOWN',reason:'Brak wiarygodnych danych',ageSeconds:null};
