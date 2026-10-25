@@ -76,7 +76,10 @@ run_case() {
     printf '%s\n' "$resolver" > "$DNS_GUARD_RESOLV_CONF"
     rc=0
     (
+        # Both counters are consumed by source-extracted healthcheck functions.
+        # shellcheck disable=SC2034
         FAILURES=0
+        # shellcheck disable=SC2034
         WARNINGS=0
         MOCK_DIG_PRESENT="$dig_present"
         MOCK_DIG_RC="$dig_rc"
