@@ -78,7 +78,8 @@ assert.doesNotMatch(snap, /198\.51\.100\.10|203\.0\.113\.20/);
 
 const found = html.match(/<script type="text\/javascript">([\s\S]*?)<\/script>/);
 assert.ok(found, 'UI inline script must exist');
-new vm.Script(found[1]);
+const js = found[1].replace(/<%[\s\S]*?%>/g, '0');
+new vm.Script(js);
 
 const entries = {};
 const sandbox = {
@@ -86,7 +87,7 @@ const sandbox = {
   document: {getElementById: id => (entries[id] ||= {innerHTML: ''})},
   console
 };
-vm.runInNewContext(found[1], sandbox);
+vm.runInNewContext(js, sandbox);
 
 const now = Math.floor(Date.now() / 1000);
 assert.equal(sandbox.edgeSnapshotFreshness({generatedEpoch: now}, now), 'fresh');
