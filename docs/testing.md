@@ -190,6 +190,15 @@ For offline reproducibility, run
 executables make **no network connection**. The main `test-static.sh`
 suite includes this isolated contract test.
 
+The same static suite runs `sh tests/test-healthcheck-warning-contract.sh`,
+which extracts and executes the real DNS Guard resolver-mode, optional `dig`
+readiness, warning counter and final-exit branches using disposable filesystem
+fixtures and mock commands. It distinguishes `LOCAL`, `BOOTSTRAP`, `MIXED`,
+`UNKNOWN`, missing `dig` and nonfunctional `dig`; it is **not** a full live
+Unbound or router DNSSEC validation. The existing DNS Guard mock tests already
+cover the optional skipped TCP `dig` probe, which remains a separate unresolved
+production diagnostic issue.
+
 Separately, the production `scripts/healthcheck.sh` retains its original
 **0 failures / warning-only = exit 0** policy: warnings are not silently
 reclassified as passing checks, and strict/degraded mode is **not implemented**
