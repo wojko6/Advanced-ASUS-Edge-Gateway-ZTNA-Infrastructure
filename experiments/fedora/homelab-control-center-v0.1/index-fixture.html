@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Homelab Control Center · wyłącznie testy V0.2</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+  <script type="module" src="./live.mjs"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Nawigacja">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">H</span><div><b>HOMELAB</b><span>CONTROL CENTER</span></div></div>
+      <div class="nav-caption">TESTY AWARII</div>
+      <nav aria-label="Widoki" id="navigation">
+        <button class="nav active" type="button" data-page="overview" aria-current="page"><span aria-hidden="true">▦</span> Przegląd</button>
+        <button class="nav" type="button" data-page="services"><span aria-hidden="true">◫</span> Usługi</button>
+        <button class="nav" type="button" data-page="incidents"><span aria-hidden="true">◷</span> Incydenty</button>
+        <button class="nav" type="button" data-page="recovery"><span aria-hidden="true">▤</span> Recovery</button>
+      </nav>
+      <div class="sidebar-foot"><span class="pulse-dot" aria-hidden="true"></span><div><b>WYŁĄCZNIE FIKCYJNE DANE</b><span>Serwer fixture 127.0.0.1:8789 · zero zapytań do VictoriaMetrics</span></div></div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar"><div class="crumb">LABORATORIUM <span>/</span> <strong id="breadcrumb">PRZEGLĄD</strong></div><div class="topright"><span class="demo-badge">● V0.2 · SYMULACJA AWARII</span><span class="avatar" aria-hidden="true">HL</span></div></header>
+      <main id="main-content" tabindex="-1">
+        <div class="heading">
+          <div><div class="overline">FEDORA TEST LAB <span class="line" aria-hidden="true"></span> V0.2 FIXTURES</div><h1 id="page-title">Centrum dowodzenia</h1><p id="page-subtitle">Wizualizacja stanów błędów bez zatrzymywania usług.</p></div>
+          <div class="head-actions"><label for="scenario">SCENARIUSZ KART DEMO</label><select id="scenario" aria-label="Scenariusz danych demonstracyjnych"></select></div>
+        </div>
+        <section id="live-vm" data-fixture-mode="true" class="panel live-panel" aria-label="Syntetyczny stan scrape" aria-live="polite"></section>
+        <div id="disclaimer" class="notice" role="note"><span class="notice-icon" aria-hidden="true">ⓘ</span><span><strong>SYMULACJA — ZERO DANYCH RZECZYWISTYCH.</strong> Także górny kafelek korzysta z generowanych lokalnie danych testowych. Żadne zapytanie nie trafia do VictoriaMetrics, Loki ani ASUS-a.</span></div>
+        <section id="view" aria-live="polite" aria-label="Zawartość panelu"></section>
+      </main>
+      <footer class="footer"><span>HOMELAB CONTROL CENTER <b>V0.2 / FIXTURE LAB</b></span><span>Issue #303 · <span id="snapshot-info">Test</span></span></footer>
+    </div>
+  </div>
+</body>
+</html>
