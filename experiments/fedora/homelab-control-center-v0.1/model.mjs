@@ -41,7 +41,11 @@ export function validateScenario(scene) {
   for(const s of scene.signals){
     if(!s || typeof s.id!=='string' || !/^[a-z0-9-]{2,45}$/.test(s.id) || ids.has(s.id) ||
        typeof s.name!=='string' || s.name.length>100 || typeof s.source!=='string' || s.source.length>100 ||
-       (s.sourceAvailable!==undefined && typeof s.sourceAvailable!=='boolean') ||\n       (s.explicitPlannedOffline!==undefined && typeof s.explicitPlannedOffline!=='boolean') ||\n       (s.conflicting!==undefined && typeof s.conflicting!=='boolean') ||\n       (s.observedAt!==undefined && s.observedAt!==null && !Number.isFinite(parseTime(s.observedAt))) ||\n       (s.measuredStatus !== undefined && !valid.has(s.measuredStatus)) ||
+       (s.sourceAvailable!==undefined && typeof s.sourceAvailable!=='boolean') ||
+       (s.explicitPlannedOffline!==undefined && typeof s.explicitPlannedOffline!=='boolean') ||
+       (s.conflicting!==undefined && typeof s.conflicting!=='boolean') ||
+       (s.observedAt!==undefined && s.observedAt!==null && !Number.isFinite(parseTime(s.observedAt))) ||
+       (s.measuredStatus !== undefined && !valid.has(s.measuredStatus)) ||
        (s.ttlSeconds!==undefined && (!Number.isFinite(s.ttlSeconds) || s.ttlSeconds<=0 || s.ttlSeconds>86400))) return false;
     ids.add(s.id);
   }
