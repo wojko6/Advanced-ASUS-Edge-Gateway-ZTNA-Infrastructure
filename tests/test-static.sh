@@ -361,6 +361,9 @@ if [ -n "$duplicate_webui_ids" ]; then
     exit 1
 fi
 
+# Issue #283: generated WebUI snapshot, safe policy count/defaults and age-state checks.
+sh "$REPO_DIR/tests/test-webui-status-contract.sh"
+
 for webui_phase3_guard in \
     'window.edgeGatewayStatus' \
     'system: {' \
