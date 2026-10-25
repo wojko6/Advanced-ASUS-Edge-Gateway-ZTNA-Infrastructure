@@ -25,7 +25,7 @@
 
 ## 3. Evidence boundaries not to erase
 
-- **ASUS WebUI #283:** published only the JFFS status script, JFFS source ASP and active ASP page. Operator-reported `ISSUE283_DEPLOYMENT=PASS`, byte-parity PASS, and `SNAPSHOT_AGE_SECONDS=19` with freshness/admin count/active ASP checks PASS. The snapshot age is a **point measurement**. No claim of a browser screenshot, full rendering, cold reboot, security pen test or long-duration service availability.
+- **ASUS WebUI #283:** published only the JFFS status script, JFFS source ASP and active ASP page. Operator-reported `ISSUE283_DEPLOYMENT=PASS`, byte-parity PASS, and `SNAPSHOT_AGE_SECONDS=19` with freshness/admin count/active ASP checks PASS. The snapshot age is a **point measurement**. **Subsequent operator follow-up:** the WebUI was reported visually correct in the browser and present after an ASUS reset/restart; this closes the prior unreported **basic appearance and restart-persistence** checks for this WebUI only. The exact reset protocol, screenshots, post-restart collector/byte retest, factory reset, power-loss cold-boot, security pen test and long-duration service availability remain undocumented.
 - **Writable temporary ancestor:** `/www/user` points to firmware `/tmp/var/wwwext`; bounded V2 trusted-path gate accepted that known structure while still reporting writable `/tmp` as an **unresolved threat-model caveat**. Avoid treating this as general permission to follow untrusted symlinks or deploy SSD/JFFS security helpers.
 - **HCC Fedora-local alias:** `control.home.arpa` activation affected **only workstation** hosts/Caddy and reloaded Caddy. The operator reported HTTP SNI success and working local browser address. That is distinct from a persistent HCC installation, endpoint authentication, independent certificate UI verification, live `/api/summary` browser fetch acceptance and LAN/Tailscale access. HCC #303 and Black Box #304 remain open/HOLD.
 - **Fedora Recovery:** actual isolated Btrfs `root` receive and encrypted Restic content check succeeded; no booted-OS restore, full `/home` recovery or accepted SELinux metadata restoration. Fedora Tailscale's post-package-migration reboot persistence remains untested.
@@ -41,6 +41,7 @@
 - [x] Keep private Polish journal and its indexes consistent without publishing raw private records.
 - [x] Preserve known HOLD gates and observed failures; do not promote synthetic tests into production evidence.
 - [ ] Public review and final PR CI after **this** doc amendment; do not auto-merge.
-- [ ] Independent browser/API/certificate, long-soak and post-reboot acceptance where appropriate (not executed by this audit).
+- [x] Record the operator's **basic ASUS WebUI visual and post-reset persistence** follow-up, separately from the earlier scripted postflight. No independent instrumented reboot test was performed by the documentation audit.
+- [ ] Independent detailed browser/API/certificate checks (HCC separately), long-soak, post-reboot byte/telemetry regression and power-loss/factory-reset assurance where applicable.
 
 **Outcome:** the identified date-specific contradictions were corrected **in documentation only**. This is a scoped consistency audit, not a complete code/security review, a full Markdown repository link crawler or new authorization for production operations.
