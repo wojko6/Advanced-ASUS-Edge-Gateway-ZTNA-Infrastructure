@@ -43,6 +43,9 @@ else
     echo "WARN: shellcheck not installed"
 fi
 
+# Issue #289: hermetic remote-client completeness and negative-policy cases.
+sh "$REPO_DIR/tests/test-live-client-contract.sh"
+
 grep -F 'dig +time=3 +tries=1 +dnssec -p "$EDGE_UNBOUND_PORT" @127.0.0.1' "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
     echo "FAIL: healthcheck does not test the configured Unbound port" >&2
     exit 1
