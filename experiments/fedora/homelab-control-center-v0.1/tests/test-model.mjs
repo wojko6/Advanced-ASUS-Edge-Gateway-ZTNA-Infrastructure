@@ -40,3 +40,17 @@ test('source can report DOWN only with fresh evidence',()=>{
  assert.equal(evaluate(row,s.generatedAt).status,'DOWN');
  assert.equal(evaluate({...row,sourceAvailable:false},s.generatedAt).status,'UNKNOWN');
 });
+
+test('malformed events and recovery collections fail closed',()=>{
+ const scene=SCENARIOS[0];
+ assert.equal(validateScenario({...scene,events:null}),false);
+ assert.equal(validateScenario({...scene,events:[{at:'29:99',severity:'healthy',title:'bad',note:'bad'}]}),false);
+ assert.equal(validateScenario({...scene,recovery:[{key:'key',value:'value'}]}),false);
+ assert.equal(validateScenario({...scene,recovery:'bad'}),false);
+});
+test('invalid calendar dates and malformed source flags are rejected',()=>{
+ const scene=SCENARIOS[0];
+ assert.equal(validateScenario({...scene,generatedAt:'2026-02-31T14:00:00Z'}),false);
+ assert.equal(evaluate({...scene.signals[0],observedAt:'2026-02-31T14:00:00Z'},scene.generatedAt).status,'UNKNOWN');
+ assert.equal(validateScenario({...scene,signals:[{...scene.signals[0],sourceAvailable:'yes'}]}),false);
+});
