@@ -78,6 +78,36 @@ A locally generated Fedora-only stage helper is available for operator review in
 
 **Status:** source/runtime parity `MATCH`; `control.home.arpa` still **not active**; `DEPLOYMENT_GATE=HOLD`.
 
+## Operator-verified staged candidate — 2026-10-25
+
+The operator ran the separate, **staging-only** Python helper. Output establishes:
+
+| Gate | Operator-reported evidence |
+| --- | --- |
+| Synthetic helper tests | `SELFTEST_RESULT=12/12` |
+| Caddy source/runtime parity | `SOURCE_RUNTIME_PARITY=MATCH` |
+| Existing local sites | Existing Caddy source confirmed, alias absent |
+| Caddy HTTPS and HCC backend listeners | Both `LOOPBACK_ONLY` (443 and 8788) |
+| Candidate syntax/adaptation | `CANDIDATE_ADAPT=PASS` |
+| Private staged files | Fresh operator-owned directory `0700`, candidate and hosts hint each `0600` |
+| Changes to operating system | `NO_ETC_CHANGES=YES`, `NO_RELOAD=YES`, `NO_DNS_CHANGES=YES` |
+
+The staging directory path is deliberately excluded from public documentation. The **on-disk candidate's full contents have not been independently inspected via this repository**; on-host review of the diff, running Caddy, and the alias entry remains a separate activation gate.
+
+### Operator activation checklist — NOT YET AUTHORIZED
+
+For a future explicit, *local Fedora-only* approval, adopt these gates in order:
+
+1. **No root to inspect.** Compare the staged `Caddyfile.candidate` against **the current** `/etc/caddy/Caddyfile`; require **only one additive site block** for `control.home.arpa`, containing `bind 127.0.0.1`, `tls internal` and `reverse_proxy 127.0.0.1:8788` with upstream Host explicitly set to `127.0.0.1:8788`. Abort if the live file changed since staging or unexpected site/config edits appear.
+2. **Reconfirm parity:** `caddy adapt --config /etc/caddy/Caddyfile --adapter caddyfile` must correspond to the active local admin `GET 127.0.0.1:2019/config/` before changing any file; also verify no existing hosts alias, non-loopback Caddy listener, site conflict or unexpected imports.
+3. **Validate candidate independently:** `caddy validate --config <staged-candidate> --adapter caddyfile` should succeed without modifying the live service. Refuse validation errors and unexpected changes. The previously passing `caddy adapt` is **not** an activation validation.
+4. **Review full rollback first:** preserve a root-controlled, non-world-readable **restorable backup of both** the existing `/etc/caddy/Caddyfile` and `/etc/hosts`, including permissions/ownership; record their hashes; confirm a testable procedure to restore these exact files and reload **only Caddy** on failure. Do not replace the entire live Caddyfile with a stale repository template.
+5. **Explicit operator opt-in:** only at this step apply the validated additive Caddyfile and the **Fedora-only** `127.0.0.1 control.home.arpa` hosts alias. Do not modify ASUS/Pi-hole DNS, Unbound, public firewall or Tailscale.
+6. **Controlled reload and read-only checks:** validate the installed Caddy source before an explicit `systemctl reload caddy`. Confirm the new SNI site is still bound only on loopback; test HTTPS certificate trust in Brave and `GET /` plus `GET /api/summary` with browser requests using unmodified `Origin`/`Sec-Fetch-Site` headers. Backend will respond only while the operator manually runs `127.0.0.1:8788`.
+7. **No regression:** verify `https://grafana.home.arpa/` and `https://pihole.home.arpa/` still work, and no LAN/Tailscale/WAN access is newly available. On any failed gate, stop; restore the original Caddyfile and hosts from protected backups, validate, and reload Caddy. If even rollback reload fails, report the incident and do not claim recovery without verifying the running configuration.
+
+**Stop condition:** if active Caddy configuration, current host file, TLS trust or candidate differs from the verified baseline, return to read-only investigation. Passing staging is not permission to modify `/etc`. `DEPLOYMENT_GATE=HOLD` until the operator expressly approves activation.
+
 ## Preconditions for any later operator-approved activation
 
 1. Read-only discovery: verify existing Caddy binds **only** `127.0.0.1:443` and still handles `grafana.home.arpa` and `pihole.home.arpa` without changes; check the current `/etc/hosts` to avoid duplicate/mismatched names. Do not expose local interface IPs or production Caddy config in public issues.
