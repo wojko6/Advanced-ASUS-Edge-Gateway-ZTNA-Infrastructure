@@ -2,7 +2,7 @@
 
 > Date: 2026-10-25
 >
-> **Status (operator report, 2026-10-25): FEDORA-LOCAL HTTPS ALIAS ACTIVATED / BROWSER TRUST NOT YET CHECKED / BACKEND AUTOSTART=NO / APP DEPLOYMENT_GATE=HOLD.**
+> **Status (operator report, 2026-10-25): FEDORA-LOCAL HTTPS ALIAS ACTIVATED / BROWSER ACCESS REPORTED WORKING / BACKEND AUTOSTART=NO / APP DEPLOYMENT_GATE=HOLD.**
 > Earlier work was documentation/staging only. The operator has since explicitly run a guarded local activation, changing **Fedora** `/etc/hosts` and `/etc/caddy/Caddyfile` and reloading **Caddy only**. No ASUS, Pi-hole DNS, Unbound, Tailscale or HCC service-autostart configuration change is reported.
 > Tracks [#303 Homelab Control Center](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/303); existing operator-local Grafana and Pi-hole precedents are [monitoring/caddy/README.md](../../monitoring/caddy/README.md) and [monitoring/caddy/Caddyfile](../../monitoring/caddy/Caddyfile).
 
@@ -55,6 +55,14 @@ The local name would be installed *only after a separate explicit operator appro
 ```
 
 to the Fedora workstation's `/etc/hosts`. No router Pi-hole Local DNS Record, dnsmasq override, Unbound zone or Tailscale MagicDNS setting is necessary or approved.
+
+## Operator-confirmed browser access — 2026-10-25
+
+After successful guarded Caddy reload and the SNI/HTTP smoke tests, the operator opened the new Control Center address and reported **“Działa” (works)** in the browser. This completes the agreed **operator-local friendly-URL smoke checkpoint** at the level actually reported: the HTTPS hostname can be used to access the application on the Fedora workstation.
+
+**Evidence limits:** the brief confirmation does **not** separately record a screenshot, browser TLS security UI, an explicit fresh `/api/summary` response through Caddy, the refreshed scrape-target count, repeat browser checks for Grafana and Pi-hole, or long-running uptime. Therefore these individual properties should **not** be marked as independently verified by the reply alone. The earlier bounded activation helper did report SNI routes `control:200`, `grafana:302`, `pihole:302`. No HTTPS alias failures have been reported.
+
+**Scope:** local-only Caddy HTTPS and `/etc/hosts` activation is complete; neither backend autostart nor permanent application deployment is enabled. No router/DNS changes, Tailscale exposure, LAN/WAN listener or HCC service installation is implied. `DEPLOYMENT_GATE=HOLD` for broader deployment. The documentation PR can be reviewed/merged separately; merging a document **must not** alter live configuration.
 
 ## Operator-confirmed Fedora-local activation checkpoint — 2026-10-25
 
@@ -156,7 +164,7 @@ The following safety checklist was defined **before** the operator exercised the
 
 **Proposed friendly name:** `https://control.home.arpa/`  
 **Scope:** Fedora operator workstation only, HTTPS through pre-existing loopback Caddy  
-**Current status:** Fedora-local HTTPS alias applied; HTTP/SNI route smoke reports `control.home.arpa:200`, `grafana.home.arpa:302`, `pihole.home.arpa:302`; real Brave trust and full application UI not yet demonstrated  
-**Gate:** Fedora-local alias activation passed; **Brave certificate trust, `/api/summary` through HTTPS, and UI behavior remain pending**. The HCC backend stays manual/foreground; `DEPLOYMENT_GATE=HOLD` for permanent application installation or broader network access.
+**Current status:** Fedora-local HTTPS alias applied; operator reports the new browser address works; prior SNI route smoke reports `control.home.arpa:200`, `grafana.home.arpa:302`, `pihole.home.arpa:302`  
+**Gate:** Operator-local HTTPS alias and browser-access smoke are **accepted**, while **separate certificate UI verification, explicit `/api/summary` freshness and full Grafana/Pi-hole browser regressions are not individually documented**. The HCC backend stays manual/foreground; `DEPLOYMENT_GATE=HOLD` for permanent application installation or broader network access.
 
 A future implementation PR may add Caddy configuration material after the operator confirms the current live Caddy state. Merely merging this design document **must not** trigger Caddy reload, automatic deployment or DNS mutation.
