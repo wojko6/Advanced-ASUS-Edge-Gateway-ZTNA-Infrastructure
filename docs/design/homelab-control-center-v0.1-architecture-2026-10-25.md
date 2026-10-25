@@ -1,6 +1,6 @@
 # Homelab Control Center — V0.1 architecture and UI contract
 
-> **Lifecycle:** PLANNED / DRAFT — design only; no implementation, running service, public endpoint or CI/live-test result.
+> **Historical lifecycle at initial design approval:** PLANNED / DRAFT — design-only checkpoint, before later implementation. This document records the original requirements and remains useful as an architectural baseline; its **Phase B NOT STARTED** and no-live-test claims are **superseded by separately merged work later on 2026-10-25**: V0.1 [PR #306](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/306), V0.2 [PR #307](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/307), and the **Fedora-local-only alias** [PR #308 evidence](homelab-control-center-local-https-alias-2026-10-25.md). The application still has **no authorized permanent production deployment**.
 > **Date:** 2026-10-25.
 > **Primary issue:** [#303 — Homelab Control Center](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/303).
 > **Separate module:** [#304 — Homelab Black Box](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/304).
