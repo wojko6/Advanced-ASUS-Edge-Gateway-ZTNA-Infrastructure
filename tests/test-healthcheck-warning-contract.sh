@@ -112,6 +112,6 @@ run_case bootstrap_ad_success 'nameserver 9.9.9.9' 1 0 0 1 0
 run_case local_all_healthy 'nameserver 192.0.2.53' 1 0 0 0 0
 run_case mixed_resolver_failure 'nameserver 192.0.2.53
 nameserver 9.9.9.9' 0 0 1 1 1
-run_case unknown_resolver_failure 'nameserver 203.0.113.99' 1 0 1 0 1
+run_case empty_resolver_failure '' 1 0 1 0 1
 
 echo 'ISSUE289_HEALTHCHECK_WARNING_CONTRACT=PASS_7_OF_7'
