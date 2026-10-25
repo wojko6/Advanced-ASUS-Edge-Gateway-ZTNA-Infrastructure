@@ -25,7 +25,8 @@ function overview(rows){
  const cards=node('div','cards-grid');for(const s of rows)cards.append(statusCard(s));view.append(cards);
  const panels=node('div','lower-grid'),timeline=node('section','panel'),facts=node('section','panel');
  add(timeline,node('h2','','Ostatnie zdarzenia · DEMO'),events(state.scenario));
- add(facts,node('h2','','Jakość danych'),node('p','fineprint','Każdy stan ma nazwę źródła, znacznik czasu i uzasadnienie. Wartości STALE i UNKNOWN nie są traktowane jak sukces.'),node('div','callout','To makieta działającego interfejsu. Nie ma odpytywania serwerów, routera, Tailscale ani usług DNS. Realne adaptery wymagają osobnej zgody.'));
+ const hybrid = Boolean(document.getElementById('live-vm'));
+ add(facts,node('h2','','Jakość danych'),node('p','fineprint','Każdy stan ma nazwę źródła, znacznik czasu i uzasadnienie. Wartości STALE i UNKNOWN nie są traktowane jak sukces.'),node('div','callout',hybrid?'Górny kafelek pobiera wyłącznie zbiorcze metryki z lokalnego API VictoriaMetrics (127.0.0.1). Karty usług, zdarzenia i Recovery pozostają DEMO. Nie ma połączeń z ASUS-em ani wykonywania poleceń administracyjnych.':'To makieta działającego interfejsu. Nie ma odpytywania serwerów, routera, Tailscale ani usług DNS. Realne adaptery wymagają osobnej zgody.'));
  add(panels,timeline,facts);view.append(panels);return view;
 }
 function services(rows){const view=node('div');const chips=node('div','chipbar');
