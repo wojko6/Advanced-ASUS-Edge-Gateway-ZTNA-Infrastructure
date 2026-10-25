@@ -1,7 +1,11 @@
 // Pure, deterministic projection of an *offline fixture*, not live monitoring.
 export const STATUSES = Object.freeze(['OK','DEGRADED','DOWN','STALE','UNKNOWN','OFFLINE']);
 const valid = new Set(STATUSES);
-const parseTime = (s) => {\n  if(typeof s!=='string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(s)) return NaN;\n  const t=Date.parse(s);\n  return Number.isFinite(t) && new Date(t).toISOString()===s ? t : NaN;\n};
+const parseTime = (s) => {
+  if(typeof s!=='string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(s)) return NaN;
+  const t=Date.parse(s);
+  return Number.isFinite(t) && new Date(t).toISOString()===s ? t : NaN;
+};
 export function evaluate(signal, generatedAt) {
   const fallback = {status:'UNKNOWN',reason:'Brak wiarygodnych danych',ageSeconds:null};
   if (!signal || typeof signal !== 'object' || !Number.isFinite(parseTime(generatedAt))) return fallback;
