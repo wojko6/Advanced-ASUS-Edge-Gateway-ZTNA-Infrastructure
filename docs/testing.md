@@ -158,6 +158,44 @@ The expected column describes policy; dated evidence is required before treating
 
 The packet-capture filter used for that negative test was intentionally directional, so it proves ingress of the unauthorized client's SYN packets but does not independently establish whether reverse packets were emitted; the failed client TCP connection and firewall rule path provide the end-to-end denial result. A phone failing to load the page after turning off Tailscale is not a substitute for this role-specific negative test. Run WAN scans only against addresses you own or are authorized to test.
 
+### Legacy remote-client smoke-check contract (Issue #289)
+
+The optional `tests/test-live-client.sh ROUTER_MANAGEMENT_IP [DENIED_LAN_IP]`
+is an **active remote-client/Tailscale policy probe**, not a passive healthcheck
+and not a replacement for the role-specific matrix above. Its historical
+expectations are router TCP/8443 **reachable** for an authorized tailnet
+administrator, router TCP/22 **denied**, and optional LAN TCP/445 **denied**.
+These fixed probes must **not** be reinterpreted as an acceptance check for
+the current Fedora **5 GHz LAN administration** profile, whose private
+configuration can use other HTTPS/SSH ports and source-IP allowlisting.
+Only run the script from a separately approved test client during a controlled
+window; do not copy example addresses into a production invocation.
+
+Missing `nc` no longer silently suppresses port checks:
+- `PASS`: the invoked check returned the expected result;
+- `FAIL`: an executed check violated the expectation;
+- `SKIP`: `nc` was missing; the relevant port check did **not** run.
+
+The script's exit status is **0** only when all requested checks were run
+and passed, **1** on a check failure (even with additional skipped checks),
+**2** if the mandatory address argument is missing, and **3** for incomplete
+coverage without observed failures. Omission of the *optional* denied-LAN
+target is not itself a skipped check. A returned `PASS` on TCP denial is
+only a connectivity observation from that client, not a firewall-rule proof.
+The `dig @1.1.1.1` check also requires independent capture evidence to
+establish DNS interception rather than merely a successful DNS answer.
+
+For offline reproducibility, run
+`sh tests/test-live-client-contract.sh`; its fake `dig` and `nc`
+executables make **no network connection**. The main `test-static.sh`
+suite includes this isolated contract test.
+
+Separately, the production `scripts/healthcheck.sh` retains its original
+**0 failures / warning-only = exit 0** policy: warnings are not silently
+reclassified as passing checks, and strict/degraded mode is **not implemented**
+by Issue #289's narrow client-test patch. Any strict-mode behavior would
+require a separate interface and compatibility review for existing consumers.
+
 ## DNS activity analytics validation
 
 Issue #108 must be validated as an observability feature, not as a DNS
