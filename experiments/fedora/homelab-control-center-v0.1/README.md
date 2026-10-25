@@ -26,6 +26,18 @@ bash -n run-lab.sh
 
 The Node tests cover fixture consistency, status semantics and static safety checks. Optional browser validation includes desktop and mobile layout, keyboard navigation, the six scenario options and four sections. Node is **only required to run tests**, not to view the demo.
 
+## Optional Fedora V0.2 source preflight (not a live dashboard)
+
+The separate `tools/fedora-v02-readonly-preflight.py` script is available for **manual, review-first** source inventory. It does not connect the demo to real monitoring and does not create any service.
+
+```bash
+python3 -B tools/fedora-v02-readonly-preflight.py --self-test
+python3 -B tools/fedora-v02-readonly-preflight.py --inspect
+# Optional explicitly requested read-only loopback probes:
+python3 -B tools/fedora-v02-readonly-preflight.py --run
+```
+
+Only use `--run` after reviewing its source. That mode performs three GET requests **solely to 127.0.0.1**, with short timeouts and fixed paths: VictoriaMetrics health and aggregated `count(up)`, plus Loki readiness. No raw labels/logs are printed. A successful preflight is **not** a live V0.2 adapter acceptance. See [V0.2 preflight boundaries](V0.2-PREFLIGHT.md).
 ## Acceptance boundaries
 
 - The demonstration clock is fixed to `2026-10-25T14:00:00Z`. Age values are relative to that **fixture**, not current time.
