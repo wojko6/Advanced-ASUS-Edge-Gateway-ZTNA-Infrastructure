@@ -1,7 +1,7 @@
 // Pure, deterministic projection of an *offline fixture*, not live monitoring.
 export const STATUSES = Object.freeze(['OK','DEGRADED','DOWN','STALE','UNKNOWN','OFFLINE']);
 const valid = new Set(STATUSES);
-const parseTime = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(s) ? Date.parse(s) : NaN;
+const parseTime = (s) => {\n  if(typeof s!=='string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(s)) return NaN;\n  const t=Date.parse(s);\n  return Number.isFinite(t) && new Date(t).toISOString()===s ? t : NaN;\n};
 export function evaluate(signal, generatedAt) {
   const fallback = {status:'UNKNOWN',reason:'Brak wiarygodnych danych',ageSeconds:null};
   if (!signal || typeof signal !== 'object' || !Number.isFinite(parseTime(generatedAt))) return fallback;
@@ -24,11 +24,20 @@ export function evaluate(signal, generatedAt) {
 export function validateScenario(scene) {
   if (!scene || scene.mode !== 'demo' || scene.schemaVersion !== '1.0' || !Number.isFinite(parseTime(scene.generatedAt))) return false;
   if (!Array.isArray(scene.signals) || scene.signals.length<1 || scene.signals.length>30) return false;
+  if(!Array.isArray(scene.events) || scene.events.length>100 ||
+     !scene.events.every(e=>e && typeof e.at==='string' && /^\d{2}:\d{2}$/.test(e.at) &&
+       +e.at.slice(0,2)<24 && +e.at.slice(3,5)<60 &&
+       ['healthy','warning','critical'].includes(e.severity) &&
+       typeof e.title==='string' && e.title.length>0 && e.title.length<=150 &&
+       typeof e.note==='string' && e.note.length<=300)) return false;
+  if(!Array.isArray(scene.recovery) || scene.recovery.length>20 ||
+     !scene.recovery.every(r=>r && ['key','value','hint'].every(k=>
+       typeof r[k]==='string' && r[k].length>0 && r[k].length<=250))) return false;
   const ids=new Set();
   for(const s of scene.signals){
     if(!s || typeof s.id!=='string' || !/^[a-z0-9-]{2,45}$/.test(s.id) || ids.has(s.id) ||
        typeof s.name!=='string' || s.name.length>100 || typeof s.source!=='string' || s.source.length>100 ||
-       (s.measuredStatus !== undefined && !valid.has(s.measuredStatus)) ||
+       (s.sourceAvailable!==undefined && typeof s.sourceAvailable!=='boolean') ||\n       (s.explicitPlannedOffline!==undefined && typeof s.explicitPlannedOffline!=='boolean') ||\n       (s.conflicting!==undefined && typeof s.conflicting!=='boolean') ||\n       (s.observedAt!==undefined && s.observedAt!==null && !Number.isFinite(parseTime(s.observedAt))) ||\n       (s.measuredStatus !== undefined && !valid.has(s.measuredStatus)) ||
        (s.ttlSeconds!==undefined && (!Number.isFinite(s.ttlSeconds) || s.ttlSeconds<=0 || s.ttlSeconds>86400))) return false;
     ids.add(s.id);
   }
