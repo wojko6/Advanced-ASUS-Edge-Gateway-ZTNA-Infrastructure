@@ -56,6 +56,28 @@ The local name would be installed *only after a separate explicit operator appro
 
 to the Fedora workstation's `/etc/hosts`. No router Pi-hole Local DNS Record, dnsmasq override, Unbound zone or Tailscale MagicDNS setting is necessary or approved.
 
+## Operator-verified active Caddy configuration parity — 2026-10-25
+
+The operator ran a **read-only** Caddy source/runtime preflight on Fedora and provided this bounded output:
+
+```text
+CADDY_SOURCE_ADAPT=PASS
+CADDY_ACTIVE_CONFIG=READABLE
+SOURCE_RUNTIME_PARITY=MATCH
+NO_CONFIG_WRITES=YES NO_RELOAD=YES ASUS_CONTACTED=NO
+DEPLOYMENT_GATE=HOLD
+```
+
+This supplements the earlier preflight (15/15 synthetic tests; Caddy `ACTIVE`; port 443 and HCC backend 8788 `LOOPBACK_ONLY`; local `control.home.arpa` alias and Caddy control site absent; existing Grafana/Pi-hole site blocks present). It establishes that the **adapted on-disk Caddyfile matched the actively reported configuration at the moment of measurement**. It does not establish browser certificate trust or reverse-proxy Host/Origin compatibility.
+
+### Candidate-only staging gate (before any activation)
+
+A locally generated Fedora-only stage helper is available for operator review in the current working conversation. It has `--self-test`, `--inspect` and `--stage` modes; its local tests returned **12/12 PASS**. The helper does not run `sudo`, write under `/etc`, reload Caddy, access ASUS or make external network requests. `--stage` repeats active parity and loopback checks, generates a private candidate Caddyfile by **appending** the reviewed control site to the *actual* current Fedora Caddyfile, records a `127.0.0.1 control.home.arpa` hosts-entry hint, and runs `caddy adapt` against that candidate only.
+
+**Not an activation instruction:** the locally generated helper is not bundled or pinned in this document. Inspect the actual source supplied to the operator before invoking it; do not assume that any file named similarly is a trusted deployment artifact. Never copy the candidate into `/etc/caddy/Caddyfile` or edit `/etc/hosts` just because staging reports success. The next separate approval requires a least-change backup/validate/reload/rollback plan protecting the existing Grafana and Pi-hole sites.
+
+**Status:** source/runtime parity `MATCH`; `control.home.arpa` still **not active**; `DEPLOYMENT_GATE=HOLD`.
+
 ## Preconditions for any later operator-approved activation
 
 1. Read-only discovery: verify existing Caddy binds **only** `127.0.0.1:443` and still handles `grafana.home.arpa` and `pihole.home.arpa` without changes; check the current `/etc/hosts` to avoid duplicate/mismatched names. Do not expose local interface IPs or production Caddy config in public issues.
