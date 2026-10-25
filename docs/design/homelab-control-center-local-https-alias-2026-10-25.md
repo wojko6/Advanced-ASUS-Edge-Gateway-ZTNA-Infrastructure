@@ -1,9 +1,9 @@
-# Homelab Control Center — proposed operator-local HTTPS name
+# Homelab Control Center — operator-local HTTPS alias
 
 > Date: 2026-10-25
 >
-> **Status: DRAFT PROPOSAL ONLY / NOT CONFIGURED / DEPLOYMENT_GATE=HOLD.**
-> No live DNS, /etc/hosts, Caddy, systemd, HTTPS trust-store, Tailscale or application configuration has been changed by this document.
+> **Status (operator report, 2026-10-25): FEDORA-LOCAL HTTPS ALIAS ACTIVATED / BROWSER TRUST NOT YET CHECKED / BACKEND AUTOSTART=NO / APP DEPLOYMENT_GATE=HOLD.**
+> Earlier work was documentation/staging only. The operator has since explicitly run a guarded local activation, changing **Fedora** `/etc/hosts` and `/etc/caddy/Caddyfile` and reloading **Caddy only**. No ASUS, Pi-hole DNS, Unbound, Tailscale or HCC service-autostart configuration change is reported.
 > Tracks [#303 Homelab Control Center](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/303); existing operator-local Grafana and Pi-hole precedents are [monitoring/caddy/README.md](../../monitoring/caddy/README.md) and [monitoring/caddy/Caddyfile](../../monitoring/caddy/Caddyfile).
 
 ## User-facing goal
@@ -12,7 +12,7 @@ Use **`https://control.home.arpa/`** on the **Fedora operator workstation only**
 
 The panel remains an opt-in, foreground V0.2 **read-only lab** and still requires an operator-started `127.0.0.1:8788` backend. A friendly HTTPS name **does not** imply a resident service, automatic start, remote availability or production security acceptance.
 
-## Proposed local request path
+## Operator-local request path
 
 ```text
 Fedora Brave: https://control.home.arpa/
@@ -30,7 +30,7 @@ VictoriaMetrics: 127.0.0.1:8428
 
 This approach follows the existing Caddy scheme already used for Grafana and Pi-hole. It does **not** grant clients in the LAN, authorized Tailscale peers or WAN access to Control Center. The name `home.arpa` also occurs in router-managed split DNS for other *separate* services, but the proposed Control Center alias is **not** a router-side DNS record: only this Fedora operator workstation's `/etc/hosts` should resolve it to loopback.
 
-## Illustrative Caddy site block — **NOT APPLIED**
+## Caddy site block — operator-reported as activated
 
 ```caddyfile
 https://control.home.arpa {
@@ -56,6 +56,32 @@ The local name would be installed *only after a separate explicit operator appro
 
 to the Fedora workstation's `/etc/hosts`. No router Pi-hole Local DNS Record, dnsmasq override, Unbound zone or Tailscale MagicDNS setting is necessary or approved.
 
+## Operator-confirmed Fedora-local activation checkpoint — 2026-10-25
+
+**Source:** the operator's captured terminal output of `hcc-control-home-arpa-activate-v1.py` on the Fedora workstation. This is **operator-reported runtime evidence**, not a claim of access to the private host by the GitHub reviewer.
+
+| Check | Evidence |
+| --- | --- |
+| Guarded helper self-tests | `SELFTEST_RESULT=14/14` |
+| Caddy candidate scope | `CANDIDATE_DELTA=EXACT_9_LINE_APPEND` |
+| Pre-apply config parity | `SOURCE_RUNTIME_PARITY=MATCH` |
+| Candidate validation | `CANDIDATE_VALIDATE=PASS` |
+| Privileged activation | `--apply --confirm-local-caddy-reload` explicitly run by operator |
+| Private rollback backup | `BACKUP_DIRECTORY` printed and retained **on Fedora**; private absolute path intentionally excluded from public repository |
+| Control Center SNI HTTPS route | `control.home.arpa:200` |
+| Existing Grafana SNI route | `grafana.home.arpa:302` |
+| Existing Pi-hole SNI route | `pihole.home.arpa:302` |
+| Local-only activation verdict | `ACTIVATION=PASS_FEDORA_LOCAL_ONLY` |
+| Brave certificate trust | `BROWSER_TLS_TRUST=REQUIRES_MANUAL_BRAVE_CHECK` |
+| Permanent backend startup | `BACKEND_AUTOSTART=NO` |
+| ASUS configuration changes | `NO_ASUS_CONFIG_CHANGES=YES` |
+
+**Scope of acceptance:** This verifies the helper's bounded local activation and route-level responses; a 200 or 302 alone does **not** prove valid Firefox/Brave user trust, full application rendering, successful browser `GET /api/summary`, new TLS certificate-chain validation, end-to-end source freshness or long-duration health. On failure of later checks, use the protected operator-local rollback directory and the previously staged `--rollback` procedure; never post the path or copy private data to the public repo.
+
+**Next manual browser check (no more system writes):** With the non-root HCC `127.0.0.1:8788` backend running, open `https://control.home.arpa/` in Brave. Confirm no certificate interstitial, the app renders, `GET /api/summary` is accepted same-origin through Caddy and the visible real VM tile matches the API response (currently healthy scrape targets might differ from earlier 7/7). Grafana and Pi-hole should still be manually visited to verify user-facing behavior. Do not weaken TLS verification or rewrite `Origin` / `Sec-Fetch-Site` to make a failed browser check pass.
+
+**Security/deployment boundary:** Fedora's HTTPS alias is now operational at the checked route level. It remains **local**, **unauthenticated**, and **manually served**. No DNS entries on the ASUS, Pi-hole/Unbound service changes, Caddy LAN/Tailscale exposure, auto-start or permanent HCC daemon were approved. `DEPLOYMENT_GATE=HOLD` for app deployment and remote access.
+
 ## Operator-verified active Caddy configuration parity — 2026-10-25
 
 The operator ran a **read-only** Caddy source/runtime preflight on Fedora and provided this bounded output:
@@ -76,7 +102,7 @@ A locally generated Fedora-only stage helper is available for operator review in
 
 **Not an activation instruction:** the locally generated helper is not bundled or pinned in this document. Inspect the actual source supplied to the operator before invoking it; do not assume that any file named similarly is a trusted deployment artifact. Never copy the candidate into `/etc/caddy/Caddyfile` or edit `/etc/hosts` just because staging reports success. The next separate approval requires a least-change backup/validate/reload/rollback plan protecting the existing Grafana and Pi-hole sites.
 
-**Status:** source/runtime parity `MATCH`; `control.home.arpa` still **not active**; `DEPLOYMENT_GATE=HOLD`.
+**Historical staging status:** source/runtime parity `MATCH`; `control.home.arpa` was **not active yet** at this checkpoint. See the dated operator activation checkpoint below.
 
 ## Operator-verified staged candidate — 2026-10-25
 
@@ -94,9 +120,9 @@ The operator ran the separate, **staging-only** Python helper. Output establishe
 
 The staging directory path is deliberately excluded from public documentation. The **on-disk candidate's full contents have not been independently inspected via this repository**; on-host review of the diff, running Caddy, and the alias entry remains a separate activation gate.
 
-### Operator activation checklist — NOT YET AUTHORIZED
+### Pre-activation checklist — historically used as the gate
 
-For a future explicit, *local Fedora-only* approval, adopt these gates in order:
+The following safety checklist was defined **before** the operator exercised the explicit Fedora-local activation on 2026-10-25; retain it for audits, future reapplication and rollback:
 
 1. **No root to inspect.** Compare the staged `Caddyfile.candidate` against **the current** `/etc/caddy/Caddyfile`; require **only one additive site block** for `control.home.arpa`, containing `bind 127.0.0.1`, `tls internal` and `reverse_proxy 127.0.0.1:8788` with upstream Host explicitly set to `127.0.0.1:8788`. Abort if the live file changed since staging or unexpected site/config edits appear.
 2. **Reconfirm parity:** `caddy adapt --config /etc/caddy/Caddyfile --adapter caddyfile` must correspond to the active local admin `GET 127.0.0.1:2019/config/` before changing any file; also verify no existing hosts alias, non-loopback Caddy listener, site conflict or unexpected imports.
@@ -106,7 +132,7 @@ For a future explicit, *local Fedora-only* approval, adopt these gates in order:
 6. **Controlled reload and read-only checks:** validate the installed Caddy source before an explicit `systemctl reload caddy`. Confirm the new SNI site is still bound only on loopback; test HTTPS certificate trust in Brave and `GET /` plus `GET /api/summary` with browser requests using unmodified `Origin`/`Sec-Fetch-Site` headers. Backend will respond only while the operator manually runs `127.0.0.1:8788`.
 7. **No regression:** verify `https://grafana.home.arpa/` and `https://pihole.home.arpa/` still work, and no LAN/Tailscale/WAN access is newly available. On any failed gate, stop; restore the original Caddyfile and hosts from protected backups, validate, and reload Caddy. If even rollback reload fails, report the incident and do not claim recovery without verifying the running configuration.
 
-**Stop condition:** if active Caddy configuration, current host file, TLS trust or candidate differs from the verified baseline, return to read-only investigation. Passing staging is not permission to modify `/etc`. `DEPLOYMENT_GATE=HOLD` until the operator expressly approves activation.
+**Historical stop condition:** staging alone did not authorize activation. On 2026-10-25 the operator separately ran the guarded `--apply --confirm-local-caddy-reload` action. **Deployment of the HCC application as a permanent service remains HOLD.**
 
 ## Preconditions for any later operator-approved activation
 
@@ -130,7 +156,7 @@ For a future explicit, *local Fedora-only* approval, adopt these gates in order:
 
 **Proposed friendly name:** `https://control.home.arpa/`  
 **Scope:** Fedora operator workstation only, HTTPS through pre-existing loopback Caddy  
-**Current status:** documentation-only, not yet reachable, no runtime mutation  
-**Gate:** HOLD until source/doc review, explicit operator permission for local Caddy/hosts configuration, actual host preflight and verified rollback
+**Current status:** Fedora-local HTTPS alias applied; HTTP/SNI route smoke reports `control.home.arpa:200`, `grafana.home.arpa:302`, `pihole.home.arpa:302`; real Brave trust and full application UI not yet demonstrated  
+**Gate:** Fedora-local alias activation passed; **Brave certificate trust, `/api/summary` through HTTPS, and UI behavior remain pending**. The HCC backend stays manual/foreground; `DEPLOYMENT_GATE=HOLD` for permanent application installation or broader network access.
 
 A future implementation PR may add Caddy configuration material after the operator confirms the current live Caddy state. Merely merging this design document **must not** trigger Caddy reload, automatic deployment or DNS mutation.
