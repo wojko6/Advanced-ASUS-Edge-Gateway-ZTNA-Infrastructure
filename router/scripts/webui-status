@@ -25,11 +25,11 @@ fi
 
 : "${EDGE_TS_SOCKET:=/var/run/tailscale/tailscaled.sock}"
 : "${EDGE_TS_NETFILTER_MODE:=off}"
-: "${EDGE_INTERCEPT_DNS:=0}"
+: "${EDGE_INTERCEPT_DNS:=1}"
 : "${EDGE_ENFORCE_LAN_DNS:=0}"
 : "${EDGE_BLOCK_LAN_DOT:=0}"
 : "${EDGE_ENABLE_EXIT_NODE:=0}"
-: "${EDGE_ALLOW_ROUTER_HTTPS:=0}"
+: "${EDGE_ALLOW_ROUTER_HTTPS:=1}"
 : "${EDGE_ALLOW_ROUTER_SSH:=0}"
 : "${EDGE_ADMIN_TS_SOURCES:=}"
 : "${EDGE_PRINTER_TS_SOURCES:=}"
@@ -293,7 +293,7 @@ policy_dot="$(bool01 "$EDGE_BLOCK_LAN_DOT")"
 policy_exit_node="$(bool01 "$EDGE_ENABLE_EXIT_NODE")"
 policy_https="$(bool01 "$EDGE_ALLOW_ROUTER_HTTPS")"
 policy_ssh="$(bool01 "$EDGE_ALLOW_ROUTER_SSH")"
-policy_admin_sources="$(printf '%s\n' "$EDGE_ADMIN_TS_SOURCES" | awk '{print NF}')"
+policy_admin_sources="$(printf '%s\n' "$EDGE_ADMIN_TS_SOURCES" | awk '{count += NF} END {printf "%.0f\n", count+0}')"
 policy_printer=0
 if [ -n "$EDGE_PRINTER_TS_SOURCES" ] && [ -n "$EDGE_PRINTER_LAN_IP" ]; then
     policy_printer=1
@@ -342,6 +342,7 @@ fi
 cat >"$OUT_TMP" <<JS
 window.edgeGatewayStatus = {
   generated: "$(date '+%Y-%m-%d %H:%M:%S')",
+  generatedEpoch: $(date +%s),
   system: {
     uptime: $system_uptime,
     load1: $load1,

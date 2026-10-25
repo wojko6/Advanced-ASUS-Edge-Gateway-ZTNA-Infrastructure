@@ -202,6 +202,19 @@
       return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">Otwórz</a>';
     }
 
+    // Fail visibly for retained files after a collector failure. Dates from
+    // the router are compared with the viewing device's clock; a large
+    // future difference is UNKNOWN rather than claiming a fresh snapshot.
+    function edgeSnapshotFreshness(data, nowSeconds) {
+      var timestamp = Number(data && data.generatedEpoch);
+      if (!isFinite(timestamp) || timestamp <= 0)
+        return "unknown";
+      var age = Number(nowSeconds) - timestamp;
+      if (!isFinite(age) || age < -30)
+        return "unknown";
+      return age > 180 ? "stale" : "fresh";
+    }
+
     function renderGatewaySnapshot() {
       var data = window.edgeGatewayStatus;
       if (!data) {
@@ -217,7 +230,14 @@
       var firewall = data.firewall || {};
       var unbound = data.unbound || {};
 
-      setText("edge_snapshot", '<span class="edge-ok">Załadowano</span>');
+      var freshness = edgeSnapshotFreshness(data, Math.floor(new Date().getTime() / 1000));
+      if (freshness === "fresh") {
+        setText("edge_snapshot", '<span class="edge-ok">Załadowano — aktualne</span>');
+      } else if (freshness === "stale") {
+        setText("edge_snapshot", '<span class="edge-bad">Nieaktualna migawka (ponad 3 min)</span>');
+      } else {
+        setText("edge_snapshot", '<span class="edge-warn">Nieznana świeżość migawki</span>');
+      }
       setText("edge_generated", data.generated || "Brak danych");
 
       setText("edge_system_uptime", edgeDuration(system.uptime));
@@ -287,7 +307,9 @@
       setText("edge_fw_ipv6_input_drop", edgeNumber(firewall.ipv6InputDropPackets));
       setText("edge_fw_ipv6_forward_drop", edgeNumber(firewall.ipv6ForwardDropPackets));
 
-      setText("edge_unbound_snapshot", edgeUnboundRuntimeState(unbound.status));
+      setText("edge_unbound_snapshot", freshness === "fresh"
+        ? edgeUnboundRuntimeState(unbound.status)
+        : '<span class="edge-warn">Stan niepotwierdzony — migawka nieaktualna lub bez znacznika czasu</span>');
       setText("edge_unbound_version", unbound.version || "Brak danych");
       setText("edge_unbound_listener", unbound.interface || ("127.0.0.1@" + unbound.port));
       setText("edge_unbound_uptime", edgeDuration(unbound.uptime));

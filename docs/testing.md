@@ -139,6 +139,38 @@ See:
 - [RouterCloud UI production validation](../evidence/2026-10-03/routercloud-ui-production-validation.md)
 - [RouterCloud password-recovery production validation](../evidence/2026-10-03/routercloud-password-recovery-production-validation.md)
 
+### Edge Gateway WebUI snapshot contract (Issue #283)
+
+`tests/test-webui-status-contract.sh` runs the real read-only
+`router/scripts/webui-status` collector **only in a disposable output
+directory on an isolated CI/Fedora test host**. It uses synthetic management
+source strings (documentation-only IP ranges) and never contacts the
+production router. Five fixtures cover empty, single, multiline and
+mixed-whitespace source lists, plus explicit overrides. Each generated
+`status.js` is checked with Node.js and evaluated for a single numeric
+`policy.adminSourceCount`, non-disclosure of source identities, and parity
+of effective policy defaults with `router/scripts/firewall-start`.
+
+The generated `generatedEpoch` is a router-side Unix timestamp (seconds),
+alongside the existing human-readable `generated` value. The WebUI now
+compares this timestamp against the browser clock. Snapshots older than
+**180 seconds** are visibly marked **stale**, and those without a valid
+timestamp (including pre-upgrade retained files) or with a substantial
+clock skew are marked **unknown** rather than **fresh**. The Unbound
+runtime status no longer claims to be current when snapshot freshness
+is stale/unknown; historical metrics remain readable but are not evidence
+of live health. The tested browser-clock tolerance is 30 seconds into
+the future. A router/browser time-sync discrepancy can produce
+`unknown` even if collection succeeded; it does not prove an outage.
+
+This does **not** replace the collector's prior safety behavior:
+an incomplete live Unbound snapshot still aborts publication, retaining
+the last generated `status.js`. The age signal prevents this retained
+file from silently masquerading as a fresh measurement once the
+staleness threshold elapses. To maintain the separate Issue #235 trust
+boundary, this change does **not** modify production scripts/services,
+file privileges, installation hooks, DNS, WAN or firmware.
+
 ## Router and remote-client security matrix
 
 | Source | Destination | Test | Expected |
