@@ -201,7 +201,7 @@ Fedora local read-only adapter (strict source allowlist, fixed queries)
         +----> Existing loopback monitoring APIs (when authorized)
 ```
 
-The **initial offline prototype must make zero network calls**, including third-party fonts, image CDN, browser telemetry, public APIs, service discovery, JavaScript package CDNs and dynamic asset fetching.
+The **initial offline prototype must make zero external or production-network requests**: no third-party fonts, image CDN, browser telemetry, public APIs, service discovery, JavaScript package CDNs or live monitoring queries. If a disposable loopback-only static server is later used for local modules/fixture files, its localhost HTTP requests are strictly for those bundled assets; it must perform **no outbound requests** and must not be described as literally network-free.
 
 For any **future** live adapter:
 
