@@ -18,3 +18,17 @@
 .live-fill{height:100%;background:#58deb1;transition:width .25s linear}
 .live-fill.down{background:#ff858e}.live-fill.degraded{background:#ffd08a}.live-fill.stale,.live-fill.unknown{background:#7086a0}
 @media(max-width:700px){.live-head{align-items:flex-start}.live-panel{padding:16px}}
+
+/* V0.3 ONLY: explicit opt-in and neutral presentation of fictional observations. */
+.hcc-v03 .demo-toggle{border:1px solid #52647b;background:#1b293c;color:#e4edf7;border-radius:9px;padding:10px 13px;text-align:center;font-weight:700}
+.hcc-v03 .demo-toggle:hover{background:#263850}
+.hcc-v03 #demo-controls{display:flex;flex-direction:column;gap:8px}
+.hcc-v03 #demo-controls[hidden]{display:none}
+.hcc-v03 #view .stat-card .metric{color:#bbc8d8}
+.hcc-v03 #view .service-card .status.demo-status{color:#d6dfeb;border-color:#56657a;background:#273347}
+.hcc-v03 #view .event-marker{background:#8292a8}
+.hcc-v03 #view .stat-card::before,.hcc-v03 #view .service-card::before,.hcc-v03 #view .recovery-item::before{content:"DEMO · SYMULACJA";display:block;color:#a5b4c8;font-size:9px;font-weight:800;letter-spacing:.1em;margin-bottom:12px}
+.hcc-v03 .sidebar-foot .pulse-dot{background:#8292a8;box-shadow:none}
+.hcc-v03 .demo-badge{background:#1c2b3e;border-color:#475b72;color:#bdcfe0}
+.hcc-v03 .demo-gated{border-style:dashed;border-color:#445a71;background:#101c2d}
+.hcc-v03 .demo-gated h2{color:#d9e7f3}
