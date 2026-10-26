@@ -2,13 +2,15 @@ import {SCENARIOS} from './data.mjs';
 import {project,summary} from './model.mjs';
 
 const $ = (id)=>document.getElementById(id);
-const state={page:'overview',scenario:SCENARIOS[0],filter:'ALL'};
+// V0.3-only gate: fixtures never appear without an explicit click. V0.1/V0.2 are unchanged.
+const v03DemoGate=document.body.dataset.demoGate==='opt-in';
+const state={page:'overview',scenario:SCENARIOS[0],filter:'ALL',showDemo:false};
 const labels={overview:['Centrum dowodzenia','Jeden widok. Jasny status. Żadnych zgadywanek.','PRZEGLĄD'],services:['Katalog usług','Komponenty i ich źródła obserwacji.','USŁUGI'],incidents:['Historia zdarzeń','Incydenty demonstracyjne; analiza Black Box należy do Issue #304.','INCYDENTY'],recovery:['Recovery Center','Kopie, integralność i testy odtworzenia to oddzielne dowody.','RECOVERY']};
 const cls=(x)=>String(x).toLowerCase();
 function node(tag,classes='',text='') {const e=document.createElement(tag);if(classes)e.className=classes;if(text!==null)e.textContent=String(text);return e;}
 function add(parent,...children){for(const c of children)parent.append(c);return parent;}
 function header(title,right=''){const el=node('div','section-header');add(el,node('h2','',title),node('div','small-note',right));return el;}
-function badge(status){return node('span',`status ${cls(status)}`,status);}
+function badge(status){return node('span',`status ${cls(status)}${v03DemoGate?' demo-status':''}`,v03DemoGate?status+' · DEMO':status);}
 function statusCard(s){
  const el=node('article','service-card');const head=node('div','service-head');const nw=node('div','name-wrap');
  add(nw,node('div','service-icon',s.icon||'•'),node('span','service-name',s.name)); add(head,nw,badge(s.status));
@@ -17,7 +19,7 @@ function statusCard(s){
  add(foot,node('span','',s.source),node('span','',age));return add(el,head,reason,foot);
 }
 function events(scene){const e=node('div');for(const entry of scene.events){const row=node('div','event');const marker=node('span',`event-marker ${entry.severity}`);marker.setAttribute('aria-hidden','true');const desc=node('div','event-text');add(desc,node('div','event-title',entry.title),node('div','event-desc',entry.note));add(row,marker,desc,node('span','event-time',entry.at));e.append(row);}return e;}
-function statCard(label,value,sub,color){const el=node('div','stat-card');add(el,node('div','metric-label',label),node('div',`metric ${color}`,value),node('div','metric-sub',sub));return el;}
+function statCard(label,value,sub,color){const el=node('div','stat-card');add(el,node('div','metric-label',v03DemoGate?label+' · DEMO':label),node('div',`metric ${color}`,value),node('div','metric-sub',sub));return el;}
 function overview(rows){
  const c=summary(rows);const view=node('div');const stats=node('section','stat-grid');
  add(stats,statCard('Stan prawidłowy',String(c.OK),'Sygnały w normie (demo)','green'),statCard('Wymaga uwagi',String(c.DEGRADED+c.DOWN),'Degradacja lub awaria','amber'),statCard('Brak pewności',String(c.STALE+c.UNKNOWN),'Nieaktualne lub nieznane','blue'),statCard('Planowo offline',String(c.OFFLINE),'Tylko jawna deklaracja','white'));
@@ -47,11 +49,26 @@ function recovery(){const root=node('div'),panel=node('section','panel');panel.a
 }
 function render(){
  const [title,sub,crumb]=labels[state.page];$('page-title').textContent=title;$('page-subtitle').textContent=sub;$('breadcrumb').textContent=crumb;
- $('snapshot-info').textContent='Migawka przykładowa: '+state.scenario.generatedAt.replace('T',' ').replace('Z',' UTC');
+ if(v03DemoGate){
+   $('demo-controls').hidden=!state.showDemo;
+   $('demo-toggle').textContent=state.showDemo?'Ukryj scenariusze DEMO':'Pokaż scenariusze DEMO';
+   $('demo-toggle').setAttribute('aria-expanded',String(state.showDemo));
+ }
+ $('snapshot-info').textContent=v03DemoGate&&!state.showDemo?'DEMO ukryte':'Migawka przykładowa: '+state.scenario.generatedAt.replace('T',' ').replace('Z',' UTC');
  for(const b of document.querySelectorAll('[data-page]')){const selected=b.dataset.page===state.page;b.classList.toggle('active',selected);if(selected)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');}
- const rows=project(state.scenario);const v=$('view');v.replaceChildren(state.page==='overview'?overview(rows):state.page==='services'?services(rows):state.page==='incidents'?incidents():recovery());
+ const v=$('view');
+ if(v03DemoGate&&!state.showDemo){
+   const panel=node('section','panel demo-gated');
+   add(panel,node('h2','','Wyłącznie obserwacje LIVE'),
+     node('p','fineprint','Fikcyjne liczniki, statusy usług, incydenty i Recovery są ukryte. Widoczne powyżej odczyty nie są sumowane z żadnym scenariuszem testowym.'),
+     node('p','fineprint','Włącz „Pokaż scenariusze DEMO”, aby obejrzeć makiety. Scenariusze nigdy nie stają się danymi rzeczywistymi.'));
+   v.replaceChildren(panel);return;
+ }
+ const rows=project(state.scenario);
+ v.replaceChildren(state.page==='overview'?overview(rows):state.page==='services'?services(rows):state.page==='incidents'?incidents():recovery());
 }
 for(const scene of SCENARIOS){const o=node('option','',scene.label);o.value=scene.id;$('scenario').append(o);}
 $('scenario').onchange=(e)=>{const found=SCENARIOS.find(x=>x.id===e.target.value);if(found){state.scenario=found;state.filter='ALL';render();}};
 for(const b of document.querySelectorAll('[data-page]'))b.onclick=()=>{state.page=b.dataset.page;state.filter='ALL';render();};
+if(v03DemoGate)$('demo-toggle').addEventListener('click',()=>{state.showDemo=!state.showDemo;render();});
 render();
