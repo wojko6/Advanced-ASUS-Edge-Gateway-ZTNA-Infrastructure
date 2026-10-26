@@ -1,5 +1,11 @@
 # Roadmap
 
+### Homelab Control Center — 2026-10-26 (V0.3 source merged; deployment HOLD)
+
+- **Completed in manual Fedora lab scope:** V0.1 offline demo, V0.2 scrape-target aggregate and merged V0.3 [#312](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/312)/[#313](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/313) with two bounded live telemetry panels and synthetic data hidden until DEMO opt-in. Operator-reported browser and HTTPS API positive-path checks and one cross-site HTTP 403 negative check passed. The 7/7 `up` result and DNS Guard `LOCAL` observation are **specific telemetry signals**, not end-to-end router/client DNS or complete homelab service health. [Lab guide](../experiments/fedora/homelab-control-center-v0.1/README.md).
+- **Open / HOLD:** persistent HCC unit/autostart, LAN/Tailscale/WAN access, multi-user authentication, comprehensive browser-security tests and reboot/long-soak acceptance. [#304](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/304) Black Box remains a separate unimplemented initiative. The Fedora-local HTTPS alias is not a Pi-hole/ASUS DNS change.
+
+
 ### Current DNS stack — 2026-10-24 (Unbound 1.26.2 operational; separate hardening HOLD)
 
 - **Completed production version change:** authorized 5/5 Unbound `1.26.2-1` ARMv7 packages, restored custom `S61unbound`, direct DNSSEC good AD/bogus SERVFAIL over UDP and TCP, both Pi-hole and dnsmasq client paths, and one **actual post-R2 router reboot** with bounded PASS. The initial failure and rollback before successful R2 are retained in the [incident case study](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md); this is **not** an outstanding 1.26.2 rollout. [Production acceptance](operations/unbound-1.26.2-production-deployment-2026-10-24.md).
