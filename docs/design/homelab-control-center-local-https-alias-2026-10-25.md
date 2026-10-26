@@ -1,6 +1,7 @@
 # Homelab Control Center — operator-local HTTPS alias
 
 > Date: 2026-10-25
+> **Follow-up (2026-10-26):** the existing **Fedora-local-only** Caddy alias was also used with a **manually started V0.3** backend on `127.0.0.1:8788`. Both fixed HTTPS APIs returned bounded live telemetry; one crafted cross-site request returned HTTP 403. V0.3 source [#312](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/312) and [#313](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/313) is **merged**, but this does not add HCC autostart, modify Caddy, create router/Pi-hole DNS records, or authorize remote access. The V0.2 explanation below is the historical October 25 activation scope; see [V0.3 details](../../experiments/fedora/homelab-control-center-v0.1/V0.3-DNS-GUARD-PREFLIGHT.md).
 >
 > **Status (operator report, 2026-10-25): FEDORA-LOCAL HTTPS ALIAS ACTIVATED / BROWSER ACCESS REPORTED WORKING / BACKEND AUTOSTART=NO / APP DEPLOYMENT_GATE=HOLD.**
 > Earlier work was documentation/staging only. The operator has since explicitly run a guarded local activation, changing **Fedora** `/etc/hosts` and `/etc/caddy/Caddyfile` and reloading **Caddy only**. No ASUS, Pi-hole DNS, Unbound, Tailscale or HCC service-autostart configuration change is reported.
