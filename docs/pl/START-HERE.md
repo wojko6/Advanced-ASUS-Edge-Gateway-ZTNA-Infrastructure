@@ -1,7 +1,7 @@
 # Zacznij tutaj — przewodnik po repozytorium ASUS Edge Gateway
 
 **Status:** CURRENT / TYLKO NAWIGACJA  
-**Przegląd:** 2026-10-19 (wyłącznie dokumentacja; bez nowych testów usług lub routera)  
+**Przegląd:** 2026-10-26 (nawigacja i bieżący stan HCC; bez nowych testów routera ani usług)  
 **Język:** polski przewodnik dla czytelnika · [English version](../START-HERE.md)
 
 Nie musisz czytać całego repozytorium ani uruchamiać żadnych poleceń, żeby zrozumieć projekt. Ta strona jest **mapą lektury**, a nie instrukcją instalacji czy zgodą na wdrożenie.
@@ -37,6 +37,10 @@ Podane czasy to orientacyjne **czasy czytania**, nie wyniki testów. Przeglądaj
 | Awarie / odzyskiwanie | [Indeks Disaster Recovery](../disaster-recovery-index.md) → [techniczna procedura DR](../router-disaster-recovery.md) | Odtwarzanie działającego routera: pełna odbudowa pustego urządzenia nie jest jeszcze potwierdzona |
 | Testy / odtwarzalność | [Strategia testów](../testing.md) → [wymagania i kryteria akceptacji](../requirements.md) → [zbieranie dowodów](../evidence-collection.md) | Archiwum dowodów, dopóki nie weryfikujesz konkretnej tezy |
 | Historia / plany | [Roadmap](../roadmap.md) → [dziennik prac](../worklog/README.md) | Traktowanie historycznego pomysłu lub wyniku PASS w laboratorium jako stanu produkcyjnego |
+
+### Opcjonalne laboratorium panelu monitoringu Fedora
+
+[Homelab Control Center V0.1–V0.3](../../experiments/fedora/homelab-control-center-v0.1/README.md) to **nie** interfejs WebUI ASUS-a ani usługa uruchamiana automatycznie. W scalonej wersji V0.3 tylko dwa panele korzystają z ograniczonej, rzeczywistej telemetrii VictoriaMetrics i DNS Guard. Pozostałe dane DEMO są domyślnie ukryte i wymagają świadomego włączenia. [Testy HTTPS i granice wnioskowania (EN)](../../experiments/fedora/homelab-control-center-v0.1/V0.3-DNS-GUARD-PREFLIGHT.md) nie oznaczają pełnej weryfikacji DNS ani stałego wdrożenia. **DEPLOYMENT_GATE=HOLD.**
 
 ## Mapa katalogów
 

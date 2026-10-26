@@ -1,7 +1,7 @@
 # Start here — a guided tour of ASUS Edge Gateway
 
 **Status:** CURRENT / NAVIGATION ONLY  
-**Reviewed:** 2026-10-19 (documentation navigation; no live router or service validation)  
+**Reviewed:** 2026-10-26 (navigation and HCC status links; no new live router/service validation)  
 **Language:** English reader entry point · [Wersja polska](pl/START-HERE.md)
 
 Welcome. You do **not** need to read the entire repository or run any scripts to understand this project. This page is a **reading map**, not an installation manual or permission to deploy changes.
@@ -37,6 +37,10 @@ The times below are **reading estimates**, not benchmarks. Skim the linked secti
 | Recovery / reliability | [Disaster Recovery reading index](disaster-recovery-index.md) → [router recovery baseline](router-disaster-recovery.md) | Restoring a live device; the blank-router recovery gate is not fully proven |
 | Tests and reproducibility | [Testing strategy](testing.md) → [requirements and acceptance map](requirements.md) → [evidence collection](evidence-collection.md) | Raw dated evidence until you are checking a specific claim |
 | Project history / next ideas | [Roadmap](roadmap.md) → [worklog timeline](worklog/README.md) | Treating older proposals or laboratory PASS results as current production state |
+
+### Optional Fedora monitoring UI lab
+
+The [Homelab Control Center V0.1–V0.3 lab](../experiments/fedora/homelab-control-center-v0.1/README.md) is **not** the ASUS router WebUI or a permanently running service. The merged V0.3 experiment has two local-source-backed read-only telemetry panels; synthetic service, incident and recovery widgets remain hidden until DEMO opt-in. The [V0.3 HTTPS test record](../experiments/fedora/homelab-control-center-v0.1/V0.3-DNS-GUARD-PREFLIGHT.md) describes what the manual checks prove—and do not prove. Permanent deployment remains HOLD.
 
 ## How the repository is organized
 

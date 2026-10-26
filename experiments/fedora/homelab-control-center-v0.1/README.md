@@ -1,8 +1,8 @@
-# Homelab Control Center V0.1 — Fedora-only static demo
+# Homelab Control Center V0.1–V0.3 — Fedora-only experiments
 
-**State:** ISOLATED PROTOTYPE, not deployed. Related: [#303](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/303) (Control Center), [#304](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/304) (Black Box), and proposed design [PR #305](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/305).
+**State (2026-10-26):** ISOLATED, MANUAL-ONLY FEDORA LAB / `DEPLOYMENT_GATE=HOLD`. V0.1–V0.3 source has merged, **not** been installed as a persistent application. Related: [#303](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/303) (Control Center), [#304](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/304) (Black Box), and merged design [PR #305](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/305).
 
-A static, Polish-language status dashboard with 4 navigable views and 6 switchable synthetic scenarios. **Nothing here is a live measurement.** No dependencies, CDN, package installation, privileged commands, systemd services, backend adapter, internet fetch, router connection, state mutation or background operation.
+The **default V0.1** is a static Polish-language dashboard with four views and six fictional scenarios; **nothing in V0.1 is a live measurement**. Separate, manually launched **V0.2/V0.3** variants use a bounded, read-only Fedora-local VictoriaMetrics adapter. V0.3 has **two real telemetry panels** (scrape-target counts and the DNS Guard exporter-reported mode), while fictional service/incident/recovery data stay hidden until explicit DEMO opt-in. The project does **not** install a permanent background process, contact ASUS directly from HCC, execute router commands, allow arbitrary metrics queries or authorize remote exposure.
 
 ## Run locally on Fedora (explicit opt-in)
 
@@ -38,13 +38,28 @@ python3 -B tools/fedora-v02-readonly-preflight.py --run
 ```
 
 Only use `--run` after reviewing its source. That mode performs three GET requests **solely to 127.0.0.1**, with short timeouts and fixed paths: VictoriaMetrics health and aggregated `count(up)`, plus Loki readiness. No raw labels/logs are printed. A successful preflight is **not** a live V0.2 adapter acceptance. See [V0.2 preflight boundaries](V0.2-PREFLIGHT.md).
+## V0.3 manually started, read-only lab (2026-10-26)
+
+Merged [PR #312](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/312) introduced the second fixed-query, live-labelled DNS Guard telemetry panel and a separate non-root V0.3 server. Merged [PR #313](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/313) hides all fictional DEMO content until explicit opt-in and visually neutralizes its statuses. **Source merge is not runtime installation.** The existing workstation-only `https://control.home.arpa/` alias can forward to V0.3 only when the operator has manually started its foreground server. V0.2 and V0.3 both bind port **8788** and cannot run simultaneously.
+
+After reviewing the exact source, confirming no other process owns the test port, and explicitly stopping a foreground V0.2 lab (if running), a non-root Fedora operator can test V0.3:
+
+```bash
+node --test tests/*.mjs
+PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -p 'test_*.py' -v
+python3 -B tools/v03_local_server.py --serve-readonly-v03
+# Stop with Ctrl+C. Do not enable systemd/autostart or expose outside loopback.
+```
+
+In the recorded October 26 manual browser and HTTPS tests, VictoriaMetrics showed **7/7 scrape targets UP**, and DNS Guard telemetry reported **LOCAL**, watchdog enabled, break-glass inactive; one cross-site API request returned **HTTP 403**. These are point-in-time observations, **not** independent DNS lookup validation, service-wide uptime proof, complete web security testing or authorization to install a production application. See [V0.3 HTTPS/source limits](V0.3-DNS-GUARD-PREFLIGHT.md) and [synthetic DEMO isolation](V0.3-DEMO-OPT-IN-PREFLIGHT.md). Black Box [#304](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/304) remains separate and unimplemented. **Persistent HCC deployment, autostart, authentication hardening and remote access are HOLD.**
+
 ## Acceptance boundaries
 
 - The demonstration clock is fixed to `2026-10-25T14:00:00Z`. Age values are relative to that **fixture**, not current time.
 - `OFFLINE` requires an explicit fictional planned-outage annotation. Missing source is `UNKNOWN` and old metric is `STALE`.
 - Recovery deliberately separates backup, Restic integrity, isolated Btrfs restore and bootable OS verification; no restore is executed.
 - The Incidents view uses **fictional events**, not the actual October 24 router incident. Evidence-based historical replay belongs to #304.
-- Real monitoring data and loopback-bound API adapters are **not implemented**. A future approval and separate threat model are needed first.
+- Default **V0.1** remains fixture-only, but **V0.2/V0.3** have strictly allowlisted, loopback-only, non-root *manual* live-read adapters. Complete live service-health acceptance, permanent deployment, authentication hardening and remote access are **not implemented/approved**.
 - ASUS production, DNS Guard, Unbound, Pi-hole, RouterCloud/DUFS, Grafana alert rules, Fedora Recovery and Tailscale configurations are untouched.
 
 **DEPLOYMENT_GATE=HOLD.**
