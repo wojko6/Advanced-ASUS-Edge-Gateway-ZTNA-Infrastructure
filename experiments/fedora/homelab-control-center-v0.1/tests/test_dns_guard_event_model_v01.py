@@ -155,7 +155,7 @@ class EventHistory(unittest.TestCase):
 
     def test_transition_time_conflict_is_not_reported_exact(self):
         samples=[row(0),row(60,boot=True,counter=1,
-                           transition=1,since=60)]
+                           transition=-10,since=60)]
         ev=model.timeline(samples)["events"][0]
         self.assertEqual(ev["event_type"],model.BOOT)
         self.assertIsNone(ev["reported_transition_at"])
