@@ -8,6 +8,7 @@ No network access in this module; manual server opt-in is separate.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import math
 from zoneinfo import ZoneInfo
 
 import dns_guard_history_join_v01 as join
@@ -93,7 +94,8 @@ def project(report: object) -> dict:
                     or evidence.get("effective_time_source") != "FEDORA_COLLECTION_INTERVAL"
                     or evidence.get("source") != "DNS_GUARD_COARSE_FEDORA_EXPORTER"
                     or window.get("interpretation") != "RAW_SAMPLED_MODE_ONLY_NOT_EXACT_EVENT_TIME"
-                    or type(window.get("gap_seconds")) not in (int, float)):
+                    or type(window.get("gap_seconds")) not in (int, float)
+                    or not math.isfinite(window["gap_seconds"])):
                 return unknown()
             start = _date(window.get("previous_sample_utc"))
             end = _date(window.get("next_sample_utc"))
