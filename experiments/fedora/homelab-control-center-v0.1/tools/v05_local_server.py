@@ -18,6 +18,7 @@ import v05_history_archive as archive
 STATIC = {
     "/": ("index-v05.html", "text/html; charset=utf-8"),
     "/dns-history-archive.mjs": ("dns-history-archive.mjs", "text/javascript; charset=utf-8"),
+    "/dns-history-archive-model.mjs": ("dns-history-archive-model.mjs", "text/javascript; charset=utf-8"),
     "/dns-history-archive.css": ("dns-history-archive.css", "text/css; charset=utf-8"),
 }
 MAX_HISTORY_OUTPUT = 8192
