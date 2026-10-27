@@ -139,7 +139,7 @@ def timeline(rows: object) -> dict:
             boot_window = (None, at, at) if mode == "BOOTSTRAP" else None
             continue
 
-        if delta > 1 or (mode == previous_mode and delta > 0):
+        if delta > 1 or (mode == previous_mode and delta > 0) or (mode == "LOCAL" and delta > 0):
             events.append(_event(UNKNOWN, at, "COUNTER_SUGGESTS_MISSED_TRANSITION",
                                  ordinal, lower_window=previous_at))
             previous = current
