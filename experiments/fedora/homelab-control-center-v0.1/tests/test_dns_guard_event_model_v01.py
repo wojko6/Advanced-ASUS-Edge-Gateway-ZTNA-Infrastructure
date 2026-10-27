@@ -99,6 +99,7 @@ class EventHistory(unittest.TestCase):
         for samples in (
             [row(0,counter=0),row(60,counter=1)],
             [row(0,counter=0),row(60,boot=True,counter=3)],
+            [row(0,boot=True,counter=1),row(60,counter=2)],
         ):
             with self.subTest(samples=samples):
                 events=model.timeline(samples)["events"]
