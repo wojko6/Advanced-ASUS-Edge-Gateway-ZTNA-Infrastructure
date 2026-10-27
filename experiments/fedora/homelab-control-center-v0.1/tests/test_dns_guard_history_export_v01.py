@@ -101,7 +101,7 @@ class ParsingAndEvidence(unittest.TestCase):
             [True, FIRST+STEP],
             [FIRST,FIRST],
             [FIRST+STEP,FIRST],
-            [FIRST-1000,FIRST],
+            [m.MIN_MS-1000,FIRST],
             [FIRST, m.MAX_MS+1000],
             ["1793112063000",FIRST+STEP],
         )
