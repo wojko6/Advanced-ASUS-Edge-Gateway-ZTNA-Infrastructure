@@ -30,7 +30,8 @@ export function normalizeHistory(raw){
      e.from!==TYPES.get(e.type)[0]||e.to!==TYPES.get(e.type)[1]||
      e.confidence!=='BOUNDED_OBSERVATION')return none;
   const start=iso(e.window_start_local),end=iso(e.window_end_local);
-  if(!Number.isFinite(start)||!Number.isFinite(end)||start>=end||start<prevEnd)return none;
+  if(!Number.isFinite(start)||!Number.isFinite(end)||start>=end||start<prevEnd||
+     start<Date.parse(START)||end>Date.parse(END))return none;
   const gap=(end-start)/1000;
   if(gap>180||typeof e.gap_seconds!=='number'||!Number.isFinite(e.gap_seconds)||
     Math.abs(gap-e.gap_seconds)>0.005)return none;
