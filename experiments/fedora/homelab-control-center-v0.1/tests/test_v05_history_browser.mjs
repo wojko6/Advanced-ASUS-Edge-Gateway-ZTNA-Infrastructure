@@ -49,6 +49,7 @@ test('malformed, overlapping or impossible event windows are rejected',()=>{
   {...original,reported_at_local:'2026-10-27T17:00:00.000+01:00'},
   {...original,window_end_local:'2026-10-27T17:01:00.000+01:00'},
   {...original,window_start_local:'2026-10-28T17:01:35.572+01:00'},
+  {...original,window_end_local:'2026-10-27T18:00:00.000+01:00',gap_seconds:7104.428},
   {...original,reported_at_local:'PRIVATE_VALUE'},
  ]){
   assert.equal(normalizeHistory({...fixture,event_count:1,events:[entry]}).status,'UNKNOWN');
