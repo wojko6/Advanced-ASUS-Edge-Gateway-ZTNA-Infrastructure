@@ -365,8 +365,6 @@ configuration only. The GitHub credential remains in the locally provisioned
 datasource and is not stored in dashboard JSON. Business Charts remains
 optional and is not required by this dashboard.
 
-
-
 ## 2026-10-27 Grafana 13.3.0 / Loki 3.7.9 DNS-query follow-up
 
 **Operator-reported Fedora production checkpoint; manual change, not an unattended-update authorization.** Grafana OSS was upgraded from `13.2.4-1` to `13.3.0-1.x86_64` using the official release RPM. The operator reported successful SHA-256 / RPM signature verification, `grafana-server=active`, `/api/health` with `database=ok` / `version=13.3.0`, and no priority-error entries in the checked post-restart Grafana journal. VictoriaMetrics was active and its health endpoint answered OK; Loki `3.7.9` was active and ultimately returned `/ready=200` after a transient startup-readiness state.
