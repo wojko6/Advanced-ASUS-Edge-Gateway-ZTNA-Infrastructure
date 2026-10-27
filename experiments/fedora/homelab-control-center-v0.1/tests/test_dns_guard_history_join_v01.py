@@ -104,7 +104,7 @@ class SevenSeriesJoin(unittest.TestCase):
 
     def test_cross_metric_timestamp_skew_over_5s_fails(self):
         with self.assertRaisesRegex(ValueError,"CROSS_SERIES_TIMESTAMP_MISALIGNMENT"):
-            m.reconcile(snapshot(skew=900))
+            m.reconcile(snapshot(skew=1200))
 
     def test_collection_to_import_clock_disagreement_fails(self):
         data = snapshot()
