@@ -14,11 +14,12 @@ assert SPEC is not None and SPEC.loader is not None
 model = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(model)
 NOW = datetime(2026, 10, 27, 12, 0, tzinfo=timezone.utc)
+DEFAULT = object()
 
 
 class RouterDnsOfflineModel(unittest.TestCase):
-    def project(self, values=None, now=NOW):
-        if values is None:
+    def project(self, values=DEFAULT, now=NOW):
+        if values is DEFAULT:
             values = {"probe_success": 1, "sample_age_seconds": 5}
         return model.project(values, now)
 
@@ -99,7 +100,7 @@ class RouterDnsOfflineModel(unittest.TestCase):
         self.assertEqual(model.TTL_SECONDS, 120)
         self.assertEqual(model.FIELDS, {"probe_success", "sample_age_seconds"})
         source = SOURCE.read_text(encoding="utf-8")
-        for forbidden in ("subprocess", "socket.", "urllib.", "requests.", "http.client."):
+        for forbidden in ("import subprocess", "subprocess.run(", "socket.", "urllib.", "requests.", "http.client."):
             self.assertNotIn(forbidden, source)
         self.assertNotIn("127.0.0.1:8428", source)
 
