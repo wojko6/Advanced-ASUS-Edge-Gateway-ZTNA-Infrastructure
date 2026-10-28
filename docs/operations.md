@@ -256,21 +256,16 @@ The Fedora observability host now has a **check-only** `homelab-update-check.tim
 
 This off-router work is separate from ASUS Entware/firmware updates and from the explicitly disabled Tailscale automatic update application described below.
 
+**Later Fedora monitoring checkpoint (2026-10-27):** [merged PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324) documents operator-validated Grafana **13.3.0** and Loki **3.7.9** in a bounded DNS-query follow-up ([evidence](../evidence/2026-10-27/fedora-grafana-1330-loki-series-cap.md)). The 13.2.4 statement immediately above is the **historical 2026-10-18 pilot**, not the latest known Grafana package. An additional VictoriaMetrics **1.155.0** update is reported in the still-open [Draft PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325) and the earlier [Draft PR #317](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/317); neither is a merged dated worklog on `main`. The automatic installation gate remains **HOLD**.
 
-### Current reference Tailscale runtime
 
-As of the end of 2026-10-06, the reference router runs:
+### Reference Tailscale runtime — dated evidence, not package-feed metadata
 
-```text
-1.103.375
-track unstable (dev)
-```
+**2026-10-21 accepted router checkpoint:** the ASUS reference runtime moved from the earlier 1.103.375 unstable/dev build to operator-compiled stable **1.104.2 ARMv7**. Bounded version, service restart, exit-node/DNS prerequisites and project healthcheck checks passed; this does **not** prove a subsequent reboot. [Dated live validation](../evidence/2026-10-21/tailscale-1.104.2-armv7-live-validation.md).
 
-This runtime was installed from the official ARM tarball after checksum
-verification and rollback preparation. It is newer than the Entware package
-metadata/candidate observed on the reference router.
+**2026-10-28 later operator-reported maintenance (documentation pending):** stable **1.104.4 ARMv7** on the ASUS, Fedora 1.104.4 and a separately signed Android development build are described in **unmerged [Draft PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326)**. The draft distinguishes staging/rollback, native runtime health, Android DNS/exit-node tests and untested cold boot, long soak and IPv6. Until the dated public record is merged, do not misrepresent its proposed worklog as a file on `main`; the 1.104.2 evidence above remains the latest merged dated Tailscale deployment reference.
 
-Earlier 1.102.3 evidence remains a historical pre-upgrade checkpoint.
+Historical **2026-10-06** baseline: 1.103.375 unstable/dev came from the official ARM tarball after checksum and rollback preparation; 1.102.3 was an even older baseline. These are **not** current-version claims.
 
 Until the Entware feed catches up or the repository gains a separately
 validated official-tarball transaction mode:
