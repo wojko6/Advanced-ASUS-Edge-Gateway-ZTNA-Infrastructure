@@ -1,7 +1,7 @@
 # Start here — a guided tour of ASUS Edge Gateway
 
 **Status:** CURRENT / NAVIGATION ONLY  
-**Reviewed:** 2026-10-26 (navigation and HCC status links; no new live router/service validation)  
+**Reviewed:** 2026-10-28 (navigation, pending PR boundaries and evidence links only; no new live router/service validation)  
 **Language:** English reader entry point · [Wersja polska](pl/START-HERE.md)
 
 Welcome. You do **not** need to read the entire repository or run any scripts to understand this project. This page is a **reading map**, not an installation manual or permission to deploy changes.
@@ -41,6 +41,10 @@ The times below are **reading estimates**, not benchmarks. Skim the linked secti
 ### Optional Fedora monitoring UI lab
 
 The [Homelab Control Center V0.1–V0.3 lab](../experiments/fedora/homelab-control-center-v0.1/README.md) is **not** the ASUS router WebUI or a permanently running service. The merged V0.3 experiment has two local-source-backed read-only telemetry panels; synthetic service, incident and recovery widgets remain hidden until DEMO opt-in. The [V0.3 HTTPS test record](../experiments/fedora/homelab-control-center-v0.1/V0.3-DNS-GUARD-PREFLIGHT.md) describes what the manual checks prove—and do not prove. Permanent deployment remains HOLD.
+
+**Unmerged extensions (not part of `main`):** HCC V0.4 [Draft PR #318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318) proposes a third source-labelled LIVE router-DNS Blackbox tile. V0.5 [stacked Draft PR #323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) proposes a **manually requested, dated archive**, not a live transition feed. The separate [Issue #319](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/319) experiment family has [Draft PRs #320–#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320) for bounded DNS Guard history/model checks. None is merged, installed as a persistent service, or evidence of client DNS failover. Track exact dependencies and acceptance gates on the linked PRs before updating current guides.
+
+**Recent publication boundary:** [Draft worklog PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325) proposes the October 27 Fedora/HCC chronology, and [Draft worklog PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326) proposes October 28 Tailscale cross-platform observations. Neither is a dated file on `main` until merged. [Merged monitoring PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324) contains the separate, date-scoped Fedora Grafana/Loki evidence. Future RouterCloud disk-usage TreeMap [Issue #327](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/327) is a proposal, not an existing Metro feature.
 
 ## How the repository is organized
 
