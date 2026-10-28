@@ -1,7 +1,7 @@
 # Zacznij tutaj — przewodnik po repozytorium ASUS Edge Gateway
 
 **Status:** CURRENT / TYLKO NAWIGACJA  
-**Przegląd:** 2026-10-26 (nawigacja i bieżący stan HCC; bez nowych testów routera ani usług)  
+**Przegląd:** 2026-10-28 (nawigacja, stan roboczych PR i odnośniki do dowodów; bez nowych testów routera ani usług)  
 **Język:** polski przewodnik dla czytelnika · [English version](../START-HERE.md)
 
 Nie musisz czytać całego repozytorium ani uruchamiać żadnych poleceń, żeby zrozumieć projekt. Ta strona jest **mapą lektury**, a nie instrukcją instalacji czy zgodą na wdrożenie.
@@ -41,6 +41,10 @@ Podane czasy to orientacyjne **czasy czytania**, nie wyniki testów. Przeglądaj
 ### Opcjonalne laboratorium panelu monitoringu Fedora
 
 [Homelab Control Center V0.1–V0.3](../../experiments/fedora/homelab-control-center-v0.1/README.md) to **nie** interfejs WebUI ASUS-a ani usługa uruchamiana automatycznie. W scalonej wersji V0.3 tylko dwa panele korzystają z ograniczonej, rzeczywistej telemetrii VictoriaMetrics i DNS Guard. Pozostałe dane DEMO są domyślnie ukryte i wymagają świadomego włączenia. [Testy HTTPS i granice wnioskowania (EN)](../../experiments/fedora/homelab-control-center-v0.1/V0.3-DNS-GUARD-PREFLIGHT.md) nie oznaczają pełnej weryfikacji DNS ani stałego wdrożenia. **DEPLOYMENT_GATE=HOLD.**
+
+**Rozszerzenia niescalone (nieobecne na `main`):** HCC V0.4 w [Draft PR #318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318) proponuje trzeci panel LIVE z pojedynczym testem Blackbox DNS routera. V0.5 w [zależnym Draft PR #323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) proponuje **ręcznie otwierane, datowane archiwum**, nie strumień zdarzeń LIVE. Osobne doświadczenia z historią DNS Guard [Issue #319](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/319) i [Draft PR #320–#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320) nie oznaczają automatycznego failover DNS klientów ani instalacji usługi. Przed uznaniem funkcji za obecną w systemie trzeba sprawdzić status scalenia i wyniki właściwych testów.
+
+**Granica publikacji:** [Draft PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325) zawiera propozycję publicznego dziennika za 27 października, a [Draft PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326) — za 28 października i prace nad Tailscale. Dopóki nie zostaną scalone, ich wpisy nie są częścią `main`. Osobne [scalone PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324) dotyczy monitoringu Grafana/Loki z 27 października. TreeMap zajętości dysków w RouterCloud [#327](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/327) pozostaje pomysłem.
 
 ## Mapa katalogów
 
