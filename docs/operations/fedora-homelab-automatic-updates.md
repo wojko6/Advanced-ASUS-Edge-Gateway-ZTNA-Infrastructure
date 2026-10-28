@@ -28,6 +28,14 @@ The 2026-10-18 inventory above was time-bounded. On 2026-10-21 the operator repo
 
 This does **not** change the 2026-10-18 claim about absence of a packaged `victoria-metrics` RPM or the then-probed inactive service; no new packaging/service-discovery inventory was published. Manual VictoriaMetrics deployment does not add it to the unattended updater allowlist and does not authorize RouterCloud backup-wrapper changes. Long-running scrape continuity and cold boot remain outside this checkpoint.
 
+### 2026-10-27 newer manual monitoring checkpoints (not unattended updates)
+
+The inventory above is the dated **October 18 baseline**, not the current package list. A separate [merged October 27 monitoring evidence update](../../evidence/2026-10-27/fedora-grafana-1330-loki-series-cap.md) ([PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324)) records **Grafana 13.3.0 / Loki 3.7.9** and scoped service/query checks. It does not retroactively turn October 18 per-rule alert delivery, rollback or all-service health into PASS.
+
+The operator-reported VictoriaMetrics **1.154.1 → 1.155.0** update, retained same-host rollback copy and bounded seven-UP scrape result are documented in the [published October 27 worklog](../worklog/2026-10-27.md) ([merged PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325)), incorporating key details from superseded partial [Draft PR #317](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/317). This is not evidence of independent off-host restore, long-soak DNS client acceptance or continuously running HCC. The observed 502 came from an absent manually started HCC backend, not a demonstrated VictoriaMetrics failure.
+
+**Unattended installation is still HOLD.** Do not enable an auto-update service or alter backups, Caddy, Grafana rules, router/Unbound/DNS Guard, kernel or NVIDIA as a consequence of this documentary reconciliation.
+
 ### 2026-10-24 DNS-dependent alert delivery limitation (separate from package updates)
 
 A later read-only reconstruction of the **first, failed ASUS Unbound maintenance incident** found direct router dnsmasq DNS probe failures while IP/HTTPS monitoring checks passed. Grafana 13.2.4 logged **14** notifier failures associated with DNS lookup, timeout and exhausted retries. The `dns_guard_sustained_failopen` FIRING email was delivered around 30m33s after its *reported observation timestamp*. The exact per-transport cause and the historical Fedora upstream resolver selection at incident time remain unproven; a current snapshot using ASUS Pi-hole is not conclusive historical evidence.
