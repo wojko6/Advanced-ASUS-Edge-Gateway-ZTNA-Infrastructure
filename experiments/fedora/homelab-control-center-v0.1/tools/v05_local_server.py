@@ -9,7 +9,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from http.server import HTTPServer
+from http.server import ThreadingHTTPServer
+from threading import BoundedSemaphore, Lock
 
 import v02_local_server as v02
 import v04_local_server as v04
@@ -22,6 +23,8 @@ STATIC = {
     "/dns-history-archive.css": ("dns-history-archive.css", "text/css; charset=utf-8"),
 }
 MAX_HISTORY_OUTPUT = 8192
+MAX_CONCURRENT_HTTP_REQUESTS = 16
+_ARCHIVE_IN_FLIGHT = Lock()  # manual history read: at most one VM seven-series batch
 
 
 class RequestHandler(v04.RequestHandler):
@@ -39,7 +42,16 @@ class RequestHandler(v04.RequestHandler):
                     None, f"http://{v02.BIND}:{v02.PORT}"):
                 self.send_headers(403, "text/plain", 0)
                 return
-            raw = json.dumps(archive.collect(), ensure_ascii=True,
+            # A slow historical read must not block unrelated LIVE/static GETs.
+            # Never fan out concurrent seven-series VM batches.
+            if not _ARCHIVE_IN_FLIGHT.acquire(blocking=False):
+                self.send_headers(503, "text/plain", 0)
+                return
+            try:
+                payload = archive.collect()
+            finally:
+                _ARCHIVE_IN_FLIGHT.release()
+            raw = json.dumps(payload, ensure_ascii=True,
                              separators=(",", ":")).encode("ascii")
             if len(raw) > MAX_HISTORY_OUTPUT:
                 self.send_headers(503, "text/plain", 0)
@@ -58,6 +70,48 @@ class RequestHandler(v04.RequestHandler):
         super().do_GET()
 
 
+class BoundedLocalHTTPServer(ThreadingHTTPServer):
+    """Manual localhost-only lab with bounded parallel request handlers.
+
+    A slow fixed-history read must not block unrelated source tiles or assets.
+    Limit local HTTP concurrency; do not spawn unbounded threads on load.
+    """
+
+    daemon_threads = True
+    block_on_close = False
+
+    def __init__(self, server_address, RequestHandlerClass):
+        super().__init__(server_address, RequestHandlerClass)
+        self._slots = BoundedSemaphore(MAX_CONCURRENT_HTTP_REQUESTS)
+
+    def process_request(self, request, client_address):
+        if not self._slots.acquire(blocking=False):
+            # An overloaded listener reveals no source data or request details.
+            try:
+                request.sendall(
+                    b"HTTP/1.0 503 Service Unavailable\\r\\n"
+                    b"Content-Length: 0\\r\\n"
+                    b"Cache-Control: no-store\\r\\n"
+                    b"Connection: close\\r\\n\\r\\n"
+                )
+            except OSError:
+                pass
+            finally:
+                self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self._slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._slots.release()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--serve-readonly-v05", action="store_true",
@@ -73,7 +127,7 @@ def main():
     print("CONFIG_WRITES=NO AUTOSTART=NO DEPLOYMENT_GATE=HOLD", flush=True)
     print(f"LOCAL_UI=http://{v02.BIND}:{v02.PORT}/", flush=True)
     print("Ctrl+C to stop", flush=True)
-    server = HTTPServer((v02.BIND, v02.PORT), RequestHandler)
+    server = BoundedLocalHTTPServer((v02.BIND, v02.PORT), RequestHandler)
     try:
         server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:
