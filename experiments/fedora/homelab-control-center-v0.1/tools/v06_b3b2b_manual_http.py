@@ -18,6 +18,7 @@ import v06_b3b2_source_supervisor as supervised
 BIND = mock.BIND
 PORT = 8791  # V0.5 8788 and B3B1 8790 must remain untouched.
 MAX_RESPONSE_BYTES = 65536
+MAX_WRITE_OPERATION_SECONDS = 2.0  # socket operation; NOT a total HTTP deadline
 SCHEMA = "hcc-dns-guard-history-http/0.6-b3b2b"
 
 
@@ -54,29 +55,28 @@ class HistoryHandler(mock.RequestHandler):
             self._empty(503)
             return
         try:
-            # This call has a 12-second process-level deadline, output byte
-            # cap and kill/reap behavior. No server-side cache or polling.
-            result = supervised.read_b2_supervised(window)
-            doc = sanitize_result(result, window)
-            body = json.dumps(doc, separators=(",", ":"), sort_keys=True,
-                              ensure_ascii=True, allow_nan=False).encode("ascii")
-            if len(body) > MAX_RESPONSE_BYTES:
-                doc = supervised.unknown()
-                body = json.dumps(doc, separators=(",", ":"), sort_keys=True).encode("ascii")
-            self._headers(200, "application/json; charset=utf-8", len(body))
+            # Compute the whole response BEFORE any status/header bytes are sent.
+            # Worker failure cannot cause a second HTTP response on one socket.
             try:
-                self.wfile.write(body)
-            except (BrokenPipeError, ConnectionResetError, OSError):
-                # No stale successes and no traceback exposing client/source.
-                pass
-        except Exception:
-            # No output from failed reads is exposed; no cached result exists.
-            try:
+                result = supervised.read_b2_supervised(window)
+                doc = sanitize_result(result, window)
+                body = json.dumps(doc, separators=(",", ":"), sort_keys=True,
+                                  ensure_ascii=True, allow_nan=False).encode("ascii")
+                if len(body) > MAX_RESPONSE_BYTES:
+                    raise ValueError("bounded response exceeded")
+            except Exception:
+                # Never leak raw child data, errors or a previous success.
                 body = json.dumps(supervised.unknown(), separators=(",", ":"),
                                   sort_keys=True).encode("ascii")
+            try:
+                # Operation timeout guards blocked writes, but does not
+                # interrupt the already-running source worker on disconnect.
+                self.connection.settimeout(MAX_WRITE_OPERATION_SECONDS)
                 self._headers(200, "application/json; charset=utf-8", len(body))
                 self.wfile.write(body)
             except OSError:
+                # A client disconnect / broken pipe does not retry headers
+                # or trigger another source read. Lock is always released.
                 pass
         finally:
             self.server.history_lock.release()
@@ -100,6 +100,7 @@ def main():
             "bind": BIND, "port": PORT, "windows": mock.WINDOWS,
             "source": "FIXED_B2_VIA_SUPERVISOR_NOT_INVOKED",
             "max_response_bytes": MAX_RESPONSE_BYTES,
+            "write_operation_timeout_seconds": MAX_WRITE_OPERATION_SECONDS,
             "max_child_seconds": supervised.MAX_CHILD_SECONDS,
             "max_child_stdout_bytes": supervised.MAX_STDOUT_BYTES,
             "max_handlers": mock.MAX_HANDLERS,
