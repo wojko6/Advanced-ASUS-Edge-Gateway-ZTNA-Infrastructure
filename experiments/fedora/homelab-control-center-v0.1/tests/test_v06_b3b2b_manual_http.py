@@ -191,7 +191,8 @@ class MockHttpIntegrationTests(unittest.TestCase):
                 if failure == "body":
                     handler.wfile.write.side_effect = ConnectionResetError
                 with patch.object(peer_guard, "read_b2_with_peer",
-                                  return_value=synthetic()) as read:
+                                  return_value=synthetic()) as read, \
+                     patch.object(http_lab, "disconnected", return_value=False):
                     handler.do_GET()
                 read.assert_called_once_with("1h", ANY)
                 self.assertEqual(handler._headers.call_count, 1)
@@ -211,7 +212,8 @@ class MockHttpIntegrationTests(unittest.TestCase):
         handler._headers = MagicMock()
         handler.wfile = MagicMock()
         with patch.object(peer_guard, "read_b2_with_peer",
-                          side_effect=RuntimeError("SECRET")) as read:
+                          side_effect=RuntimeError("SECRET")) as read, \
+             patch.object(http_lab, "disconnected", return_value=False):
             handler.do_GET()
         read.assert_called_once()
         handler._headers.assert_called_once()
