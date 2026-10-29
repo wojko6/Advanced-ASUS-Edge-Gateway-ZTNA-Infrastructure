@@ -59,7 +59,7 @@ def analyze(series: object, window: str, window_end_ms: int) -> dict:
     describe ABSENCE OF TELEMETRY, never router shutdown or DNS outage.
     No transition is inferred across a gap or an invalid sample.
     """
-    if window not in WINDOWS_MS or type(window_end_ms) is not int:
+    if type(window) is not str or window not in WINDOWS_MS or type(window_end_ms) is not int:
         return unknown("INVALID_WINDOW")
     if not MIN_MS + WINDOWS_MS[window] <= window_end_ms <= MAX_MS:
         return unknown("INVALID_WINDOW_CLOCK")
