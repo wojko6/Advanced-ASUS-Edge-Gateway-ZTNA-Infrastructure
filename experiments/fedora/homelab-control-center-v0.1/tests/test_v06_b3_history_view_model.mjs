@@ -99,6 +99,41 @@ test('mismatched segment/sample arithmetic and impossible ranges fail closed',()
   assert.equal(normalizeCoverage({...clone(src),...override},'24h').status,'UNKNOWN');
 });
 
+test('real B1 internal gap starting exactly at window boundary is valid',()=>{
+ const start='2026-10-29T11:00:00.000Z';
+ const second='2026-10-29T11:05:00.000Z';
+ const end='2026-10-29T12:00:00.000Z';
+ const source={...sample(),window:'1h',window_start_utc:start,window_end_utc:end,
+  sample_count:2,gaps:[gap('INTERNAL',start,second),gap('TRAILING',second,end)],
+  segments:[segment(start,start,1),segment(second,second,1)]};
+ const result=normalizeCoverage(source,'1h');
+ assert.equal(result.status,'COVERAGE_OBSERVED_WITH_UNCERTAINTY');
+ assert.deepEqual(result.gaps.map(g=>g.position),['INTERNAL','TRAILING']);
+});
+
+test('omitted boundary or internal gap cannot fake continuous coverage',()=>{
+ const source=sample();
+ const missingLeading={...source,gaps:[source.gaps[1]]};
+ assert.equal(normalizeCoverage(missingLeading,'24h').status,'UNKNOWN');
+ const early='2026-10-29T10:00:00.000Z';
+ const late='2026-10-29T11:00:00.000Z';
+ const missingInternal={...source,sample_count:2,
+  gaps:[gap('LEADING',START,early),gap('TRAILING',late,END)],
+  segments:[segment(early,early,1),segment(late,late,1)]};
+ assert.equal(normalizeCoverage(missingInternal,'24h').status,'UNKNOWN');
+ const missingTrailing={...source,gaps:[source.gaps[0]]};
+ assert.equal(normalizeCoverage(missingTrailing,'24h').status,'UNKNOWN');
+});
+
+test('single-sample segment cannot claim hours of continuous observations',()=>{
+ const start='2026-10-29T11:00:00.000Z';
+ const end='2026-10-29T12:00:00.000Z';
+ const source={...sample(),window:'1h',window_start_utc:start,window_end_utc:end,
+  status:'COVERAGE_OBSERVED',sample_count:1,gaps:[],
+  segments:[segment(start,end,1)]};
+ assert.equal(normalizeCoverage(source,'1h').status,'UNKNOWN');
+});
+
 test('UNKNOWN, malformed, absent input never retain previous success',()=>{
  const once=normalizeCoverage(sample(),'24h');
  assert.equal(once.sample_count,1);
