@@ -53,6 +53,17 @@ python3 -B tools/v03_local_server.py --serve-readonly-v03
 
 In the recorded October 26 manual browser and HTTPS tests, VictoriaMetrics showed **7/7 scrape targets UP**, and DNS Guard telemetry reported **LOCAL**, watchdog enabled, break-glass inactive; one cross-site API request returned **HTTP 403**. These are point-in-time observations, **not** independent DNS lookup validation, service-wide uptime proof, complete web security testing or authorization to install a production application. See [V0.3 HTTPS/source limits](V0.3-DNS-GUARD-PREFLIGHT.md) and [synthetic DEMO isolation](V0.3-DEMO-OPT-IN-PREFLIGHT.md). Black Box [#304](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/304) remains separate and unimplemented. **Persistent HCC deployment, autostart, authentication hardening and remote access are HOLD.**
 
+
+## V0.13–V0.14 correlation work (operator evidence, 2026-10-29)
+
+The manual offline V0.13.2a lab correlated 21 historical seven-series DNS Guard telemetry gaps against bounded Fedora suspend/resume, interboot journal records, and systemd user-unit collector exits. The operator reported **31/31 synthetic self-tests PASS** and **PASS_CORRELATION_ONLY** on the local seven-day input. Five gaps were strongly suspend-correlated, eight interboot-correlated, three partially host-correlated, one mixed host/collector, four collector-exit-255 observed, and zero entirely unmatched by selected evidence. Correlation is **not** proof of DNS outage, precise power state, SSH root cause, or full journal completeness.
+
+The separate V0.14 source-only design uses a privacy-reviewed, *sanitized* event file tail into existing Alloy/Loki, plus an explicitly generated **static local-only** HCC correlation report. The Alloy fragment is intentionally **not** included in the running config; permission, privacy, retention, live Alloy validation and Loki E2E gates remain open. No HCC endpoint, schedule, autostart, service restart, router access or production integration is approved.
+
+See [V0.13–V0.14 evidence and deployment boundaries](V0.13-TO-V0.14-CORRELATION-LAB.md) and the un-applied [Alloy fragment](monitoring/v014-dns-guard-sanitized.alloy.fragment).
+
+**DEPLOYMENT_GATE=HOLD.**
+
 ## Acceptance boundaries
 
 - The demonstration clock is fixed to `2026-10-25T14:00:00Z`. Age values are relative to that **fixture**, not current time.
