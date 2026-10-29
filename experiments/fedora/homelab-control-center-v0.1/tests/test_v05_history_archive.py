@@ -6,7 +6,8 @@ import json
 import sys
 from http.server import HTTPServer
 from pathlib import Path
-from threading import Thread
+from threading import Event, Thread
+from concurrent.futures import ThreadPoolExecutor
 import unittest
 from unittest.mock import patch
 
@@ -238,6 +239,93 @@ class ArchiveHTTP(unittest.TestCase):
             status, body, _ = self.get(path="/api/router-dns")
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["schema_version"], "0.4")
+
+
+class ConcurrentManualV05(unittest.TestCase):
+    """Synthetic loopback-only concurrency checks: never access real VM/router."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.server = v05.BoundedLocalHTTPServer(("127.0.0.1", 0),
+                                                v05.RequestHandler)
+        cls.worker = Thread(target=cls.server.serve_forever, daemon=True)
+        cls.worker.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.worker.join(timeout=2)
+
+    def get(self, path="/api/dns-guard-history-archive"):
+        conn = http.client.HTTPConnection("127.0.0.1",
+                                          self.server.server_port, timeout=3)
+        try:
+            conn.request("GET", path, headers={"Host": "127.0.0.1:8788"})
+            response = conn.getresponse()
+            response.read()
+            return response.status
+        finally:
+            conn.close()
+
+    def test_static_requests_continue_while_history_is_slow(self):
+        entered, release = Event(), Event()
+
+        def synthetic_slow_archive():
+            entered.set()
+            if not release.wait(timeout=4):
+                raise AssertionError("synthetic archive release timed out")
+            return archive.unknown()
+
+        try:
+            with patch.object(v05.archive, "collect", side_effect=synthetic_slow_archive) as collect:
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    slow = pool.submit(self.get)
+                    self.assertTrue(entered.wait(2), "archive handler was not entered")
+                    # This must complete WHILE the archive is still blocked.
+                    fast = pool.submit(self.get, "/")
+                    self.assertEqual(fast.result(timeout=1.5), 200)
+                    self.assertFalse(slow.done())
+                    release.set()
+                    self.assertEqual(slow.result(timeout=2), 200)
+                collect.assert_called_once_with()
+        finally:
+            release.set()
+
+    def test_parallel_duplicate_archive_is_denied_without_extra_vm_read(self):
+        entered, release = Event(), Event()
+
+        def synthetic_slow_archive():
+            entered.set()
+            if not release.wait(timeout=4):
+                raise AssertionError("synthetic archive release timed out")
+            return archive.unknown()
+
+        try:
+            with patch.object(v05.archive, "collect", side_effect=synthetic_slow_archive) as collect:
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    first = pool.submit(self.get)
+                    self.assertTrue(entered.wait(2), "archive handler was not entered")
+                    self.assertEqual(self.get(), 503)
+                    release.set()
+                    self.assertEqual(first.result(timeout=2), 200)
+                collect.assert_called_once_with()
+        finally:
+            release.set()
+
+    def test_http_worker_limit_rejects_excess_without_dispatch(self):
+        # Saturate the semaphore synthetically: no real client flood.
+        acquired = 0
+        try:
+            for _ in range(v05.MAX_CONCURRENT_HTTP_REQUESTS):
+                self.assertTrue(self.server._slots.acquire(blocking=False))
+                acquired += 1
+            with patch.object(v05.archive, "collect",
+                              side_effect=AssertionError("no VM calls allowed")):
+                self.assertEqual(self.get(), 503)
+        finally:
+            for _ in range(acquired):
+                self.server._slots.release()
 
 
 if __name__ == "__main__":
