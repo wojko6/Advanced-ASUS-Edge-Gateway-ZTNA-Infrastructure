@@ -122,7 +122,7 @@ class SourceTests(unittest.TestCase):
 
     def test_24h_chunked_history_with_inactive_hours(self):
         times = [END-86400000+60000, END-86400000+120000]
-        times.extend([END-20000000+i*60000 for i in range(640)])
+        times.extend([END-640*60000+i*60000 for i in range(640)])
         raw_data = {}
         for name in coverage.SUFFIXES:
             metric = src.METRIC_PREFIX+name
