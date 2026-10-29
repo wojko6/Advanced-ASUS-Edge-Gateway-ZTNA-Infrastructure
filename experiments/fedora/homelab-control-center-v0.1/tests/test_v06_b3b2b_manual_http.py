@@ -5,11 +5,13 @@ import contextlib
 import http.client
 import io
 import json
+from email.message import Message
+from types import SimpleNamespace
 from pathlib import Path
 import sys
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 import v06_b3b2b_manual_http as http_lab
@@ -168,6 +170,53 @@ class MockHttpIntegrationTests(unittest.TestCase):
             self.assertEqual(json.loads(request(self.port)[2])["status"], "UNKNOWN")
         with patch.object(guard, "read_b2_supervised", return_value=synthetic()):
             self.assertEqual(json.loads(request(self.port)[2])["sample_count"], 3)
+
+    def test_disconnect_during_headers_or_body_never_retries_response(self):
+        # Source completes, but the client goes away during response delivery.
+        # We must never attempt to begin a second response on the same socket.
+        for failure in ("headers", "body"):
+            with self.subTest(failure=failure):
+                handler = object.__new__(http_lab.HistoryHandler)
+                handler.path = "/api/dns-guard-history?window=1h"
+                handler.headers = Message()
+                handler.headers.add_header("Host", "127.0.0.1:8791")
+                lock = threading.Lock()
+                handler.server = SimpleNamespace(
+                    server_address=("127.0.0.1", 8791), history_lock=lock)
+                handler.connection = MagicMock()
+                handler._headers = MagicMock(
+                    side_effect=BrokenPipeError if failure == "headers" else None)
+                handler.wfile = MagicMock()
+                if failure == "body":
+                    handler.wfile.write.side_effect = ConnectionResetError
+                with patch.object(guard, "read_b2_supervised",
+                                  return_value=synthetic()) as read:
+                    handler.do_GET()
+                read.assert_called_once_with("1h")
+                self.assertEqual(handler._headers.call_count, 1)
+                handler.connection.settimeout.assert_called_once_with(
+                    http_lab.MAX_WRITE_OPERATION_SECONDS)
+                self.assertFalse(lock.locked())
+
+    def test_source_exception_emits_one_neutral_response_not_private_data(self):
+        handler = object.__new__(http_lab.HistoryHandler)
+        handler.path = "/api/dns-guard-history?window=1h"
+        handler.headers = Message()
+        handler.headers.add_header("Host", "127.0.0.1:8791")
+        lock = threading.Lock()
+        handler.server = SimpleNamespace(
+            server_address=("127.0.0.1", 8791), history_lock=lock)
+        handler.connection = MagicMock()
+        handler._headers = MagicMock()
+        handler.wfile = MagicMock()
+        with patch.object(guard, "read_b2_supervised",
+                          side_effect=RuntimeError("SECRET")) as read:
+            handler.do_GET()
+        read.assert_called_once()
+        handler._headers.assert_called_once()
+        self.assertEqual(json.loads(handler.wfile.write.call_args.args[0]),
+                         guard.unknown())
+        self.assertFalse(lock.locked())
 
     def test_no_root_or_listener_without_explicit_two_flags(self):
         with patch.object(sys, "argv", ["script.py", "--inspect"]), \
