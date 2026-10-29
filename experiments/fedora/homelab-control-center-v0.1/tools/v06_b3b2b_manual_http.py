@@ -14,6 +14,8 @@ import os
 
 import v06_b3b_mock_http as mock
 import v06_b3b2_source_supervisor as supervised
+import v06_b3b2d_cancel_guard as cancel_guard
+from v06_b3b2c_disconnect_lab import disconnected
 
 BIND = mock.BIND
 PORT = 8791  # V0.5 8788 and B3B1 8790 must remain untouched.
@@ -55,29 +57,36 @@ class HistoryHandler(mock.RequestHandler):
             self._empty(503)
             return
         try:
-            # Compute the whole response BEFORE any status/header bytes are sent.
-            # Worker failure cannot cause a second HTTP response on one socket.
+            # An abandoned request never starts, nor continues, a B2 child.
+            # Linux POLLRDHUP is conservative about write-half-closes.
+            if disconnected(self.connection):
+                self.close_connection = True
+                return
             try:
-                result = supervised.read_b2_supervised(window)
+                # The peer-aware B3B2D guard inherits B3B2A's fixed B2 CLI,
+                # provisional 12s child deadline, in-flight stdout cap,
+                # strict sanitized schema and process group kill/reap.
+                result = cancel_guard.read_b2_with_peer(window, self.connection)
                 doc = sanitize_result(result, window)
                 body = json.dumps(doc, separators=(",", ":"), sort_keys=True,
                                   ensure_ascii=True, allow_nan=False).encode("ascii")
                 if len(body) > MAX_RESPONSE_BYTES:
                     raise ValueError("bounded response exceeded")
             except Exception:
-                # Never leak raw child data, errors or a previous success.
+                # Neutral evidence only, no private errors or last-good cache.
                 body = json.dumps(supervised.unknown(), separators=(",", ":"),
                                   sort_keys=True).encode("ascii")
+            # The peer could close after the supervised child exits. Never
+            # send headers/UNKNOWN to a closed client or restart the read.
+            if disconnected(self.connection):
+                self.close_connection = True
+                return
             try:
-                # Operation timeout guards blocked writes, but does not
-                # interrupt the already-running source worker on disconnect.
                 self.connection.settimeout(MAX_WRITE_OPERATION_SECONDS)
                 self._headers(200, "application/json; charset=utf-8", len(body))
                 self.wfile.write(body)
             except OSError:
-                # A client disconnect / broken pipe does not retry headers
-                # or trigger another source read. Lock is always released.
-                pass
+                self.close_connection = True
         finally:
             self.server.history_lock.release()
 
@@ -103,6 +112,8 @@ def main():
             "write_operation_timeout_seconds": MAX_WRITE_OPERATION_SECONDS,
             "max_child_seconds": supervised.MAX_CHILD_SECONDS,
             "max_child_stdout_bytes": supervised.MAX_STDOUT_BYTES,
+            "peer_watch": "LINUX_POLLRDHUP_POLLHUP_POLLERR_POLLNVAL",
+            "peer_poll_interval_ms": round(cancel_guard.POLL_INTERVAL_SECONDS * 1000),
             "max_handlers": mock.MAX_HANDLERS,
             "one_source_read_at_a_time": True,
             "requires_two_explicit_flags": True,

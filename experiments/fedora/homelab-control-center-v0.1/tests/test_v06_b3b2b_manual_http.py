@@ -11,12 +11,13 @@ from pathlib import Path
 import sys
 import threading
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 import v06_b3b2b_manual_http as http_lab
 import v06_b3b_mock_http as b3b1
 import v06_b3b2_source_supervisor as guard
+import v06_b3b2d_cancel_guard as peer_guard
 import v06_coverage_model as coverage
 import v06_history_source as b2
 
@@ -54,6 +55,14 @@ def request(port, path="/api/dns-guard-history?window=1h", method="GET", headers
 
 class MockHttpIntegrationTests(unittest.TestCase):
     def setUp(self):
+        # A missing mock must NEVER spawn the real B2 source child.
+        # Fail the test even if the HTTP handler masks that attempt as UNKNOWN.
+        self._no_source_process = patch.object(
+            peer_guard.subprocess, "Popen",
+            side_effect=AssertionError("UNEXPECTED_REAL_SOURCE_PROCESS_IN_MOCK_TEST"))
+        self._source_popen = self._no_source_process.start()
+        self.addCleanup(self._no_source_process.stop)
+        self.addCleanup(self._source_popen.assert_not_called)
         self.server = b3b1.BoundedServer(("127.0.0.1", 0), http_lab.HistoryHandler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -65,7 +74,7 @@ class MockHttpIntegrationTests(unittest.TestCase):
         self.thread.join(timeout=2)
 
     def test_no_background_read_on_server_start_or_idle(self):
-        with patch.object(guard, "read_b2_supervised",
+        with patch.object(peer_guard, "read_b2_with_peer",
                           side_effect=AssertionError("unexpected source read")) as read:
             self.assertEqual(http_lab.BIND, "127.0.0.1")
             self.assertEqual(http_lab.PORT, 8791)
@@ -76,11 +85,11 @@ class MockHttpIntegrationTests(unittest.TestCase):
     def test_one_explicit_request_returns_bounded_sanitized_evidence(self):
         report = synthetic()
         report["PRIVATE_ROUTER_NAME"] = "DO_NOT_EXPOSE"
-        with patch.object(guard, "read_b2_supervised", return_value=report) as read:
+        with patch.object(peer_guard, "read_b2_with_peer", return_value=report) as read:
             status, headers, raw = request(self.port)
         self.assertEqual(status, 200)
         self.assertEqual(read.call_count, 1)
-        read.assert_called_once_with("1h")
+        read.assert_called_once_with("1h", ANY)
         data = json.loads(raw)
         self.assertEqual(data["sample_count"], 3)
         self.assertEqual(data["status"], "COVERAGE_OBSERVED_WITH_UNCERTAINTY")
@@ -91,7 +100,7 @@ class MockHttpIntegrationTests(unittest.TestCase):
         self.assertLessEqual(len(raw), http_lab.MAX_RESPONSE_BYTES)
 
     def test_unknown_on_worker_failure_without_stale_success(self):
-        with patch.object(guard, "read_b2_supervised",
+        with patch.object(peer_guard, "read_b2_with_peer",
                           side_effect=[synthetic(), guard.unknown(), RuntimeError("PRIVATE")]):
             first = json.loads(request(self.port)[2])
             second = json.loads(request(self.port)[2])
@@ -113,10 +122,11 @@ class MockHttpIntegrationTests(unittest.TestCase):
             False,
         ):
             with self.subTest(bad_type=type(bad).__name__), patch.object(
-                    guard, "read_b2_supervised", return_value=bad):
+                    peer_guard, "read_b2_with_peer", return_value=bad) as read:
                 status, _, raw = request(self.port)
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(raw), guard.unknown())
+            read.assert_called_once_with("1h", ANY)
             self.assertNotIn("SECRET", raw.decode())
 
     def test_bad_paths_methods_headers_blocked_before_source(self):
@@ -126,7 +136,7 @@ class MockHttpIntegrationTests(unittest.TestCase):
             "/api/dns-guard-history?window=4h",
             "/api/summary",
         )
-        with patch.object(guard, "read_b2_supervised") as read:
+        with patch.object(peer_guard, "read_b2_with_peer") as read:
             for path in paths:
                 code, _, body = request(self.port, path)
                 self.assertEqual((code, body), (403, b""))
@@ -142,7 +152,7 @@ class MockHttpIntegrationTests(unittest.TestCase):
         started, release = threading.Event(), threading.Event()
         results = []
 
-        def blocked(window):
+        def blocked(window, peer):
             started.set()
             release.wait(timeout=2)
             return guard.unknown()
@@ -151,7 +161,7 @@ class MockHttpIntegrationTests(unittest.TestCase):
             results.append(request(self.port, "/api/dns-guard-history?window=7d"))
 
         try:
-            with patch.object(guard, "read_b2_supervised", side_effect=blocked):
+            with patch.object(peer_guard, "read_b2_with_peer", side_effect=blocked):
                 thread = threading.Thread(target=first, daemon=True)
                 thread.start()
                 self.assertTrue(started.wait(timeout=2))
@@ -166,9 +176,9 @@ class MockHttpIntegrationTests(unittest.TestCase):
             release.set()
 
     def test_source_exception_failure_releases_lock(self):
-        with patch.object(guard, "read_b2_supervised", side_effect=RuntimeError("fault")):
+        with patch.object(peer_guard, "read_b2_with_peer", side_effect=RuntimeError("fault")):
             self.assertEqual(json.loads(request(self.port)[2])["status"], "UNKNOWN")
-        with patch.object(guard, "read_b2_supervised", return_value=synthetic()):
+        with patch.object(peer_guard, "read_b2_with_peer", return_value=synthetic()):
             self.assertEqual(json.loads(request(self.port)[2])["sample_count"], 3)
 
     def test_disconnect_during_headers_or_body_never_retries_response(self):
@@ -189,10 +199,11 @@ class MockHttpIntegrationTests(unittest.TestCase):
                 handler.wfile = MagicMock()
                 if failure == "body":
                     handler.wfile.write.side_effect = ConnectionResetError
-                with patch.object(guard, "read_b2_supervised",
-                                  return_value=synthetic()) as read:
+                with patch.object(peer_guard, "read_b2_with_peer",
+                                  return_value=synthetic()) as read, \
+                     patch.object(http_lab, "disconnected", return_value=False):
                     handler.do_GET()
-                read.assert_called_once_with("1h")
+                read.assert_called_once_with("1h", ANY)
                 self.assertEqual(handler._headers.call_count, 1)
                 handler.connection.settimeout.assert_called_once_with(
                     http_lab.MAX_WRITE_OPERATION_SECONDS)
@@ -209,8 +220,9 @@ class MockHttpIntegrationTests(unittest.TestCase):
         handler.connection = MagicMock()
         handler._headers = MagicMock()
         handler.wfile = MagicMock()
-        with patch.object(guard, "read_b2_supervised",
-                          side_effect=RuntimeError("SECRET")) as read:
+        with patch.object(peer_guard, "read_b2_with_peer",
+                          side_effect=RuntimeError("SECRET")) as read, \
+             patch.object(http_lab, "disconnected", return_value=False):
             handler.do_GET()
         read.assert_called_once()
         handler._headers.assert_called_once()
@@ -220,7 +232,7 @@ class MockHttpIntegrationTests(unittest.TestCase):
 
     def test_no_root_or_listener_without_explicit_two_flags(self):
         with patch.object(sys, "argv", ["script.py", "--inspect"]), \
-             patch.object(guard, "read_b2_supervised", side_effect=AssertionError("read")), \
+             patch.object(peer_guard, "read_b2_with_peer", side_effect=AssertionError("read")), \
              patch.object(http_lab.b3b1 if hasattr(http_lab,"b3b1") else b3b1, "BoundedServer",
                           side_effect=AssertionError("listener")), \
              contextlib.redirect_stdout(io.StringIO()) as output:
