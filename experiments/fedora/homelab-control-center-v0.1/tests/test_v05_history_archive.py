@@ -81,6 +81,19 @@ class Projection(unittest.TestCase):
         self.assertEqual(data["events"], [])
         self.assertIsNone(data["sample_count"])
 
+    def test_http_protocol_errors_fail_closed_to_unknown(self):
+        # Invalid/truncated localhost HTTP responses must not terminate the
+        # manual archive handler or accidentally retain an earlier good view.
+        for fault in (http.client.BadStatusLine("malformed status"),
+                      http.client.IncompleteRead(b"partial", 10),
+                      http.client.ResponseNotReady("response not ready")):
+            with self.subTest(fault=type(fault).__name__):
+                with patch.object(archive.join, "read_local", side_effect=fault):
+                    result = archive.collect()
+                self.assertEqual(result["status"], "UNKNOWN")
+                self.assertEqual(result["reason_code"], "ARCHIVE_EVIDENCE_NOT_VERIFIED")
+                self.assertEqual(result["events"], [])
+
     def test_unknown_for_contradictory_and_missing_evidence(self):
         for changes in (
             {"corroborated_sampled_transitions": False},
