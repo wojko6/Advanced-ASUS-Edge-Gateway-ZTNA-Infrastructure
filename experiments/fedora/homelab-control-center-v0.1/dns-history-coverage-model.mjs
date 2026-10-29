@@ -56,8 +56,9 @@ export function normalizeCoverage(raw,expectedWindow){
    return bad;
   if(g.position==='LEADING'&&(a!==start||++leading!==1))return bad;
   if(g.position==='TRAILING'&&(b!==end||++trailing!==1))return bad;
-  if(g.position==='INTERNAL'&&(leading===0&&a===start||trailing!==0))
-   return bad;
+  // An INTERNAL gap may legitimately start at the window boundary when the
+  // very first sample sits exactly there; it is not a LEADING gap.
+  if(g.position==='INTERNAL'&&trailing!==0)return bad;
   gaps.push({kind:'TELEMETRY_GAP',position:g.position,start_utc:g.start_utc,
    end_utc:g.end_utc,duration_seconds:(b-a)/1000,cause:'NOT_DETERMINED'});
   lastGapEnd=b;
@@ -85,6 +86,33 @@ export function normalizeCoverage(raw,expectedWindow){
   lastSegEnd=b;
  }
  if(sum!==raw.sample_count-raw.invalid_sample_count)return bad;
+ // With zero invalid rows B1 emits all sampled runs, and every long
+ // between-sample gap exactly separates two runs. Enforce that relationship
+ // so a forged/missing gap cannot imply continuous telemetry. With invalid
+ // samples, B1 intentionally omits invalid rows from runs: exact alignment
+ // cannot be reconstructed from sanitized evidence alone.
+ if(raw.invalid_sample_count===0){
+  const internal=gaps.filter(g=>g.position==='INTERNAL');
+  if(segments.length!==internal.length+1)return bad;
+  const first=Date.parse(segments[0].start_utc);
+  const last=Date.parse(segments[segments.length-1].end_utc);
+  const leadingGap=gaps.find(g=>g.position==='LEADING');
+  const trailingGap=gaps.find(g=>g.position==='TRAILING');
+  if(leadingGap?Date.parse(leadingGap.end_utc)!==first:
+     first-start>180000)return bad;
+  if(trailingGap?Date.parse(trailingGap.start_utc)!==last:
+     end-last>180000)return bad;
+  for(let i=0;i<internal.length;i++){
+   if(Date.parse(internal[i].start_utc)!==Date.parse(segments[i].end_utc)||
+      Date.parse(internal[i].end_utc)!==Date.parse(segments[i+1].start_utc))
+    return bad;
+  }
+  for(const seg of segments){
+   const span=Date.parse(seg.end_utc)-Date.parse(seg.start_utc);
+   if(span<seg.sample_count-1||span>(seg.sample_count-1)*180000)
+    return bad;
+  }
+ }
  const uncertain=gaps.length>0||raw.invalid_sample_count>0;
  if(raw.status!==(uncertain?'COVERAGE_OBSERVED_WITH_UNCERTAINTY':'COVERAGE_OBSERVED'))
   return bad;
