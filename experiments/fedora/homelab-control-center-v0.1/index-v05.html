@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Homelab Control Center · Lab V0.5 Archive</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./dns-history-archive.css">
+  <script type="module" src="./app.mjs"></script>
+  <script type="module" src="./live.mjs"></script>
+  <script type="module" src="./dns-guard-live.mjs"></script>
+  <script type="module" src="./router-dns-live.mjs"></script>
+  <script type="module" src="./dns-history-archive.mjs"></script>
+</head>
+<body class="hcc-v03 hcc-v04 hcc-v05" data-demo-gate="opt-in">
+<div class="shell">
+  <aside class="sidebar" aria-label="Nawigacja">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">H</span><div><b>HOMELAB</b><span>CONTROL CENTER</span></div></div>
+    <div class="nav-caption">PRZESTRZEŃ ROBOCZA</div>
+    <nav aria-label="Widoki" id="navigation">
+      <button class="nav active" type="button" data-page="overview" aria-current="page"><span aria-hidden="true">▦</span> Przegląd</button>
+      <button class="nav" type="button" data-page="services"><span aria-hidden="true">◫</span> Usługi</button>
+      <button class="nav" type="button" data-page="incidents"><span aria-hidden="true">◷</span> Incydenty</button>
+      <button class="nav" type="button" data-page="recovery"><span aria-hidden="true">▤</span> Recovery</button>
+    </nav>
+    <div class="sidebar-foot"><span class="pulse-dot" aria-hidden="true"></span><div><b>3 odczyty LIVE</b><span>VictoriaMetrics + DNS Guard + test DNS · DEMO tylko na żądanie</span></div></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div class="crumb">INFRASTRUKTURA <span>/</span> <strong id="breadcrumb">PRZEGLĄD</strong></div><div class="topright"><span class="demo-badge">● V0.5 · 3 LIVE + ARCHIWUM + DEMO</span><span class="avatar" aria-hidden="true">HL</span></div></header>
+    <main id="main-content" tabindex="-1">
+      <div class="heading">
+        <div><div class="overline">FEDORA MONITORING HUB <span class="line" aria-hidden="true"></span> V0.5 LAB</div><h1 id="page-title">Centrum dowodzenia</h1><p id="page-subtitle">Jeden widok. Jasny status. Żadnych zgadywanek.</p></div>
+        <div class="head-actions"><button id="demo-toggle" class="demo-toggle" type="button" aria-controls="view" aria-expanded="false">Pokaż scenariusze DEMO</button><div id="demo-controls" hidden><label for="scenario">SCENARIUSZ DEMO</label><select id="scenario" aria-label="Scenariusz danych demonstracyjnych"></select></div></div>
+      </div>
+      <section id="live-vm" class="panel live-panel" aria-label="Rzeczywisty stan monitorowania" aria-live="polite"></section>
+      <section id="live-dns-guard" class="panel live-panel" aria-label="Rzeczywista telemetria DNS Guard" aria-live="polite"></section>
+      <section id="live-router-dns" class="panel live-panel" aria-label="Rzeczywisty wynik testu DNS przez router" aria-live="polite"></section>
+      <section id="dns-history-archive" class="panel history-archive" aria-label="Archiwum zaobserwowanych przełączeń DNS Guard z 27 października" aria-live="polite"></section>
+      <div id="disclaimer" class="notice" role="note"><span class="notice-icon" aria-hidden="true">ⓘ</span><span><strong>Dane demonstracyjne są domyślnie ukryte.</strong> Trzy kafelki LIVE odczytują lokalne VictoriaMetrics. Osobny panel ARCHIWUM pokazuje wyłącznie historię z 27 października, po ręcznym odczycie — nie bieżące zdarzenia. DNS Guard pokazuje zgłoszony tryb. Test DNS dotyczy tylko jednego zapytania Blackbox, nie stanu całego Pi-hole ani Unbound. Karty usług, incydenty i Recovery pozostają fikcyjne i można je włączyć osobno.</span></div>
+      <section id="view" aria-live="polite" aria-label="Zawartość panelu"></section>
+    </main>
+    <footer class="footer"><span>HOMELAB CONTROL CENTER <b>V0.5 / READ-ONLY ARCHIVE LAB</b></span><span>Issue #303 · Black Box #304 · <span id="snapshot-info">Offline</span></span></footer>
+  </div>
+</div>
+</body>
+</html>
