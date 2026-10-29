@@ -89,10 +89,10 @@ class BoundedLocalHTTPServer(ThreadingHTTPServer):
             # An overloaded listener reveals no source data or request details.
             try:
                 request.sendall(
-                    b"HTTP/1.0 503 Service Unavailable\\r\\n"
-                    b"Content-Length: 0\\r\\n"
-                    b"Cache-Control: no-store\\r\\n"
-                    b"Connection: close\\r\\n\\r\\n"
+                    b"HTTP/1.0 503 Service Unavailable\r\n"
+                    b"Content-Length: 0\r\n"
+                    b"Cache-Control: no-store\r\n"
+                    b"Connection: close\r\n\r\n"
                 )
             except OSError:
                 pass
