@@ -55,6 +55,14 @@ def request(port, path="/api/dns-guard-history?window=1h", method="GET", headers
 
 class MockHttpIntegrationTests(unittest.TestCase):
     def setUp(self):
+        # A missing mock must NEVER spawn the real B2 source child.
+        # Fail the test even if the HTTP handler masks that attempt as UNKNOWN.
+        self._no_source_process = patch.object(
+            peer_guard.subprocess, "Popen",
+            side_effect=AssertionError("UNEXPECTED_REAL_SOURCE_PROCESS_IN_MOCK_TEST"))
+        self._source_popen = self._no_source_process.start()
+        self.addCleanup(self._no_source_process.stop)
+        self.addCleanup(self._source_popen.assert_not_called)
         self.server = b3b1.BoundedServer(("127.0.0.1", 0), http_lab.HistoryHandler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -114,10 +122,11 @@ class MockHttpIntegrationTests(unittest.TestCase):
             False,
         ):
             with self.subTest(bad_type=type(bad).__name__), patch.object(
-                    guard, "read_b2_supervised", return_value=bad):
+                    peer_guard, "read_b2_with_peer", return_value=bad) as read:
                 status, _, raw = request(self.port)
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(raw), guard.unknown())
+            read.assert_called_once_with("1h", ANY)
             self.assertNotIn("SECRET", raw.decode())
 
     def test_bad_paths_methods_headers_blocked_before_source(self):
