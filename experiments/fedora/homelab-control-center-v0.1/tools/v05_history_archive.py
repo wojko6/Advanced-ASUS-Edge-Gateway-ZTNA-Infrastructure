@@ -8,6 +8,7 @@ No network access in this module; manual server opt-in is separate.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import http.client
 import math
 from zoneinfo import ZoneInfo
 
@@ -154,5 +155,6 @@ def project(report: object) -> dict:
 def collect() -> dict:
     try:
         return project(join.read_local())
-    except (OSError, ValueError, TypeError, UnicodeError, OverflowError):
+    except (OSError, ValueError, TypeError, UnicodeError, OverflowError,
+            http.client.HTTPException):
         return unknown()
