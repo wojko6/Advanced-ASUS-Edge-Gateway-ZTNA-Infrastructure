@@ -31,7 +31,7 @@ def fixture(count=61, *, span=60000, end=END):
             values = [x//1000 for x in stamps]
         else:
             values = [0]*count
-        data[src.METRIC_PREFIX+name] = (stamps, values)
+        data[src.METRIC_PREFIX+name] = (list(stamps), list(values))
     return data
 
 
