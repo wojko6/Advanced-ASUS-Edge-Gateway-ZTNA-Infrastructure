@@ -108,6 +108,41 @@ class SupervisorTests(unittest.TestCase):
             with self.subTest(changes=changes), self.assertRaises((ValueError, TypeError)):
                 guard._project(json.dumps({**base, **changes}).encode(), "1h")
 
+    def test_missing_or_forged_gap_is_rejected_at_source_boundary(self):
+        raw = synthetic()
+        self.assertEqual(len(raw["gaps"]), 1)
+        # The 1h window has a long leading gap and a valid 3-point segment.
+        for change in (
+            {"gaps": []},
+            {"gaps": [{**raw["gaps"][0], "position": "INTERNAL"}]},
+            {"gaps": [{**raw["gaps"][0], "end_utc": raw["window_end_utc"]}]},
+        ):
+            with self.subTest(change=change), self.assertRaises((ValueError, TypeError)):
+                guard._project(json.dumps({**raw, **change}).encode(), "1h")
+
+    def test_legitimate_internal_gap_at_window_start_is_accepted(self):
+        # B1 is able to emit an INTERNAL gap when its first sample is at
+        # the exact window boundary and the next sample is >180 seconds later.
+        start = END - coverage.WINDOWS_MS["1h"]
+        times = [start, start + 300000]
+        series = {}
+        for name in coverage.SUFFIXES:
+            if name in ("mode_local", "state_valid"):
+                values = [1, 1]
+            elif name == "collection_timestamp_seconds":
+                values = [t // 1000 for t in times]
+            else:
+                values = [0, 0]
+            series[name] = list(zip(times, values))
+        report = coverage.analyze(series, "1h", END)
+        self.assertEqual([g["position"] for g in report["gaps"]],
+                         ["INTERNAL", "TRAILING"])
+        report["source_adapter"] = source.SCHEMA
+        projected = guard._project(json.dumps(report).encode(), "1h")
+        self.assertEqual(projected["sample_count"], 2)
+        self.assertEqual(len(projected["segments"]), 2)
+        self.assertEqual(len(projected["gaps"]), 2)
+
     def test_duplicate_keys_or_invalid_json_fail_closed(self):
         for raw in (b'{"status":"OK","status":"UNKNOWN"}',
                     b'{"status":NaN}', b'not-json', b'\xff'):
