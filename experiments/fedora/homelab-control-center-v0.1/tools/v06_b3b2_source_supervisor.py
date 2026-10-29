@@ -125,7 +125,39 @@ def _project(raw, requested_window):
     if data["status"] != ("COVERAGE_OBSERVED_WITH_UNCERTAINTY" if gaps or invalid
                           else "COVERAGE_OBSERVED"):
         raise ValueError("contradictory status")
-    # The B3A browser validator separately enforces cross-interval gap/run parity.
+    # Align the Python source boundary with the B3A browser contract.
+    # Do not forward a sample-continuity claim with missing or forged gaps.
+    positions = [g["position"] for g in gaps]
+    if (positions.count("LEADING") > 1 or positions.count("TRAILING") > 1 or
+        "LEADING" in positions[1:] or "TRAILING" in positions[:-1]):
+        raise ValueError("invalid gap position ordering")
+    if invalid == 0:
+        internal = [g for g in gaps if g["position"] == "INTERNAL"]
+        if len(segments) != len(internal) + 1:
+            raise ValueError("internal gaps and segment count mismatch")
+        first = _instant(segments[0]["start_utc"])
+        last = _instant(segments[-1]["end_utc"])
+        leading = gaps[0] if positions and positions[0] == "LEADING" else None
+        trailing = gaps[-1] if positions and positions[-1] == "TRAILING" else None
+        if leading is not None:
+            if _instant(leading["start_utc"]) != start or _instant(leading["end_utc"]) != first:
+                raise ValueError("incorrect leading gap")
+        elif first - start > coverage.GAP_THRESHOLD_MS:
+            raise ValueError("missing leading gap")
+        if trailing is not None:
+            if _instant(trailing["start_utc"]) != last or _instant(trailing["end_utc"]) != end:
+                raise ValueError("incorrect trailing gap")
+        elif end - last > coverage.GAP_THRESHOLD_MS:
+            raise ValueError("missing trailing gap")
+        for idx, gap in enumerate(internal):
+            if (_instant(gap["start_utc"]) != _instant(segments[idx]["end_utc"]) or
+                _instant(gap["end_utc"]) != _instant(segments[idx + 1]["start_utc"])):
+                raise ValueError("misaligned internal gap")
+        for seg in segments:
+            duration = _instant(seg["end_utc"]) - _instant(seg["start_utc"])
+            rows = seg["sample_count"]
+            if duration < rows - 1 or duration > (rows - 1) * coverage.GAP_THRESHOLD_MS:
+                raise ValueError("impossible sampled segment duration")
     return {"schema_version": coverage.SCHEMA, "source_adapter": b2.SCHEMA,
             "source": coverage.SOURCE, "mode": "OFFLINE_EVIDENCE_ONLY",
             "deployment_gate": "HOLD", "reason_code": "SAMPLED_COVERAGE_ONLY",
