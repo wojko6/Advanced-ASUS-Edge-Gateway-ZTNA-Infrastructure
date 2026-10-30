@@ -44,6 +44,8 @@ jobs:
           python3 -B tools/v0145g_file_receiver.py --lab
           python3 -B tools/v0145h_loki_request.py --self-test
           python3 -B tools/v0145h_loki_request.py --lab
+          python3 -B tools/v0145i_batch_plan.py --self-test
+          python3 -B tools/v0145i_batch_plan.py --lab
       - name: Bash runner syntax check
         run: |
           bash -n experiments/fedora/homelab-control-center-v0.1/run-lab.sh

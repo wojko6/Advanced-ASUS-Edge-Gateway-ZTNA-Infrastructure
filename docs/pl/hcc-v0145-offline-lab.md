@@ -1,4 +1,4 @@
-# HCC V0.14.5A–H — instrukcja izolowanego laboratorium
+# HCC V0.14.5A–I — instrukcja izolowanego laboratorium
 
 **Status:** polska adaptacja operatorska, 2026-10-30; Draft PR #338,
 bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
@@ -10,6 +10,7 @@ Etap E opisuje [atomowy zapis identyfikatora i treści](../../experiments/fedora
 Etap F opisuje [testowy odbiornik i osobny plik ACK](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5F-SYNTHETIC-DELIVERY-ACK-LAB.md).
 Etap G opisuje [plikowy odbiornik testowy i deduplikację zachowanych ID](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5G-DISPOSABLE-FILE-RECEIVER-LAB.md).
 Etap H opisuje [formatter żądania JSON Loki działający w pamięci](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5H-OFFLINE-LOKI-REQUEST-LAB.md).
+Etap I opisuje [planowanie partii z kontrolą wersji źródła i testowych ACK](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5I-OFFLINE-BATCH-PLAN-LAB.md).
 Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
 **59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Następnie osobno
 potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
@@ -266,20 +267,63 @@ interpretacji odpowiedzi/ACK, zmiany punktu wznowienia i integracji Alloy.
 Istniejący fragment Alloy nie jest adapterem dla tego JSON-a. Ograniczenie G
 dotyczące utraty pary plików nadal obowiązuje. H nie ma wyniku na Fedorze.
 
-## Granice wyniku — aktualizacja po H
+## Osobny etap I — plan partii bez wysyłki i zapisu postępu
 
-W środowisku Work wykonano A–H **251/251 testów**, pełne HCC **456/456 Python**
+I sprawdza kompletną migawkę E i zadeklarowany stan ACK w formacie F. Każdy ACK
+musi odpowiadać ID i skrótowi pełnej treści w źródle. Pozostałe rekordy tworzą
+plan żądań H, w kolejności czasu i ID. Każdy oczekujący rekord występuje w planie
+raz; nie oznacza to dostarczenia dokładnie raz do rzeczywistego odbiornika.
+
+```bash
+python3 -B tools/v0145i_batch_plan.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0145i*.py' -v
+python3 -B tools/v0145i_batch_plan.py --lab
+```
+
+Oczekiwane: **30 testów OK**, `V0145I_RESULT=PASS_OFFLINE_BATCH_PLAN_ONLY`,
+`PLANNED_REQUESTS=3 PENDING_SYNTHETIC_RECORDS=33`,
+`BATCH_RECORD_COUNTS=16,16,1`, `PLAN_REUSE_ON_CHANGED_INPUT=HOLD`,
+`ACK_BASIS=DECLARED_F_FIXTURE_NOT_LOKI_RECEIPT`, `ACK_OR_CHECKPOINT_ADVANCE=NO`
+i `DEPLOYMENT_GATE=HOLD`. W pamięci jest 35 rekordów i dwa zadeklarowane ACK;
+nie ma pliku stanu, odbioru ani kontaktu z Loki. Oba tryby i testy I nie tworzą
+plików, sieci ani procesów; wyjście CLI nie zawiera ID, zakresu ani treści żądań.
+
+Maksymalnie **64 żądania / 1 MiB sumy treści**, każde zgodne z limitem H:
+16 rekordów / 64 KiB. Sprawdzono pełne 1024 rekordy. Uszkodzony dalszy rekord,
+obcy zakres, nieznany ID lub zły hash ACK oznaczają HOLD przed budową partii.
+Błąd przy budowaniu dalszego żądania nie zwraca częściowego planu. Wybór opiera
+się na zbiorze ID; nowy niższy ID nie jest pomijany przy jawnej budowie nowego planu.
+
+Plan jest powiązany z dokładnymi bajtami źródła i ACK. Ponowna kontrola przelicza
+całość: zmienione źródło/ACK, treść, ID lub metadane planu oznaczają HOLD.
+Ścisła kontrola typów odrzuca również `True`/`1.0` jako liczniki i modyfikowalny
+`bytearray` zamiast `bytes`; wcześniejszy błąd porównania i poprawka są w dzienniku.
+Przyszły kod musi przekazać świeżo odczytane bajty. I nie odczytuje/blokuje plików
+i nie zapobiega zmianie danych po sprawdzeniu. Stare bajty mogą ukryć zmianę stanu.
+
+`None` oznacza jawną deklarację braku ACK; uszkodzony stan nigdy nie zamienia się
+w `None`. Brak ACK i zapisany pusty stan są różnymi podstawami planu. **ACK z F
+są tutaj zadeklarowaną fiksturą, nie potwierdzeniem z rzeczywistego Loki.** I nie
+sprawdza magazynu odbiornika G. Zgodnie podrobione źródło i ACK mogą dać pusty
+plan bez rzeczywistego odbioru. Skróty nie uwierzytelniają danych, a ograniczenie
+G dotyczące utraty pary plików nadal obowiązuje. Brak klienta HTTP, harmonogramu,
+przesuwania punktu wznowienia, retencji i wyniku I na Fedorze.
+
+## Granice wyniku — aktualizacja po I
+
+W środowisku Work wykonano A–I **281/281 testów**, pełne HCC **486/486 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,
 SELinux, trwałych ACL i utraty zasilania. Wklejony wynik C nie zawierał
 wersji Pythona/jądra, SHA checkoutu ani wyjścia self-testu; nie dopisujemy ich
 na podstawie pamięci wcześniejszych sesji.
-D/E/F/G/H nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
+D/E/F/G/H/I nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
 repozytorium nadal kończy się kodem 1 w niezmienionych testach DNS Guard UDP/TCP;
-przebieg diagnostyczny H odtworzył ten punkt zatrzymania. Pierwszy przebieg H
+bieżący przebieg I oraz wcześniejszy diagnostyczny H odtworzyły ten punkt
+zatrzymania. Pierwszy przebieg H
 zatrzymał się wcześniej bez wskazania przyczyny; osobny test healthcheck przeszedł
-7/7. Wyniki HCC i zdalnego CI oraz oba nieudane przebiegi lokalne pozostają
+7/7. Wyniki HCC i zdalnego CI oraz opisane nieudane przebiegi lokalne pozostają
 osobno opisane w PR i dzienniku.
 Poprzedni ZIP z 19
 testami jest historyczną wersją V0.14.5A, a nie aktualnym kodem tej gałęzi.

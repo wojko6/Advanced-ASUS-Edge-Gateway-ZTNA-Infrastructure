@@ -127,11 +127,22 @@ durability, G Fedora acceptance, GC, production store or service change.
 E snapshot before producing one bounded JSON request body, up to 16 records /
 64 KiB. Exact microseconds become integer-nanosecond strings; full event lines
 retain IDs/scope with two fixed stream labels. Request order is time then ID,
-without changing F/G dispatch order or state. **26/26 H tests**, current
+without changing F/G dispatch order or state. **26/26 H tests**, at the H checkpoint
 **251/251 A–H**, **456/456 HCC Python**, **55/55 JavaScript** PASS.
 No HTTP, actual Loki acceptance, response/ACK interpretation, files, progress
 change, batching/selection, H Fedora result or service action. G's state-loss
 limitations and all production gates remain open.
+
+**V0.14.5I offline batch planning (Work only):** the
+[memory-only planner](V0.14.5I-OFFLINE-BATCH-PLAN-LAB.md) splits all pending
+records from a validated E snapshot into H requests, using declared F fixture
+ACKs by ID/hash. Global time/ID order, up to 64 requests / 1 MiB total body
+bytes; full 1,024-record input tested. Exact-input checksums and complete
+recomputation reject drift before a future caller reuses a plan. **30/30 I
+tests**, current **281/281 A–I**, **486/486 HCC Python**, **55/55 JavaScript**
+PASS. No HTTP, real receipt/authentication, live file locking, checkpoint
+advance or I Fedora acceptance. Fresh bytes must be supplied; old bytes or
+consistent forged source/ACKs cannot establish actual receipt or rollback safety.
 
 **DEPLOYMENT_GATE=HOLD.**
 

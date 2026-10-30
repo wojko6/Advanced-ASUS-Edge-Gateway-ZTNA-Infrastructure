@@ -1,13 +1,13 @@
 # Dokumentacja po polsku — ASUS Edge Gateway
 
 **Status:** indeks bieżących instrukcji i dokumentów pomocniczych  
-**Aktualizacja:** 2026-10-30 (izolowane laboratorium HCC V0.14.5A–H; bez wdrożenia ani walidacji produkcyjnej)
+**Aktualizacja:** 2026-10-30 (izolowane laboratorium HCC V0.14.5A–I; bez wdrożenia ani walidacji produkcyjnej)
 
 Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest osobną kopią całej dokumentacji projektu. **Techniczny stan infrastruktury i zasady bezpieczeństwa** pozostają opisane w [PROJECT-STATUS.md](../../PROJECT-STATUS.md), [modelu dokumentacji](../documentation-model.md) i [polityce językowej](../language-policy.md).
 
 ## Pierwsza wizyta — od czego zacząć?
 
-Laboratorium robocze: [HCC V0.14.5A–H — odtwarzanie, tożsamość, testowe ACK i format żądania Loki](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Osobne wyniki operatora na Fedorze: A–B 59/59 i oba laboratoria PASS, C 28/28 i laboratorium PASS. D 31, E 34, F 37, G 36 i H 26 testów Work, bez akceptacji na Fedorze. F/G dotyczą testowych odbiorników; H jedynie formatuje JSON w pamięci. Brak wysyłki H do Loki, testu zaniku zasilania, Alloy/SELinux i wdrożenia.
+Laboratorium robocze: [HCC V0.14.5A–I — odtwarzanie, testowe ACK, format JSON i planowanie partii](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Osobne wyniki operatora na Fedorze: A–B 59/59 i oba laboratoria PASS, C 28/28 i laboratorium PASS. D 31, E 34, F 37, G 36, H 26 i I 30 testów Work, bez akceptacji na Fedorze. F/G dotyczą testowych odbiorników; H/I formatują i planują JSON w pamięci. Brak wysyłki H/I do Loki, testu zaniku zasilania, Alloy/SELinux i wdrożenia.
 
 **Nowy czytelnik?** Otwórz **[Zacznij tutaj — przewodnik na 15–20 minut](START-HERE.md)** ([English](../START-HERE.md)). To bezpieczna ścieżka poznania projektu: od celu i diagramu architektury po aktualny stan, ograniczenia i dobór dalszych materiałów. **Nie wymaga instalacji ani poleceń na routerze.**
 
