@@ -77,6 +77,13 @@ def request(port, path=PATH, *, method="GET", headers=None):
 
 
 class RealHandlerSyntheticTests(unittest.TestCase):
+    def _wait_for_history_release(self, server):
+        # A received response does not establish handler-finally completion.
+        # A real leaked lock still fails this bounded barrier; no HTTP retry.
+        acquired = server.history_lock.acquire(timeout=1)
+        self.assertTrue(acquired, "handler did not release history lock")
+        server.history_lock.release()
+
     def test_no_vm_on_handler_start_or_inspect(self):
         code = Path(http_lab.__file__).read_text(encoding="utf-8")
         self.assertIn("peer_guard", code.replace("cancel_guard", "peer_guard"))
@@ -194,13 +201,13 @@ class RealHandlerSyntheticTests(unittest.TestCase):
                 status, _, raw = request(port)
                 self.assertEqual(status, 200)
                 self.assertEqual(json.loads(raw)["status"], "UNKNOWN")
-            self.assertFalse(server.history_lock.locked())
+                self._wait_for_history_release(server)
             with patch.object(supervisor, "_fixed_argv",
                               return_value=argv("import sys;sys.stdout.write('X'*70000)")):
                 status, _, raw = request(port)
                 self.assertEqual(status, 200)
                 self.assertEqual(json.loads(raw)["status"], "UNKNOWN")
-            self.assertFalse(server.history_lock.locked())
+                self._wait_for_history_release(server)
 
     def test_disconnect_or_failure_does_not_retain_last_success(self):
         payload = json.dumps(synthetic())
@@ -209,10 +216,16 @@ class RealHandlerSyntheticTests(unittest.TestCase):
             with patch.object(supervisor, "_fixed_argv",
                               return_value=argv("import sys;sys.stdout.write(" +
                                                 repr(payload) + ")")):
-                first = json.loads(request(port)[2])
+                status, _, body = request(port)
+                self.assertEqual(status, 200)
+                first = json.loads(body)
+                self._wait_for_history_release(server)
             with patch.object(supervisor, "_fixed_argv",
                               return_value=argv("import sys;sys.exit(12)")):
-                second = json.loads(request(port)[2])
+                status, _, body = request(port)
+                self.assertEqual(status, 200)
+                second = json.loads(body)
+                self._wait_for_history_release(server)
             self.assertEqual(first["sample_count"], 3)
             self.assertEqual(second["status"], "UNKNOWN")
             self.assertIsNone(second["sample_count"])
@@ -241,8 +254,9 @@ class RealHandlerSyntheticTests(unittest.TestCase):
                 t.join(timeout=3)
             self.assertFalse(t.is_alive())
             self.assertEqual(len(results), 1)
+            self.assertEqual(results[0][0], 200)
             self.assertEqual(json.loads(results[0][2])["status"], "UNKNOWN")
-            self.assertFalse(server.history_lock.locked())
+            self._wait_for_history_release(server)
 
 
 if __name__ == "__main__":

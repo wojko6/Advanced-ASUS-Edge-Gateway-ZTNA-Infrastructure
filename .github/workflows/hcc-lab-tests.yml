@@ -1,5 +1,12 @@
 name: Homelab Control Center lab checks
 on:
+  # Validate this Draft branch directly when a PR run is not available.
+  push:
+    branches:
+      - 'lab/hcc-v014-alloy-manual-correlation-20261029'
+    paths:
+      - 'experiments/fedora/homelab-control-center-v0.1/**'
+      - '.github/workflows/hcc-lab-tests.yml'
   pull_request:
     paths:
       - 'experiments/fedora/homelab-control-center-v0.1/**'
@@ -25,6 +32,31 @@ jobs:
         run: |
           cd experiments/fedora/homelab-control-center-v0.1
           PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -p 'test_*.py' -v
+      - name: V0.14.5 isolated CLI contracts
+        run: |
+          cd experiments/fedora/homelab-control-center-v0.1
+          python3 -B tools/v0145a_segment_spool.py --self-test
+          python3 -B tools/v0145a_segment_spool.py --lab
+          python3 -B tools/v0145b_segment_replay.py --self-test
+          python3 -B tools/v0145b_segment_replay.py --lab
+          python3 -B tools/v0145c_checkpoint_store.py --self-test
+          python3 -B tools/v0145c_checkpoint_store.py --lab
+          python3 -B tools/v0145d_event_identity.py --self-test
+          python3 -B tools/v0145d_event_identity.py --lab
+          python3 -B tools/v0145e_atomic_handoff.py --self-test
+          python3 -B tools/v0145e_atomic_handoff.py --lab
+          python3 -B tools/v0145f_delivery_ack.py --self-test
+          python3 -B tools/v0145f_delivery_ack.py --lab
+          python3 -B tools/v0145g_file_receiver.py --self-test
+          python3 -B tools/v0145g_file_receiver.py --lab
+          python3 -B tools/v0145h_loki_request.py --self-test
+          python3 -B tools/v0145h_loki_request.py --lab
+          python3 -B tools/v0145i_batch_plan.py --self-test
+          python3 -B tools/v0145i_batch_plan.py --lab
+          python3 -B tools/v0145j_loopback_exchange.py --self-test
+          python3 -B tools/v0145j_loopback_exchange.py --lab
+          python3 -B tools/v0145k_prefix_exchange.py --self-test
+          python3 -B tools/v0145k_prefix_exchange.py --lab
       - name: Bash runner syntax check
         run: |
           bash -n experiments/fedora/homelab-control-center-v0.1/run-lab.sh

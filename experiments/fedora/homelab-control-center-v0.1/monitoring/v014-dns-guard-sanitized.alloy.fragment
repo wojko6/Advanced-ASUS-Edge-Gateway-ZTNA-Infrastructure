@@ -1,0 +1,28 @@
+// V0.14 DESIGN-ONLY FRAGMENT: DO NOT APPLY to running Alloy.
+// Read ONLY locally pre-sanitized events; never raw user journal, SSH or secrets.
+// File path and UNIX permissions require separate privacy/operations approval.
+// This fragment assumes the existing loki.write.local receiver from config.alloy.
+loki.source.file "hcc_dns_guard_sanitized" {
+  targets = [
+    {
+      "__path__" = "/var/lib/hcc-dns-guard/collector-events.ndjson",
+      "job" = "hcc-dns-guard-collector",
+      "dataset" = "sanitized-collector-events",
+    },
+  ]
+  forward_to = [loki.process.hcc_dns_guard_sanitized.receiver]
+  tail_from_end = true
+}
+
+loki.process "hcc_dns_guard_sanitized" {
+  stage.json {
+    expressions = {event_time = "time"}
+    drop_malformed = true
+  }
+  stage.timestamp {
+    source = "event_time"
+    format = "RFC3339Nano"
+    action_on_failure = "skip"
+  }
+  forward_to = [loki.write.local.receiver]
+}

@@ -2,6 +2,91 @@
 
 **Status date: 2026-10-28.** Most recent operator-reported **ASUS production maintenance** was the separately approved **stable Tailscale 1.104.4 ARMv7 paired-binary upgrade** on October 28, including runtime/daemon hash validation and project healthcheck 0 failures / 0 warnings; the previous **WebUI-only Issue #283** three-file publication on October 25 remains the latest WebUI change. The last **DNS service** change remains October 24 **Unbound 1.26.2-1 R2** with bounded UDP/TCP DNSSEC acceptance. Tailscale cold boot, extended soak, IPv6 and forced rollback are **NOT TESTED**. No new HCC permanent deployment, RouterCloud/DUFS, DNS Guard or firewall feature is implied by merging documentation. Unplanned October 24 DNS Guard resolver fail-open/failback was observed, not controlled client DNS continuity. Existing #235/#278/#287/#298/#299 and HCC gates remain HOLD.
 
+## 2026-10-30 — HCC V0.14.5A–K lab scope frozen (Draft only)
+
+[Draft #338](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/338)
+includes immutable-segment publication, frozen-snapshot replay/ACK and a
+[disposable checkpoint-file substage C](experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
+Work Linux tests: **336 A–K cases included in 542/542 HCC Python**, **55/55 JavaScript**
+PASS. The operator separately reported **A–B 59/59 and both labs PASS**, then
+**C 28/28 in 0.171 s and its disposable lab PASS on Fedora**, with cleanup.
+These are two scoped runs, not a full HCC Fedora regression, actual
+Alloy/SELinux acceptance or production checkpoint durability.
+D adds a [memory-only synthetic identity/consistency model](experiments/fedora/homelab-control-center-v0.1/V0.14.5D-SYNTHETIC-EVENT-IDENTITY-LAB.md)
+with **31/31 tests**, integer microseconds, keyed opaque record IDs, bounded
+replay handling and atomic same-ID/payload-conflict refusal. Its new schema is
+deliberately rejected by A–C. The public fixture key and declared unit are not
+source authentication; D has no journal reader, persisted ledger, production
+key lifecycle, actual spool integration or Fedora operator acceptance.
+E adds a [disposable atomic handoff snapshot](experiments/fedora/homelab-control-center-v0.1/V0.14.5E-ATOMIC-HANDOFF-LAB.md)
+with **34/34 tests**: ID and full payload are published together in one private
+canonical file. Reopen/replay keeps payload readable even after a lost commit
+receipt. E calls D normalization, not the volatile ledger; it has no receiver
+ACK, delivery scheduler, GC, A–C/Alloy adapter or E Fedora operator acceptance.
+F adds a [synthetic receiver and disposable ACK file](experiments/fedora/homelab-control-center-v0.1/V0.14.5F-SYNTHETIC-DELIVERY-ACK-LAB.md)
+with **37/37 tests**. Each stored ACK binds the scope, ID and complete payload
+hash; it advances only after an exact in-process fixture ACK. Missing ACK state
+after receive causes a repeat attempt; appending lower IDs does not skip them.
+All E payloads remain retained. Four child-exit phases test process interruption,
+not power loss. The receiver is volatile, so ACK is not proof of durable remote
+delivery or actual Loki semantics. No F Fedora operator acceptance exists.
+G adds a [disposable file-backed synthetic receiver](experiments/fedora/homelab-control-center-v0.1/V0.14.5G-DISPOSABLE-FILE-RECEIVER-LAB.md)
+with **36/36 tests**. It stores the complete event before fixture ACK and
+deduplicates retries against retained IDs after process reopen. All three
+stores are cross-checked even after apparent completion. Six child-exit phases
+exercise receiver/ACK gaps. Losing both receiver and ACK state is not detected;
+replay/rebuild is explicitly tested. This is not an authenticated durable
+remote receiver, actual Loki protocol, power-loss or G Fedora acceptance.
+H adds a [memory-only Loki JSON request formatter](experiments/fedora/homelab-control-center-v0.1/V0.14.5H-OFFLINE-LOKI-REQUEST-LAB.md)
+with **26/26 tests**. It verifies the whole E snapshot and encodes up to 16
+records / 64 KiB, retaining exact microseconds as integer-nanosecond strings.
+Two fixed stream labels; ID/scope remain in complete JSON lines. This stage
+only formats documented JSON shape: no HTTP, actual Loki acceptance, ACK,
+progress change, file I/O or H Fedora operator acceptance.
+I adds a [memory-only batch planner](experiments/fedora/homelab-control-center-v0.1/V0.14.5I-OFFLINE-BATCH-PLAN-LAB.md)
+with **30/30 tests**. It validates whole E/F byte snapshots, selects IDs absent
+from declared synthetic ACKs and creates at most 64 bounded H requests / 1 MiB
+total body bytes. Strict field types and full recomputation reject changed source, ACK or
+request content. Fresh bytes must be supplied by a future caller; there is no
+live lock, real receipt proof, transport, progress update or I Fedora result.
+J adds a [single owned loopback HTTP exchange](experiments/fedora/homelab-control-center-v0.1/V0.14.5J-OWNED-LOOPBACK-EXCHANGE-LAB.md)
+with **30/30 tests**. Lab binds its own ephemeral IPv4 peer, checks exact request
+bytes and uses one bounded client child. Timeout/interrupt cleanup kills/reaps
+the worker and closes the peer. The fixture result does not advance ACKs;
+33 records remain pending. This is not real Loki acceptance, durable receipt,
+an installed service or J Fedora acceptance. Self-test remains memory-only.
+K adds a [bounded sequential prefix of owned exchanges](experiments/fedora/homelab-control-center-v0.1/V0.14.5K-BOUNDED-PREFIX-EXCHANGE-LAB.md)
+with **25/25 tests**. It selects at most four requests (default three), rechecks
+supplied source/ACK bytes before each and stops after the first state, exchange
+or cleanup error. Previous peers close before the next state callback; no retry
+or following request after failure. Three matching lab exchanges still leave
+33 pending records / two declared ACKs unchanged. Fixture counts are not
+receipts or a resume cursor. No run-wide deadline, live file locks, actual Loki
+or K Fedora acceptance is claimed. A–J Python modules remain unchanged by K.
+The HCC workflow additionally checks matching pushes to this exact Draft
+branch, preserving PR/manual triggers and the unchanged fixture-only jobs.
+Original K head `9d5c0b5` had general CI SUCCESS but no observed HCC run;
+current-head remote results are recorded separately in Draft #338.
+The user approved freezing #338 at A–K. The
+[closing review and follow-up split](experiments/fedora/homelab-control-center-v0.1/V0.14.5-A-K-FREEZE-REVIEW.md)
+fixes non-finite numbers accepted by the imported V0.14 report parser and a
+response-before-lock-release assumption in existing B3B2E tests. Full closing
+regression passes after the fixes; the initial 542-case / one-failure run is
+preserved. A–K modules and runtime HTTP/source guards remain unchanged.
+Further trusted-input, transport/receipt and Fedora runtime integrations are
+separate planned PR scopes. This freeze does not close, merge or deploy #338.
+The first D CI run exposed an existing sequential HTTP test ordering race.
+Only test synchronization/status assertions were corrected, with a deterministic
+503-before-release regression; runtime handler/source guards are unchanged.
+C adds private atomic checkpoint replacement and new-process/abrupt-exit tests
+only in disposable directories. ACK without a stored checkpoint still causes
+duplicate receive attempts. Trusted real-event identity, production checkpoint
+durability, safe GC, real Alloy and workstation SELinux/ACL persistence remain
+unaccepted. See [A–B contract and limits](experiments/fedora/homelab-control-center-v0.1/V0.14.5-OFFLINE-SEGMENT-REPLAY-LAB.md).
+No merge, Fedora/ASUS service action, production spool, actual journal input or
+production Loki delivery. The production-status date above is unchanged;
+this is a separate test-source checkpoint. **DEPLOYMENT_GATE=HOLD.**
+
 ## 2026-10-28 — operator-reported Tailscale maintenance and scoped Android acceptance
 
 - **ASUS GNUton ARMv7:** stable **1.104.2 → 1.104.4** built from a pinned upstream tag using isolated cross-toolchain checks, ARMv7 QEMU and read-only staged/rollback preflight, followed by a separately approved paired-binary publication and project-managed Tailscale restart. The operator reported matched live binary/daemon provenance, active `tailscale0`, connected exit-node/IPv4 forwarding prerequisites and healthcheck **0 failures / 0 warnings**. This is **bounded live runtime acceptance**, not an untested cold reboot, full failover soak or rollback exercise.

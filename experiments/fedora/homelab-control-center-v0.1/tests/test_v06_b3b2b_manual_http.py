@@ -73,6 +73,13 @@ class MockHttpIntegrationTests(unittest.TestCase):
         self.server.server_close()
         self.thread.join(timeout=2)
 
+    def _wait_for_history_release(self):
+        # Response bytes can arrive before the handler's finally block.
+        # A leaked lock fails this bounded barrier; no HTTP retry is hidden.
+        acquired = self.server.history_lock.acquire(timeout=1)
+        self.assertTrue(acquired, "previous handler did not release history lock")
+        self.server.history_lock.release()
+
     def test_no_background_read_on_server_start_or_idle(self):
         with patch.object(peer_guard, "read_b2_with_peer",
                           side_effect=AssertionError("unexpected source read")) as read:
@@ -102,9 +109,13 @@ class MockHttpIntegrationTests(unittest.TestCase):
     def test_unknown_on_worker_failure_without_stale_success(self):
         with patch.object(peer_guard, "read_b2_with_peer",
                           side_effect=[synthetic(), guard.unknown(), RuntimeError("PRIVATE")]):
-            first = json.loads(request(self.port)[2])
-            second = json.loads(request(self.port)[2])
-            third = json.loads(request(self.port)[2])
+            reports = []
+            for _ in range(3):
+                status, _, body = request(self.port)
+                self.assertEqual(status, 200)
+                reports.append(json.loads(body))
+                self._wait_for_history_release()
+            first, second, third = reports
         self.assertEqual(first["sample_count"], 3)
         for stale in (second, third):
             self.assertEqual(stale["status"], "UNKNOWN")
@@ -124,6 +135,7 @@ class MockHttpIntegrationTests(unittest.TestCase):
             with self.subTest(bad_type=type(bad).__name__), patch.object(
                     peer_guard, "read_b2_with_peer", return_value=bad) as read:
                 status, _, raw = request(self.port)
+                self._wait_for_history_release()
             self.assertEqual(status, 200)
             self.assertEqual(json.loads(raw), guard.unknown())
             read.assert_called_once_with("1h", ANY)
@@ -177,9 +189,54 @@ class MockHttpIntegrationTests(unittest.TestCase):
 
     def test_source_exception_failure_releases_lock(self):
         with patch.object(peer_guard, "read_b2_with_peer", side_effect=RuntimeError("fault")):
-            self.assertEqual(json.loads(request(self.port)[2])["status"], "UNKNOWN")
+            status, _, body = request(self.port)
+            self.assertEqual(status, 200)
+            self.assertEqual(json.loads(body)["status"], "UNKNOWN")
+        # The client may finish reading before the handler reaches its finally
+        # block. Wait for the real release; never retry/ignore a 503 or relax the
+        # server's one-read-at-a-time boundary. A leaked lock still fails here.
+        self._wait_for_history_release()
         with patch.object(peer_guard, "read_b2_with_peer", return_value=synthetic()):
-            self.assertEqual(json.loads(request(self.port)[2])["sample_count"], 3)
+            status, _, body = request(self.port)
+            self.assertEqual(status, 200)
+            self.assertEqual(json.loads(body)["sample_count"], 3)
+
+    def test_response_can_arrive_before_history_lock_release(self):
+        real_lock = self.server.history_lock
+        release_started, allow_release = threading.Event(), threading.Event()
+        delay_once = True
+
+        def delayed_release():
+            nonlocal delay_once
+            if delay_once:
+                delay_once = False
+                release_started.set()
+                allow_release.wait(timeout=2)
+            real_lock.release()
+
+        proxy = SimpleNamespace(acquire=real_lock.acquire, release=delayed_release)
+        try:
+            with patch.object(self.server, "history_lock", proxy), \
+                 patch.object(peer_guard, "read_b2_with_peer", side_effect=[guard.unknown(), synthetic()]) as read:
+                status, _, body = request(self.port)
+                self.assertEqual(status, 200)
+                self.assertEqual(json.loads(body), guard.unknown())
+                self.assertTrue(release_started.wait(timeout=1))
+                # A response already reached the client, but finally is gated.
+                busy, _, empty = request(self.port)
+                self.assertEqual((busy, empty), (503, b""))
+                self.assertEqual(read.call_count, 1)
+                allow_release.set()
+                released = real_lock.acquire(timeout=1)
+                self.assertTrue(released, "handler did not release lock after gate opened")
+                if released:
+                    real_lock.release()
+                status, _, body = request(self.port)
+                self.assertEqual(status, 200)
+                self.assertEqual(json.loads(body)["sample_count"], 3)
+                self.assertEqual(read.call_count, 2)
+        finally:
+            allow_release.set()
 
     def test_disconnect_during_headers_or_body_never_retries_response(self):
         # Source completes, but the client goes away during response delivery.
