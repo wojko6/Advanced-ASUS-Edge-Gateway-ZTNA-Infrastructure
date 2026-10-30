@@ -2,18 +2,25 @@
 
 **Status date: 2026-10-28.** Most recent operator-reported **ASUS production maintenance** was the separately approved **stable Tailscale 1.104.4 ARMv7 paired-binary upgrade** on October 28, including runtime/daemon hash validation and project healthcheck 0 failures / 0 warnings; the previous **WebUI-only Issue #283** three-file publication on October 25 remains the latest WebUI change. The last **DNS service** change remains October 24 **Unbound 1.26.2-1 R2** with bounded UDP/TCP DNSSEC acceptance. Tailscale cold boot, extended soak, IPv6 and forced rollback are **NOT TESTED**. No new HCC permanent deployment, RouterCloud/DUFS, DNS Guard or firewall feature is implied by merging documentation. Unplanned October 24 DNS Guard resolver fail-open/failback was observed, not controlled client DNS continuity. Existing #235/#278/#287/#298/#299 and HCC gates remain HOLD.
 
-## 2026-10-30 — V0.14.6A supplied-metadata follow-up (separate stacked Draft)
+## 2026-10-30 — V0.14.6A–B supplied-metadata/import follow-up (stacked Draft #342)
 
 The [V0.14.6A adapter](experiments/fedora/homelab-control-center-v0.1/V0.14.6A-SUPPLIED-JOURNAL-ENVELOPE-LAB.md)
 is a separate follow-up based on frozen #338 head `82ba838`, targeting that
 parent branch. It validates supplied journal-like JSON metadata and maps a
-strict stdout subset to D identity / E snapshot bytes in memory. **29/29 new
-cases**, full Work **571/571 Python / 55/55 JavaScript PASS**. Current-head CI
-is recorded separately in the new Draft. #338's A–K modules remain unchanged.
+strict stdout subset to D identity / E snapshot bytes in memory. At the A
+checkpoint: **29 cases / 571 full Python / 55 JavaScript PASS**. B adds a
+[disposable atomic E import](experiments/fedora/homelab-control-center-v0.1/V0.14.6B-DISPOSABLE-IMPORT-LAB.md)
+with **32 cases**, UID/unit/transport-scoped IDs, retained-set merge and
+reopen/replay without rewriting duplicates. Full Work: **603/603 Python /
+55/55 JavaScript PASS**, including **61 V0.14.6A–B cases**. Current-head CI is
+recorded separately in Draft #342. #338's A–K and A's module remain unchanged.
 
 Supplied fields can be forged; a test explicitly accepts consistent fabricated
 metadata. No trusted journal reader, actual provenance, private key lifecycle,
-cross-call ledger, file/ACK/checkpoint state or transport is implemented.
+delivery ACK/source checkpoint or transport is implemented. B stores only a
+disposable private snapshot; its three child-exit cases are not power-loss
+acceptance. It retains sanitized payloads, not cross-call raw-message evidence;
+total snapshot loss can replay like a fresh store.
 Only three message hints are classified; manager exit-255 attribution is
 unsupported. No real journal, Fedora/ASUS service or Alloy/Loki contact. The
 original #338 remains Draft/unmerged and frozen at its own 542-case checkpoint;

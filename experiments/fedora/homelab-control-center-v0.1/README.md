@@ -180,12 +180,22 @@ does not grant deployment or Fedora/actual Loki acceptance.
 **Separate V0.14.6A stacked Draft follow-up:** the
 [supplied journal-envelope adapter](V0.14.6A-SUPPLIED-JOURNAL-ENVELOPE-LAB.md)
 checks declared metadata and maps three text hints to D identity / E snapshot
-bytes in memory, preserving microseconds and distinct cursors. **29/29 new
-cases / 571/571 full Python / 55/55 JavaScript PASS** in Work. Supplied JSON
+bytes in memory, preserving microseconds and distinct cursors. At the A checkpoint:
+**29 cases / 571 full Python / 55 JavaScript PASS** in Work. Supplied JSON
 can be forged and is not trusted provenance. No reader, actual journal,
 file/key input, persistence, ACK, transport or V0.14.6A Fedora acceptance.
 The new Draft targets frozen #338's branch; its A–K source remains unchanged.
 [PL adaptation](../../../docs/pl/hcc-v0146a-journal-envelope-lab.md).
+
+**V0.14.6B in Draft #342:** the
+[disposable import](V0.14.6B-DISPOSABLE-IMPORT-LAB.md) merges A-derived E events
+into its own private temporary snapshot with scoped policy, atomic replacement
+and reopen/replay. **32 B / 61 V0.14.6A–B cases**, full Work **603/603 Python /
+55/55 JavaScript PASS**. Three actual child exits and file/directory errors
+are tested. The store retains sanitized events, not raw-message fingerprints
+or delivery/source progress; total state loss can appear fresh. No real
+journal, production store/service, transport, Fedora or power-loss acceptance.
+A and the frozen parent implementations are unchanged.
 
 **DEPLOYMENT_GATE=HOLD.**
 
