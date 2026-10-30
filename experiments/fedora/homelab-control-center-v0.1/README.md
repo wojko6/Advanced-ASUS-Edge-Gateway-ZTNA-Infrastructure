@@ -159,7 +159,7 @@ progress change or J Fedora result. Pending count remains 33 after the lab.
 four I requests (default three), checks supplied source/ACK bytes before each
 and stops at the first state/exchange/cleanup error. Each J peer closes before
 the next callback; all selected scripts validate before any network. **25/25 K
-tests**, current **336/336 A–K**, **541/541 HCC Python**, **55/55 JavaScript** PASS.
+tests**, at the K checkpoint **336/336 A–K**, **541/541 HCC Python**, **55/55 JavaScript** PASS.
 Self-test stays memory-only; lab exchanges three requests with separate owned
 loopback fixtures. All 33 records remain pending / two declared ACKs unchanged.
 No retry, receipt/progress persistence, resume cursor, run-wide deadline, live
@@ -167,6 +167,15 @@ locks, actual Loki or K Fedora acceptance. A–J Python modules are unchanged.
 HCC CI also checks matching pushes to the exact Draft branch, alongside
 PR/manual triggers. Results are matched to head SHA/event in Draft #338;
 the original K head's missing HCC run remains recorded in the worklog.
+
+**PR #338 functional scope is frozen at A–K:** the
+[closing review](V0.14.5-A-K-FREEZE-REVIEW.md) records model boundaries, a fixed
+non-finite-number bug in the imported V0.14 view and corrected B3B2E test
+ordering. Closing Work regression: **542/542 Python**, including **336 A–K**,
+and **55/55 JavaScript PASS**. A–K modules and runtime HTTP/source guards are
+unchanged. Follow-up input/storage, transport/receipt and Fedora runtime work
+belongs in separate PRs. #338 remains open/Draft/unmerged; source scope freeze
+does not grant deployment or Fedora/actual Loki acceptance.
 
 **DEPLOYMENT_GATE=HOLD.**
 

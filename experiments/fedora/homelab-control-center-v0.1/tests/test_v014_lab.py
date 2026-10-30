@@ -70,6 +70,15 @@ class LabTests(unittest.TestCase):
         with self.assertRaises(view.InvalidReport):
             view.parse_report(synthetic_report().replace(b'COUNT_COLLECTOR_EXIT_255_OBSERVED=1', b'COUNT_COLLECTOR_EXIT_255_OBSERVED=2'))
 
+    def test_view_rejects_nonfinite_gap_numbers(self):
+        for field, original in ((b'DURATION_SECONDS', b'1238.000'),
+                                (b'HOST_RECORD_OVERLAP_PCT', b'0.0'),
+                                (b'RESIDUAL_NOT_MATCHED_SECONDS', b'1238.000')):
+            for value in (b'nan', b'inf', b'-inf'):
+                with self.subTest(field=field, value=value), self.assertRaises(view.InvalidReport):
+                    view.parse_report(synthetic_report().replace(field + b'=' + original,
+                                                                 field + b'=' + value))
+
     def test_alloy_fragment_not_direct_journal(self):
         config = (ROOT/'monitoring/v014-dns-guard-sanitized.alloy.fragment').read_text()
         self.assertIn('loki.source.file', config)

@@ -8,6 +8,7 @@ import argparse
 from collections import Counter
 from datetime import datetime
 from html import escape
+import math
 from pathlib import Path
 import re
 import sys
@@ -79,7 +80,8 @@ def parse_report(raw):
             pct = float(gap['HOST_RECORD_OVERLAP_PCT'])
             residual = float(gap['RESIDUAL_NOT_MATCHED_SECONDS'])
             exits = int(gap['COLLECTOR_EXIT_255_EVENTS'])
-            if (start.tzinfo is None or end.tzinfo is None or end <= start
+            if (not all(math.isfinite(value) for value in (duration, pct, residual))
+                    or start.tzinfo is None or end.tzinfo is None or end <= start
                     or duration <= 0 or duration > 700000 or abs((end-start).total_seconds()-duration)>0.01
                     or not 0 <= pct <= 100 or residual < 0 or residual > duration+0.01 or exits < 0 or exits > 10000):
                 raise InvalidReport('INVALID_GAP_VALUES')

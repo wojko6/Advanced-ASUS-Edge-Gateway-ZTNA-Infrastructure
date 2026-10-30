@@ -18,6 +18,38 @@ Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
 potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
 To dwa uruchomienia na kolejnych rewizjach, bez akceptacji rzeczywistego Alloy/SELinux.
 
+## Zamrożenie zakresu PR #338 na A–K
+
+Użytkownik zatwierdził końcowy przegląd i zamrożenie funkcji na A–K.
+[Angielskie podsumowanie zamknięcia zakresu](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5-A-K-FREEZE-REVIEW.md)
+opisuje granice modeli, poprawki i dalsze prace. PR pozostaje **otwarty,
+Draft i niescalony**. Zamrożenie zakresu nie oznacza wdrożenia ani zgody na
+scalenie. **DEPLOYMENT_GATE=HOLD.**
+
+W końcowym przeglądzie poprawiono starszy parser raportu V0.14: przyjmował
+`nan` jako czas trwania i pozostały czas luki. Nowy test obejmuje `nan`, `inf`
+i `-inf` w trzech polach; sprawdzane liczby muszą być skończone. Liczba testów
+V0.14 wzrosła z 6 do 7. Moduły i 336 testów A–K pozostają bez zmian.
+
+Pierwsza pełna regresja końcowa miała 542 testy i jeden błąd w istniejącym
+teście HTTP B3B2E: odpowiedź dotarła do klienta przed zwolnieniem blokady
+przez `finally` handlera. Dodano ograniczone oczekiwanie na rzeczywiste
+zwolnienie blokady oraz jawne sprawdzanie statusu 200. Blokada, która nie
+zostanie zwolniona, nadal powoduje błąd testu. Kontrola 503/403 i kod obsługi
+HTTP pozostają bez zmian; nie dodano ponowień, nowych opóźnień ani pomijania
+testów. Wynik negatywny zachowano w dzienniku.
+
+Po poprawkach Work: **542/542 Python w 36.578 s i 55/55 JavaScript PASS**.
+To nadal laboratoria, bez wyniku D–K na Fedorze i bez rzeczywistego Loki.
+Pełny test lokalny DNS Guard nadal kończy się błędem; wynik CI jest osobną
+warstwą walidacji i jest przypisany do SHA w Draft #338.
+
+Dalsze planowane PR-y obejmą zaufany odczyt journala i wspólny kontrakt zapisu,
+integrację transportu z potwierdzeniami/wznowieniem oraz akceptację na Fedorze
+z właściwymi prawami i SELinux. W #338 pozostają poprawki przeglądu, dowody
+i dokumentacja. A–C oraz D–G są osobnymi modelami; wynik J/K nie przesuwa
+stanu ACK F/G. Zmiany usług produkcyjnych nadal wymagają osobnej wyraźnej zgody.
+
 ## Co sprawdzamy
 
 - V0.14.5A zapisuje syntetyczne, niezmienne segmenty w prywatnym katalogu
@@ -425,15 +457,16 @@ Workflow HCC uruchamia się teraz także po `push` do dokładnie tej gałęzi:
 `lab/hcc-v014-alloy-manual-correlation-20261029`, przy zmianie katalogu HCC
 lub pliku workflow. Nadal działa wyzwalacz PR i tryb ręczny. Push sprawdza
 bezpośrednio rewizję gałęzi; oba zdarzenia mogą utworzyć osobne przebiegi.
-Wynik trzeba powiązać z SHA i rodzajem zdarzenia. Zestaw 541 Python / 55
-JavaScript, polecenia laboratoryjne A–K, uprawnienie odczytu repozytorium
+Wynik trzeba powiązać z SHA i rodzajem zdarzenia. Po poprawce wyzwalacza było
+541 Python / 55 JavaScript; po przeglądzie zamknięcia jest 542 Python / 55
+JavaScript. Polecenia laboratoryjne A–K, uprawnienie odczytu repozytorium
 i limit czasu zadania pozostają bez zmian. Bieżący wynik zdalny jest zapisany
 w Draft #338 oddzielnie od lokalnych testów. Zielony CI nie daje zgody na
 scalenie ani działania na Fedorze/ASUS. **DEPLOYMENT_GATE=HOLD.**
 
 ## Granice wyniku — aktualizacja po K
 
-W środowisku Work wykonano A–K **336/336 testów**, pełne HCC **541/541 Python**
+W środowisku Work wykonano A–K **336 testów w pełnym HCC 542/542 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,
