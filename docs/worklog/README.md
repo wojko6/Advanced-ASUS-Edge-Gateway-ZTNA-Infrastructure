@@ -10,7 +10,7 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
-- [2026-10-30](2026-10-30.md) — **Draft #338 only:** separate Fedora A–B 59/59 + both labs PASS, C 28/28 + disposable lab PASS. D identity through I frozen plans, then J owned loopback HTTP/one bounded child: 30 J / 311 A–J / 516 HCC Python / 55 JavaScript PASS in Work. Interrupt-cleanup regression retained/fixed; exact request, response rejection, timeout/reap and peer cleanup tested. No real Loki receipt, progress change or D–J Fedora/Alloy/SELinux/power-loss/production acceptance; no merge or deployment.
+- [2026-10-30](2026-10-30.md) — **Draft #338 only:** separate Fedora A–B 59/59 + both labs PASS, C 28/28 + disposable lab PASS. D identity through I frozen plans, J owned HTTP, then K bounded sequential prefix: 25 K / 336 A–K / 541 HCC Python / 55 JavaScript PASS in Work. State revalidation, stop on first failure, no retry and closed peers/reaped children tested. Earlier failures retained. No real Loki receipt, progress change or D–K Fedora/Alloy/SELinux/power-loss/production acceptance; no merge or deployment.
 
 **Legacy #151 source archive (2026-10-15):** the [RouterCloud historical PR comparison](../audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md) preserves the [September 30 #137 acceptance evidence](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) and [original dated design notes](../history/routercloud-browser-access-2026-09-30.md) without installing obsolete startup scripts or changing the production router.
 

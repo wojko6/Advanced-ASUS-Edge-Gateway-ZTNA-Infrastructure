@@ -48,6 +48,8 @@ jobs:
           python3 -B tools/v0145i_batch_plan.py --lab
           python3 -B tools/v0145j_loopback_exchange.py --self-test
           python3 -B tools/v0145j_loopback_exchange.py --lab
+          python3 -B tools/v0145k_prefix_exchange.py --self-test
+          python3 -B tools/v0145k_prefix_exchange.py --lab
       - name: Bash runner syntax check
         run: |
           bash -n experiments/fedora/homelab-control-center-v0.1/run-lab.sh

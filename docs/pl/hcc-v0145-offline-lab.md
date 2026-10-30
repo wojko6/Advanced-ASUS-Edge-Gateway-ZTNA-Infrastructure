@@ -1,4 +1,4 @@
-# HCC V0.14.5A–J — instrukcja izolowanego laboratorium
+# HCC V0.14.5A–K — instrukcja izolowanego laboratorium
 
 **Status:** polska adaptacja operatorska, 2026-10-30; Draft PR #338,
 bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
@@ -12,6 +12,7 @@ Etap G opisuje [plikowy odbiornik testowy i deduplikację zachowanych ID](../../
 Etap H opisuje [formatter żądania JSON Loki działający w pamięci](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5H-OFFLINE-LOKI-REQUEST-LAB.md).
 Etap I opisuje [planowanie partii z kontrolą wersji źródła i testowych ACK](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5I-OFFLINE-BATCH-PLAN-LAB.md).
 Etap J opisuje [jedną wymianę HTTP z własną fiksturą loopback](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5J-OWNED-LOOPBACK-EXCHANGE-LAB.md).
+Etap K opisuje [sekwencyjne wykonanie ograniczonego początku planu](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5K-BOUNDED-PREFIX-EXCHANGE-LAB.md).
 Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
 **59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Następnie osobno
 potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
@@ -363,18 +364,69 @@ klienta HTTP. Brak TLS/auth/tenantów, przyjęcia/readback Loki, wysyłki wielu
 partii, mapowania odpowiedzi na ACK i blokad żywego źródła. Token fikstury nie
 jest systemem uwierzytelniania hostów. J nie ma wyniku na Fedorze.
 
-## Granice wyniku — aktualizacja po J
+## V0.14.5K — ograniczony początek planu i zatrzymanie po błędzie
 
-W środowisku Work wykonano A–J **311/311 testów**, pełne HCC **516/516 Python**
+K wykonuje po kolei najwyżej cztery żądania od indeksu zero w planie I;
+domyślnie wybiera trzy. Każde wysyła przez osobną własną fiksturę J. Przed
+każdym żądaniem ponownie sprawdza dostarczone bajty źródła i ACK, a poprzedni
+odbiornik zamyka przed kolejnym odczytem stanu. Pierwszy błąd stanu, wymiany
+lub sprzątania zatrzymuje dalsze żądania. Nie ma ponowień.
+
+```bash
+python3 -B tools/v0145k_prefix_exchange.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0145k*.py' -v
+python3 -B tools/v0145k_prefix_exchange.py --lab
+```
+
+Wymagania jak w J: Linux/Python 3.10+, własne gniazda IPv4 loopback i procesy
+potomne. Self-test działa w pamięci. Laboratorium i sieciowe testy K tworzą
+odbiorniki i ograniczone procesy klientów po kolei, bez sudo i zmiany usług.
+CLI nie przyjmuje adresu, portu, ścieżki ani zmiany limitu.
+
+Oczekiwane: **25 testów OK**, `V0145K_RESULT=PASS_OWNED_PREFIX_FIXTURES_ONLY`,
+`SELECTED_PREFIX_REQUESTS=3 SEND_CALLS=3 MATCHED_FIXTURES=3`,
+`OBSERVED_HTTP_POSTS=3 REMAINING_UNINVOKED_REQUESTS=0`,
+`PENDING_RECORDS_AFTER_RUN=33 DECLARED_ACKS_AFTER_RUN=2`,
+`STATE_CHECKS=BEFORE_EACH_SELECTED_REQUEST`,
+`FAILED_BATCH_POLICY=STOP_NO_RETRY_NO_FOLLOWING_REQUEST`,
+`CLIENTS_REAPED=YES LISTENERS_CLOSED=YES`,
+`NETWORK=OWNED_EPHEMERAL_IPV4_LOOPBACK_ONLY`,
+`REAL_LOKI_ACCEPTANCE=NOT_TESTED ACK_OR_CHECKPOINT_ADVANCE=NO`
+i `DEPLOYMENT_GATE=HOLD`.
+
+W teście odpowiedź 500 drugiej partii pozostawia jeden zgodny wynik, dwie
+próby i brak otwarcia trzeciego odbiornika. Zmiana źródła/ACK przed drugą
+partią zatrzymuje ją jeszcze przed otwarciem gniazda. Test rzeczywistego
+zawieszenia drugiego odbiornika zbiera procesy klientów i zamyka bieżącą
+fiksturę; testy przerwania i błędu sprzątania używają wstrzykniętych wyjątków.
+
+Limit wybranych treści wynosi 256 KiB; limity pojedynczej wymiany J pozostają.
+**Nie ma wspólnego twardego limitu czasu dla całego przebiegu.** Zaufana funkcja
+dostarczająca stan musi przekazać świeże bajty. K nie ogranicza jej czasu, nie
+blokuje żywych plików i nie wykrywa zmian ukrytych przez stare bajty. Wszystkie
+skrypty odpowiedzi sprawdza przed rozpoczęciem sieci. Licznik zgodnych wymian
+rośnie dopiero po udanym sprzątaniu odbiornika.
+
+Raport rozróżnia wywołania J i zaobserwowane POST-y. Nieudana próba mogła już
+dotrzeć do odbiornika; `uninvoked_requests` obejmuje także resztę planu poza
+wybranym początkiem. `plan_pending_records` opisuje pierwotny plan, nie nowy
+odczyt kolejki. Raport nie jest ACK ani punktem wznowienia. Nadal pozostają
+33 oczekujące rekordy / dwa zadeklarowane ACK; ponowne jawne uruchomienie
+zaczyna od indeksu zero i może powtórzyć wcześniejsze żądania. Nie ma trwałego
+odbiornika, dowodu przyjęcia przez Loki ani wyniku K na Fedorze.
+
+## Granice wyniku — aktualizacja po K
+
+W środowisku Work wykonano A–K **336/336 testów**, pełne HCC **541/541 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,
 SELinux, trwałych ACL i utraty zasilania. Wklejony wynik C nie zawierał
 wersji Pythona/jądra, SHA checkoutu ani wyjścia self-testu; nie dopisujemy ich
 na podstawie pamięci wcześniejszych sesji.
-D/E/F/G/H/I/J nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
+D/E/F/G/H/I/J/K nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
 repozytorium nadal kończy się kodem 1 w niezmienionych testach DNS Guard UDP/TCP;
-bieżący przebieg J oraz wcześniejsze I i diagnostyczny H odtworzyły ten punkt
+bieżący przebieg K oraz wcześniejsze J/I i diagnostyczny H odtworzyły ten punkt
 zatrzymania. Pierwszy przebieg H
 zatrzymał się wcześniej bez wskazania przyczyny; osobny test healthcheck przeszedł
 7/7. Wyniki HCC i zdalnego CI oraz opisane nieudane przebiegi lokalne pozostają

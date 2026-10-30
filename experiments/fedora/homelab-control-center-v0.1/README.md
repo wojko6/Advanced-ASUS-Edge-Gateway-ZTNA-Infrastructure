@@ -149,10 +149,21 @@ consistent forged source/ACKs cannot establish actual receipt or rollback safety
 ephemeral IPv4 peer and one bounded Python client. The peer validates capability
 and exact selected H bytes; strict report/peer checks recognize only the chosen
 empty-204 fixture result. Timeout/interrupt paths kill/reap the client, then
-close the listener/thread. **30/30 J tests**, current **311/311 A–J**, **516/516
+close the listener/thread. **30/30 J tests**, at the J checkpoint **311/311 A–J**, **516/516
 HCC Python**, **55/55 JavaScript** PASS. Self-test is memory-only; lab/network
 tests use owned loopback sockets and children. No real Loki, durable receipt,
 progress change or J Fedora result. Pending count remains 33 after the lab.
+
+**V0.14.5K bounded prefix exchange (Work only):** the
+[sequential prefix runner](V0.14.5K-BOUNDED-PREFIX-EXCHANGE-LAB.md) selects at most
+four I requests (default three), checks supplied source/ACK bytes before each
+and stops at the first state/exchange/cleanup error. Each J peer closes before
+the next callback; all selected scripts validate before any network. **25/25 K
+tests**, current **336/336 A–K**, **541/541 HCC Python**, **55/55 JavaScript** PASS.
+Self-test stays memory-only; lab exchanges three requests with separate owned
+loopback fixtures. All 33 records remain pending / two declared ACKs unchanged.
+No retry, receipt/progress persistence, resume cursor, run-wide deadline, live
+locks, actual Loki or K Fedora acceptance. A–J Python modules are unchanged.
 
 **DEPLOYMENT_GATE=HOLD.**
 
