@@ -6,8 +6,9 @@ bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
 [dokument angielski V0.14.5A–B](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5-OFFLINE-SEGMENT-REPLAY-LAB.md).
 Etap C opisuje [osobny kontrakt zapisu punktu wznowienia](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
 Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
-**59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Ten wynik nie
-obejmuje nowego C ani rzeczywistego Alloy/SELinux.
+**59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Następnie osobno
+potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
+To dwa uruchomienia na kolejnych rewizjach, bez akceptacji rzeczywistego Alloy/SELinux.
 
 ## Co sprawdzamy
 
@@ -68,13 +69,20 @@ i `POWER_LOSS_DURABILITY=NOT_TESTED`. Łącznie A–C: **87 testów**.
 Osierocony plik tymczasowy blokuje wznowienie i wymaga przeglądu; brak
 automatycznej naprawy. Nagłe zakończenie procesu nie jest utratą zasilania.
 Wszystkie dane C są usuwane wraz z katalogiem testowym. **Nie zainstalowano
-trwałego magazynu punktu wznowienia i nie wykonano jeszcze C na Fedorze.**
+trwałego magazynu punktu wznowienia. C przeszedł już osobny test na Fedorze:
+28/28, `V0145C_RESULT=PASS_DISPOSABLE_CHECKPOINT_ONLY` oraz
+`FEDORA_V0145C_LAB=PASS`.** Odtworzono prefiks 1, końcowy prefiks wyniósł 2;
+trzecia próba odbioru była oczekiwanym powtórzeniem po utracie zapisu.
 
 ## Granice wyniku
 
 W środowisku Work wykonano A–C **87/87 testów**, pełne HCC **291/291 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
-laboratoria); brak wyniku C, rzeczywistego Alloy, SELinux i trwałych ACL.
+laboratoria), następnie C (28/28 i laboratorium). Nie oznacza to pojedynczego
+uruchomienia 87 ani 291 testów na Fedorze. Brak akceptacji rzeczywistego Alloy,
+SELinux, trwałych ACL i utraty zasilania. Wklejony wynik C nie zawierał
+wersji Pythona/jądra, SHA checkoutu ani wyjścia self-testu; nie dopisujemy ich
+na podstawie pamięci wcześniejszych sesji.
 Poprzedni ZIP z 19
 testami jest historyczną wersją V0.14.5A, a nie aktualnym kodem tej gałęzi.
 

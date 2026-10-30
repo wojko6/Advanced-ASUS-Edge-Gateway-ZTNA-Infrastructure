@@ -70,9 +70,11 @@ receive attempts for two segments are the expected lost-checkpoint replay.
 [V0.14.5C](V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md) now adds actual checkpoint
 files in disposable directories, exact ACK before storage, atomic replacement,
 restart and abrupt child-exit tests. Current Work results: **28/28 C**, **87/87
-A–C**, **291/291 HCC Python**, **55/55 JavaScript** PASS. C is not Fedora
-accepted, installed or a proof of power-loss durability, authenticated event
-identity, exactly-once delivery or real Alloy compatibility.
+A–C**, **291/291 HCC Python**, **55/55 JavaScript** PASS. The operator later
+also reported **C 28/28 OK in 0.171 s**, its disposable lab PASS, prefix 1 after
+reopen / final 2 and cleanup. A–B and C were accepted in **separate Fedora
+runs**. C remains uninstalled and is not proof of power-loss durability,
+authenticated event identity, exactly-once delivery or real Alloy compatibility.
 
 See [V0.13–V0.14 evidence and deployment boundaries](V0.13-TO-V0.14-CORRELATION-LAB.md) and the un-applied [Alloy fragment](monitoring/v014-dns-guard-sanitized.alloy.fragment).
 

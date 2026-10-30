@@ -8,8 +8,10 @@
 includes immutable-segment publication, frozen-snapshot replay/ACK and a
 [disposable checkpoint-file substage C](experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
 Work Linux tests: **87/87 focused**, **291/291 HCC Python**, **55/55 JavaScript**
-PASS. The operator then reported **A–B 59/59 and both synthetic labs PASS on
-Fedora**, with cleanup; this does not accept C or actual Alloy/SELinux.
+PASS. The operator separately reported **A–B 59/59 and both labs PASS**, then
+**C 28/28 in 0.171 s and its disposable lab PASS on Fedora**, with cleanup.
+These are two scoped runs, not a full 291-test Fedora regression, actual
+Alloy/SELinux acceptance or production checkpoint durability.
 C adds private atomic checkpoint replacement and new-process/abrupt-exit tests
 only in disposable directories. ACK without a stored checkpoint still causes
 duplicate receive attempts. Stable event identity, production checkpoint

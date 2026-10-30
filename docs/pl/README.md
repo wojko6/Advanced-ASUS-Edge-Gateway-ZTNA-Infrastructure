@@ -7,7 +7,7 @@ Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest
 
 ## Pierwsza wizyta — od czego zacząć?
 
-Laboratorium robocze: [HCC V0.14.5A–C — segmenty, odtwarzanie i plik punktu wznowienia](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. A–B: operator zgłosił 59/59 i oba laboratoria PASS na Fedorze; C: testy Work, bez akceptacji na Fedorze.
+Laboratorium robocze: [HCC V0.14.5A–C — segmenty, odtwarzanie i plik punktu wznowienia](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Operator zgłosił osobne wyniki na Fedorze: A–B 59/59 i oba laboratoria PASS, następnie C 28/28 i laboratorium PASS. Nie obejmuje to rzeczywistego Alloy/SELinux ani wdrożenia.
 
 **Nowy czytelnik?** Otwórz **[Zacznij tutaj — przewodnik na 15–20 minut](START-HERE.md)** ([English](../START-HERE.md)). To bezpieczna ścieżka poznania projektu: od celu i diagramu architektury po aktualny stan, ograniczenia i dobór dalszych materiałów. **Nie wymaga instalacji ani poleceń na routerze.**
 
