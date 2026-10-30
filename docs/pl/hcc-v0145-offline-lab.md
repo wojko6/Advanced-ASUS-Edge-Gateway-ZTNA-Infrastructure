@@ -415,6 +415,22 @@ odczyt kolejki. Raport nie jest ACK ani punktem wznowienia. Nadal pozostają
 zaczyna od indeksu zero i może powtórzyć wcześniejsze żądania. Nie ma trwałego
 odbiornika, dowodu przyjęcia przez Loki ani wyniku K na Fedorze.
 
+### CI dla gałęzi laboratoryjnej
+
+Dla pierwszego commita K `9d5c0b5` ogólny CI przeszedł, lecz kolejne odczyty
+Actions nie pokazały przebiegu HCC. Przyczyny nie ustalono; brak wyniku nie
+jest PASS ani nieudanym testem HCC. Ten wynik pozostaje w dzienniku.
+
+Workflow HCC uruchamia się teraz także po `push` do dokładnie tej gałęzi:
+`lab/hcc-v014-alloy-manual-correlation-20261029`, przy zmianie katalogu HCC
+lub pliku workflow. Nadal działa wyzwalacz PR i tryb ręczny. Push sprawdza
+bezpośrednio rewizję gałęzi; oba zdarzenia mogą utworzyć osobne przebiegi.
+Wynik trzeba powiązać z SHA i rodzajem zdarzenia. Zestaw 541 Python / 55
+JavaScript, polecenia laboratoryjne A–K, uprawnienie odczytu repozytorium
+i limit czasu zadania pozostają bez zmian. Bieżący wynik zdalny jest zapisany
+w Draft #338 oddzielnie od lokalnych testów. Zielony CI nie daje zgody na
+scalenie ani działania na Fedorze/ASUS. **DEPLOYMENT_GATE=HOLD.**
+
 ## Granice wyniku — aktualizacja po K
 
 W środowisku Work wykonano A–K **336/336 testów**, pełne HCC **541/541 Python**

@@ -1,5 +1,12 @@
 name: Homelab Control Center lab checks
 on:
+  # Validate this Draft branch directly when a PR run is not available.
+  push:
+    branches:
+      - 'lab/hcc-v014-alloy-manual-correlation-20261029'
+    paths:
+      - 'experiments/fedora/homelab-control-center-v0.1/**'
+      - '.github/workflows/hcc-lab-tests.yml'
   pull_request:
     paths:
       - 'experiments/fedora/homelab-control-center-v0.1/**'

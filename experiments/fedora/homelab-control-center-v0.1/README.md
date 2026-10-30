@@ -164,6 +164,9 @@ Self-test stays memory-only; lab exchanges three requests with separate owned
 loopback fixtures. All 33 records remain pending / two declared ACKs unchanged.
 No retry, receipt/progress persistence, resume cursor, run-wide deadline, live
 locks, actual Loki or K Fedora acceptance. A–J Python modules are unchanged.
+HCC CI also checks matching pushes to the exact Draft branch, alongside
+PR/manual triggers. Results are matched to head SHA/event in Draft #338;
+the original K head's missing HCC run remains recorded in the worklog.
 
 **DEPLOYMENT_GATE=HOLD.**
 

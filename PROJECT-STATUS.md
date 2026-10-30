@@ -63,6 +63,10 @@ or following request after failure. Three matching lab exchanges still leave
 33 pending records / two declared ACKs unchanged. Fixture counts are not
 receipts or a resume cursor. No run-wide deadline, live file locks, actual Loki
 or K Fedora acceptance is claimed. A–J Python modules remain unchanged by K.
+The HCC workflow additionally checks matching pushes to this exact Draft
+branch, preserving PR/manual triggers and the unchanged fixture-only jobs.
+Original K head `9d5c0b5` had general CI SUCCESS but no observed HCC run;
+current-head remote results are recorded separately in Draft #338.
 The first D CI run exposed an existing sequential HTTP test ordering race.
 Only test synchronization/status assertions were corrected, with a deterministic
 503-before-release regression; runtime handler/source guards are unchanged.
