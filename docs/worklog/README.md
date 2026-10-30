@@ -10,6 +10,8 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
+- [2026-10-30](2026-10-30.md) — **Draft #338 only:** HCC V0.14.5A immutable-segment corrections and V0.14.5B offline snapshot/ACK replay; 59 focused / 263 HCC Python / 55 JavaScript tests PASS in Work Linux. Fedora/SELinux/Alloy/production gates HOLD; no merge or deployment.
+
 **Legacy #151 source archive (2026-10-15):** the [RouterCloud historical PR comparison](../audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md) preserves the [September 30 #137 acceptance evidence](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) and [original dated design notes](../history/routercloud-browser-access-2026-09-30.md) without installing obsolete startup scripts or changing the production router.
 
 - [2026-09-11](2026-09-11.md) — SSD/Entware migration, controlled reboot validation, QoS cleanup, Stability Gate baseline.

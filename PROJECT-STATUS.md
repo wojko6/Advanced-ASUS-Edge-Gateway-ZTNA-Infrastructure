@@ -2,6 +2,19 @@
 
 **Status date: 2026-10-28.** Most recent operator-reported **ASUS production maintenance** was the separately approved **stable Tailscale 1.104.4 ARMv7 paired-binary upgrade** on October 28, including runtime/daemon hash validation and project healthcheck 0 failures / 0 warnings; the previous **WebUI-only Issue #283** three-file publication on October 25 remains the latest WebUI change. The last **DNS service** change remains October 24 **Unbound 1.26.2-1 R2** with bounded UDP/TCP DNSSEC acceptance. Tailscale cold boot, extended soak, IPv6 and forced rollback are **NOT TESTED**. No new HCC permanent deployment, RouterCloud/DUFS, DNS Guard or firewall feature is implied by merging documentation. Unplanned October 24 DNS Guard resolver fail-open/failback was observed, not controlled client DNS continuity. Existing #235/#278/#287/#298/#299 and HCC gates remain HOLD.
 
+## 2026-10-30 — HCC V0.14.5A–B isolated Work continuation (Draft only)
+
+[Draft #338](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/338)
+now includes corrected immutable-segment publication and a frozen-snapshot
+replay/ACK model. Work Linux tests: **59/59 focused**, **263/263 HCC Python**,
+**55/55 HCC JavaScript** PASS. The ACK/checkpoint failure test deliberately
+observes a duplicate receive attempt; stable event identity, durable checkpoint,
+safe GC, real Alloy integration and workstation SELinux/ACL persistence remain
+unaccepted. See [contract and limits](experiments/fedora/homelab-control-center-v0.1/V0.14.5-OFFLINE-SEGMENT-REPLAY-LAB.md).
+No merge, Fedora/ASUS service action, production spool, actual journal input or
+production Loki delivery. The production-status date above is unchanged;
+this is a separate test-source checkpoint. **DEPLOYMENT_GATE=HOLD.**
+
 ## 2026-10-28 — operator-reported Tailscale maintenance and scoped Android acceptance
 
 - **ASUS GNUton ARMv7:** stable **1.104.2 → 1.104.4** built from a pinned upstream tag using isolated cross-toolchain checks, ARMv7 QEMU and read-only staged/rollback preflight, followed by a separately approved paired-binary publication and project-managed Tailscale restart. The operator reported matched live binary/daemon provenance, active `tailscale0`, connected exit-node/IPv4 forwarding prerequisites and healthcheck **0 failures / 0 warnings**. This is **bounded live runtime acceptance**, not an untested cold reboot, full failover soak or rollback exercise.

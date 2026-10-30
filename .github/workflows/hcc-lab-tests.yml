@@ -25,6 +25,13 @@ jobs:
         run: |
           cd experiments/fedora/homelab-control-center-v0.1
           PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -p 'test_*.py' -v
+      - name: V0.14.5 offline segment and replay CLI contracts
+        run: |
+          cd experiments/fedora/homelab-control-center-v0.1
+          python3 -B tools/v0145a_segment_spool.py --self-test
+          python3 -B tools/v0145a_segment_spool.py --lab
+          python3 -B tools/v0145b_segment_replay.py --self-test
+          python3 -B tools/v0145b_segment_replay.py --lab
       - name: Bash runner syntax check
         run: |
           bash -n experiments/fedora/homelab-control-center-v0.1/run-lab.sh
