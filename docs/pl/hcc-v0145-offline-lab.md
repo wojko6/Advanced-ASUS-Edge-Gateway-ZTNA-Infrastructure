@@ -1,4 +1,4 @@
-# HCC V0.14.5A–G — instrukcja izolowanego laboratorium
+# HCC V0.14.5A–H — instrukcja izolowanego laboratorium
 
 **Status:** polska adaptacja operatorska, 2026-10-30; Draft PR #338,
 bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
@@ -9,6 +9,7 @@ Etap D opisuje [osobny kontrakt syntetycznej tożsamości rekordów](../../exper
 Etap E opisuje [atomowy zapis identyfikatora i treści](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5E-ATOMIC-HANDOFF-LAB.md).
 Etap F opisuje [testowy odbiornik i osobny plik ACK](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5F-SYNTHETIC-DELIVERY-ACK-LAB.md).
 Etap G opisuje [plikowy odbiornik testowy i deduplikację zachowanych ID](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5G-DISPOSABLE-FILE-RECEIVER-LAB.md).
+Etap H opisuje [formatter żądania JSON Loki działający w pamięci](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5H-OFFLINE-LOKI-REQUEST-LAB.md).
 Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
 **59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Następnie osobno
 potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
@@ -226,18 +227,60 @@ procesy wyłącznie do prób wznowienia/przerwania. Katalogi są usuwane na koń
 Brak transportu Loki, adaptera Alloy/A–C, automatycznych ponowień, retencji,
 trwałego magazynu produkcyjnego i wyniku G na Fedorze.
 
-## Granice wyniku — aktualizacja po G
+## Osobny etap H — format żądania JSON bez wysyłki
 
-W środowisku Work wykonano A–G **225/225 testów**, pełne HCC **430/430 Python**
+H sprawdza kompletną migawkę E i formatuje jeden JSON zgodnie z opisanym kształtem
+API Loki. Zachowuje mikrosekundy jako dokładne całkowite nanosekundy zapisane
+napisem. Pełny rekord pozostaje linią JSON; ID, zakres klucza, czas i klasa nie
+trafiają do etykiet strumienia. Żądanie ma tylko stałe etykiety `component`
+i `source=synthetic-unit-envelope`. Rekordy są uporządkowane po czasie, a przy
+równych czasach po ID. Kolejność i magazyny F/G pozostają bez zmian.
+
+```bash
+python3 -B tools/v0145h_loki_request.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0145h*.py' -v
+python3 -B tools/v0145h_loki_request.py --lab
+```
+
+Oczekiwane: **26 testów OK**,
+`V0145H_RESULT=PASS_OFFLINE_REQUEST_ENCODING_ONLY`,
+`MICROSECOND_PRECISION=EXACT_NO_FLOAT`, `REQUEST_BODY_BYTES=1231`,
+`REQUEST_CONTRACT=DOCUMENTED_JSON_SHAPE_NOT_LOKI_ACCEPTANCE`,
+`DELIVERY_OR_ACK=NOT_IMPLEMENTED`, `FILES_WRITTEN=NO SUBPROCESS=NO`
+i `DEPLOYMENT_GATE=HOLD`. Oba tryby oraz testy H są wyłącznie pamięciowe,
+bez sieci, plików, stdin, osobnych procesów i kontaktu z usługami. Wyjście CLI
+nie drukuje treści żądania, ID ani zakresu klucza.
+
+Limit laboratoryjny: **16 rekordów / 64 KiB treści żądania**. Są to ograniczenia
+H, nie odczytana konfiguracja serwera Loki. Większa poprawna migawka jest
+odrzucana w całości, bez obcinania, wyboru oczekujących rekordów i paginacji.
+Uszkodzony dalszy rekord nie jest pomijany. Format A–C i surowe koperty journala
+nie są wejściem tego narzędzia. Skrót treści jest sumą kontrolną, bez dowodu
+pochodzenia lub dostarczenia; poprawnie podrobione ID mogą przejść formatowanie.
+
+Zweryfikowano publiczną dokumentację API i etykiet Grafana z 2026-10-30; linki
+źródłowe są w kontrakcie EN. **Nie wysłano żądania i nie potwierdzono jego
+przyjęcia przez rzeczywisty Loki.** Daty graniczne 2000–2100 w testach sprawdzają
+przeliczenie liczb, nie dopuszczalne okna czasowe serwera. Brak klienta HTTP,
+interpretacji odpowiedzi/ACK, zmiany punktu wznowienia i integracji Alloy.
+Istniejący fragment Alloy nie jest adapterem dla tego JSON-a. Ograniczenie G
+dotyczące utraty pary plików nadal obowiązuje. H nie ma wyniku na Fedorze.
+
+## Granice wyniku — aktualizacja po H
+
+W środowisku Work wykonano A–H **251/251 testów**, pełne HCC **456/456 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,
 SELinux, trwałych ACL i utraty zasilania. Wklejony wynik C nie zawierał
 wersji Pythona/jądra, SHA checkoutu ani wyjścia self-testu; nie dopisujemy ich
 na podstawie pamięci wcześniejszych sesji.
-D/E/F/G nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
+D/E/F/G/H nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
 repozytorium nadal kończy się kodem 1 w niezmienionych testach DNS Guard UDP/TCP;
-wyniki HCC i zdalnego CI są raportowane osobno w PR i dzienniku.
+przebieg diagnostyczny H odtworzył ten punkt zatrzymania. Pierwszy przebieg H
+zatrzymał się wcześniej bez wskazania przyczyny; osobny test healthcheck przeszedł
+7/7. Wyniki HCC i zdalnego CI oraz oba nieudane przebiegi lokalne pozostają
+osobno opisane w PR i dzienniku.
 Poprzedni ZIP z 19
 testami jest historyczną wersją V0.14.5A, a nie aktualnym kodem tej gałęzi.
 

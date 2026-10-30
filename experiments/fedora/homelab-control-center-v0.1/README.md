@@ -116,11 +116,22 @@ installed transport/scheduler. No F Fedora result, real source, GC or service ch
 full E-format payload before returning F's fixture ACK. Reopen/lost ACK retries
 find the same retained ID without rewriting its snapshot. Cross-check all
 three stores even after apparent completion; all source/receiver data remain.
-**36/36 G tests**, current **225/225 A–G**, **430/430 HCC Python**, **55/55
+**36/36 G tests**, at the G checkpoint **225/225 A–G**, **430/430 HCC Python**, **55/55
 JavaScript** PASS, including six actual child-exit phases. Losing both receiver
 and ACK state permits replay/rebuild; no independent rollback anchor exists.
 No actual Loki/transport, external exactly-once effects, physical power-loss
 durability, G Fedora acceptance, GC, production store or service change.
+
+**V0.14.5H offline Loki JSON request encoding (Work only):** the
+[memory-only formatter](V0.14.5H-OFFLINE-LOKI-REQUEST-LAB.md) validates an entire
+E snapshot before producing one bounded JSON request body, up to 16 records /
+64 KiB. Exact microseconds become integer-nanosecond strings; full event lines
+retain IDs/scope with two fixed stream labels. Request order is time then ID,
+without changing F/G dispatch order or state. **26/26 H tests**, current
+**251/251 A–H**, **456/456 HCC Python**, **55/55 JavaScript** PASS.
+No HTTP, actual Loki acceptance, response/ACK interpretation, files, progress
+change, batching/selection, H Fedora result or service action. G's state-loss
+limitations and all production gates remain open.
 
 **DEPLOYMENT_GATE=HOLD.**
 
