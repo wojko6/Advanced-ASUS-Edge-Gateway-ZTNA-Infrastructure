@@ -1,4 +1,4 @@
-# HCC V0.14.5A–F — instrukcja izolowanego laboratorium
+# HCC V0.14.5A–G — instrukcja izolowanego laboratorium
 
 **Status:** polska adaptacja operatorska, 2026-10-30; Draft PR #338,
 bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
@@ -8,6 +8,7 @@ Etap C opisuje [osobny kontrakt zapisu punktu wznowienia](../../experiments/fedo
 Etap D opisuje [osobny kontrakt syntetycznej tożsamości rekordów](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5D-SYNTHETIC-EVENT-IDENTITY-LAB.md).
 Etap E opisuje [atomowy zapis identyfikatora i treści](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5E-ATOMIC-HANDOFF-LAB.md).
 Etap F opisuje [testowy odbiornik i osobny plik ACK](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5F-SYNTHETIC-DELIVERY-ACK-LAB.md).
+Etap G opisuje [plikowy odbiornik testowy i deduplikację zachowanych ID](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5G-DISPOSABLE-FILE-RECEIVER-LAB.md).
 Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
 **59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Następnie osobno
 potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
@@ -169,16 +170,72 @@ Self-test jest pamięciowy; pliki laboratorium/testów pozostają w świeżych
 drzewach `/tmp` usuwanych na końcu. Brak automatycznego ponawiania, retencji,
 rzeczywistego transportu i adaptera Alloy/A–C. F ma wynik Work, bez testu na Fedorze.
 
-## Granice wyniku — aktualizacja po F
+## Osobny etap G — plikowy odbiornik i ponowienie po utracie ACK
 
-W środowisku Work wykonano A–F **189/189 testów**, pełne HCC **394/394 Python**
+G przechowuje pełną treść rekordu w osobnej migawce plikowej, zanim zwróci
+testowe ACK z F. Po ponownym otwarciu oraz po utracie ACK znajduje ten sam ID
+i identyczną treść bez ponownego zapisu migawki. To ograniczona deduplikacja
+w zachowanym stanie testowym, bez gwarancji exactly-once dla rzeczywistej usługi.
+
+```bash
+python3 -B tools/v0145g_file_receiver.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0145g*.py' -v
+python3 -B tools/v0145g_file_receiver.py --lab
+```
+
+Oczekiwane: **36 testów OK**,
+`V0145G_RESULT=PASS_DISPOSABLE_FILE_RECEIVER_ONLY`,
+`REPLAY_RECEIVER_SNAPSHOT_UNCHANGED=YES`,
+`FINAL_RECEIVER_RECORDS=3 FINAL_STORED_ACKS=3`, `SOURCE_PAYLOADS_RETAINED=3`,
+`ACK_PROTOCOL=IN_PROCESS_FIXTURE_NOT_LOKI`, `TEMP_STATE_REMOVED=YES`
+i `DEPLOYMENT_GATE=HOLD`. Wznawiany etap ma początkowo jeden rekord odbiornika
+i zero zapisanych ACK. Wszystkie dane źródła i odbiornika pozostają zachowane.
+
+Trzy katalogi muszą mieć różne inody i pozostać prywatne oraz zablokowane do
+zamknięcia deskryptorów. Nie współdziel deskryptorów między równoległymi
+wywołaniami. Źródło i odbiornik mają osobne pliki `handoff.json` w formacie E
+(każdy do 1024 rekordów / 512 KiB), a nadawca osobny plik ACK z F (1024 par /
+256 KiB). Pojedyncza treść przekazywana odbiornikowi ma limit 4096 bajtów.
+Zapis odbiornika: prywatny plik tymczasowy, pełny zapis, fsync pliku, atomowa
+podmiana, fsync katalogu, a następnie ACK. Duplikat wymaga ponownego fsync
+katalogu, bez przepisywania pliku. Kolejność wynika z ID, nie chronologii.
+
+Przed próbą i także po pozornym zakończeniu wysyłki G sprawdza wszystkie trzy
+magazyny: każdy rekord odbiornika musi mieć identyczną treść w źródle, a każdy
+zapisany ACK odpowiadać rekordowi odbiornika. Zmiana/brak wcześniej odebranego
+rekordu, obcy zakres klucza, uszkodzony/obcy/osierocony stan oznaczają HOLD.
+Nie ma automatycznego zerowania, kasowania ani naprawy.
+
+Sześć przypadków nagłego zakończenia osobnego procesu obejmuje fsync pliku
+tymczasowego odbiornika, podmianę, fsync katalogu odbiornika, zweryfikowane ACK
+przed zapisem nadawcy, fsync pliku tymczasowego ACK oraz podmianę ACK.
+Ponowienie po utracie ACK nie dopisuje drugiego rekordu o tym samym ID.
+Osierocony plik po zakończeniu procesu blokuje dalszą próbę bez kasowania.
+To nie są testy zaniku zasilania, restartu hosta ani trwałości zdalnej usługi.
+
+Utrata samego pliku ACK powoduje ponowienie, które wykorzystuje zachowane ID
+odbiornika. **Utrata obu plików — odbiornika i ACK — nie jest wykrywana jako
+utrata historii; model zaczyna odbudowę od początku.** Skróty nie uwierzytelniają
+plików, ról ani pochodzenia z journala. Brak niezależnego punktu zaufania do
+wykrywania cofnięcia stanu. Root i niewspółpracujący zapis z tym samym UID
+pozostają poza modelem.
+
+Self-test jest pamięciowy; laboratorium używa tylko świeżych katalogów `/tmp`,
+bez sieci i osobnych procesów. Testy jednostkowe uruchamiają ograniczone czasowo
+procesy wyłącznie do prób wznowienia/przerwania. Katalogi są usuwane na końcu.
+Brak transportu Loki, adaptera Alloy/A–C, automatycznych ponowień, retencji,
+trwałego magazynu produkcyjnego i wyniku G na Fedorze.
+
+## Granice wyniku — aktualizacja po G
+
+W środowisku Work wykonano A–G **225/225 testów**, pełne HCC **430/430 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,
 SELinux, trwałych ACL i utraty zasilania. Wklejony wynik C nie zawierał
 wersji Pythona/jądra, SHA checkoutu ani wyjścia self-testu; nie dopisujemy ich
 na podstawie pamięci wcześniejszych sesji.
-D/E/F nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
+D/E/F/G nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
 repozytorium nadal kończy się kodem 1 w niezmienionych testach DNS Guard UDP/TCP;
 wyniki HCC i zdalnego CI są raportowane osobno w PR i dzienniku.
 Poprzedni ZIP z 19

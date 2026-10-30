@@ -106,10 +106,21 @@ one retained E record at a time through a volatile in-process fake receiver.
 The private ACK file advances after an exact scope/ID/payload-hash match;
 reopen resumes by ID without skipping newly appended lower IDs. Receive before
 ACK storage can repeat an attempt. E source payloads are never deleted.
-**37/37 F tests**, current **189/189 A–F**, **394/394 HCC Python**, **55/55
+**37/37 F tests**, at the F checkpoint **189/189 A–F**, **394/394 HCC Python**, **55/55
 JavaScript** PASS. Four child-exit phases do not prove physical power-loss or
 remote-receiver durability. This fixture is not Loki's ACK protocol or an
 installed transport/scheduler. No F Fedora result, real source, GC or service change.
+
+**V0.14.5G disposable file receiver (Work only):** the
+[file-backed synthetic receiver](V0.14.5G-DISPOSABLE-FILE-RECEIVER-LAB.md) retains
+full E-format payload before returning F's fixture ACK. Reopen/lost ACK retries
+find the same retained ID without rewriting its snapshot. Cross-check all
+three stores even after apparent completion; all source/receiver data remain.
+**36/36 G tests**, current **225/225 A–G**, **430/430 HCC Python**, **55/55
+JavaScript** PASS, including six actual child-exit phases. Losing both receiver
+and ACK state permits replay/rebuild; no independent rollback anchor exists.
+No actual Loki/transport, external exactly-once effects, physical power-loss
+durability, G Fedora acceptance, GC, production store or service change.
 
 **DEPLOYMENT_GATE=HOLD.**
 

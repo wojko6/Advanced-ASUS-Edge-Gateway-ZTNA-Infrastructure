@@ -2,12 +2,12 @@
 
 **Status date: 2026-10-28.** Most recent operator-reported **ASUS production maintenance** was the separately approved **stable Tailscale 1.104.4 ARMv7 paired-binary upgrade** on October 28, including runtime/daemon hash validation and project healthcheck 0 failures / 0 warnings; the previous **WebUI-only Issue #283** three-file publication on October 25 remains the latest WebUI change. The last **DNS service** change remains October 24 **Unbound 1.26.2-1 R2** with bounded UDP/TCP DNSSEC acceptance. Tailscale cold boot, extended soak, IPv6 and forced rollback are **NOT TESTED**. No new HCC permanent deployment, RouterCloud/DUFS, DNS Guard or firewall feature is implied by merging documentation. Unplanned October 24 DNS Guard resolver fail-open/failback was observed, not controlled client DNS continuity. Existing #235/#278/#287/#298/#299 and HCC gates remain HOLD.
 
-## 2026-10-30 — HCC V0.14.5A–F isolated continuation (Draft only)
+## 2026-10-30 — HCC V0.14.5A–G isolated continuation (Draft only)
 
 [Draft #338](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/338)
 includes immutable-segment publication, frozen-snapshot replay/ACK and a
 [disposable checkpoint-file substage C](experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
-Work Linux tests: **189/189 focused**, **394/394 HCC Python**, **55/55 JavaScript**
+Work Linux tests: **225/225 focused**, **430/430 HCC Python**, **55/55 JavaScript**
 PASS. The operator separately reported **A–B 59/59 and both labs PASS**, then
 **C 28/28 in 0.171 s and its disposable lab PASS on Fedora**, with cleanup.
 These are two scoped runs, not a full HCC Fedora regression, actual
@@ -30,6 +30,13 @@ after receive causes a repeat attempt; appending lower IDs does not skip them.
 All E payloads remain retained. Four child-exit phases test process interruption,
 not power loss. The receiver is volatile, so ACK is not proof of durable remote
 delivery or actual Loki semantics. No F Fedora operator acceptance exists.
+G adds a [disposable file-backed synthetic receiver](experiments/fedora/homelab-control-center-v0.1/V0.14.5G-DISPOSABLE-FILE-RECEIVER-LAB.md)
+with **36/36 tests**. It stores the complete event before fixture ACK and
+deduplicates retries against retained IDs after process reopen. All three
+stores are cross-checked even after apparent completion. Six child-exit phases
+exercise receiver/ACK gaps. Losing both receiver and ACK state is not detected;
+replay/rebuild is explicitly tested. This is not an authenticated durable
+remote receiver, actual Loki protocol, power-loss or G Fedora acceptance.
 The first D CI run exposed an existing sequential HTTP test ordering race.
 Only test synchronization/status assertions were corrected, with a deterministic
 503-before-release regression; runtime handler/source guards are unchanged.
