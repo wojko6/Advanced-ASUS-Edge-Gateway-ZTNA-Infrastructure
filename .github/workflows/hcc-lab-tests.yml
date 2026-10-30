@@ -58,13 +58,15 @@ jobs:
           python3 -B tools/v0145j_loopback_exchange.py --lab
           python3 -B tools/v0145k_prefix_exchange.py --self-test
           python3 -B tools/v0145k_prefix_exchange.py --lab
-      - name: V0.14.6A–B isolated import contracts
+      - name: V0.14.6A–C isolated import and source contracts
         run: |
           cd experiments/fedora/homelab-control-center-v0.1
           python3 -B tools/v0146a_journal_envelope.py --self-test
           python3 -B tools/v0146a_journal_envelope.py --lab
           python3 -B tools/v0146b_disposable_import.py --self-test
           python3 -B tools/v0146b_disposable_import.py --lab
+          python3 -B tools/v0146c_bounded_source.py --self-test
+          python3 -B tools/v0146c_bounded_source.py --lab
       - name: Bash runner syntax check
         run: |
           bash -n experiments/fedora/homelab-control-center-v0.1/run-lab.sh

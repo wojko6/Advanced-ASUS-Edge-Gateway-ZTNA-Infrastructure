@@ -1,10 +1,11 @@
-# HCC V0.14.6A–B — model metadanych journala i testowy zapis D/E
+# HCC V0.14.6A–C — metadane, testowy zapis i ograniczony proces źródła
 
 **Status:** polska adaptacja operatorska, 2026-10-30; [Draft #342](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/342) po zamrożeniu
 #338 na A–K. **DEPLOYMENT_GATE=HOLD.**
 Źródło EN:
 [kontrakt i ograniczenia V0.14.6A](../../experiments/fedora/homelab-control-center-v0.1/V0.14.6A-SUPPLIED-JOURNAL-ENVELOPE-LAB.md).
 Zapis opisuje [kontrakt V0.14.6B](../../experiments/fedora/homelab-control-center-v0.1/V0.14.6B-DISPOSABLE-IMPORT-LAB.md).
+Proces testowego źródła opisuje [kontrakt V0.14.6C](../../experiments/fedora/homelab-control-center-v0.1/V0.14.6C-BOUNDED-SOURCE-LAB.md).
 
 Nowa gałąź `lab/hcc-v0146a-journal-envelope-contract-20261030` bazuje na
 zamrożonej gałęzi #338, commit `82ba838`. Nowy Draft jest kierowany do tej
@@ -121,10 +122,57 @@ snapshotu w pustym katalogu wygląda jak nowy magazyn i pozwala na ponowny
 import. Pierwsza partia bez dopasowań nie tworzy pliku ani kotwicy polityki.
 Nie ma przesuwania kursora, ACK, automatycznej naprawy lub retencji.
 
+## V0.14.6C — ograniczony proces przed importem
+
+C uruchamia **własny stały proces Pythona z danymi syntetycznymi**. To nadal
+nie jest czytnik journala ani wykonanie `journalctl`. Podane pola można
+sfałszować; przesłanie ich przez proces nie potwierdza pochodzenia.
+Nie ma argumentu polecenia, ścieżki, UID, klucza ani odczytu rzeczywistych logów.
+
+W katalogu eksperymentu, bez sudo i zmian usług:
+
+```bash
+python3 -B tools/v0146c_bounded_source.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0146c*.py' -v
+python3 -B tools/v0146c_bounded_source.py --lab
+```
+
+Self-test jest pamięciowy. Lab tworzy własny katalog tymczasowy i uruchamia
+trzy własne procesy: import, powtórzenie i pełny wynik zakończony kodem 23.
+Import do B następuje dopiero po pełnym odczycie, kodzie 0, pustym stderr
+i sprawdzeniu rekordów przez A. Poprawny początek zakończony błędem nie
+zmienia magazynu. Nie ma częściowego importu ani automatycznego ponawiania.
+
+Odczyt i zapis potoków odbywają się współbieżnie. Limity: 1 MiB stdout,
+128 wierszy zakończonych nową linią, 1 KiB stderr; **każdy niepusty stderr
+daje HOLD**. Przekroczenie limitów przerywa proces. Pusty wynik również
+pozostaje HOLD. Limit 2 s zaczyna się **po powrocie `Popen`**; obejmuje potoki
+i oczekiwanie na zakończenie. Błąd lub przerwanie powoduje zabicie własnego
+procesu i oczekiwanie na jego zebranie do 1 s oraz zamknięcie potoków.
+Niepewność sprzątania jest błędem. To nie gwarantuje twardego czasu operacji
+systemowych ani ograniczenia dowolnego wrogiego programu.
+
+Oczekiwane: **32 testy OK**, `SOURCE_ROWS=5`, `INITIAL_RETAINED_EVENTS=3`,
+`REPLAY_DUPLICATES=4`, `LATE_NONZERO_EXIT=HOLD_NO_STORE_CHANGE`,
+`JOURNALCTL_EXECUTED=NO`, `TRUSTED_JOURNAL_READER=NOT_IMPLEMENTED`,
+`TEMP_STATE_REMOVED=YES`, `V0146C_RESULT=PASS_BOUNDED_FIXTURE_IMPORT_ONLY`
+i `DEPLOYMENT_GATE=HOLD`. Sukces jest wypisywany po usunięciu katalogu.
+Testy sprawdzają też zawieszenie przed/po danych, zamknięte potoki przy
+żyjącym procesie, przepełnienia, przerwanie i faktycznie zebrane procesy.
+
+Work ma `journalctl` systemd 255, ale w sprawdzonych lokalizacjach brakuje
+`systemd-journal-remote` do utworzenia własnego binarnego journala. Sprawdzono
+tylko wersję/pomoc, bez odczytu journala i instalacji pakietów. Nie ma więc
+pozytywnego testu rzeczywistego czytnika. A/B pozostają bez zmian.
+
 ## Wyniki i granice
 
 Checkpoint A: **29 testów / 571 Python / 55 JavaScript PASS**. Po B: **32 B /
 61 V0.14.6A–B**, pełne Work **603/603 Python / 55/55 JavaScript PASS**.
+C dodaje 32 przypadki; **93 V0.14.6A–C PASS**, końcowa pełna regresja
+**635/635 Python / 55/55 JavaScript PASS**. Pierwszy pełny przebieg miał dwa
+timeouty istniejących testów procesów A/C; ich osobne 66/66 przeszło bez zmian.
+Wyniki pozostają w dzienniku, bieżące CI jest zapisane w Draft #342.
 Zamrożony #338 nadal ma własny checkpoint 542 Python / 55 JavaScript; nie
 dopisujemy do niego nowego etapu. Bieżące CI nowej gałęzi jest osobnym wynikiem
 przypisanym do SHA w nowym Draft.
@@ -137,7 +185,7 @@ pozostają w [dzienniku EN](../worklog/2026-10-30.md).
 
 Pełny lokalny test statyczny repozytorium nadal kończy się błędem fikstury
 DNS Guard UDP/TCP; brak lokalnego shellcheck pozostaje ograniczeniem. Nie ma
-wyniku V0.14.6A–B na Fedorze, rzeczywistego journala/Alloy/Loki, trwałości po
+wyniku V0.14.6A–C na Fedorze, rzeczywistego journala/Alloy/Loki, trwałości po
 reboocie, SELinux/ACL ani zaniku zasilania. Otwarcie nowych deskryptorów i
 zakończenia procesów w B nie są tą akceptacją. Następne prace obejmują zaufany
 czytnik, świeżość i blokady źródła, politykę kluczy oraz trwałe połączenie

@@ -197,6 +197,18 @@ or delivery/source progress; total state loss can appear fresh. No real
 journal, production store/service, transport, Fedora or power-loss acceptance.
 A and the frozen parent implementations are unchanged.
 
+**V0.14.6C in Draft #342:** the
+[bounded source/import boundary](V0.14.6C-BOUNDED-SOURCE-LAB.md) receives JSONL
+from one fixed owned Python child, bounds both streams in flight and requires
+exit 0 / empty stderr / complete framing before A/B import. It kills/reaps
+failed or stalled children; tests cover output followed by failure and
+unchanged retained state. **32 C / 93 V0.14.6A–C cases PASS** in Work.
+This is not journalctl execution or a trusted journal reader. The deadline
+starts after process creation; no hard OS/filesystem deadline or empty-batch
+acceptance. A/B and frozen parent code remain unchanged; final full Work
+**635/635 Python / 55/55 JavaScript PASS**. Earlier child-test timeouts remain
+in the worklog; current-head CI is recorded in Draft #342.
+
 **DEPLOYMENT_GATE=HOLD.**
 
 ## Acceptance boundaries
