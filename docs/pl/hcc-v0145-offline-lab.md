@@ -104,7 +104,7 @@ D ma wynik Work/CI zgodnie z bieżącym PR; brak wyniku operatora na Fedorze.
 
 ## Granice wyniku — bieżący stan
 
-W środowisku Work wykonano A–D **118/118 testów**, pełne HCC **322/322 Python**
+W środowisku Work wykonano A–D **118/118 testów**, pełne HCC **323/323 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,

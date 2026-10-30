@@ -7,7 +7,7 @@
 [Draft #338](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/338)
 includes immutable-segment publication, frozen-snapshot replay/ACK and a
 [disposable checkpoint-file substage C](experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
-Work Linux tests: **118/118 focused**, **322/322 HCC Python**, **55/55 JavaScript**
+Work Linux tests: **118/118 focused**, **323/323 HCC Python**, **55/55 JavaScript**
 PASS. The operator separately reported **A–B 59/59 and both labs PASS**, then
 **C 28/28 in 0.171 s and its disposable lab PASS on Fedora**, with cleanup.
 These are two scoped runs, not a full HCC Fedora regression, actual
@@ -18,6 +18,9 @@ replay handling and atomic same-ID/payload-conflict refusal. Its new schema is
 deliberately rejected by A–C. The public fixture key and declared unit are not
 source authentication; D has no journal reader, persisted ledger, production
 key lifecycle, actual spool integration or Fedora operator acceptance.
+The first D CI run exposed an existing sequential HTTP test ordering race.
+Only test synchronization/status assertions were corrected, with a deterministic
+503-before-release regression; runtime handler/source guards are unchanged.
 C adds private atomic checkpoint replacement and new-process/abrupt-exit tests
 only in disposable directories. ACK without a stored checkpoint still causes
 duplicate receive attempts. Trusted real-event identity, production checkpoint
