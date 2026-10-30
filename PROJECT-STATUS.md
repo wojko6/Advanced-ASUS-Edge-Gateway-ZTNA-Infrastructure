@@ -2,19 +2,25 @@
 
 **Status date: 2026-10-28.** Most recent operator-reported **ASUS production maintenance** was the separately approved **stable Tailscale 1.104.4 ARMv7 paired-binary upgrade** on October 28, including runtime/daemon hash validation and project healthcheck 0 failures / 0 warnings; the previous **WebUI-only Issue #283** three-file publication on October 25 remains the latest WebUI change. The last **DNS service** change remains October 24 **Unbound 1.26.2-1 R2** with bounded UDP/TCP DNSSEC acceptance. Tailscale cold boot, extended soak, IPv6 and forced rollback are **NOT TESTED**. No new HCC permanent deployment, RouterCloud/DUFS, DNS Guard or firewall feature is implied by merging documentation. Unplanned October 24 DNS Guard resolver fail-open/failback was observed, not controlled client DNS continuity. Existing #235/#278/#287/#298/#299 and HCC gates remain HOLD.
 
-## 2026-10-30 — HCC V0.14.5A–C isolated continuation (Draft only)
+## 2026-10-30 — HCC V0.14.5A–D isolated continuation (Draft only)
 
 [Draft #338](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/338)
 includes immutable-segment publication, frozen-snapshot replay/ACK and a
 [disposable checkpoint-file substage C](experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
-Work Linux tests: **87/87 focused**, **291/291 HCC Python**, **55/55 JavaScript**
+Work Linux tests: **118/118 focused**, **322/322 HCC Python**, **55/55 JavaScript**
 PASS. The operator separately reported **A–B 59/59 and both labs PASS**, then
 **C 28/28 in 0.171 s and its disposable lab PASS on Fedora**, with cleanup.
-These are two scoped runs, not a full 291-test Fedora regression, actual
+These are two scoped runs, not a full HCC Fedora regression, actual
 Alloy/SELinux acceptance or production checkpoint durability.
+D adds a [memory-only synthetic identity/consistency model](experiments/fedora/homelab-control-center-v0.1/V0.14.5D-SYNTHETIC-EVENT-IDENTITY-LAB.md)
+with **31/31 tests**, integer microseconds, keyed opaque record IDs, bounded
+replay handling and atomic same-ID/payload-conflict refusal. Its new schema is
+deliberately rejected by A–C. The public fixture key and declared unit are not
+source authentication; D has no journal reader, persisted ledger, production
+key lifecycle, actual spool integration or Fedora operator acceptance.
 C adds private atomic checkpoint replacement and new-process/abrupt-exit tests
 only in disposable directories. ACK without a stored checkpoint still causes
-duplicate receive attempts. Stable event identity, production checkpoint
+duplicate receive attempts. Trusted real-event identity, production checkpoint
 durability, safe GC, real Alloy and workstation SELinux/ACL persistence remain
 unaccepted. See [A–B contract and limits](experiments/fedora/homelab-control-center-v0.1/V0.14.5-OFFLINE-SEGMENT-REPLAY-LAB.md).
 No merge, Fedora/ASUS service action, production spool, actual journal input or

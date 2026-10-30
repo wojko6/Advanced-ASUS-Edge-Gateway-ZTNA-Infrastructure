@@ -78,6 +78,18 @@ authenticated event identity, exactly-once delivery or real Alloy compatibility.
 
 See [V0.13–V0.14 evidence and deployment boundaries](V0.13-TO-V0.14-CORRELATION-LAB.md) and the un-applied [Alloy fragment](monitoring/v014-dns-guard-sanitized.alloy.fragment).
 
+**V0.14.5D synthetic record identity (Work only):** a separate
+[memory-only source-envelope model](V0.14.5D-SYNTHETIC-EVENT-IDENTITY-LAB.md)
+retains integer microseconds and opaque keyed IDs, recognizes exact replay,
+preserves distinct same-time/kind records and refuses changed payload under
+the same ID without partially updating its bounded ledger. **31/31 D tests**,
+current **118/118 A–D**, **322/322 HCC Python**, **55/55 JavaScript** PASS in Work.
+The key is a public fixture, input unit/cursor is merely declared synthetic
+metadata, and the ledger is volatile. This is not authenticated journal input,
+collector-run/incident identity or exactly-once delivery. The new schema is
+**incompatible with A–C**, with a regression requiring rejection. No actual
+spool/Alloy integration or D Fedora operator test has occurred.
+
 **DEPLOYMENT_GATE=HOLD.**
 
 ## Acceptance boundaries
