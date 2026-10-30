@@ -20,6 +20,15 @@ final full regression **635/635 Python / 55/55 JavaScript PASS**. The earlier
 two child-test timeouts remain in the worklog; exact-head CI is in Draft #342.
 #338's A–K and A/B modules remain unchanged.
 
+**Session paused at V0.14.6C, operator request 2026-10-30.** Last code change
+`bb508977a2542212da412bd941f7b31e2830df14` has **4/4 push/PR workflows
+completed SUCCESS**; the HCC push log confirms 635 Python / 55 JavaScript
+and the C cleanup/error markers. The
+[session checkpoint and run links](docs/worklog/2026-10-30.md#session-close--v0146c-code-checkpoint-and-next-step)
+separate this tested code from the documentation-only closure. Next work is
+an owned binary-journal reader/completeness fixture; it has not started.
+No Fedora action is required to close this session.
+
 Supplied fields can be forged; a test explicitly accepts consistent fabricated
 metadata. No trusted journal reader, actual provenance, private key lifecycle,
 delivery ACK/source checkpoint or transport is implemented. B stores only a

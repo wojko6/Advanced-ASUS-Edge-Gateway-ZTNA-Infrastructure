@@ -165,6 +165,27 @@ Work ma `journalctl` systemd 255, ale w sprawdzonych lokalizacjach brakuje
 tylko wersję/pomoc, bez odczytu journala i instalacji pakietów. Nie ma więc
 pozytywnego testu rzeczywistego czytnika. A/B pozostają bez zmian.
 
+## Zamknięcie sesji — 2026-10-30
+
+Na prośbę operatora kończymy rozwój na **V0.14.6C**. Ostatnia zmiana kodu:
+`bb508977a2542212da412bd941f7b31e2830df14`; **4/4 przebiegi CI push/PR
+zakończone SUCCESS**. Log HCC potwierdza 635 Python / 55 JavaScript,
+odrzucenie błędu procesu i usunięcie katalogu testowego. Odnośniki do
+konkretnych przebiegów są w
+[końcowym zapisie EN](../worklog/2026-10-30.md#session-close--v0146c-code-checkpoint-and-next-step).
+
+To uzupełnienie zmienia tylko dokumentację. **Na Fedorze nie trzeba teraz
+nic uruchamiać.** #338 pozostaje zamrożony na `82ba838`; #342 jest osobnym
+Draftem opartym na tej gałęzi wyłącznie do przeglądu. Nie scalać go do #338.
+Oba PR-y pozostają niescalone; `DEPLOYMENT_GATE=HOLD`.
+
+Po wznowieniu najpierw przygotujemy własny binarny plik journala w izolowanym
+laboratorium i sprawdzimy stały, ograniczony odczyt oraz jego kompletność.
+Tego etapu nie rozpoczęto. Nadal brakuje zaufanego źródła, polityki kluczy,
+kursora, rzeczywistych potwierdzeń Alloy/Loki i nowej akceptacji na Fedorze.
+Wcześniejsze timeouty i lokalny błąd fikstury DNS pozostają w dokumentacji;
+zielone CI ich nie unieważnia. Domknięcie dokumentacji nie oznacza wdrożenia.
+
 ## Wyniki i granice
 
 Checkpoint A: **29 testów / 571 Python / 55 JavaScript PASS**. Po B: **32 B /
