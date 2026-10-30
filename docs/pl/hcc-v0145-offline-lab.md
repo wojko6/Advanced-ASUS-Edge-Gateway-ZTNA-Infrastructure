@@ -1,4 +1,4 @@
-# HCC V0.14.5A–D — instrukcja izolowanego laboratorium
+# HCC V0.14.5A–E — instrukcja izolowanego laboratorium
 
 **Status:** polska adaptacja operatorska, 2026-10-30; Draft PR #338,
 bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
@@ -6,6 +6,7 @@ bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
 [dokument angielski V0.14.5A–B](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5-OFFLINE-SEGMENT-REPLAY-LAB.md).
 Etap C opisuje [osobny kontrakt zapisu punktu wznowienia](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
 Etap D opisuje [osobny kontrakt syntetycznej tożsamości rekordów](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5D-SYNTHETIC-EVENT-IDENTITY-LAB.md).
+Etap E opisuje [atomowy zapis identyfikatora i treści](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5E-ATOMIC-HANDOFF-LAB.md).
 Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
 **59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Następnie osobno
 potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
@@ -102,9 +103,34 @@ autentykacji źródła, połączenia z rzeczywistym buforem/Alloy ani exactly-on
 ID dotyczy rekordu, a nie awarii czy pojedynczego uruchomienia kolektora.
 D ma wynik Work/CI zgodnie z bieżącym PR; brak wyniku operatora na Fedorze.
 
-## Granice wyniku — bieżący stan
+## Osobny etap E — identyfikator i treść w jednym zapisie
 
-W środowisku Work wykonano A–D **118/118 testów**, pełne HCC **323/323 Python**
+E zapisuje każdą parę ID/treść w jednej prywatnej migawce. Po utracie wyniku
+wywołania i ponownym otwarciu dane nadal są dostępne, nawet gdy ponowienie
+nie dodaje nowych ID. Używa normalizacji D, bez wcześniejszego oznaczania
+rekordów jako zapamiętanych w jego rejestrze ulotnym.
+
+```bash
+python3 -B tools/v0145e_atomic_handoff.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0145e*.py' -v
+python3 -B tools/v0145e_atomic_handoff.py --lab
+```
+
+Oczekiwane: **34 testy OK**, `V0145E_RESULT=PASS_DISPOSABLE_ATOMIC_HANDOFF_ONLY`
+i `TEMP_STATE_REMOVED=YES`. Self-test tylko w pamięci; laboratorium i testy
+plikowe używają świeżych prywatnych katalogów `/tmp`, które są usuwane na końcu.
+Osierocony plik tymczasowy oznacza HOLD bez automatycznego sprzątania.
+Nagłe zakończenie procesu nie jest utratą zasilania.
+
+Migawka ma maksymalnie 1024 rekordy / 512 KiB, a jej SHA-256 wykrywa uszkodzenia,
+nie potwierdza pochodzenia. Format nie jest strumieniem NDJSON ani adapterem
+Alloy/A–C. Brak odbiornika, ACK, automatycznego ponawiania i kasowania danych;
+nie deklarujemy exactly-once ani wdrożenia trwałego bufora. E ma wynik Work,
+bez akceptacji na Fedorze i bez kontaktu z usługami.
+
+## Granice wyniku — aktualizacja po E
+
+W środowisku Work wykonano A–E **152/152 testów**, pełne HCC **357/357 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,

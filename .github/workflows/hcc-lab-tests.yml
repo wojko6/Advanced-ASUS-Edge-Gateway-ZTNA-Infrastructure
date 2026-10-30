@@ -36,6 +36,8 @@ jobs:
           python3 -B tools/v0145c_checkpoint_store.py --lab
           python3 -B tools/v0145d_event_identity.py --self-test
           python3 -B tools/v0145d_event_identity.py --lab
+          python3 -B tools/v0145e_atomic_handoff.py --self-test
+          python3 -B tools/v0145e_atomic_handoff.py --lab
       - name: Bash runner syntax check
         run: |
           bash -n experiments/fedora/homelab-control-center-v0.1/run-lab.sh

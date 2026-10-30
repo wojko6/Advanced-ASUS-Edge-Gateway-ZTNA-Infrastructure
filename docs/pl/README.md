@@ -7,7 +7,7 @@ Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest
 
 ## Pierwsza wizyta — od czego zacząć?
 
-Laboratorium robocze: [HCC V0.14.5A–D — segmenty, odtwarzanie i syntetyczna tożsamość rekordów](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Osobne wyniki operatora na Fedorze: A–B 59/59 i oba laboratoria PASS, C 28/28 i laboratorium PASS. D: 31 testów Work, bez akceptacji na Fedorze ani integracji. Nie obejmuje to rzeczywistego Alloy/SELinux i wdrożenia.
+Laboratorium robocze: [HCC V0.14.5A–E — odtwarzanie, tożsamość i atomowy zapis ID/treści](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Osobne wyniki operatora na Fedorze: A–B 59/59 i oba laboratoria PASS, C 28/28 i laboratorium PASS. D 31 i E 34 testy Work, bez akceptacji na Fedorze i rzeczywistej integracji. Nie obejmuje to Alloy/SELinux ani wdrożenia.
 
 **Nowy czytelnik?** Otwórz **[Zacznij tutaj — przewodnik na 15–20 minut](START-HERE.md)** ([English](../START-HERE.md)). To bezpieczna ścieżka poznania projektu: od celu i diagramu architektury po aktualny stan, ograniczenia i dobór dalszych materiałów. **Nie wymaga instalacji ani poleceń na routerze.**
 

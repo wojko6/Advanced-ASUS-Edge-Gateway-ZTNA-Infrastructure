@@ -90,6 +90,16 @@ collector-run/incident identity or exactly-once delivery. The new schema is
 **incompatible with A–C**, with a regression requiring rejection. No actual
 spool/Alloy integration or D Fedora operator test has occurred.
 
+**V0.14.5E disposable atomic handoff (Work only):** the
+[new private snapshot store](V0.14.5E-ATOMIC-HANDOFF-LAB.md) puts record ID and
+complete canonical payload in the same publication. Losing a receipt does not
+make committed payload unavailable on reopen/replay. E uses D normalization
+without precommitting its volatile ledger; no separate seen-ID file exists.
+**34/34 E tests**, current **152/152 A–E**, **357/357 HCC Python**, **55/55
+JavaScript** PASS. This is a retained snapshot, not a receiver ACK or an
+append-only Alloy stream. No deletion, scheduler, source authentication,
+production store, A–C migration, power-loss guarantee or E Fedora result.
+
 **DEPLOYMENT_GATE=HOLD.**
 
 ## Acceptance boundaries
