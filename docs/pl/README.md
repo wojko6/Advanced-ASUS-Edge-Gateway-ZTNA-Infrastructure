@@ -1,11 +1,13 @@
 # Dokumentacja po polsku — ASUS Edge Gateway
 
 **Status:** indeks bieżących instrukcji i dokumentów pomocniczych  
-**Aktualizacja:** 2026-10-30 (zamrożony zakres laboratorium HCC V0.14.5A–K; bez wdrożenia ani walidacji produkcyjnej)
+**Aktualizacja:** 2026-10-30 (zamrożony HCC V0.14.5A–K i osobny model V0.14.6A; bez wdrożenia ani walidacji produkcyjnej)
 
 Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest osobną kopią całej dokumentacji projektu. **Techniczny stan infrastruktury i zasady bezpieczeństwa** pozostają opisane w [PROJECT-STATUS.md](../../PROJECT-STATUS.md), [modelu dokumentacji](../documentation-model.md) i [polityce językowej](../language-policy.md).
 
 ## Pierwsza wizyta — od czego zacząć?
+
+Osobny następny Draft: [HCC V0.14.6A — model metadanych journala i snapshot D/E](hcc-v0146a-journal-envelope-lab.md), oparty na zamrożonym #338. **29 nowych / 571 Python / 55 JavaScript PASS** w Work. Adapter działa w pamięci i sprawdza podane deklaracje, bez dowodu pochodzenia danych; nie czyta rzeczywistego journala i nie zapisuje stanu. Brak wyniku na Fedorze. `DEPLOYMENT_GATE=HOLD`.
 
 Laboratorium robocze: [HCC V0.14.5A–K — odtwarzanie, testowe ACK, plan partii i własne fikstury HTTP](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Zakres A–K zamrożony po przeglądzie; dalsze integracje zaplanowane w osobnych PR-ach. Osobne wyniki operatora na Fedorze: A–B 59/59 i oba laboratoria PASS, C 28/28 i laboratorium PASS. D 31, E 34, F 37, G 36, H 26, I 30, J 30 i K 25 testów Work, bez akceptacji na Fedorze. H/I są pamięciowe; J wysyła jedną partię do własnego odbiornika loopback, K wykonuje ograniczony początek planu z zatrzymaniem po pierwszym błędzie. Aktualnie 336 A–K w 542 Python / 55 JavaScript PASS; starszy parser V0.14 odrzuca już liczby nieskończone i NaN. Brak rzeczywistego Loki, zapisu postępu J/K, testu zaniku zasilania, Alloy/SELinux i wdrożenia.
 

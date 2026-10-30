@@ -10,7 +10,7 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
-- [2026-10-30](2026-10-30.md) — **Draft #338 / scope frozen at A–K:** separate Fedora A–B 59/59 + both labs PASS, C 28/28 + disposable lab PASS. Closing review fixed legacy V0.14 non-finite report values and B3B2E test ordering; failed results retained. **336 A–K included in 542 HCC Python / 55 JavaScript PASS** in Work; scoped branch CI and proposed follow-up PR boundaries documented. No real Loki receipt, progress change or D–K Fedora/Alloy/SELinux/power-loss/production acceptance; PR stays open/Draft/unmerged, `DEPLOYMENT_GATE=HOLD`.
+- [2026-10-30](2026-10-30.md) — **#338 frozen at A–K / separate stacked V0.14.6A Draft:** parent closing review 542 Python / 55 JavaScript PASS; new supplied-metadata-to-D/E adapter **29 new / 571 full Python / 55 JavaScript PASS** in Work. Prepublication Unicode/conflict failures retained/fixed; fabricated consistent metadata remains unauthenticated. Separate Fedora A–B 59/59 and C 28/28 evidence unchanged. No live journal/Loki, new Fedora, durable progress or production acceptance; no merge/deployment, `DEPLOYMENT_GATE=HOLD`.
 
 **Legacy #151 source archive (2026-10-15):** the [RouterCloud historical PR comparison](../audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md) preserves the [September 30 #137 acceptance evidence](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) and [original dated design notes](../history/routercloud-browser-access-2026-09-30.md) without installing obsolete startup scripts or changing the production router.
 

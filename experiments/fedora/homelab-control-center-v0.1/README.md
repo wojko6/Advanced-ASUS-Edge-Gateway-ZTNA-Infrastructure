@@ -177,6 +177,16 @@ unchanged. Follow-up input/storage, transport/receipt and Fedora runtime work
 belongs in separate PRs. #338 remains open/Draft/unmerged; source scope freeze
 does not grant deployment or Fedora/actual Loki acceptance.
 
+**Separate V0.14.6A stacked Draft follow-up:** the
+[supplied journal-envelope adapter](V0.14.6A-SUPPLIED-JOURNAL-ENVELOPE-LAB.md)
+checks declared metadata and maps three text hints to D identity / E snapshot
+bytes in memory, preserving microseconds and distinct cursors. **29/29 new
+cases / 571/571 full Python / 55/55 JavaScript PASS** in Work. Supplied JSON
+can be forged and is not trusted provenance. No reader, actual journal,
+file/key input, persistence, ACK, transport or V0.14.6A Fedora acceptance.
+The new Draft targets frozen #338's branch; its A–K source remains unchanged.
+[PL adaptation](../../../docs/pl/hcc-v0146a-journal-envelope-lab.md).
+
 **DEPLOYMENT_GATE=HOLD.**
 
 ## Acceptance boundaries
