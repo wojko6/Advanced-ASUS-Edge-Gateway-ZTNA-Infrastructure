@@ -1,13 +1,13 @@
 # Dokumentacja po polsku — ASUS Edge Gateway
 
 **Status:** indeks bieżących instrukcji i dokumentów pomocniczych  
-**Aktualizacja:** 2026-10-30 (dodanie izolowanego laboratorium HCC V0.14.5A–B; bez wdrożenia ani walidacji produkcyjnej)
+**Aktualizacja:** 2026-10-30 (izolowane laboratorium HCC V0.14.5A–F; bez wdrożenia ani walidacji produkcyjnej)
 
 Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest osobną kopią całej dokumentacji projektu. **Techniczny stan infrastruktury i zasady bezpieczeństwa** pozostają opisane w [PROJECT-STATUS.md](../../PROJECT-STATUS.md), [modelu dokumentacji](../documentation-model.md) i [polityce językowej](../language-policy.md).
 
 ## Pierwsza wizyta — od czego zacząć?
 
-Laboratorium robocze: [HCC V0.14.5A–E — odtwarzanie, tożsamość i atomowy zapis ID/treści](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Osobne wyniki operatora na Fedorze: A–B 59/59 i oba laboratoria PASS, C 28/28 i laboratorium PASS. D 31 i E 34 testy Work, bez akceptacji na Fedorze i rzeczywistej integracji. Nie obejmuje to Alloy/SELinux ani wdrożenia.
+Laboratorium robocze: [HCC V0.14.5A–F — odtwarzanie, tożsamość, zapis treści i testowe ACK](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Osobne wyniki operatora na Fedorze: A–B 59/59 i oba laboratoria PASS, C 28/28 i laboratorium PASS. D 31, E 34 i F 37 testów Work, bez akceptacji na Fedorze. F ma wyłącznie ulotny odbiornik w pamięci, nie rzeczywisty protokół Loki. Nie obejmuje to trwałości odbiornika, Alloy/SELinux ani wdrożenia.
 
 **Nowy czytelnik?** Otwórz **[Zacznij tutaj — przewodnik na 15–20 minut](START-HERE.md)** ([English](../START-HERE.md)). To bezpieczna ścieżka poznania projektu: od celu i diagramu architektury po aktualny stan, ograniczenia i dobór dalszych materiałów. **Nie wymaga instalacji ani poleceń na routerze.**
 

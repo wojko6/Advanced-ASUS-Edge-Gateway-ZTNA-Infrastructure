@@ -10,7 +10,7 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
-- [2026-10-30](2026-10-30.md) — **Draft #338 only:** separate Fedora A–B 59/59 + both labs PASS, C 28/28 + disposable lab PASS. D synthetic identity and E atomic ID/payload snapshot: 34 E / 152 A–E / 357 HCC Python / 55 JavaScript PASS in Work; no D/E trusted source, receiver/A–C/Alloy integration or Fedora result. Real SELinux/Alloy, power-loss and production gates HOLD; no merge or deployment.
+- [2026-10-30](2026-10-30.md) — **Draft #338 only:** separate Fedora A–B 59/59 + both labs PASS, C 28/28 + disposable lab PASS. D identity, E retained ID/payload snapshot and F volatile fake receiver/private ACK file: 37 F / 189 A–F / 394 HCC Python / 55 JavaScript PASS in Work. No D/E/F Fedora result, trusted source, durable receiver or A–C/Alloy integration. Real SELinux/Alloy, power-loss and production gates HOLD; no merge or deployment.
 
 **Legacy #151 source archive (2026-10-15):** the [RouterCloud historical PR comparison](../audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md) preserves the [September 30 #137 acceptance evidence](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) and [original dated design notes](../history/routercloud-browser-access-2026-09-30.md) without installing obsolete startup scripts or changing the production router.
 

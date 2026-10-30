@@ -1,4 +1,4 @@
-# HCC V0.14.5A–E — instrukcja izolowanego laboratorium
+# HCC V0.14.5A–F — instrukcja izolowanego laboratorium
 
 **Status:** polska adaptacja operatorska, 2026-10-30; Draft PR #338,
 bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
@@ -7,6 +7,7 @@ bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
 Etap C opisuje [osobny kontrakt zapisu punktu wznowienia](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
 Etap D opisuje [osobny kontrakt syntetycznej tożsamości rekordów](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5D-SYNTHETIC-EVENT-IDENTITY-LAB.md).
 Etap E opisuje [atomowy zapis identyfikatora i treści](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5E-ATOMIC-HANDOFF-LAB.md).
+Etap F opisuje [testowy odbiornik i osobny plik ACK](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5F-SYNTHETIC-DELIVERY-ACK-LAB.md).
 Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
 **59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Następnie osobno
 potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
@@ -128,15 +129,58 @@ Alloy/A–C. Brak odbiornika, ACK, automatycznego ponawiania i kasowania danych;
 nie deklarujemy exactly-once ani wdrożenia trwałego bufora. E ma wynik Work,
 bez akceptacji na Fedorze i bez kontaktu z usługami.
 
-## Granice wyniku — aktualizacja po E
+## Osobny etap F — testowy odbiornik i plik potwierdzeń
 
-W środowisku Work wykonano A–E **152/152 testów**, pełne HCC **357/357 Python**
+F wysyła po jednym zachowanym rekordzie E do ulotnego odbiornika w pamięci.
+Zapisuje ACK dopiero po dokładnym dopasowaniu schematu, zakresu klucza, ID i
+skrótu pełnej treści rekordu. To własny protokół testowy, nie potwierdzenie HTTP
+Loki ani dowód trwałego odbioru. Odbiornik nie usuwa duplikatów prób.
+
+```bash
+python3 -B tools/v0145f_delivery_ack.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0145f*.py' -v
+python3 -B tools/v0145f_delivery_ack.py --lab
+```
+
+Oczekiwane: **37 testów OK**,
+`V0145F_RESULT=PASS_DISPOSABLE_DELIVERY_ACK_ONLY`,
+`ACK_PROTOCOL=IN_PROCESS_FIXTURE_NOT_LOKI`, `RECEIVER_DURABILITY=NOT_IMPLEMENTED`,
+`SOURCE_PAYLOADS_RETAINED=3`, `SYNTHETIC_RECEIVE_ATTEMPTS=4`,
+`TEMP_STATE_REMOVED=YES` i `DEPLOYMENT_GATE=HOLD`.
+Jedno celowe powtórzenie następuje po odbiorze bez zapisu ACK.
+
+Plik `delivery-acks.json` ma tryb 0600 w osobnym katalogu 0700, limit 1024 par
+ID/hash i 256 KiB. Zapis: prywatny plik tymczasowy, pełny zapis, fsync pliku,
+atomowa podmiana i fsync katalogu. Nowa para nie może nadpisać poprzedniej.
+Wznowienie śledzi zbiór ID, dzięki czemu nie pomija później dodanego niższego ID;
+kolejność nie jest chronologiczna. Wszystkie rekordy E pozostają zachowane.
+
+Uszkodzony/obcy/osierocony stan, zmiana zakresu klucza lub brak/zmiana wcześniej
+potwierdzonego rekordu oznaczają HOLD, bez zerowania i kasowania. Całkowita
+utrata pliku ACK może spowodować ponowne próby. Skrót stanu nie uwierzytelnia
+odbiornika ani zapisu; proces root i niewspółpracujący zapis z tym samym UID
+nie są objęte modelem. Dwa katalogi muszą być różne i pozostawać zablokowane
+przez całe wywołanie; nie współdziel deskryptorów między równoległymi wywołaniami.
+
+Cztery testy osobnych procesów sprawdzają nagłe zakończenie po zweryfikowanym
+ACK przed zapisem, po fsync pliku tymczasowego, po podmianie oraz po fsync
+katalogu przed zwrotem. To nie jest zanik zasilania ani trwałość odbiornika.
+Self-test jest pamięciowy; pliki laboratorium/testów pozostają w świeżych
+drzewach `/tmp` usuwanych na końcu. Brak automatycznego ponawiania, retencji,
+rzeczywistego transportu i adaptera Alloy/A–C. F ma wynik Work, bez testu na Fedorze.
+
+## Granice wyniku — aktualizacja po F
+
+W środowisku Work wykonano A–F **189/189 testów**, pełne HCC **394/394 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,
 SELinux, trwałych ACL i utraty zasilania. Wklejony wynik C nie zawierał
 wersji Pythona/jądra, SHA checkoutu ani wyjścia self-testu; nie dopisujemy ich
 na podstawie pamięci wcześniejszych sesji.
+D/E/F nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
+repozytorium nadal kończy się kodem 1 w niezmienionych testach DNS Guard UDP/TCP;
+wyniki HCC i zdalnego CI są raportowane osobno w PR i dzienniku.
 Poprzedni ZIP z 19
 testami jest historyczną wersją V0.14.5A, a nie aktualnym kodem tej gałęzi.
 

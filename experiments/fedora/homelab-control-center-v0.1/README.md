@@ -83,7 +83,7 @@ See [V0.13–V0.14 evidence and deployment boundaries](V0.13-TO-V0.14-CORRELATIO
 retains integer microseconds and opaque keyed IDs, recognizes exact replay,
 preserves distinct same-time/kind records and refuses changed payload under
 the same ID without partially updating its bounded ledger. **31/31 D tests**,
-current **118/118 A–D**, **323/323 HCC Python**, **55/55 JavaScript** PASS in Work.
+at the D checkpoint **118/118 A–D**, **323/323 HCC Python**, **55/55 JavaScript** PASS in Work.
 The key is a public fixture, input unit/cursor is merely declared synthetic
 metadata, and the ledger is volatile. This is not authenticated journal input,
 collector-run/incident identity or exactly-once delivery. The new schema is
@@ -95,10 +95,21 @@ spool/Alloy integration or D Fedora operator test has occurred.
 complete canonical payload in the same publication. Losing a receipt does not
 make committed payload unavailable on reopen/replay. E uses D normalization
 without precommitting its volatile ledger; no separate seen-ID file exists.
-**34/34 E tests**, current **152/152 A–E**, **357/357 HCC Python**, **55/55
+**34/34 E tests**, at the E checkpoint **152/152 A–E**, **357/357 HCC Python**, **55/55
 JavaScript** PASS. This is a retained snapshot, not a receiver ACK or an
 append-only Alloy stream. No deletion, scheduler, source authentication,
 production store, A–C migration, power-loss guarantee or E Fedora result.
+
+**V0.14.5F synthetic delivery ACK state (Work only):** the
+[separate disposable ACK model](V0.14.5F-SYNTHETIC-DELIVERY-ACK-LAB.md) attempts
+one retained E record at a time through a volatile in-process fake receiver.
+The private ACK file advances after an exact scope/ID/payload-hash match;
+reopen resumes by ID without skipping newly appended lower IDs. Receive before
+ACK storage can repeat an attempt. E source payloads are never deleted.
+**37/37 F tests**, current **189/189 A–F**, **394/394 HCC Python**, **55/55
+JavaScript** PASS. Four child-exit phases do not prove physical power-loss or
+remote-receiver durability. This fixture is not Loki's ACK protocol or an
+installed transport/scheduler. No F Fedora result, real source, GC or service change.
 
 **DEPLOYMENT_GATE=HOLD.**
 
