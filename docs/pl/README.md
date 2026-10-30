@@ -1,11 +1,13 @@
 # Dokumentacja po polsku — ASUS Edge Gateway
 
 **Status:** indeks bieżących instrukcji i dokumentów pomocniczych  
-**Aktualizacja:** 2026-10-30 (zamrożony zakres laboratorium HCC V0.14.5A–K; bez wdrożenia ani walidacji produkcyjnej)
+**Aktualizacja:** 2026-10-30 (zamrożony HCC V0.14.5A–K i osobny model/import V0.14.6A–B; bez wdrożenia ani walidacji produkcyjnej)
 
 Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest osobną kopią całej dokumentacji projektu. **Techniczny stan infrastruktury i zasady bezpieczeństwa** pozostają opisane w [PROJECT-STATUS.md](../../PROJECT-STATUS.md), [modelu dokumentacji](../documentation-model.md) i [polityce językowej](../language-policy.md).
 
 ## Pierwsza wizyta — od czego zacząć?
+
+Osobny Draft #342: [HCC V0.14.6A–C — metadane, testowy zapis i ograniczony proces źródła](hcc-v0146a-journal-envelope-lab.md), oparty na zamrożonym #338. **32 C / 93 V0.14.6A–C / 635 Python / 55 JavaScript PASS** w Work. A sprawdza podane metadane, B zapisuje własny prywatny snapshot, C dodaje ograniczony proces Pythona przed importem. Błąd procesu nie zapisuje poprawnego początku danych; testy sprawdzają limity, sprzątanie i powtórzenia. Brak rzeczywistego czytnika journala, dowodu pochodzenia, nowej akceptacji na Fedorze i zaniku zasilania. `DEPLOYMENT_GATE=HOLD`.
 
 Laboratorium robocze: [HCC V0.14.5A–K — odtwarzanie, testowe ACK, plan partii i własne fikstury HTTP](hcc-v0145-offline-lab.md), Draft #338 / `DEPLOYMENT_GATE=HOLD`. Zakres A–K zamrożony po przeglądzie; dalsze integracje zaplanowane w osobnych PR-ach. Osobne wyniki operatora na Fedorze: A–B 59/59 i oba laboratoria PASS, C 28/28 i laboratorium PASS. D 31, E 34, F 37, G 36, H 26, I 30, J 30 i K 25 testów Work, bez akceptacji na Fedorze. H/I są pamięciowe; J wysyła jedną partię do własnego odbiornika loopback, K wykonuje ograniczony początek planu z zatrzymaniem po pierwszym błędzie. Aktualnie 336 A–K w 542 Python / 55 JavaScript PASS; starszy parser V0.14 odrzuca już liczby nieskończone i NaN. Brak rzeczywistego Loki, zapisu postępu J/K, testu zaniku zasilania, Alloy/SELinux i wdrożenia.
 

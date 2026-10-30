@@ -177,6 +177,45 @@ unchanged. Follow-up input/storage, transport/receipt and Fedora runtime work
 belongs in separate PRs. #338 remains open/Draft/unmerged; source scope freeze
 does not grant deployment or Fedora/actual Loki acceptance.
 
+**Separate V0.14.6A stacked Draft follow-up:** the
+[supplied journal-envelope adapter](V0.14.6A-SUPPLIED-JOURNAL-ENVELOPE-LAB.md)
+checks declared metadata and maps three text hints to D identity / E snapshot
+bytes in memory, preserving microseconds and distinct cursors. At the A checkpoint:
+**29 cases / 571 full Python / 55 JavaScript PASS** in Work. Supplied JSON
+can be forged and is not trusted provenance. No reader, actual journal,
+file/key input, persistence, ACK, transport or V0.14.6A Fedora acceptance.
+The new Draft targets frozen #338's branch; its A–K source remains unchanged.
+[PL adaptation](../../../docs/pl/hcc-v0146a-journal-envelope-lab.md).
+
+**V0.14.6B in Draft #342:** the
+[disposable import](V0.14.6B-DISPOSABLE-IMPORT-LAB.md) merges A-derived E events
+into its own private temporary snapshot with scoped policy, atomic replacement
+and reopen/replay. **32 B / 61 V0.14.6A–B cases**, full Work **603/603 Python /
+55/55 JavaScript PASS**. Three actual child exits and file/directory errors
+are tested. The store retains sanitized events, not raw-message fingerprints
+or delivery/source progress; total state loss can appear fresh. No real
+journal, production store/service, transport, Fedora or power-loss acceptance.
+A and the frozen parent implementations are unchanged.
+
+**V0.14.6C in Draft #342:** the
+[bounded source/import boundary](V0.14.6C-BOUNDED-SOURCE-LAB.md) receives JSONL
+from one fixed owned Python child, bounds both streams in flight and requires
+exit 0 / empty stderr / complete framing before A/B import. It kills/reaps
+failed or stalled children; tests cover output followed by failure and
+unchanged retained state. **32 C / 93 V0.14.6A–C cases PASS** in Work.
+This is not journalctl execution or a trusted journal reader. The deadline
+starts after process creation; no hard OS/filesystem deadline or empty-batch
+acceptance. A/B and frozen parent code remain unchanged; final full Work
+**635/635 Python / 55/55 JavaScript PASS**. Earlier child-test timeouts remain
+in the worklog; current-head CI is recorded in Draft #342.
+
+**Session paused after V0.14.6C (2026-10-30):** tested implementation
+`bb50897` has **4/4 push/PR workflows SUCCESS**. The
+[closing checkpoint](../../../docs/worklog/2026-10-30.md#session-close--v0146c-code-checkpoint-and-next-step)
+records exact run links, limits and the next owned binary-journal fixture.
+The closure changes documentation only. No new feature stage or Fedora
+operator run has started; both Drafts remain unmerged.
+
 **DEPLOYMENT_GATE=HOLD.**
 
 ## Acceptance boundaries

@@ -1,9 +1,10 @@
 name: Homelab Control Center lab checks
 on:
-  # Validate this Draft branch directly when a PR run is not available.
+  # Validate these Draft branches directly when a PR run is not available.
   push:
     branches:
       - 'lab/hcc-v014-alloy-manual-correlation-20261029'
+      - 'lab/hcc-v0146a-journal-envelope-contract-20261030'
     paths:
       - 'experiments/fedora/homelab-control-center-v0.1/**'
       - '.github/workflows/hcc-lab-tests.yml'
@@ -57,6 +58,15 @@ jobs:
           python3 -B tools/v0145j_loopback_exchange.py --lab
           python3 -B tools/v0145k_prefix_exchange.py --self-test
           python3 -B tools/v0145k_prefix_exchange.py --lab
+      - name: V0.14.6A–C isolated import and source contracts
+        run: |
+          cd experiments/fedora/homelab-control-center-v0.1
+          python3 -B tools/v0146a_journal_envelope.py --self-test
+          python3 -B tools/v0146a_journal_envelope.py --lab
+          python3 -B tools/v0146b_disposable_import.py --self-test
+          python3 -B tools/v0146b_disposable_import.py --lab
+          python3 -B tools/v0146c_bounded_source.py --self-test
+          python3 -B tools/v0146c_bounded_source.py --lab
       - name: Bash runner syntax check
         run: |
           bash -n experiments/fedora/homelab-control-center-v0.1/run-lab.sh

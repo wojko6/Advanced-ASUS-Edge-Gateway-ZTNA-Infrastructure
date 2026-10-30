@@ -2,6 +2,47 @@
 
 **Status date: 2026-10-28.** Most recent operator-reported **ASUS production maintenance** was the separately approved **stable Tailscale 1.104.4 ARMv7 paired-binary upgrade** on October 28, including runtime/daemon hash validation and project healthcheck 0 failures / 0 warnings; the previous **WebUI-only Issue #283** three-file publication on October 25 remains the latest WebUI change. The last **DNS service** change remains October 24 **Unbound 1.26.2-1 R2** with bounded UDP/TCP DNSSEC acceptance. Tailscale cold boot, extended soak, IPv6 and forced rollback are **NOT TESTED**. No new HCC permanent deployment, RouterCloud/DUFS, DNS Guard or firewall feature is implied by merging documentation. Unplanned October 24 DNS Guard resolver fail-open/failback was observed, not controlled client DNS continuity. Existing #235/#278/#287/#298/#299 and HCC gates remain HOLD.
 
+## 2026-10-30 — V0.14.6A–C supplied-metadata/import follow-up (stacked Draft #342)
+
+The [V0.14.6A adapter](experiments/fedora/homelab-control-center-v0.1/V0.14.6A-SUPPLIED-JOURNAL-ENVELOPE-LAB.md)
+is a separate follow-up based on frozen #338 head `82ba838`, targeting that
+parent branch. It validates supplied journal-like JSON metadata and maps a
+strict stdout subset to D identity / E snapshot bytes in memory. At the A
+checkpoint: **29 cases / 571 full Python / 55 JavaScript PASS**. B adds a
+[disposable atomic E import](experiments/fedora/homelab-control-center-v0.1/V0.14.6B-DISPOSABLE-IMPORT-LAB.md)
+with **32 cases**, UID/unit/transport-scoped IDs, retained-set merge and
+reopen/replay without rewriting duplicates. B checkpoint: **603/603 Python /
+55/55 JavaScript PASS**, including **61 V0.14.6A–B cases**. C adds a
+[bounded owned Python source](experiments/fedora/homelab-control-center-v0.1/V0.14.6C-BOUNDED-SOURCE-LAB.md)
+before A/B: concurrent bounded streams, exit/stderr checks, deadline and
+kill/reap before any import. **32 C / 93 V0.14.6A–C cases PASS** in Work;
+final full regression **635/635 Python / 55/55 JavaScript PASS**. The earlier
+two child-test timeouts remain in the worklog; exact-head CI is in Draft #342.
+#338's A–K and A/B modules remain unchanged.
+
+**Session paused at V0.14.6C, operator request 2026-10-30.** Last code change
+`bb508977a2542212da412bd941f7b31e2830df14` has **4/4 push/PR workflows
+completed SUCCESS**; the HCC push log confirms 635 Python / 55 JavaScript
+and the C cleanup/error markers. The
+[session checkpoint and run links](docs/worklog/2026-10-30.md#session-close--v0146c-code-checkpoint-and-next-step)
+separate this tested code from the documentation-only closure. Next work is
+an owned binary-journal reader/completeness fixture; it has not started.
+No Fedora action is required to close this session.
+
+Supplied fields can be forged; a test explicitly accepts consistent fabricated
+metadata. No trusted journal reader, actual provenance, private key lifecycle,
+delivery ACK/source checkpoint or transport is implemented. B stores only a
+disposable private snapshot; its three child-exit cases are not power-loss
+acceptance. It retains sanitized payloads, not cross-call raw-message evidence;
+total snapshot loss can replay like a fresh store.
+C runs only a fixed synthetic producer, not journalctl. Its two-second
+deadline starts after process creation; empty output remains HOLD and
+successful child output is not authenticated source evidence.
+Only three message hints are classified; manager exit-255 attribution is
+unsupported. No real journal, Fedora/ASUS service or Alloy/Loki contact. The
+original #338 remains Draft/unmerged and frozen at its own 542-case checkpoint;
+the production-status date above is unchanged. **DEPLOYMENT_GATE=HOLD.**
+
 ## 2026-10-30 — HCC V0.14.5A–K lab scope frozen (Draft only)
 
 [Draft #338](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/338)
