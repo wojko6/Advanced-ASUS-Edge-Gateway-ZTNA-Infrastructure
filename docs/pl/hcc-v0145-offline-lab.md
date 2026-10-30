@@ -1,4 +1,4 @@
-# HCC V0.14.5A–I — instrukcja izolowanego laboratorium
+# HCC V0.14.5A–J — instrukcja izolowanego laboratorium
 
 **Status:** polska adaptacja operatorska, 2026-10-30; Draft PR #338,
 bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
@@ -11,6 +11,7 @@ Etap F opisuje [testowy odbiornik i osobny plik ACK](../../experiments/fedora/ho
 Etap G opisuje [plikowy odbiornik testowy i deduplikację zachowanych ID](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5G-DISPOSABLE-FILE-RECEIVER-LAB.md).
 Etap H opisuje [formatter żądania JSON Loki działający w pamięci](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5H-OFFLINE-LOKI-REQUEST-LAB.md).
 Etap I opisuje [planowanie partii z kontrolą wersji źródła i testowych ACK](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5I-OFFLINE-BATCH-PLAN-LAB.md).
+Etap J opisuje [jedną wymianę HTTP z własną fiksturą loopback](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5J-OWNED-LOOPBACK-EXCHANGE-LAB.md).
 Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
 **59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Następnie osobno
 potwierdził C: **28/28 testów OK w 0.171 s, laboratorium i sprzątanie PASS**.
@@ -309,18 +310,71 @@ plan bez rzeczywistego odbioru. Skróty nie uwierzytelniają danych, a ogranicze
 G dotyczące utraty pary plików nadal obowiązuje. Brak klienta HTTP, harmonogramu,
 przesuwania punktu wznowienia, retencji i wyniku I na Fedorze.
 
-## Granice wyniku — aktualizacja po I
+## Osobny etap J — jedna wymiana z własnym odbiornikiem HTTP
 
-W środowisku Work wykonano A–I **281/281 testów**, pełne HCC **486/486 Python**
+J uruchamia własny tymczasowy odbiornik na numerycznym IPv4 `127.0.0.1` i porcie
+wybranym przez system. Jeden proces Pythona wysyła wybraną partię H z wcześniej
+zweryfikowanego planu I. Odbiornik sprawdza prywatny token tej fikstury i dokładne
+bajty żądania. Nie ma opcji adresu/portu produkcyjnego ani automatycznych ponowień.
+
+```bash
+python3 -B tools/v0145j_loopback_exchange.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0145j*.py' -v
+python3 -B tools/v0145j_loopback_exchange.py --lab
+```
+
+Wymagane: Linux/Python 3.10+, możliwość utworzenia własnego gniazda IPv4 loopback
+i jednego procesu potomnego. **Self-test jest pamięciowy; laboratorium oraz
+sieciowe testy J używają własnych gniazd loopback i ograniczonych czasowo procesów.**
+Nie wymagają sudo, zmiany usług, praw journala ani połączenia z rzeczywistym Loki.
+
+Oczekiwane: **30 testów OK**,
+`V0145J_RESULT=PASS_OWNED_LOOPBACK_FIXTURE_ONLY`,
+`SYNTHETIC_REQUESTS_SENT=1 RECORDS_IN_REQUEST=16`,
+`HTTP_STATUS=204 FIXTURE_BODY_MATCH=YES`, `CLIENT_ATTEMPTS=1 AUTOMATIC_RETRY=NO`,
+`CLIENT_WORKER=EXITED_AND_REAPED FIXTURE_LISTENER=CLOSED`,
+`NETWORK=OWNED_EPHEMERAL_IPV4_LOOPBACK_ONLY`,
+`REAL_LOKI_ACCEPTANCE=NOT_TESTED ACK_OR_CHECKPOINT_ADVANCE=NO`
+i `DEPLOYMENT_GATE=HOLD`. Fikstura zachowuje w pamięci dokładną treść żądania.
+Po wymianie nadal pozostają **33 rekordy oczekujące / dwa zadeklarowane ACK**.
+Nie zapisano danych do pliku ani punktu wznowienia.
+
+Rodzic ogranicza komunikację procesu klienta do 2 sekund od jego utworzenia;
+po przekroczeniu limitu lub przerwaniu kończy proces i zbiera go z osobnym
+limitem 1 sekundy. Samo tworzenie procesu nie jest objęte tym limitem. Zamknięcie
+kontekstu zwalnia blokadę testowego zawieszenia, zamyka połączenie/listener
+i kończy wątek odbiornika. Nieudane sprzątanie oznacza HOLD. Przed publikacją
+test wykrył brak tej obsługi dla `KeyboardInterrupt`; poprawka i wynik negatywny
+pozostają w dzienniku. Rzeczywisty test limitu czasu zebrał proces klienta;
+przerwanie oraz `OSError` sprawdzono przez wstrzyknięte wyjątki.
+
+Sprawdzono błędne 200/260, przekierowanie, 429/500, dodatkową treść, błędne
+ramkowanie, zerwane połączenie i zły status. Nie przyjmujemy ogólnego „2xx = ACK”:
+dokumentacja Loki dopuszcza konfigurowalny status blokady ingestii, także 200.
+J uznaje wyłącznie wybraną odpowiedź własnej fikstury oraz obserwację zgodnych
+bajtów. To zależy od kontroli nad odbiornikiem i **nie dowodzi trwałego przyjęcia
+przez prawdziwy Loki**. Parser HTTP może traktować 204 jako odpowiedź bez treści;
+dlatego J dodatkowo sprawdza pustą odpowiedź w skrypcie kontrolowanej fikstury.
+
+Odczyt odpowiedzi ma limit aplikacyjny 512 bajtów plus jeden bajt kontroli,
+raport klienta 1 KiB. Kontrola liczby/rozmiaru nagłówków następuje po parsowaniu
+przez bibliotekę standardową, nie przed nim. Nie jest to audyt produkcyjnego
+klienta HTTP. Brak TLS/auth/tenantów, przyjęcia/readback Loki, wysyłki wielu
+partii, mapowania odpowiedzi na ACK i blokad żywego źródła. Token fikstury nie
+jest systemem uwierzytelniania hostów. J nie ma wyniku na Fedorze.
+
+## Granice wyniku — aktualizacja po J
+
+W środowisku Work wykonano A–J **311/311 testów**, pełne HCC **516/516 Python**
 i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
 laboratoria), następnie C (28/28 i laboratorium). Są to dwa osobne uruchomienia,
 bez wyniku pełnej regresji HCC na Fedorze. Brak akceptacji rzeczywistego Alloy,
 SELinux, trwałych ACL i utraty zasilania. Wklejony wynik C nie zawierał
 wersji Pythona/jądra, SHA checkoutu ani wyjścia self-testu; nie dopisujemy ich
 na podstawie pamięci wcześniejszych sesji.
-D/E/F/G/H/I nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
+D/E/F/G/H/I/J nie mają wyników operatora na Fedorze. Ogólny lokalny zestaw statyczny
 repozytorium nadal kończy się kodem 1 w niezmienionych testach DNS Guard UDP/TCP;
-bieżący przebieg I oraz wcześniejszy diagnostyczny H odtworzyły ten punkt
+bieżący przebieg J oraz wcześniejsze I i diagnostyczny H odtworzyły ten punkt
 zatrzymania. Pierwszy przebieg H
 zatrzymał się wcześniej bez wskazania przyczyny; osobny test healthcheck przeszedł
 7/7. Wyniki HCC i zdalnego CI oraz opisane nieudane przebiegi lokalne pozostają
@@ -329,7 +383,7 @@ Poprzedni ZIP z 19
 testami jest historyczną wersją V0.14.5A, a nie aktualnym kodem tej gałęzi.
 
 Nie ma czytnika journala, zaufanej tożsamości rzeczywistych zdarzeń, produkcyjnego
-magazynu punktu wznowienia, automatycznej retencji, usługi ani nowego endpointu HCC. Istniejący
+magazynu punktu wznowienia, automatycznej retencji, zainstalowanej usługi ani nowego endpointu HCC. Istniejący
 nieaktywny fragment Alloy wskazuje pojedynczy plik i nie obsługuje tego modelu
 segmentów. Nie podłączaj go do tych narzędzi ani do produkcyjnego Loki.
 

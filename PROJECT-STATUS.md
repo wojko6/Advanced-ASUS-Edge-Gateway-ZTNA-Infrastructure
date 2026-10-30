@@ -2,12 +2,12 @@
 
 **Status date: 2026-10-28.** Most recent operator-reported **ASUS production maintenance** was the separately approved **stable Tailscale 1.104.4 ARMv7 paired-binary upgrade** on October 28, including runtime/daemon hash validation and project healthcheck 0 failures / 0 warnings; the previous **WebUI-only Issue #283** three-file publication on October 25 remains the latest WebUI change. The last **DNS service** change remains October 24 **Unbound 1.26.2-1 R2** with bounded UDP/TCP DNSSEC acceptance. Tailscale cold boot, extended soak, IPv6 and forced rollback are **NOT TESTED**. No new HCC permanent deployment, RouterCloud/DUFS, DNS Guard or firewall feature is implied by merging documentation. Unplanned October 24 DNS Guard resolver fail-open/failback was observed, not controlled client DNS continuity. Existing #235/#278/#287/#298/#299 and HCC gates remain HOLD.
 
-## 2026-10-30 — HCC V0.14.5A–I isolated continuation (Draft only)
+## 2026-10-30 — HCC V0.14.5A–J isolated continuation (Draft only)
 
 [Draft #338](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/338)
 includes immutable-segment publication, frozen-snapshot replay/ACK and a
 [disposable checkpoint-file substage C](experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
-Work Linux tests: **281/281 focused**, **486/486 HCC Python**, **55/55 JavaScript**
+Work Linux tests: **311/311 focused**, **516/516 HCC Python**, **55/55 JavaScript**
 PASS. The operator separately reported **A–B 59/59 and both labs PASS**, then
 **C 28/28 in 0.171 s and its disposable lab PASS on Fedora**, with cleanup.
 These are two scoped runs, not a full HCC Fedora regression, actual
@@ -49,6 +49,12 @@ from declared synthetic ACKs and creates at most 64 bounded H requests / 1 MiB
 total body bytes. Strict field types and full recomputation reject changed source, ACK or
 request content. Fresh bytes must be supplied by a future caller; there is no
 live lock, real receipt proof, transport, progress update or I Fedora result.
+J adds a [single owned loopback HTTP exchange](experiments/fedora/homelab-control-center-v0.1/V0.14.5J-OWNED-LOOPBACK-EXCHANGE-LAB.md)
+with **30/30 tests**. Lab binds its own ephemeral IPv4 peer, checks exact request
+bytes and uses one bounded client child. Timeout/interrupt cleanup kills/reaps
+the worker and closes the peer. The fixture result does not advance ACKs;
+33 records remain pending. This is not real Loki acceptance, durable receipt,
+an installed service or J Fedora acceptance. Self-test remains memory-only.
 The first D CI run exposed an existing sequential HTTP test ordering race.
 Only test synchronization/status assertions were corrected, with a deterministic
 503-before-release regression; runtime handler/source guards are unchanged.

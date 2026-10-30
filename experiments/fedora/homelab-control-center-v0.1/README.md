@@ -139,10 +139,20 @@ records from a validated E snapshot into H requests, using declared F fixture
 ACKs by ID/hash. Global time/ID order, up to 64 requests / 1 MiB total body
 bytes; full 1,024-record input tested. Exact-input checksums and complete
 recomputation reject drift before a future caller reuses a plan. **30/30 I
-tests**, current **281/281 A–I**, **486/486 HCC Python**, **55/55 JavaScript**
+tests**, at the I checkpoint **281/281 A–I**, **486/486 HCC Python**, **55/55 JavaScript**
 PASS. No HTTP, real receipt/authentication, live file locking, checkpoint
 advance or I Fedora acceptance. Fresh bytes must be supplied; old bytes or
 consistent forged source/ACKs cannot establish actual receipt or rollback safety.
+
+**V0.14.5J owned loopback HTTP exchange (Work only):** the
+[new isolated exchange](V0.14.5J-OWNED-LOOPBACK-EXCHANGE-LAB.md) starts its own
+ephemeral IPv4 peer and one bounded Python client. The peer validates capability
+and exact selected H bytes; strict report/peer checks recognize only the chosen
+empty-204 fixture result. Timeout/interrupt paths kill/reap the client, then
+close the listener/thread. **30/30 J tests**, current **311/311 A–J**, **516/516
+HCC Python**, **55/55 JavaScript** PASS. Self-test is memory-only; lab/network
+tests use owned loopback sockets and children. No real Loki, durable receipt,
+progress change or J Fedora result. Pending count remains 33 after the lab.
 
 **DEPLOYMENT_GATE=HOLD.**
 
