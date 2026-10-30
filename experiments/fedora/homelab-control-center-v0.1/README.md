@@ -64,6 +64,16 @@ Separate accepted isolated labs: **V0.14.1** one synthetic Alloy → loopback fa
 
 **V0.14.5A–B now has isolated test source in Draft #338 (2026-10-30):** corrected private atomic immutable-segment publication and an offline snapshot/ACK replay model, **59/59 focused tests PASS**, full HCC **263/263 Python + 55/55 JavaScript PASS** in the Work Linux container. These results are not Fedora/SELinux/Alloy acceptance. Trusted journal identity, durable checkpoint, safe deletion/retention, SELinux/ACL persistence and real synthetic Alloy full-chain testing remain unimplemented/unaccepted. See [V0.14.5 contract, reproducible tests and limitations](V0.14.5-OFFLINE-SEGMENT-REPLAY-LAB.md). No production journal stream, `/var/lib/hcc-dns-guard` spool, deployed Loki ingestion, service timer, autostart, Grafana alert changes, HCC endpoint, router access or remote exposure has been approved. Running Alloy had supplementary `adm` and `systemd-journal` groups: empty systemd `SupplementaryGroups=` did **not** mean those groups were absent.
 
+**Later acceptance and C continuation (2026-10-30):** the Fedora operator reported
+**59/59 A–B tests OK** in 0.088 s, both lab PASS markers and cleanup; three B
+receive attempts for two segments are the expected lost-checkpoint replay.
+[V0.14.5C](V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md) now adds actual checkpoint
+files in disposable directories, exact ACK before storage, atomic replacement,
+restart and abrupt child-exit tests. Current Work results: **28/28 C**, **87/87
+A–C**, **291/291 HCC Python**, **55/55 JavaScript** PASS. C is not Fedora
+accepted, installed or a proof of power-loss durability, authenticated event
+identity, exactly-once delivery or real Alloy compatibility.
+
 See [V0.13–V0.14 evidence and deployment boundaries](V0.13-TO-V0.14-CORRELATION-LAB.md) and the un-applied [Alloy fragment](monitoring/v014-dns-guard-sanitized.alloy.fragment).
 
 **DEPLOYMENT_GATE=HOLD.**

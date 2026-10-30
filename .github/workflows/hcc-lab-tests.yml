@@ -32,6 +32,8 @@ jobs:
           python3 -B tools/v0145a_segment_spool.py --lab
           python3 -B tools/v0145b_segment_replay.py --self-test
           python3 -B tools/v0145b_segment_replay.py --lab
+          python3 -B tools/v0145c_checkpoint_store.py --self-test
+          python3 -B tools/v0145c_checkpoint_store.py --lab
       - name: Bash runner syntax check
         run: |
           bash -n experiments/fedora/homelab-control-center-v0.1/run-lab.sh

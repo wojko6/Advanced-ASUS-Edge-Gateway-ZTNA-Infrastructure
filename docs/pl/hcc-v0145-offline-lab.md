@@ -1,10 +1,13 @@
-# HCC V0.14.5A–B — instrukcja izolowanego laboratorium
+# HCC V0.14.5A–C — instrukcja izolowanego laboratorium
 
 **Status:** polska adaptacja operatorska, 2026-10-30; Draft PR #338,
 bez scalenia i bez wdrożenia. **DEPLOYMENT_GATE=HOLD.**
 Źródłem kontraktu i ograniczeń jest
 [dokument angielski V0.14.5A–B](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5-OFFLINE-SEGMENT-REPLAY-LAB.md).
-Ta instrukcja została z nim uzgodniona; nie stanowi osobnej akceptacji na Fedorze.
+Etap C opisuje [osobny kontrakt zapisu punktu wznowienia](../../experiments/fedora/homelab-control-center-v0.1/V0.14.5C-DISPOSABLE-CHECKPOINT-LAB.md).
+Instrukcja jest z nimi uzgodniona. Operator potwierdził już A–B na Fedorze:
+**59/59 testów OK, oba laboratoria PASS i sprzątanie YES**. Ten wynik nie
+obejmuje nowego C ani rzeczywistego Alloy/SELinux.
 
 ## Co sprawdzamy
 
@@ -32,7 +35,7 @@ python3 -B tools/v0145a_segment_spool.py --self-test
 python3 -B tools/v0145a_segment_spool.py --lab
 python3 -B tools/v0145b_segment_replay.py --self-test
 python3 -B tools/v0145b_segment_replay.py --lab
-python3 -B -m unittest discover -s tests -p 'test_v0145*.py' -v
+python3 -B -m unittest discover -s tests -p 'test_v0145[ab]*.py' -v
 ```
 
 Self-testy pracują tylko w pamięci. Tryby `--lab` i testy jednostkowe tworzą
@@ -46,15 +49,37 @@ Oczekiwane: **59 testów PASS**, oba self-testy PASS,
 i `DEPLOYMENT_GATE=HOLD`. Przy błędzie zatrzymaj procedurę i zachowaj wynik;
 nie usuwaj prawdziwego bufora w celu wymuszenia PASS.
 
+## Osobny etap C — plik punktu wznowienia
+
+W nowszej rewizji tej samej gałęzi dostępny jest etap C. Zapisuje atomowo
+`checkpoint.json` w prywatnym katalogu testowym, odczytuje go po ponownym
+otwarciu i sprawdza wznowienie także w osobnym procesie. Przerwanie po ACK
+przed zapisem nadal może dać powtórną próbę; nie deklarujemy exactly-once.
+
+```bash
+python3 -B tools/v0145c_checkpoint_store.py --self-test
+python3 -B -m unittest discover -s tests -p 'test_v0145c*.py' -v
+python3 -B tools/v0145c_checkpoint_store.py --lab
+```
+
+Oczekiwane: **28 testów OK**,
+`V0145C_RESULT=PASS_DISPOSABLE_CHECKPOINT_ONLY`, `TEMP_STATE_REMOVED=YES`
+i `POWER_LOSS_DURABILITY=NOT_TESTED`. Łącznie A–C: **87 testów**.
+Osierocony plik tymczasowy blokuje wznowienie i wymaga przeglądu; brak
+automatycznej naprawy. Nagłe zakończenie procesu nie jest utratą zasilania.
+Wszystkie dane C są usuwane wraz z katalogiem testowym. **Nie zainstalowano
+trwałego magazynu punktu wznowienia i nie wykonano jeszcze C na Fedorze.**
+
 ## Granice wyniku
 
-W środowisku Work wykonano 59/59 nowych testów oraz pełne regresje HCC:
-263/263 Python i 55/55 JavaScript. Nie wykonano w tej sesji testów na laptopie
-Fedora, z rzeczywistym Alloy, SELinux ani trwałymi ACL. Poprzedni ZIP z 19
+W środowisku Work wykonano A–C **87/87 testów**, pełne HCC **291/291 Python**
+i **55/55 JavaScript**. Na Fedorze operator potwierdził A–B (59/59 i oba
+laboratoria); brak wyniku C, rzeczywistego Alloy, SELinux i trwałych ACL.
+Poprzedni ZIP z 19
 testami jest historyczną wersją V0.14.5A, a nie aktualnym kodem tej gałęzi.
 
-Nie ma czytnika journala, stabilnego identyfikatora zdarzenia, trwałego punktu
-wznowienia, automatycznej retencji, usługi ani nowego endpointu HCC. Istniejący
+Nie ma czytnika journala, stabilnego identyfikatora zdarzenia, produkcyjnego
+magazynu punktu wznowienia, automatycznej retencji, usługi ani nowego endpointu HCC. Istniejący
 nieaktywny fragment Alloy wskazuje pojedynczy plik i nie obsługuje tego modelu
 segmentów. Nie podłączaj go do tych narzędzi ani do produkcyjnego Loki.
 
