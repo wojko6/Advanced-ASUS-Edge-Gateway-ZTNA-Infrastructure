@@ -91,3 +91,18 @@ python3 -B local_ai_agent_v021c60_1_strict_ollama_completion_shadow_lab_v01.py -
 ```
 
 **Scope of proof:** pinning and a single historical VM+Loki+Qwen SHADOW response; no cryptographic source attestation, exact fallback timings, DNS-success measurement, live HCC parity, adversarial-model certification or production readiness. The Qwen model has **no execution authority**. Refer to [October 31 worklog](../../../docs/worklog/2026-10-31.md).
+
+## October 31: C.61 six-category synthetic fixture contract (operator-accepted)
+
+**C.61 is offline/synthetic ONLY**, not a production detector or live-model integration. Pinned source `local_ai_agent_v021c61_multi_incident_host_fixture_lab_v01.py`, SHA-256 in [SHA256SUMS](SHA256SUMS). Operator-reported Fedora `55/55 PASS` for `--self-test` and again `55/55 PASS` for `--fixture-matrix`, with six expected scenarios: DNS Guard BOOTSTRAP, Pi-hole log activity, synthetic Unbound DNSSEC failure, synthetic Tailscale peer unreachable, stale/missing Fedora collector evidence, and a normal-looking sample (not health proof).
+
+The schema is `local-ai-agent.multi-incident.host-observation.v1`, source origin `SYNTHETIC_FIXTURE_ONLY`, fixed test clock `2026-10-31 08:00 UTC`. A stale/missing/UNKNOWN/UNAVAILABLE signal cannot be upgraded to healthy or failed. No real source, model, ASUS, HCC or executor contacted; no file writes; `DEPLOYMENT_GATE=HOLD`.
+
+Manual non-root offline verification:
+
+```bash
+python3 -B local_ai_agent_v021c61_multi_incident_host_fixture_lab_v01.py --self-test
+python3 -B local_ai_agent_v021c61_multi_incident_host_fixture_lab_v01.py --fixture-matrix
+```
+
+**Bridge boundary:** The existing historical C.57 VM/Loki data must **not** be passed directly into C.61's fixed-clock synthetic classifier. A separate historical evidence adapter (C.61.1) is pending Fedora operator acceptance and is **not included** in this PR. Its planned result is not proof of fresh Unbound/Tailscale/Fedora incidents.
