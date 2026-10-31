@@ -68,3 +68,26 @@ A failing source, missing historical data, invalid model output or hash mismatch
 - This checkpoint does not replace [HCC's own implementation and acceptance gates](../homelab-control-center-v0.1/README.md).
 
 **Evidence classification:** Fedora results above are **operator-reported terminal outputs**, not freshly verified by GitHub CI or independent host access. See the [October 30 public engineering worklog](../../../docs/worklog/2026-10-30.md). Public documentation follows the [repository language policy](../../../docs/language-policy.md).
+
+## October 31 addendum — C.60 / C.60.1
+
+**Current Qwen SHADOW entry point:** `local_ai_agent_v021c60_1_strict_ollama_completion_shadow_lab_v01.py`. C.59.1 remains unchanged as a historical, pinned artifact. This section extends (does not rewrite) the October 30 checkpoint.
+
+- **C.60:** an offline-only pinned negative/fault matrix for C.59.1. Fedora operator reported `40/40 PASS`. The audit confirmed an actual defect: omitted Ollama `done_reason` was implicitly accepted as `stop`. The audit PASS does **not** certify hostile-model safety.
+- **C.60.1:** requires `done is True` and explicitly `done_reason == "stop"`; rejects missing, null, incomplete (`length`), extra-whitespace and other incorrect values. Twelve additional tests bring the total to `48/48 PASS` offline on Fedora. Host preflight passed using fixed historical VictoriaMetrics and Loki data.
+- **Real SHADOW acceptance:** first run failed safely with `OLLAMA_LOOPBACK_UNAVAILABLE` because portable Ollama had not been started since the workstation was shut down. After the operator manually started the existing local service, `qwen3.5:4b` at `127.0.0.1:11435` returned `VALID_SHADOW_CODES_ONLY` and `PASS_DUAL_SOURCE_QWEN_SHADOW_ONLY`. This is *one bounded response*, not evidence of autonomous authority.
+- Source identity is recorded in [SHA256SUMS](SHA256SUMS). The files are read-only laboratory sources; no ASUS, HCC runtime, VM/Loki configuration, Ollama service setup, autostart or executor changes were authorized. **`DEPLOYMENT_GATE=HOLD`.**
+
+Manual test commands (from this directory, as a non-root operator):
+
+```bash
+sha256sum -c SHA256SUMS
+python3 -B local_ai_agent_v021c60_offline_fault_matrix_audit_v01.py --self-test
+python3 -B local_ai_agent_v021c60_1_strict_ollama_completion_shadow_lab_v01.py --self-test
+# Optional explicitly manual read-only host evaluation:
+python3 -B local_ai_agent_v021c60_1_strict_ollama_completion_shadow_lab_v01.py --host-preflight
+# Optional, only after host preflight PASS and operator-started local Ollama:
+python3 -B local_ai_agent_v021c60_1_strict_ollama_completion_shadow_lab_v01.py --qwen-shadow
+```
+
+**Scope of proof:** pinning and a single historical VM+Loki+Qwen SHADOW response; no cryptographic source attestation, exact fallback timings, DNS-success measurement, live HCC parity, adversarial-model certification or production readiness. The Qwen model has **no execution authority**. Refer to [October 31 worklog](../../../docs/worklog/2026-10-31.md).
