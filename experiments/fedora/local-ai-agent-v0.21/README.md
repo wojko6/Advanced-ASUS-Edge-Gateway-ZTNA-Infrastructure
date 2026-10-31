@@ -105,4 +105,28 @@ python3 -B local_ai_agent_v021c61_multi_incident_host_fixture_lab_v01.py --self-
 python3 -B local_ai_agent_v021c61_multi_incident_host_fixture_lab_v01.py --fixture-matrix
 ```
 
-**Bridge boundary:** The existing historical C.57 VM/Loki data must **not** be passed directly into C.61's fixed-clock synthetic classifier. A separate historical evidence adapter (C.61.1) is pending Fedora operator acceptance and is **not included** in this PR. Its planned result is not proof of fresh Unbound/Tailscale/Fedora incidents.
+**Bridge boundary:** The existing historical C.57 VM/Loki data must **not** be passed directly into C.61's fixed-clock synthetic classifier. The separate historical evidence adapter (C.61.1) has now passed operator verification and is included in this same Draft PR. Its result is **not** evidence of fresh Unbound/Tailscale/Fedora incidents. See the next section.
+
+## October 31: C.61.1 historical VM/Loki bridge — operator-accepted
+
+**Entry point:** `local_ai_agent_v021c61_1_historical_vm_loki_to_multi_incident_bridge_lab_v01.py` (pinned SHA-256 in [SHA256SUMS](SHA256SUMS)). This is a separate **historical** real-source adapter; it does **not** invoke the fixed-clock C.61 synthetic classifier on live data and does not add new Unbound, Tailscale or Fedora measurements.
+
+Reported on the operator's Fedora workstation:
+
+- Script integrity check: **PASS**; offline `--self-test`: **40/40 PASS**, no network contact.
+- Manual `--historical-adapter-preflight`: **`PASS_HISTORICAL_VM_LOKI_ADAPTER_ONLY`**. Exactly seven fixed local VictoriaMetrics range reads plus one local Loki aggregate; all sources cover **2026-10-27 15:40–16:40 UTC**, *not* current health.
+- C.57 source SHA-256 `758e5155c72136bca98371f59e3df01c3655d22401d9faada818b33934ef3115`; C.61 source SHA-256 `fcc6a5bbc526f4f49700411a133a8657976d80371f575b1ca17ae7d9c5dfa024`; source joint evidence SHA-256 `557914157204f5b888459efacb4f0e6f13489ad6b21a91042c3be7e76c675b83`.
+- Output schema `local-ai-agent.multi-incident.historical-vm-loki-bridge.v1`, **three bounded observations** for **DNS Guard and Pi-hole**; **Unbound, Tailscale and Fedora explicitly unobserved**. The Pi-hole full minute ending 17:02 CET contains **141 log entries**, **not** a count of successful DNS resolutions.
+- Canonical bridge evidence: **1,825 bytes**, SHA-256 `07e92be151d1cf6f27b6100d365da856d83c73babb045820e2e5472d9e3cdbbe`. This hash is an internal serialization identity, **not cryptographic authentication of underlying telemetry**.
+- No raw Loki log lines, Ollama, ASUS, deployed HCC, executor, Podman or output file writes. `MODEL_ACTION_AUTHORITY=NONE`; `DEPLOYMENT_GATE=HOLD`.
+
+Manual non-root testing (use only after reviewing source and choosing the correct local environment):
+
+```bash
+sha256sum -c SHA256SUMS
+python3 -B local_ai_agent_v021c61_1_historical_vm_loki_to_multi_incident_bridge_lab_v01.py --self-test
+# Explicitly opt in to historical loopback reads after the offline test passes:
+python3 -B local_ai_agent_v021c61_1_historical_vm_loki_to_multi_incident_bridge_lab_v01.py --historical-adapter-preflight
+```
+
+**Next design boundary:** a separate, carefully reviewed *freshness-aware* observational contract is needed before querying current metrics. Missing observations, host shutdowns and stale collectors must not be silently promoted into failures or healthy status. Current DNS resolver paths and live HCC parity remain **unverified**.
