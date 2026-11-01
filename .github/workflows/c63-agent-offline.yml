@@ -1,0 +1,36 @@
+name: C.63 agent lab — offline only
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/fedora/local-ai-agent-v0.21/c63/**'
+      - '.github/workflows/c63-agent-offline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  c63-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
+      - name: Verify 13 pinned source checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/fedora/local-ai-agent-v0.21/c63
+          sha256sum --check SHA256SUMS
+          test "$(find . -maxdepth 1 -name 'local_ai_agent_v021c63*.py' -type f | wc -l)" -eq 13
+      - name: Run bounded synthetic offline self-tests ONLY
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -euo pipefail
+          cd experiments/fedora/local-ai-agent-v0.21/c63
+          for source in local_ai_agent_v021c63*.py; do
+            echo "Offline self-test: $source"
+            python3 -B "$source" --self-test
+          done
