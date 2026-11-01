@@ -108,13 +108,26 @@ def response_for_fixture(packet):
     }
 
 
+def reject_duplicate_pairs(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError('DUPLICATE_JSON_PROPERTY')
+        result[key] = value
+    return result
+
+
+def reject_nonstandard_json_constant(value):
+    raise ValueError('NONSTANDARD_JSON_CONSTANT')
+
+
 def validate_response(raw, packet):
     """Validate hypothetical SHADOW response, never execute its text."""
     if not isinstance(raw,bytes) or not 0<len(raw)<=MAX_RESPONSE_BYTES:
         raise Hold('RESPONSE_SIZE_INVALID')
     try:
         txt=raw.decode('ascii')
-        response=json.loads(txt)
+        response=json.loads(txt, object_pairs_hook=reject_duplicate_pairs, parse_constant=reject_nonstandard_json_constant)
     except (UnicodeDecodeError,ValueError) as exc:
         raise Hold('RESPONSE_NOT_ASCII_JSON') from exc
     if type(response) is not dict or set(response)!=RESPONSE_KEYS:
@@ -170,6 +183,17 @@ class Tests(unittest.TestCase):
         self.assertFalse(self.packet['source_provenance_attested'])
     def test_06_allows_safe_response(self):
         self.assertEqual(validate_response(self.encoded(),self.packet)['result'],'PASS_SHADOW_CODES_ONLY')
+    def test_reject_duplicate_json_key(self):
+        raw=self.encoded().decode('ascii')
+        raw=raw.replace('"root_cause":"UNDETERMINED"', '"root_cause":"UNDETERMINED","root_cause":"UNDETERMINED"')
+        with self.assertRaises(Hold):
+            validate_response(raw.encode('ascii'),self.packet)
+
+    def test_reject_nonstandard_json_constant(self):
+        raw=self.encoded().decode('ascii').replace('"root_cause":"UNDETERMINED"','"root_cause":NaN')
+        with self.assertRaises(Hold):
+            validate_response(raw.encode('ascii'),self.packet)
+
     def test_07_secondary_manual_choice(self):
         r=dict(self.response,next_check_code='REQUEST_OPERATOR_APPROVED_ACL_VERIFICATION')
         self.assertEqual(validate_response(self.encoded(r),self.packet)['result'],'PASS_SHADOW_CODES_ONLY')
@@ -257,8 +281,8 @@ def main(argv=None):
         result=unittest.TextTestRunner(verbosity=0).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
         good=result.testsRun-len(result.failures)-len(result.errors)
         print(f'C632_SELFTESTS={good}/{result.testsRun}')
-        print('C632_RESULT='+('PASS_SYNTHETIC_ONLY' if result.wasSuccessful() and result.testsRun==30 else 'HOLD'))
-        return 0 if result.wasSuccessful() and result.testsRun==30 else 1
+        print('C632_RESULT='+('PASS_SYNTHETIC_ONLY' if result.wasSuccessful() and result.testsRun==32 else 'HOLD'))
+        return 0 if result.wasSuccessful() and result.testsRun==32 else 1
     try:
         if args.fixture_matrix:
             pkt=fixture_packet()
