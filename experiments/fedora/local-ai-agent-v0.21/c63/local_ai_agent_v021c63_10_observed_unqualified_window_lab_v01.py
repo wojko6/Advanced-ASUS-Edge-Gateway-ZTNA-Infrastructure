@@ -67,7 +67,26 @@ def checked_report(r):
     collection_age=r['collection_age_seconds']
     if collection_age is not None and (type(collection_age) is not int or collection_age<0):
         raise Hold('COLLECTION_AGE_INVALID')
-    qualified=r['classification']=='DNS_GUARD_MODE_SAMPLED_ONLY'
+    # A report with complete fresh metrics and no error indicators cannot
+    # become a gap merely by changing its classification label.
+    classification=r['classification']
+    if classification not in ('DNS_GUARD_MODE_SAMPLED_ONLY',
+                              'INSUFFICIENT_EVIDENCE',
+                              'INVALID_DNS_GUARD_STATE_SAMPLED'):
+        raise Hold('UNKNOWN_OBSERVATION_CLASSIFICATION')
+    gaps=r['gaps']
+    if type(gaps) is not list or any(type(g) is not str or not g for g in gaps):
+        raise Hold('INVALID_GAP_LIST')
+    if classification=='DNS_GUARD_MODE_SAMPLED_ONLY':
+        if r['sampled_mode'] not in ('LOCAL','BOOTSTRAP'):
+            raise Hold('QUALIFIED_MODE_MISMATCH')
+    elif r['sampled_mode']!='UNVERIFIED':
+        raise Hold('UNQUALIFIED_MODE_MISMATCH')
+    if classification=='INSUFFICIENT_EVIDENCE' and not gaps:
+        raise Hold('UNQUALIFIED_WITHOUT_EVIDENCE_GAP')
+    if classification=='INVALID_DNS_GUARD_STATE_SAMPLED' and gaps:
+        raise Hold('INVALID_STATE_WITH_EVIDENCE_GAPS')
+    qualified=classification=='DNS_GUARD_MODE_SAMPLED_ONLY'
     if qualified:
         if any(t is None for t in times.values()) or r['gaps']:
             raise Hold('QUALIFIED_WITH_MISSING_DATA')
@@ -277,6 +296,21 @@ class Tests(unittest.TestCase):
         with self.assertRaises(Hold):assess_timeline(f)
     def test_duplicate_snapshot_clock_not_new_sample(self):
         with self.assertRaises(Hold):assess_timeline(fixture('duplicate_evaluation'))
+    def test_reject_forged_unqualified_label(self):
+        f=fixture()
+        f[1]=sample(f[1]['evaluation_epoch_utc'],'fresh')
+        f[1]['classification']='INSUFFICIENT_EVIDENCE'
+        f[1]['sampled_mode']='UNVERIFIED'
+        with self.assertRaisesRegex(Hold,'UNQUALIFIED_WITHOUT_EVIDENCE_GAP'):
+            assess_timeline(f)
+
+    def test_reject_forged_qualified_label(self):
+        f=fixture()
+        f[1]['classification']='DNS_GUARD_MODE_SAMPLED_ONLY'
+        f[1]['sampled_mode']='LOCAL'
+        with self.assertRaises(Hold):
+            assess_timeline(f)
+
     def test_no_file_io_or_external_calls(self):
         import ast,inspect
         tree=ast.parse(inspect.getsource(sys.modules[__name__]))
