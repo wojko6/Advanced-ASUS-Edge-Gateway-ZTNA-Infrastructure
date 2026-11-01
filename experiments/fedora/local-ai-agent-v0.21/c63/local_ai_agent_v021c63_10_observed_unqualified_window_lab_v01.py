@@ -84,6 +84,34 @@ def checked_report(r):
         raise Hold('UNQUALIFIED_MODE_MISMATCH')
     if classification=='INSUFFICIENT_EVIDENCE' and not gaps:
         raise Hold('UNQUALIFIED_WITHOUT_EVIDENCE_GAP')
+    if classification=='INSUFFICIENT_EVIDENCE':
+        # Reconcile each declared gap with evidence actually present in the
+        # bounded report. We never trust a free-form gap label as a witness.
+        # Some source-value-only conditions cannot be re-derived from this
+        # timestamp-focused report: fail closed rather than infer a boundary.
+        for code in gaps:
+            if code=='COLLECTION_VALUE_STALE':
+                grounded=collection_age is not None and collection_age>vm.TTL_COLLECTION
+            elif code=='COLLECTION_VALUE_SAMPLE_TIME_MISALIGNED':
+                grounded=(collection_age is not None and times['collection'] is not None and
+                          abs(Decimal(n-collection_age)-times['collection'])>vm.TTL_COLLECTION)
+            elif code=='COLLECTION_VALUE_INVALID_OR_MISSING':
+                grounded=collection_age is None and times['collection'] is None
+            elif code=='CROSS_METRIC_RAW_SAMPLE_SKEW':
+                grounded=(all(t is not None for t in times.values()) and
+                          max(times.values())-min(times.values())>vm.MAX_SPREAD)
+            elif code.endswith('_VALUE_OR_TIMESTAMP_MISSING'):
+                k=code.removesuffix('_VALUE_OR_TIMESTAMP_MISSING').lower()
+                grounded=k in vm.NAMES and times[k] is None and ages[k] is None
+            elif code.endswith('_RAW_SAMPLE_STALE'):
+                k=code.removesuffix('_RAW_SAMPLE_STALE').lower()
+                grounded=k in vm.NAMES and times[k] is not None and Decimal(n)-times[k]>vm.TTL_RAW
+            else:
+                # MODE_FLAGS_CONTRADICTORY or a fabricated/unknown code cannot
+                # be verified without values missing from this report format.
+                grounded=False
+            if not grounded:
+                raise Hold('UNVERIFIED_GAP_EVIDENCE')
     if classification=='INVALID_DNS_GUARD_STATE_SAMPLED' and gaps:
         raise Hold('INVALID_STATE_WITH_EVIDENCE_GAPS')
     qualified=classification=='DNS_GUARD_MODE_SAMPLED_ONLY'
@@ -309,6 +337,39 @@ class Tests(unittest.TestCase):
         f[1]['classification']='DNS_GUARD_MODE_SAMPLED_ONLY'
         f[1]['sampled_mode']='LOCAL'
         with self.assertRaises(Hold):
+            assess_timeline(f)
+
+    def test_reject_unknown_gap_code(self):
+        f=fixture()
+        f[1]['gaps']=['CUSTOM_TELEMETRY_OUTAGE']
+        with self.assertRaisesRegex(Hold,'UNVERIFIED_GAP_EVIDENCE'):
+            assess_timeline(f)
+
+    def test_reject_false_stale_collection_claim(self):
+        f=fixture()
+        f[1]=sample(f[1]['evaluation_epoch_utc'],'fresh')
+        f[1]['classification']='INSUFFICIENT_EVIDENCE'
+        f[1]['sampled_mode']='UNVERIFIED'
+        f[1]['gaps']=['COLLECTION_VALUE_STALE']
+        with self.assertRaisesRegex(Hold,'UNVERIFIED_GAP_EVIDENCE'):
+            assess_timeline(f)
+
+    def test_reject_false_missing_sample_claim(self):
+        f=fixture()
+        f[1]=sample(f[1]['evaluation_epoch_utc'],'fresh')
+        f[1]['classification']='INSUFFICIENT_EVIDENCE'
+        f[1]['sampled_mode']='UNVERIFIED'
+        f[1]['gaps']=['LOCAL_VALUE_OR_TIMESTAMP_MISSING']
+        with self.assertRaisesRegex(Hold,'UNVERIFIED_GAP_EVIDENCE'):
+            assess_timeline(f)
+
+    def test_reject_unverifiable_mode_flag_gap(self):
+        f=fixture()
+        f[1]=sample(f[1]['evaluation_epoch_utc'],'fresh')
+        f[1]['classification']='INSUFFICIENT_EVIDENCE'
+        f[1]['sampled_mode']='UNVERIFIED'
+        f[1]['gaps']=['MODE_FLAGS_CONTRADICTORY']
+        with self.assertRaisesRegex(Hold,'UNVERIFIED_GAP_EVIDENCE'):
             assess_timeline(f)
 
     def test_no_file_io_or_external_calls(self):
