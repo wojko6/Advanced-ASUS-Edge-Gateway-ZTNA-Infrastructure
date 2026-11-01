@@ -4,9 +4,9 @@
 
 ## Scope
 
-This directory is reserved for 13 SHA-256-pinned source files from the C.63.0–C.63.10 laboratory series, including C.63.3/C.63.3.1 and C.63.8/C.63.8.1. These are manual operator experiments, **not** production services. The historical C.63.11–C.63.14 operator-specific incident report/snapshot, raw system logs, router credentials and private addresses are explicitly excluded.
+This directory contains 13 SHA-256-pinned source files from the C.63.0–C.63.10 laboratory series, including C.63.3/C.63.3.1 and C.63.8/C.63.8.1. These are manual operator experiments, **not** production services. The historical C.63.11–C.63.14 operator-specific incident report/snapshot, raw system logs, router credentials and private addresses are explicitly excluded.
 
-**Publication status:** This initial review scaffold contains a checksum manifest and runbook. The exact 13 source files must be added and their checksums independently verified before this PR is reviewable or mergeable. Do not infer acceptance from the presence of this document.
+**Publication status (2026-11-01):** The 13 source files have been added to Draft PR #347. After the upload, their remote Git blob IDs were independently compared with the 13 local checksum-verified archive blobs (13/13 matching). The SHA-256 source manifest is present in the PR. This is publication/integrity verification only, not deployment approval, source provenance attestation, or a sign-off to merge.
 
 ## Safety boundary
 
@@ -19,7 +19,7 @@ This directory is reserved for 13 SHA-256-pinned source files from the C.63.0–
 
 ## Source verification and bounded offline regression
 
-From this directory, **after** all source files have been staged:
+From this directory:
 
 ```bash
 sha256sum -c SHA256SUMS
@@ -32,4 +32,4 @@ The 13 included sources passed 499/499 manual offline tests on Fedora per operat
 
 ## Merge gate
 
-Keep PR as Draft; do not auto-merge. Pending: 13 pinned source files, offline verification in fresh checkout, code/security review, source provenance explanation, parent PR #343→#344→#345 coordination and explicit review of no data disclosure. Documentation-only C.62 evidence is tracked separately in Draft PR #346.
+Keep PR as Draft; do not auto-merge. All 13 sources have been staged and their content identities verified against the local archive; the uploader ran 13/13 offline self-tests in a fresh branch clone, and an independent disposable run passed 499/499 offline unit tests. Still pending: final code/security and privacy review, source provenance explanation, parent PR #343→#344→#345 coordination, and explicit reviewer approval. Documentation-only C.62 evidence is tracked separately in Draft PR #346. No CI check runs have been claimed.
