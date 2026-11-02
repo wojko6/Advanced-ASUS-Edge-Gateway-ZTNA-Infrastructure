@@ -1,0 +1,36 @@
+name: C.64.1 fake loopback HTTP transport — offline only
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/fedora/local-ai-agent-v0.21/c64/**'
+      - '.github/workflows/agent-c641-offline.yml'
+      - 'experiments/fedora/local-ai-agent-v0.21/c63/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  c641-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
+      - name: Verify pinned C.63 source manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/fedora/local-ai-agent-v0.21/c63
+          sha256sum --check SHA256SUMS
+          sha256sum --check SHA256SUMS_PUBLIC_C63_11_14.txt
+      - name: Test C.64.1 fake HTTP transport and output invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT=experiments/fedora/local-ai-agent-v0.21/c64/local_ai_agent_v021c64_1_fake_loopback_http_transport_lab_v01.py
+          python3 -B "$SCRIPT" --self-test
+          python3 -B "$SCRIPT" --fixture-matrix
+          python3 -B "$SCRIPT" --summary-json --scenario baseline | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x["mode"] == "IN_MEMORY_SIMULATED_HTTP_ONLY"; assert x["expected_queries"] == x["performed_fake_queries"] == 8; assert x["real_network_requests"] == 0; assert x["clock_basis"] == "FAKE_INJECTED_CLOCK"; assert x["quality_gate_decision"] == "ABSTAIN_NO_MODEL_INFERENCE"; assert x["deployment_gate"] == "HOLD"; assert x["model_action_authority"] == "NONE"; assert x["model_requests"] == 0; assert x["dns_health"] == "NOT_ESTABLISHED"; assert x["root_cause"] == "UNDETERMINED"; assert x["operator_authorized_live_reads"] is False; assert x["remediation_authorized"] is False'
