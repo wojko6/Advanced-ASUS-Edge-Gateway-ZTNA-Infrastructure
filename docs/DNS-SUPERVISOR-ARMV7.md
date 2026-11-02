@@ -18,6 +18,14 @@ artifact on the production router during development.
 
 **No further production supervisor/timer/cron modification is approved**; separate #235 privileged-cron trust work is still HOLD.
 
+## Issue #287 laboratory update — 2026-11-02 (C287.2J24)
+
+A [source-pinned laboratory evidence and acceptance matrix](operations/dns-guard-issue287-c2872j24-acceptance-matrix-2026-11-02.md) records C287.2J13–J23: byte-reproduction of the **original** Debian GCC/glibc ARMv7 binary, an 8-line `SIGCHLD` candidate tested under QEMU, 12/12 candidate process cases, 19/19 mocked `auto` A/B paths, and later static/private-namespace/deadline-model checks. The J23 bundle checks local log markers; it is not independent firmware evidence.
+
+These results do **not** mean the automatic `native_bounded_exec()` has been replaced by the C supervisor, nor do they establish execution on ASUS Linux 4.1.52, exact BusyBox 1.25.1 early-boot operation, a whole-`auto` hard deadline, or absolute protection against PID reuse. The proposed 60-second budget is not an approved requirement. The separate November 2 Cron/Entware `dig` fix (PR #350/#351) did not resolve Issue #287.
+
+**Issue #287 remains OPEN with `ISSUE287_DEPLOYMENT_GATE=HOLD`.** No production candidate, installer digest, DNS Guard timing primitive, or service configuration is approved by this documentation update.
+
 ## Local verification (Fedora)
 
 ```sh
