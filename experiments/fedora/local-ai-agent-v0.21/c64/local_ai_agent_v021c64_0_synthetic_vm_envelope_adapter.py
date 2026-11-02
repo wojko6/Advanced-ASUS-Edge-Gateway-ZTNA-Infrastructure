@@ -261,7 +261,11 @@ class Tests(unittest.TestCase):
 
     def test_27_nonfinite_rejected(self):
         x = fixture_responses()
-        x[ORDER[0]] = x[ORDER[0]].replace(b'"value"', b'"value"', 1) + b'{"nan":NaN}'
+        key = ORDER[0]
+        obj = json.loads(x[key])
+        obj['stats'] = {'executionTimeMsec': float('nan'), 'seriesFetched': '1'}
+        x[key] = json.dumps(obj, sort_keys=True).encode('ascii')
+        self.assertIn(b'NaN', x[key])
         self.assert_hold(lambda: assess_packets(x), 'VM_ENVELOPE_REJECTED')
 
     def test_28_http_never_used(self):
@@ -282,8 +286,9 @@ class Tests(unittest.TestCase):
         self.assertNotEqual(scenario_summary()['source_fingerprint_sha256'],
                             scenario_summary('stale_local')['source_fingerprint_sha256'])
 
-    def test_32_no_arbitrary_cli_input(self):
-        self.assertTrue(all(x in CASES for x in ('baseline', 'stats_envelope')))
+    def test_32_boolean_clock_rejected(self):
+        self.assert_hold(lambda: assess_packets(fixture_responses(), evaluated_at=True),
+                         'UNAPPROVED_EVALUATION_CLOCK')
 
 
 def main(argv=None):
