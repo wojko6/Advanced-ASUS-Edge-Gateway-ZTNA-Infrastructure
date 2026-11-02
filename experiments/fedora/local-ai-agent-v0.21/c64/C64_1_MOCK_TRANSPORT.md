@@ -29,6 +29,10 @@ Only explicitly named simulation scenarios are available; there is **no `--live`
 - The existing C.63.8.1 parser does **not** validate HTTP response content-type. The result explicitly reports `response_headers_verified=false`; no source-authenticity or complete HTTP header-validation claim is made.
 - Even good simulated samples always preserve `ABSTAIN_NO_MODEL_INFERENCE`, `DNS_HEALTH=NOT_ESTABLISHED`, `ROOT_CAUSE=UNDETERMINED`, `MODEL_ACTION_AUTHORITY=NONE`, `REMEDIATION_AUTHORIZED=false` and `DEPLOYMENT_GATE=HOLD`.
 
+## Pre-live transport security review
+
+See [REVIEW_C64_1_PRE_LIVE.md](REVIEW_C64_1_PRE_LIVE.md) for the preliminary (non-sign-off) security review, unresolved transport/identity/time risks and the **independent operator-approval gate** required before any real local monitoring read.
+
 ## Test and review limitations
 
 Mock connection objects are useful for request-contract testing but are **not a proof that real socket, proxy, service, timeout or system-clock behavior is safe**. Tests exercise a fake transport; no production response or private log is included. Successful SHA-256 fingerprints only establish identity of fictional response bytes, never chain of custody.
