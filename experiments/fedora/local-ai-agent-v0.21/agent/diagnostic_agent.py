@@ -30,7 +30,7 @@ import local_ai_agent_v021c63_14_operator_incident_report_offline_lab_v01 as rep
 
 SCHEMA = 'local-ai-agent.v0.21.operator-diagnostic-synthetic.v1'
 FIXTURE_NAME = 'C63_13_SYNTHETIC_SNAPSHOT.json'
-# Byte identity of the fictional fixture, not a claim about upstream provenance.
+# Byte identity of the fictional fixture; not a provenance attestation.
 EXPECTED_FIXTURE_SHA256 = 'b9dbbb5889fa824f2eb98d31ca786767a94575b43e19b7edfd4e17900b4a9886'
 REQUIRED_GATE_RESULT = {
     'scenario': 'baseline',
@@ -153,102 +153,7 @@ class Tests(unittest.TestCase):
     def test_digest_not_attestation(self):
         result = collect()
         self.assertEqual(result['incident_fixture_sha256'], EXPECTED_FIXTURE_SHA256)
-        self.assertRegex(result['incident_fixture_sha256'], r'^[a-f0-9]{64}        self.assertFalse(result['fixture_fingerprint_is_provenance_attestation'])
-
-    def test_no_host_access_or_network(self):
-        with patch('socket.socket', side_effect=AssertionError('NETWORK_CALL')):
-            with patch('subprocess.Popen', side_effect=AssertionError('SUBPROCESS_CALL')):
-                self.assertEqual(collect()['model_requests'], 0)
-
-    def test_no_private_data_or_commands_in_summary(self):
-        text = json.dumps(collect(), ensure_ascii=False)
-        for forbidden in ('192.168.', '10.0.', 'SSH_PASSWORD', 'sudo ', 'reboot'):
-            self.assertNotIn(forbidden, text)
-
-    def test_fail_closed_with_malformed_fixture(self):
-        original, digest = report.fixture()
-        injected = deepcopy(original)
-        injected['deployment_gate'] = 'OPEN'
-        with self.assertRaisesRegex(Hold, 'INCIDENT_FIXTURE_REJECTED'):
-            collect(load_fixture=lambda: (injected, digest))
-
-    def test_fail_closed_with_extra_input(self):
-        original, digest = report.fixture()
-        injected = deepcopy(original)
-        injected['raw_journal_line'] = 'private'
-        with self.assertRaisesRegex(Hold, 'INCIDENT_FIXTURE_REJECTED'):
-            collect(load_fixture=lambda: (injected, digest))
-
-    def test_fail_closed_schema_valid_fixture_modification(self):
-        original, _ = report.fixture()
-        altered = deepcopy(original)
-        altered['journal_rows_user'] += 1
-        report.validate(altered)  # Deliberately valid shape, but wrong pinned bytes.
-        digest = hashlib.sha256(json.dumps(altered, sort_keys=True).encode('utf-8')).hexdigest()
-        with self.assertRaisesRegex(Hold, 'FIXTURE_INTEGRITY_MISMATCH'):
-            collect(load_fixture=lambda: (altered, digest))
-
-    def test_fail_closed_gate_escalation(self):
-        baseline = gate.process_case('baseline')
-        injected = dict(baseline, model_requests=1, model_invoked=True)
-        with self.assertRaisesRegex(Hold, 'GATE_INVARIANT_FAILED'):
-            collect(run_gate=lambda _: injected)
-
-    def test_fail_closed_gate_unexpected_exception(self):
-        def broken(_):
-            raise RuntimeError('broken')
-        with self.assertRaisesRegex(Hold, 'SYNTHETIC_GATE_FAILED'):
-            collect(run_gate=broken)
-
-    def test_fail_closed_invalid_digest(self):
-        original, _ = report.fixture()
-        with self.assertRaisesRegex(Hold, 'SOURCE_DIGEST_INVALID'):
-            collect(load_fixture=lambda: (original, 'not-sha256'))
-
-    def test_report_labels_synthetic_and_hold(self):
-        result = operator_report(collect())
-        self.assertIn('Scenariusz syntetyczny', result)
-        self.assertIn('innym syntetycznym zestawem danych', result)
-        self.assertIn('DEPLOYMENT_GATE=HOLD', result)
-
-    def test_report_rejects_modified_summary(self):
-        modified = dict(collect(), operator_next_step='RESTART_ROUTER')
-        with self.assertRaisesRegex(Hold, 'SUMMARY_CHANGED'):
-            operator_report(modified)
-
-    def test_reproducible(self):
-        self.assertEqual(collect(), collect())
-
-
-def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    commands = parser.add_mutually_exclusive_group(required=True)
-    commands.add_argument('--self-test', action='store_true')
-    commands.add_argument('--summary-json', action='store_true')
-    commands.add_argument('--operator-report', action='store_true')
-    args = parser.parse_args(argv)
-    if args.self_test:
-        suite = unittest.defaultTestLoader.loadTestsFromTestCase(Tests)
-        result = unittest.TextTestRunner(verbosity=1).run(suite)
-        print(f'AGENT_DIAGNOSTIC_TESTS={result.testsRun} STATUS=' +
-              ('PASS_OFFLINE' if result.wasSuccessful() else 'HOLD'))
-        return 0 if result.wasSuccessful() else 1
-    try:
-        summary = collect()
-        if args.summary_json:
-            print(json.dumps(summary, sort_keys=True, ensure_ascii=True, indent=2))
-        else:
-            print(operator_report(summary))
-    except Hold as exc:
-        # Only fixed, non-sensitive hold codes, never input, paths or tracebacks.
-        print('AGENT_DIAGNOSTIC=HOLD_' + str(exc), file=sys.stderr)
-        return 2
-    return 0
-
-
-if __name__ == '__main__':
-    raise SystemExit(main())
-)
+        self.assertRegex(result['incident_fixture_sha256'], r'^[a-f0-9]{64}$')
         self.assertFalse(result['fixture_fingerprint_is_provenance_attestation'])
 
     def test_no_host_access_or_network(self):
@@ -279,7 +184,7 @@ if __name__ == '__main__':
         original, _ = report.fixture()
         altered = deepcopy(original)
         altered['journal_rows_user'] += 1
-        report.validate(altered)  # Deliberately valid shape, but wrong pinned bytes.
+        report.validate(altered)  # Valid shape, but not the pinned fixture.
         digest = hashlib.sha256(json.dumps(altered, sort_keys=True).encode('utf-8')).hexdigest()
         with self.assertRaisesRegex(Hold, 'FIXTURE_INTEGRITY_MISMATCH'):
             collect(load_fixture=lambda: (altered, digest))
