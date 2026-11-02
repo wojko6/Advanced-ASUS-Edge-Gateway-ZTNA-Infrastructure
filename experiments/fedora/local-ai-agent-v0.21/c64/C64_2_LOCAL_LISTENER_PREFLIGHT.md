@@ -2,7 +2,7 @@
 
 **Draft laboratory workflow. Manual inspection only.**
 
-The operator may explicitly run this tool on Fedora to inspect the local TCP listener for port **8428** and cross-check it with the **victoriametrics.service** systemd unit. It **does not query VictoriaMetrics**, open a socket, execute curl, contact the ASUS router, invoke Qwen or write any files. The goal is to identify blockers before a separately approved one-shot read.
+The operator may explicitly run this tool on Fedora to inspect the local TCP listener for port **8428** and cross-check it with the **victoriametrics.service** systemd unit. It **does not query VictoriaMetrics**, open a TCP/HTTP connection, execute curl, contact the ASUS router, invoke Qwen or write any files. The fixed systemctl command can use local systemd IPC; this is not a VM metrics request. The goal is to identify blockers before a separately approved one-shot read.
 
 ## Commands
 
