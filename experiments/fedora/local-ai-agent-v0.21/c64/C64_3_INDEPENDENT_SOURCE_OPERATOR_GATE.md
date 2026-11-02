@@ -62,6 +62,10 @@ Outputs are bounded, fixed codes and small counts; no raw service command line, 
 
 This lab **cannot validate** real socket identity, operator identity or consent, genuine source authenticity, production sampling freshness, or real-world service behavior. An artificial positive socket match cannot override the actual Fedora FD_PERMISSION_DENIED HOLD.
 
+## C.64.0–C.64.3 integration checkpoint
+
+See [REVIEW_C64_0_3_INTEGRATION.md](REVIEW_C64_0_3_INTEGRATION.md) for stacked PR ancestry verification, cross-stage contract validation, risk register and the **manual-only** proposed merge sequence. The additional source-only integration suite is `local_ai_agent_v021c64_0_3_integration_contract_offline.py`; it remains synthetic, offline and non-authorizing.
+
 ## PR dependencies
 
 This is a stacked Draft based on PR #358 (C.64.2), which follows PR #355 (C.64.1) and PR #354 (C.64.0). The independent diagnostic PR #353 remains separate.
