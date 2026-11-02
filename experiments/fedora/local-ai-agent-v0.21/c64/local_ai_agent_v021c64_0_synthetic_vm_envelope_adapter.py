@@ -2,9 +2,10 @@
 """C.64.0: offline in-memory VictoriaMetrics envelope adapter (SYNTHETIC ONLY).
 
 Reuses the pinned C.63.8.1 parser and assessment logic without calling any
-network, host, subprocess, model, router or filesystem-write API. Every one of
-the eight VM-like responses is fabricated in memory. The future 2030 clock is
-fictional, not an incident timestamp. No production data enters this module.
+network, host, subprocess, model, router or filesystem-write API. The CLI
+fabricates eight VM-like responses in memory. Direct parser calls with
+caller-provided bytes must retain explicitly UNVERIFIED source identity.
+The future 2030 clock is fictional, not an incident timestamp.
 """
 from __future__ import annotations
 
@@ -112,11 +113,11 @@ def assess_packets(packets, *, evaluated_at=FIXED_NOW):
         raise Hold('C63_SAFETY_INVARIANT')
     result = {
         'schema': SCHEMA,
-        'mode': 'SYNTHETIC_OFFLINE_IN_MEMORY',
+        'mode': 'OFFLINE_VM_ENVELOPE_VALIDATION_ONLY',
         'evaluation_epoch_utc': evaluated_at,
         'expected_envelopes': len(ORDER),
         'parsed_envelopes': len(ORDER),
-        'source_identity': 'SYNTHETIC_VM_LIKE_FIXTURE_NOT_ENDPOINT',
+        'source_identity': 'CALLER_PROVIDED_VM_LIKE_BYTES_ORIGIN_UNVERIFIED',
         'source_authenticity': 'NOT_CRYPTOGRAPHICALLY_ATTESTED',
         'source_fingerprint_sha256': fingerprint(packets),
         'source_fingerprint_is_provenance_attestation': False,
@@ -140,7 +141,12 @@ def assess_packets(packets, *, evaluated_at=FIXED_NOW):
 
 
 def scenario_summary(name='baseline'):
-    return assess_packets(fixture_responses(name))
+    # Only this entrypoint creates the fixed synthetic fixture itself. The
+    # general-purpose assessor does not trust caller bytes to be synthetic.
+    result = assess_packets(fixture_responses(name))
+    result['mode'] = 'SYNTHETIC_OFFLINE_IN_MEMORY'
+    result['source_identity'] = 'SYNTHETIC_VM_LIKE_FIXTURE_NOT_ENDPOINT'
+    return result
 
 
 def matrix():
@@ -297,6 +303,28 @@ class Tests(unittest.TestCase):
     def test_32_boolean_clock_rejected(self):
         self.assert_hold(lambda: assess_packets(fixture_responses(), evaluated_at=True),
                          'UNAPPROVED_EVALUATION_CLOCK')
+
+    def test_33_direct_assessor_does_not_claim_synthetic_origin(self):
+        direct = assess_packets(fixture_responses('baseline'))
+        self.assertEqual(direct['mode'], 'OFFLINE_VM_ENVELOPE_VALIDATION_ONLY')
+        self.assertEqual(direct['source_identity'],
+                         'CALLER_PROVIDED_VM_LIKE_BYTES_ORIGIN_UNVERIFIED')
+        self.assertEqual(scenario_summary('baseline')['mode'],
+                         'SYNTHETIC_OFFLINE_IN_MEMORY')
+
+    def test_34_modified_valid_input_remains_unverified_and_abstains(self):
+        packets = fixture_responses('baseline')
+        packets[(vm.NAMES['local'], 'value')] = vm.vector(
+            vm.NAMES['local'], 'value', FIXED_NOW, 0)
+        packets[(vm.NAMES['bootstrap'], 'value')] = vm.vector(
+            vm.NAMES['bootstrap'], 'value', FIXED_NOW, 1)
+        direct = assess_packets(packets)
+        self.assertEqual(direct['sampled_mode'], 'BOOTSTRAP')
+        self.assertEqual(direct['source_identity'],
+                         'CALLER_PROVIDED_VM_LIKE_BYTES_ORIGIN_UNVERIFIED')
+        self.assertEqual(direct['quality_gate_decision'],
+                         'ABSTAIN_NO_MODEL_INFERENCE')
+        self.assertEqual(direct['model_action_authority'], 'NONE')
 
 
 def main(argv=None):
