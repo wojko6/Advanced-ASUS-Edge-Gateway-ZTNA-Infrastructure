@@ -4,7 +4,7 @@
 Offline self-tests use injected fake /proc and unit data. The *separate*
 --inspect-local-listener command reads only /proc/net/tcp{,6}, metadata of
 the victoriaMetrics.service systemd unit, and the service MainPID's
-/proc/<pid>/fd symlink targets. It never connects, sends GET, writes files,
+/proc/<pid>/fd symlink targets. It opens no TCP/HTTP connection, writes files,
 contacts the router, invokes a model, or authorizes a production read.
 """
 from __future__ import annotations
@@ -433,6 +433,32 @@ class Tests(unittest.TestCase):
     def test_41_empty_proc_table_and_trailing_blank_line(self):
         self.assertEqual(summarize_bindings(table(), table())['count'], 0)
         self.assertEqual(summarize_bindings(self.local4(), table())['count'], 1)
+
+    def test_42_inspect_local_uses_bounded_metadata_only(self):
+        with patch(__name__ + '.read_table', side_effect=[self.local4(), table()]) as read, \
+             patch(__name__ + '.query_unit', return_value=('active', 123)) as unit, \
+             patch(__name__ + '.check_main_pid_fds', return_value='YES') as fds, \
+             patch('socket.socket', side_effect=AssertionError('TCP_SOCKET')), \
+             patch('subprocess.Popen', side_effect=AssertionError('PROCESS')):
+            result = inspect_local()
+        self.assertEqual(result['http_requests'], 0)
+        self.assertEqual(result['preflight_result'],
+                         'OBSERVED_LOOPBACK_MAINPID_SOCKET_MANUAL_REVIEW_ONLY')
+        self.assertEqual(read.call_count, 2)
+        unit.assert_called_once()
+        fds.assert_called_once()
+
+    def test_43_query_unit_uses_fixed_non_shell_argv(self):
+        with patch('subprocess.run') as runner:
+            runner.return_value.returncode = 0
+            runner.return_value.stdout = 'MainPID=51\\nActiveState=active\\n'
+            result = query_unit()
+            runner.assert_called_once_with(
+                ['systemctl', '--no-pager', 'show', '--property=MainPID',
+                 '--property=ActiveState', SERVICE],
+                capture_output=True, text=True, timeout=SYSCTL_TIMEOUT,
+                check=False)
+        self.assertEqual(result, ('active', 51))
 
 
 def main(argv=None):
