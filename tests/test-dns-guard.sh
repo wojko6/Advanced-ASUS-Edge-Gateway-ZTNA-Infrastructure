@@ -23,6 +23,7 @@ QUERY_ACTIVE="$TMP_DIR/query-active"
 QUERY_STARTED="$TMP_DIR/query-started"
 QUERY_COLLISION="$TMP_DIR/query-collision"
 PROBE_LOG="$TMP_DIR/probe.log"
+LOG_CAPTURE="$TMP_DIR/logger.log"
 FAIL_PROBE_PRIMARY="$TMP_DIR/fail-probe-primary"
 FAIL_PROBE_SECONDARY="$TMP_DIR/fail-probe-secondary"
 FAIL_TCP_PRIMARY="$TMP_DIR/fail-tcp-primary"
@@ -92,6 +93,7 @@ EOF
 cat >"$MOCK_BIN/logger" <<EOF
 #!/bin/sh
 [ -f "$HANG_LOGGER" ] && exec /bin/sleep 30
+printf '%s\n' "\$*" >>"$LOG_CAPTURE"
 exit 0
 EOF
 
@@ -159,7 +161,10 @@ cat >"$MOCK_BIN/dig" <<EOF
 
 case " \$* " in
     *" -v "*)
-        [ -f "$FAIL_DIG_RUNTIME" ] && exit 1
+        if [ -f "$FAIL_DIG_RUNTIME" ]; then
+            [ -s "$FAIL_DIG_RUNTIME" ] && exit "\$(cat "$FAIL_DIG_RUNTIME")"
+            exit 1
+        fi
         echo "DiG mock"
         exit 0
         ;;
@@ -342,7 +347,7 @@ fi
 
 echo "=== unusable optional dig does not make local DNS unhealthy ==="
 : >"$FAIL_DIG_RUNTIME"
-rm -f "$PROBE_LOG"
+rm -f "$PROBE_LOG" "$LOG_CAPTURE"
 
 broken_dig_output="$(run_guard ready)"
 printf '%s\n' "$broken_dig_output"
@@ -352,9 +357,23 @@ $broken_dig_output
 EOF
 
 grep -F 'udp one.one.one.one' "$PROBE_LOG" >/dev/null
+grep -F 'dig preflight failed (rc=1); TCP probe skipped' "$LOG_CAPTURE" >/dev/null
 
 if grep -F 'tcp ' "$PROBE_LOG" >/dev/null; then
     echo "FAIL: DNS Guard attempted active TCP query with unusable dig" >&2
+    exit 1
+fi
+
+echo "=== nonzero dig preflight rc is preserved without enforcing TCP ==="
+printf '7\n' >"$FAIL_DIG_RUNTIME"
+rm -f "$PROBE_LOG" "$LOG_CAPTURE"
+nonzero_dig_output="$(run_guard ready)"
+printf '%s\n' "$nonzero_dig_output"
+printf '%s\n' "$nonzero_dig_output" | grep -F 'READY=PASS' >/dev/null
+grep -F 'dig preflight failed (rc=7); TCP probe skipped' "$LOG_CAPTURE" >/dev/null
+grep -F 'udp one.one.one.one' "$PROBE_LOG" >/dev/null
+if grep -F 'tcp ' "$PROBE_LOG" >/dev/null; then
+    echo "FAIL: DNS Guard changed optional TCP behavior on nonzero dig rc" >&2
     exit 1
 fi
 
