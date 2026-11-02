@@ -159,6 +159,15 @@ EOF
 cat >"$MOCK_BIN/dig" <<EOF
 #!/bin/sh
 
+# Simulate Cron's firmware-first glibc lookup. Only dig should receive the
+# corrected Entware-first library search path.
+if [ "\${EDGE_TEST_CRON_DIG_ABI:-0}" = 1 ]; then
+    case "\${LD_LIBRARY_PATH:-}" in
+        /opt/lib|/opt/lib:*) ;;
+        *) echo "mock: firmware libc selected" >&2; exit 1 ;;
+    esac
+fi
+
 case " \$* " in
     *" -v "*)
         if [ -f "$FAIL_DIG_RUNTIME" ]; then
@@ -342,6 +351,21 @@ grep -F 'udp one.one.one.one' "$PROBE_LOG" >/dev/null
 grep -F 'tcp ' "$PROBE_LOG" | grep -F ' one.one.one.one ' >/dev/null
 if grep -E 'sslip\.io|edge-health-' "$PROBE_LOG" >/dev/null; then
     echo "FAIL: DNS Guard still generated unique external probe names" >&2
+    exit 1
+fi
+
+echo "=== Cron firmware library path does not break optional dig TCP ==="
+rm -f "$PROBE_LOG" "$LOG_CAPTURE"
+cron_ld_output="$(
+    EDGE_TEST_CRON_DIG_ABI=1 \\
+    LD_LIBRARY_PATH="/lib:/usr/lib:/lib/aarch64" \\
+    run_guard ready
+)"
+printf '%s\\n' "$cron_ld_output"
+printf '%s\\n' "$cron_ld_output" | grep -F 'READY=PASS' >/dev/null
+grep -F 'tcp ' "$PROBE_LOG" | grep -F ' one.one.one.one ' >/dev/null
+if [ -f "$LOG_CAPTURE" ] && grep -F 'dig preflight failed' "$LOG_CAPTURE" >/dev/null; then
+    echo "FAIL: Entware dig failed under firmware-first Cron LD_LIBRARY_PATH" >&2
     exit 1
 fi
 
