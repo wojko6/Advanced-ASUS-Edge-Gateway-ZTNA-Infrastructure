@@ -166,23 +166,32 @@ def check_main_pid_fds(pid, expected_inodes):
     directory = f'/proc/{pid}/fd'
     try:
         fds = os.listdir(directory)
+    except PermissionError:
+        return 'PERMISSION_DENIED'
     except OSError:
         return 'UNAVAILABLE'
     if len(fds) > MAX_FDS:
         return 'UNAVAILABLE'
     incomplete = False
+    access_denied = False
     for fd in fds:
         if not re.fullmatch(r'[0-9]{1,10}', fd):
             incomplete = True
             continue
         try:
             destination = os.readlink(f'{directory}/{fd}')
+        except PermissionError:
+            access_denied = True
+            continue
         except OSError:
             incomplete = True
             continue
         m = SOCKET_RE.fullmatch(destination)
         if m and m.group(1) in expected_inodes:
             return 'YES'
+    # A failed descriptor read must never be turned into a false NO.
+    if access_denied:
+        return 'PERMISSION_DENIED'
     return 'UNAVAILABLE' if incomplete else 'NO'
 
 
@@ -195,7 +204,7 @@ def evaluate(ipv4_text, ipv6_text, state, pid, owner_lookup):
         raise Hold('UNIT_PID_INVALID')
     matched = (owner_lookup(pid, bound['socket_inodes'])
                if pid and bound['count'] else 'UNAVAILABLE')
-    if matched not in ('YES', 'NO', 'UNAVAILABLE'):
+    if matched not in ('YES', 'NO', 'UNAVAILABLE', 'PERMISSION_DENIED'):
         raise Hold('OWNER_LOOKUP_INVALID')
     if bound['wildcard_count'] or bound['nonloopback_count']:
         outcome = 'HOLD_NONLOCAL_BIND_PRESENT'
@@ -205,6 +214,8 @@ def evaluate(ipv4_text, ipv6_text, state, pid, owner_lookup):
         outcome = 'HOLD_SERVICE_NOT_ACTIVE'
     elif matched == 'YES':
         outcome = 'OBSERVED_LOOPBACK_MAINPID_SOCKET_MANUAL_REVIEW_ONLY'
+    elif matched == 'PERMISSION_DENIED':
+        outcome = 'HOLD_LISTENER_FD_ACCESS_DENIED'
     else:
         outcome = 'HOLD_LISTENER_OWNERSHIP_UNCONFIRMED'
     summary = {
@@ -365,9 +376,10 @@ class Tests(unittest.TestCase):
                  return_value='socket:[888]'):
             self.assertEqual(check_main_pid_fds(77, frozenset({'12345'})), 'NO')
 
-    def test_27_fd_unavailable(self):
+    def test_27_fd_directory_permission_denied(self):
         with patch('os.listdir', side_effect=PermissionError):
-            self.assertEqual(check_main_pid_fds(77, frozenset({'12345'})), 'UNAVAILABLE')
+            self.assertEqual(check_main_pid_fds(77, frozenset({'12345'})),
+                             'PERMISSION_DENIED')
 
     def test_28_fd_too_many(self):
         with patch('os.listdir', return_value=['1']*(MAX_FDS+1)):
@@ -424,6 +436,38 @@ class Tests(unittest.TestCase):
     def test_39_excessive_input_hold(self):
         self.holds(lambda: parse_proc_table('X'*(MAX_PROC_BYTES+1),4),
                    'PROC_TABLE_INVALID')
+
+    def test_44_fd_link_permission_denied(self):
+        with patch('os.listdir', return_value=['4']), patch('os.readlink',
+                 side_effect=PermissionError):
+            self.assertEqual(check_main_pid_fds(77, frozenset({'12345'})),
+                             'PERMISSION_DENIED')
+
+    def test_45_fd_denied_precedes_race(self):
+        with patch('os.listdir', return_value=['4', '5']), patch('os.readlink',
+                 side_effect=[FileNotFoundError(), PermissionError()]):
+            self.assertEqual(check_main_pid_fds(77, frozenset({'12345'})),
+                             'PERMISSION_DENIED')
+
+    def test_46_observed_match_even_after_denied_link(self):
+        with patch('os.listdir', return_value=['4', '5']), patch('os.readlink',
+                 side_effect=[PermissionError(), 'socket:[12345]']):
+            self.assertEqual(check_main_pid_fds(77, frozenset({'12345'})), 'YES')
+
+    def test_47_permission_denied_keeps_hold(self):
+        result = self.sample(ownership='PERMISSION_DENIED')
+        self.assertEqual(result['mainpid_socket_inode_match'],
+                         'PERMISSION_DENIED')
+        self.assertEqual(result['preflight_result'],
+                         'HOLD_LISTENER_FD_ACCESS_DENIED')
+        self.assertEqual(result['http_requests'], 0)
+        self.assertEqual(result['model_action_authority'], 'NONE')
+        self.assertEqual(result['deployment_gate'], 'HOLD')
+
+    def test_48_nonlocal_bind_precedence_over_fd_denied(self):
+        v4 = table([mock_row('00000000')])
+        result = self.sample(v4=v4, ownership='PERMISSION_DENIED')
+        self.assertEqual(result['preflight_result'], 'HOLD_NONLOCAL_BIND_PRESENT')
 
     def test_40_socket_link_matching_is_strict(self):
         with patch('os.listdir',return_value=['1']), patch('os.readlink',
