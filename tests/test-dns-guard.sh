@@ -93,7 +93,7 @@ EOF
 cat >"$MOCK_BIN/logger" <<EOF
 #!/bin/sh
 [ -f "$HANG_LOGGER" ] && exec /bin/sleep 30
-printf '%s\\n' "\$*" >>"$LOG_CAPTURE"
+printf '%s\n' "\$*" >>"$LOG_CAPTURE"
 exit 0
 EOF
 
@@ -365,11 +365,11 @@ if grep -F 'tcp ' "$PROBE_LOG" >/dev/null; then
 fi
 
 echo "=== nonzero dig preflight rc is preserved without enforcing TCP ==="
-printf '7\\n' >"$FAIL_DIG_RUNTIME"
+printf '7\n' >"$FAIL_DIG_RUNTIME"
 rm -f "$PROBE_LOG" "$LOG_CAPTURE"
 nonzero_dig_output="$(run_guard ready)"
-printf '%s\\n' "$nonzero_dig_output"
-printf '%s\\n' "$nonzero_dig_output" | grep -F 'READY=PASS' >/dev/null
+printf '%s\n' "$nonzero_dig_output"
+printf '%s\n' "$nonzero_dig_output" | grep -F 'READY=PASS' >/dev/null
 grep -F 'dig preflight failed (rc=7); TCP probe skipped' "$LOG_CAPTURE" >/dev/null
 grep -F 'udp one.one.one.one' "$PROBE_LOG" >/dev/null
 if grep -F 'tcp ' "$PROBE_LOG" >/dev/null; then
