@@ -357,12 +357,12 @@ fi
 echo "=== Cron firmware library path does not break optional dig TCP ==="
 rm -f "$PROBE_LOG" "$LOG_CAPTURE"
 cron_ld_output="$(
-    EDGE_TEST_CRON_DIG_ABI=1 \\
-    LD_LIBRARY_PATH="/lib:/usr/lib:/lib/aarch64" \\
+    EDGE_TEST_CRON_DIG_ABI=1 \
+    LD_LIBRARY_PATH="/lib:/usr/lib:/lib/aarch64" \
     run_guard ready
 )"
-printf '%s\\n' "$cron_ld_output"
-printf '%s\\n' "$cron_ld_output" | grep -F 'READY=PASS' >/dev/null
+printf '%s\n' "$cron_ld_output"
+printf '%s\n' "$cron_ld_output" | grep -F 'READY=PASS' >/dev/null
 grep -F 'tcp ' "$PROBE_LOG" | grep -F ' one.one.one.one ' >/dev/null
 if [ -f "$LOG_CAPTURE" ] && grep -F 'dig preflight failed' "$LOG_CAPTURE" >/dev/null; then
     echo "FAIL: Entware dig failed under firmware-first Cron LD_LIBRARY_PATH" >&2
