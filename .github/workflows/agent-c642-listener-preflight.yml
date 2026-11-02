@@ -1,0 +1,57 @@
+name: C.64.2 agent local listener preflight — offline tests
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/fedora/local-ai-agent-v0.21/c64/**'
+      - '.github/workflows/agent-c642-listener-preflight.yml'
+      - 'experiments/fedora/local-ai-agent-v0.21/c63/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  c642-offline-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
+      - name: Check pinned upstream C.63 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/fedora/local-ai-agent-v0.21/c63
+          sha256sum --check SHA256SUMS
+          sha256sum --check SHA256SUMS_PUBLIC_C63_11_14.txt
+      - name: Run earlier offline laboratory regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=experiments/fedora/local-ai-agent-v0.21/c64
+          python3 -B "$BASE/local_ai_agent_v021c64_0_synthetic_vm_envelope_adapter.py" --self-test
+          python3 -B "$BASE/local_ai_agent_v021c64_1_mocked_vm_transport_contract.py" --self-test
+      - name: Run C.64.2 offline listener preflight unit tests ONLY
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT=experiments/fedora/local-ai-agent-v0.21/c64/local_ai_agent_v021c64_2_listener_identity_preflight.py
+          python3 -B "$SCRIPT" --self-test
+          # DO NOT invoke --inspect-local-listener in CI: it must only be
+          # manually run by the owner on their own Fedora host.
+          ! grep -q -- '--live-vm-readonly' "$SCRIPT"
+          python3 -B - "$SCRIPT" <<'PY'
+          import ast, sys
+          p = sys.argv[1]
+          with open(p, encoding='utf-8') as f:
+              tree = ast.parse(f.read())
+          class TestsOnly(ast.NodeVisitor):
+              def visit_Call(self, node):
+                  self.generic_visit(node)
+          functions = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+          for expected in ('parse_proc_table', 'parse_unit_properties', 'check_main_pid_fds', 'evaluate', 'inspect_local'):
+              assert expected in functions, expected
+          print('C642_CI=OFFLINE_TESTS_ONLY NO_HTTP=YES DEPLOYMENT_GATE=HOLD')
+          PY
