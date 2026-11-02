@@ -163,6 +163,12 @@ bounded_exec() {
     native_bounded_exec "$EDGE_DNS_QUERY_TIMEOUT_SECONDS" "$@"
 }
 
+# Cron inherits firmware LD_LIBRARY_PATH ahead of Entware's glibc. Scope
+# the Entware loader search order to dig only; never alter firmware helpers.
+bounded_dig() {
+    bounded_exec env LD_LIBRARY_PATH="/opt/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" dig "$@"
+}
+
 mkdir -p "$STATE_DIR" || die "cannot create $STATE_DIR"
 chmod 700 "$STATE_DIR" 2>/dev/null || true
 
@@ -567,7 +573,7 @@ dns_probe_tcp_ready() {
     # binary must not force DNS Guard into fail-open by itself.
     executable_exists dig >/dev/null 2>&1 || return 0
 
-    if bounded_exec dig -v >/dev/null 2>&1; then
+    if bounded_dig -v >/dev/null 2>&1; then
         :
     else
         dig_preflight_rc=$?
@@ -576,7 +582,7 @@ dns_probe_tcp_ready() {
     fi
 
     query_output="$(
-        bounded_exec dig +tcp +time=2 +tries=1 +short \
+        bounded_dig +tcp +time=2 +tries=1 +short \
             @"$EDGE_DNS_LOCAL_RESOLVER_IP" "$probe_name" A 2>&1
     )" || return 1
 
