@@ -69,6 +69,8 @@ def parse_proc_table(contents, family):
         raise Hold('PROC_HEADER_INVALID')
     results = []
     for line in lines[1:]:
+        if not line.strip():
+            continue  # A trailing empty /proc line is not a TCP socket row.
         parts = line.split()
         if len(parts) < 10:
             raise Hold('PROC_ROW_INVALID')
@@ -427,6 +429,10 @@ class Tests(unittest.TestCase):
         with patch('os.listdir',return_value=['1']), patch('os.readlink',
                  return_value='file:socket:[12345]'):
             self.assertEqual(check_main_pid_fds(77,frozenset({'12345'})), 'NO')
+
+    def test_41_empty_proc_table_and_trailing_blank_line(self):
+        self.assertEqual(summarize_bindings(table(), table())['count'], 0)
+        self.assertEqual(summarize_bindings(self.local4(), table())['count'], 1)
 
 
 def main(argv=None):
