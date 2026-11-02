@@ -26,6 +26,14 @@ These results do **not** mean the automatic `native_bounded_exec()` has been rep
 
 **Issue #287 remains OPEN with `ISSUE287_DEPLOYMENT_GATE=HOLD`.** No production candidate, installer digest, DNS Guard timing primitive, or service configuration is approved by this documentation update.
 
+## Issue #287 end-of-day laboratory follow-up — 2026-11-02 (C287.2J25–J27)
+
+The [J25–J27 laboratory evidence annex](operations/dns-guard-issue287-c2872j25-j27-timer-lifetime-2026-11-02.md) follows the source-pinned J24 review without changing the deployed helper. Initial J25/R1–R4 fixture failures arose from missing `kill` / `[` executable dispatch or unsupported `command -v` in an artificially restricted shell PATH; the corrected J25-R5 laboratory negative/positive test showed an original-helper timeout of `RC=137` at 1016 ms **with** `kill`, contrasted with `RC=0` at 3021 ms **without** `kill`, and observed an orphaned external timer `sleep`.
+
+J26 exercised **four selected original `dns-guard auto` paths** against mocked services in a private PID namespace, with bounded lock contention and sampled FD9 checks PASS. J27 observed 27 unique adopted timer descendants after three `auto` calls: zero were active by 2300 ms, but all 27 were zombies until deliberately reaped by the test PID 1. Separately, the pinned GCC/glibc ARMv7 candidate cleaned up a detached child in standalone QEMU (RC 0, 465 ms). **This is not a same-scenario, integrated whole-`auto` A/B verdict.**
+
+`C287.2J27_RESULT=PASS_TIMER_LIFETIME_AND_SEPARATE_CANDIDATE_CLEANUP_LAB_ONLY`. Next proposed check: J28 full-`auto` original-versus-lab-adapter parity with descendants, FD9, locking, timing and labels; **not run on 2026-11-02**. Router kernel 4.1.52, firmware BusyBox config/PATH, absolute PID-reuse safety, a hard total `auto` deadline and real-router acceptance remain untested. **Issue OPEN; `ISSUE287_DEPLOYMENT_GATE=HOLD`.**
+
 ## Local verification (Fedora)
 
 ```sh
