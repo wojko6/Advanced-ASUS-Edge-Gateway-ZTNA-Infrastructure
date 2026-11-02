@@ -269,8 +269,16 @@ class Tests(unittest.TestCase):
         self.assert_hold(lambda: assess_packets(x), 'VM_ENVELOPE_REJECTED')
 
     def test_28_http_never_used(self):
-        with patch('http.client.HTTPConnection', side_effect=AssertionError('NETWORK')):
-            self.assertEqual(scenario_summary()['model_requests'], 0)
+        # C.63's fetch() binds HTTPConnection as a default argument at import
+        # time, so patching only http.client.HTTPConnection would miss it.
+        # Block both public C.63 read entry points and the socket connection
+        # function; exercise every synthetic scenario under these guards.
+        with patch.object(vm, 'fetch', side_effect=AssertionError('VM_FETCH_FORBIDDEN')):
+            with patch.object(vm, 'observe', side_effect=AssertionError('VM_OBSERVE_FORBIDDEN')):
+                with patch('socket.create_connection',
+                           side_effect=AssertionError('NETWORK_FORBIDDEN')):
+                    for scenario in CASES:
+                        self.assertEqual(scenario_summary(scenario)['model_requests'], 0)
 
     def test_29_no_subprocess(self):
         with patch('subprocess.Popen', side_effect=AssertionError('SUBPROCESS')):
