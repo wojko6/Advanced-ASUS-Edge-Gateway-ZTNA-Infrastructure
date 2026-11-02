@@ -58,7 +58,7 @@ Outputs are bounded, fixed codes and small counts; no raw service command line, 
 
 ## Tests and limits
 
-48 tests cover source/authority spoofing, extra fields, contradictions, timestamps, invalid gaps, process metadata uncertainty, operator-code refusal, network/model isolation and file-write absence. CI also executes C.64.0, C.64.1 and C.64.2 regressions.
+50 tests cover source/authority spoofing, extra fields, contradictions, timestamps, invalid gaps, process metadata uncertainty, operator-code refusal, network/model isolation and file-write absence. CI also executes C.64.0, C.64.1 and C.64.2 regressions.
 
 This lab **cannot validate** real socket identity, operator identity or consent, genuine source authenticity, production sampling freshness, or real-world service behavior. An artificial positive socket match cannot override the actual Fedora FD_PERMISSION_DENIED HOLD.
 
