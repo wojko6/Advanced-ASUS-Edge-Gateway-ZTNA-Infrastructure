@@ -567,8 +567,11 @@ dns_probe_tcp_ready() {
     # binary must not force DNS Guard into fail-open by itself.
     executable_exists dig >/dev/null 2>&1 || return 0
 
-    if ! bounded_exec dig -v >/dev/null 2>&1; then
-        log "WARNING: dig is installed but not runnable; skipping active TCP DNS query probe"
+    if bounded_exec dig -v >/dev/null 2>&1; then
+        :
+    else
+        dig_preflight_rc=$?
+        log "WARNING: dig preflight failed (rc=$dig_preflight_rc); TCP probe skipped"
         return 0
     fi
 
