@@ -54,7 +54,7 @@ operator_next_step parsed_envelopes quality_gate_decision
 remediation_authorized response_headers_verified root_cause sampled_mode
 source_authenticity source_fingerprint_is_provenance_attestation
 source_fingerprint_sha256 source_identity transport
-transport_closed_connections transport_method transport_requests
+transport_closed_connections transport_method transport_requests deployment_gate
 '''.split())
 
 LISTENER_RESULTS = frozenset((
@@ -512,6 +512,19 @@ class Tests(unittest.TestCase):
         a, b = synthetic_pair()
         self.hold(lambda: evaluate_inputs([], b), 'LISTENER_SCHEMA_REJECTED')
         self.hold(lambda: evaluate_inputs(a, []), 'VM_SCHEMA_REJECTED')
+
+    def test_49_contract_keys_match_actual_c642_c641_producers(self):
+        a, b = synthetic_pair('fd_denied')
+        self.assertEqual(set(a), LISTENER_FIELDS)
+        self.assertEqual(set(b), VM_FIELDS)
+        self.assertEqual(b['deployment_gate'], 'HOLD')
+
+    def test_50_no_external_authority_from_direct_input(self):
+        a, b = synthetic_pair('loopback_match')
+        result = evaluate_inputs(a, b, 'ACKNOWLEDGE_OFFLINE_FINDINGS')
+        self.assertEqual(result['decision'], 'HOLD_SOURCE_NOT_ATTESTED')
+        self.assertFalse(result['review_code_authenticated'])
+        self.assertFalse(result['live_http_authorized'])
 
 
 def main(argv=None):
