@@ -33,6 +33,10 @@ This is a Python **test double**, not an OS network sandbox or a guarantee again
 
 The `agent-c641-offline.yml` workflow verifies C.63 pinned checksums, 50 tests, the eight-scenario matrix, and structured output invariants. This is **source/test acceptance only**, not release or deployment approval.
 
+## Preliminary security gate
+
+See [REVIEW_C64_1_PRE_LIVE.md](REVIEW_C64_1_PRE_LIVE.md) for the preliminary source-level review, residual risks and the **HOLD** gate for live observations. This is not independent security sign-off.
+
 ## What remains
 
 Any future live-reader design must separately address actual clock provenance/jumps, VM listener identity and access controls, non-atomicity and raw sample freshness, resource exhaustion, and operator authorization. This PR intentionally implements **none** of those live operations.
