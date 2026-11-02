@@ -20,7 +20,8 @@ The only accepted `--scenario` values are `baseline`, `stats_envelope`, `missing
 
 ## Security and interpretation
 
-- The adapter **never calls the C.63.8.1 network fetch function**. All eight JSON envelopes are generated directly in RAM; there is no arbitrary URL, query, file path, payload, or host data input.
+- The CLI **never calls the C.63.8.1 network fetch function**. All eight CLI JSON envelopes are generated directly in RAM; there is no arbitrary URL, query, file path, payload, or host data input.
+- When the Python `assess_packets()` API is called directly with caller-supplied VM-shaped bytes, it returns `CALLER_PROVIDED_VM_LIKE_BYTES_ORIGIN_UNVERIFIED` and `OFFLINE_VM_ENVELOPE_VALIDATION_ONLY`. Only `scenario_summary()`, which itself constructs the selected fictional fixture, labels the origin synthetic. Neither path attests to a real source or grants model access.
 - The existing C.63.8.1 parser rejects unknown labels, extra series, duplicate keys, malformed envelopes, nonfinite values, skewed evaluation clocks and oversized responses.
 - Strict sets, byte caps and a fixed evaluation clock prevent silently dropping, adding or replacing metric queries.
 - An SHA-256 fingerprint identifies the *ordered synthetic bytes only*. It is **not** a cryptographic attestation of real-source origin.
