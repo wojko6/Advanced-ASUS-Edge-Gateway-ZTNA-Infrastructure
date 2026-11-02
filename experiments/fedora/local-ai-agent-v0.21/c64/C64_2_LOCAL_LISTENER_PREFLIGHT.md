@@ -33,10 +33,19 @@ Run with the regular user account. **Do not use sudo.** Do not paste raw system 
 | HOLD_NONLOCAL_BIND_PRESENT | At least one wildcard or non-loopback listener appears bound to 8428. | Review service exposure separately; do not use as proof of safe local-only binding. |
 | HOLD_NO_LISTENER | No TCP LISTEN socket at 8428 was observed. | Do not infer why the service is unavailable; inspect independently. |
 | HOLD_SERVICE_NOT_ACTIVE | systemd did not report active service with a nonzero MainPID. | Do not proceed to live data. |
-| HOLD_LISTENER_OWNERSHIP_UNCONFIRMED | The process link could not be confirmed, e.g. rootless permissions or process race. | Do not use sudo automatically; request a distinct operator-authorized investigation. |
+| HOLD_LISTENER_FD_ACCESS_DENIED | The regular user was denied access to the service's descriptor directory or descriptor symlink targets. | Keep HOLD; do not raise privileges automatically or infer listener ownership. |
+| HOLD_LISTENER_OWNERSHIP_UNCONFIRMED | The process link could not be confirmed for other reasons, such as a process race or different socket owner. | Do not use sudo automatically; request a distinct operator-authorized investigation. |
 | C642_RESULT=HOLD_... | A bounded inspection stage failed (read/parse/timeout). | Treat as insufficient evidence. |
 
 **Important limitations:** a local socket can be impersonated by another local process; socket/process metadata is not cryptographic attestation of VictoriaMetrics or of its underlying telemetry. /proc and systemd are not a synchronized snapshot. A container/network namespace may limit what the observer sees. PID reuse or a rapidly changing listener may invalidate a snapshot. The absence of a non-loopback binding does not prove broader system isolation or firewall effectiveness.
+
+## Observed Fedora rootless boundary (2026-11-02)
+
+The operator completed 43/43 initial offline tests and an explicit metadata-only inspection: systemd reported the service active, a single port-8428 IPv4 loopback listener was visible, and no non-loopback or wildcard listener was observed. MainPID socket association was reported as UNAVAILABLE. A separate **read-only, non-sudo check** confirmed that listing the service's process descriptor directory was blocked with PERMISSION_DENIED under the regular user account.
+
+This explains the inability to confirm ownership through /proc/<MainPID>/fd. It does **not** establish that the listener belongs to that service, and it does **not** establish VictoriaMetrics source authenticity.
+
+The subsequent C.64.2 revision distinguishes the restricted-access case with mainpid_socket_inode_match=PERMISSION_DENIED and preflight_result=HOLD_LISTENER_FD_ACCESS_DENIED. Both are **HOLD**. This is a precision improvement only; it does not change access permissions or authorize live reads.
 
 ## Review gates before any future real read
 
