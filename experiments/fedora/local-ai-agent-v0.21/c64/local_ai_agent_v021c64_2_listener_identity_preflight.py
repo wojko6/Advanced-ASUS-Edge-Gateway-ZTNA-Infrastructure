@@ -451,7 +451,7 @@ class Tests(unittest.TestCase):
     def test_43_query_unit_uses_fixed_non_shell_argv(self):
         with patch('subprocess.run') as runner:
             runner.return_value.returncode = 0
-            runner.return_value.stdout = 'MainPID=51\\nActiveState=active\\n'
+            runner.return_value.stdout = 'MainPID=51\nActiveState=active\n'
             result = query_unit()
             runner.assert_called_once_with(
                 ['systemctl', '--no-pager', 'show', '--property=MainPID',
