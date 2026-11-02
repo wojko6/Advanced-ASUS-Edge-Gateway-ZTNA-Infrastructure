@@ -1,0 +1,41 @@
+name: C.64.1 agent mocked VM transport contract — offline only
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/fedora/local-ai-agent-v0.21/c64/**'
+      - '.github/workflows/agent-c641-mock-transport.yml'
+      - 'experiments/fedora/local-ai-agent-v0.21/c63/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  c641-mocked-transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
+      - name: Verify the existing C.63 pinned test modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/fedora/local-ai-agent-v0.21/c63
+          sha256sum --check SHA256SUMS
+          sha256sum --check SHA256SUMS_PUBLIC_C63_11_14.txt
+      - name: Check C.64.0 prerequisite offline suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B experiments/fedora/local-ai-agent-v0.21/c64/local_ai_agent_v021c64_0_synthetic_vm_envelope_adapter.py --self-test
+      - name: Verify C.64.1 mock HTTP transport and machine-readable invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT=experiments/fedora/local-ai-agent-v0.21/c64/local_ai_agent_v021c64_1_mocked_vm_transport_contract.py
+          python3 -B "$SCRIPT" --self-test
+          python3 -B "$SCRIPT" --mock-matrix
+          python3 -B "$SCRIPT" --summary-json --scenario baseline | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x["schema"] == "local-ai-agent.v0.21.c64.1.mocked-vm-transport.v1"; assert x["mode"] == "MOCK_HTTP_TRANSPORT_OFFLINE_ONLY"; assert x["transport_requests"] == 8; assert x["transport_closed_connections"] == 8; assert x["destination_contract"] == "FIXED_127_0_0_1_8428_NOT_CONTACTED"; assert x["source_identity"] == "SCRIPTED_HTTP_CONNECTIONS_IN_MEMORY_NOT_REAL_VM"; assert x["quality_gate_decision"] == "ABSTAIN_NO_MODEL_INFERENCE"; assert x["deployment_gate"] == "HOLD"; assert x["model_action_authority"] == "NONE"; assert x["model_requests"] == 0; assert x["dns_health"] == "NOT_ESTABLISHED"; assert x["root_cause"] == "UNDETERMINED"; assert x["remediation_authorized"] is False; assert x["response_headers_verified"] is False'
