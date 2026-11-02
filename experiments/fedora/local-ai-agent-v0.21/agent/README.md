@@ -19,7 +19,7 @@ python3 -B agent/diagnostic_agent.py --summary-json
 python3 -B agent/diagnostic_agent.py --operator-report
 ```
 
-No `pip install`, model download, network connection, user credentials, existing local service, root privilege or host telemetry is required. The CLI has no arbitrary file path, URL, command or text input. It reads only the public synthetic JSON shipped in the repository.
+No `pip install`, model download, network connection, user credentials, existing local service, root privilege or host telemetry is required. The entrypoint also compares the bundled fixture's SHA-256 with the fixed expected digest and fails closed if a still-schema-valid fixture has been changed. The CLI has no arbitrary file path, URL, command or text input. It reads only the public synthetic JSON shipped in the repository.
 
 ## Allowed and prohibited behavior
 
