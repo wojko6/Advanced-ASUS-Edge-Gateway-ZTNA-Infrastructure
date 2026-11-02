@@ -76,7 +76,7 @@ def collect(*, load_fixture=None, run_gate=None):
             or incident['dns_health'] != 'NOT_ESTABLISHED'):
         raise Hold('INCIDENT_SAFETY_BOUNDARY')
     try:
-        # No send callback. C.63.6 will never construct an HTTP client.
+        # No `send` callback. C.63.6 will never construct an HTTP client.
         gate_result = run_gate('baseline')
     except Exception as exc:
         raise Hold('SYNTHETIC_GATE_FAILED') from exc
@@ -119,11 +119,11 @@ def operator_report(summary):
     incident, digest = report.fixture()
     return (report.report_markdown(incident, digest)
             + '\n## Oddzielna demonstracja bramki C.63.6\n\n'
-            + '- Scenariusz \`baseline\` jest innym syntetycznym zestawem danych.\n'
+            + '- Scenariusz `baseline` jest innym syntetycznym zestawem danych.\n'
             + '- Jego kwalifikacja nie dotyczy powyższego incydentu.\n'
             + '- Brak wywołań modelu i brak uprawnień do działania.\n'
-            + '- Decyzja operatora: \`MANUAL_REVIEW_ONLY\`.\n'
-            + '- \`DEPLOYMENT_GATE=HOLD\`, \`MODEL_ACTION_AUTHORITY=NONE\`.\n')
+            + '- Decyzja operatora: `MANUAL_REVIEW_ONLY`.\n'
+            + '- `DEPLOYMENT_GATE=HOLD`, `MODEL_ACTION_AUTHORITY=NONE`.\n')
 
 
 class Tests(unittest.TestCase):
