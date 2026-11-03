@@ -15,6 +15,14 @@ The main public repository contained **609 tracked files** at the snapshot exami
 
 **Reviewed examples:** root README, PROJECT-STATUS, CHANGELOG, docs/START-HERE, worklog index and Nov 1–2 entries, documentation policy and private diary indexing rules. Review of all 609 files' text, automated full-repo relative link checking, independent source/sandbox security assessment and live router checks **were not performed**. Older dated evidence remains intact.
 
+## Source status and link reconciliation addendum (2026-11-03)
+
+The current-facing HCC navigation in `README.md`, `PROJECT-STATUS.md`, English/Polish `START-HERE` treated #318/#320/#322/#323 as still unmerged. The GitHub API now confirms **MERGED** for those four; #321 remains **OPEN/DRAFT**, while #338/#340 and C.57–C.62 #343–#346 stay Draft. This cleanup updates navigation and explicitly qualifies older statements as historical; no older evidence text is altered or backdated.
+
+A relative-link existence scan of selected canonical documentation (root README, status, changelog, EN/PL start guides, documentation model, worklog index, Polish index and recovery index) found no missing linked files among those reviewed; one `docs/case-studies/` directory pointer is a valid directory, not a missing file. Private README, index, daily guide and worklog rules, plus curated ASUS mirror README/migration/changelog, also showed no missing relative linked targets in this bounded scan. **Not** a comprehensive Markdown validator, fragment/anchor audit, external URL check or review of all 308 public Markdown files.
+
+**Structural finding:** root README and PROJECT-STATUS each contain long historical chronologies; private README/INDEX overlap with the daily guide, and the curated private ASUS migration repository still carries a September 2026 baseline. The [documentation map](../DOCUMENTATION-MAP.md) now centralizes navigation and source roles rather than moving/deleting records and breaking historic links.
+
 **Publication policy:** English public sanitized synopsis only, operator observations marked as such, no raw private logs, addresses, screenshots or personal home paths; docs-only Draft PR, no automatic merge or deployment.
 
 [Worklog](../worklog/2026-11-03.md) · [Boundary note](../design/local-qwen-supervised-gui-2026-11-03.md)

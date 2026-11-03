@@ -8,6 +8,8 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 **October 25 focused documentation reconciliation:** the [date-scoped consistency audit](../audits/2026-10-25-daily-documentation-consistency-review.md) distinguishes merged HCC #305–#308, Fedora-local Caddy activation, client-test #289 and later ASUS WebUI #283 production acceptance. It does not certify wider router/security or disaster-recovery changes.
 
+**Status disclaimer (reviewed 2026-11-03):** each dated entry describes the source/PR state *at that time*. Current publication state is recorded in [documentation map](../DOCUMENTATION-MAP.md); older labels such as `Draft` must not be read as a live status. The public timeline intentionally omits unsanitized private days, including 30–31 October on `main` pending separate review.
+
 ## Timeline
 
 **Legacy #151 source archive (2026-10-15):** the [RouterCloud historical PR comparison](../audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md) preserves the [September 30 #137 acceptance evidence](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) and [original dated design notes](../history/routercloud-browser-access-2026-09-30.md) without installing obsolete startup scripts or changing the production router.

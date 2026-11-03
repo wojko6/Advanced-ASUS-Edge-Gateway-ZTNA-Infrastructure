@@ -1,9 +1,11 @@
 # Dokumentacja po polsku — ASUS Edge Gateway
 
 **Status:** indeks bieżących instrukcji i dokumentów pomocniczych  
-**Aktualizacja:** 2026-10-28 (odświeżenie odnośników do bieżących i roboczych prac; bez zmiany instrukcji operacyjnych ani walidacji produkcyjnej)
+**Aktualizacja:** 2026-11-03 (porządkowanie nawigacji i statusów PR; bez zmiany instrukcji operacyjnych ani walidacji produkcyjnej)
 
 Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest osobną kopią całej dokumentacji projektu. **Techniczny stan infrastruktury i zasady bezpieczeństwa** pozostają opisane w [PROJECT-STATUS.md](../../PROJECT-STATUS.md), [modelu dokumentacji](../documentation-model.md) i [polityce językowej](../language-policy.md).
+
+**Mapa wszystkich dokumentów:** [DOCUMENTATION-MAP.md](../DOCUMENTATION-MAP.md) — źródła prawdy, historia, laboratoria i aktualny na 03.11.2026 stan wybranych PR. Nie jest to osobny dokument produkcyjny.
 
 ## Pierwsza wizyta — od czego zacząć?
 
