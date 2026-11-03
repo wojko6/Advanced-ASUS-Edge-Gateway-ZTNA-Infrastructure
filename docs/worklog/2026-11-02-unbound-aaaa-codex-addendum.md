@@ -1,6 +1,6 @@
 # 2026-11-02 — Unbound AAAA/DNSSEC repair and Codex C64 review (supplement)
 
-> **Scope:** Sanitized, operator-reported end-of-day supplement to [the November 2 worklog](2026-11-02.md). This is not a general production audit. It does not replace the independent DNS Guard Issue #287 laboratory record in [Draft PR #361](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/361). No secrets, local workstation user data, private screenshots or raw router logs are reproduced here.
+> **Scope:** Sanitized, operator-reported end-of-day supplement to [the November 2 worklog](2026-11-02.md). This is not a general production audit. It does not replace the independent DNS Guard Issue #287 laboratory record in [merged PR #361](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/361). No secrets, local workstation user data, private screenshots or raw router logs are reproduced here.
 
 ## 1. Fedora Codex OAuth failure isolated to DNS AAAA handling
 
