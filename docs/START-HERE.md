@@ -1,7 +1,7 @@
 # Start here — a guided tour of ASUS Edge Gateway
 
 **Status:** CURRENT / NAVIGATION ONLY  
-**Reviewed:** 2026-10-28 (navigation, pending PR boundaries and evidence links only; no new live router/service validation)  
+**Reviewed:** 2026-11-03 (documentation/PR status only; no new live router/service validation)  
 **Language:** English reader entry point · [Wersja polska](pl/START-HERE.md)
 
 Welcome. You do **not** need to read the entire repository or run any scripts to understand this project. This page is a **reading map**, not an installation manual or permission to deploy changes.
@@ -11,6 +11,8 @@ Welcome. You do **not** need to read the entire repository or run any scripts to
 This is a reproducible, security-focused Home/SMB network lab built around an **ASUS TUF-AX5400** running GNUton Asuswrt-Merlin. It brings together firewall and access policies, Tailscale remote access, Pi-hole and Unbound DNS, RouterCloud, recovery workflows, and monitoring on a separate Fedora host. The goal is to make design decisions and test outcomes reviewable.
 
 **Scope matters:** the reference ASUS is still the production gateway. This is an *enterprise-style lab*, **not** an enterprise high-availability appliance. A proposed future Flint 4/ASUS split or OPNsense replacement is **design/research**, not a completed migration. The authoritative current deployment and restrictions are in [PROJECT-STATUS.md](../PROJECT-STATUS.md).
+
+**Current navigation:** [Documentation map and source-of-truth entry points](DOCUMENTATION-MAP.md). Historical worklog entries retain their original as-of status.
 
 ## First visit: 15–20-minute route
 
@@ -42,7 +44,7 @@ The times below are **reading estimates**, not benchmarks. Skim the linked secti
 
 The [Homelab Control Center V0.1–V0.3 lab](../experiments/fedora/homelab-control-center-v0.1/README.md) is **not** the ASUS router WebUI or a permanently running service. The merged V0.3 experiment has two local-source-backed read-only telemetry panels; synthetic service, incident and recovery widgets remain hidden until DEMO opt-in. The [V0.3 HTTPS test record](../experiments/fedora/homelab-control-center-v0.1/V0.3-DNS-GUARD-PREFLIGHT.md) describes what the manual checks prove—and do not prove. Permanent deployment remains HOLD.
 
-**Unmerged extensions (not part of `main`):** HCC V0.4 [Draft PR #318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318) proposes a third source-labelled LIVE router-DNS Blackbox tile. V0.5 [stacked Draft PR #323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) proposes a **manually requested, dated archive**, not a live transition feed. The separate [Issue #319](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/319) experiment family has [Draft PRs #320–#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320) for bounded DNS Guard history/model checks. None is merged, installed as a persistent service, or evidence of client DNS failover. Track exact dependencies and acceptance gates on the linked PRs before updating current guides.
+**PR/source status reviewed 2026-11-03:** HCC V0.4 [#318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318), offline event model [#320](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320), seven-series correlation [#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/322) and fixed V0.5 archive [#323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) are **merged source**. The separately scoped one-series preflight [#321](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/321) remains **OPEN / DRAFT**. These source states do **not** certify an HCC persistent service, ASUS configuration changes or client DNS failover; deployment remains **HOLD**. For later HCC lab branches and current navigation see the [documentation map](DOCUMENTATION-MAP.md).
 
 **Recent publication boundary:** The [October 27 Fedora/HCC worklog](worklog/2026-10-27.md) was published through [merged PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325), and the [October 28 Tailscale worklog](worklog/2026-10-28.md) through [merged PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326). The earlier partial [Draft PR #317](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/317) was superseded by the fuller October 27 record; do not merge both versions. Separate [merged monitoring PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324) records the dated Grafana/Loki observations. Future RouterCloud disk-usage TreeMap [Issue #327](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/327) remains a proposal, not a shipped Metro feature.
 
