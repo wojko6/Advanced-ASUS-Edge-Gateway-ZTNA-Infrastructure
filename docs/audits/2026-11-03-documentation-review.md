@@ -25,6 +25,8 @@ A relative-link existence scan of selected canonical documentation (root README,
 
 **PR #364 review correction (2026-11-03):** the Polish `docs/pl/README.md` still stated that only HCC V0.1–V0.3 had merged; this was corrected using the same independently checked PR statuses. Dated text in `CHANGELOG.md` and the 2026-10-28 section of `PROJECT-STATUS.md` now distinguishes the original Draft checkpoint from the 2026-11-03 merged-source state. The malformed trailing bold delimiter in the 2026-10-27 status paragraph was also corrected. These are **docs-only semantic consistency fixes**; no old test outcome was changed.
 
+**PR #364 content-link correction (2026-11-03):** the public HCC experiment README on `main` describes **V0.1–V0.3**, not V0.14.5. The retrospective October 30 entry now names that earlier baseline correctly and points to Draft #338 for unmerged V0.14.5 A–K source and test notes. This preserves the source-versus-deployment distinction.
+
 ## October 30–31 retrospective worklog addendum
 
 At the operator's 2026-11-03 request, two missing **public chronology entries** were constructed from GitHub Draft evidence and the private October 31 diary:
