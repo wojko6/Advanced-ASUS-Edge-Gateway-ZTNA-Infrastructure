@@ -4,6 +4,8 @@
 
 > **First time here?** Begin with the **[15–20-minute guided tour](docs/START-HERE.md)** or **[Zacznij tutaj — po polsku](docs/pl/START-HERE.md)**. These reading routes explain what to open first, what to skip, and how to distinguish tested production state from plans or lab-only work. **No installation required.**
 
+**2026-11-03 local Qwen workstation GUI (operator-reported, NOT an ASUS deployment):** a separate Fedora KDE prototype through v0.10.1 performed bounded auto-reads/app launches and consent-gated file changes. The GUI code is **not** published or CI-audited here; the separate C.63 agent/HCC production deployment remains **HOLD**. [Dated worklog](docs/worklog/2026-11-03.md) · [Safety boundary](docs/design/local-qwen-supervised-gui-2026-11-03.md).
+
 A reproducible Home/SMB security-edge lab for the ASUS TUF-AX5400. The current reference deployment combines Asuswrt-Merlin, Entware, Tailscale, Pi-hole, Unbound, syslog-ng, off-router observability, and a least-privilege firewall policy.
 
 This is an **enterprise-style lab**, not an enterprise-grade appliance. It has no high availability, redundant WAN, native VLAN microsegmentation, or vendor support.
