@@ -23,6 +23,8 @@ A relative-link existence scan of selected canonical documentation (root README,
 
 **Structural finding:** root README and PROJECT-STATUS each contain long historical chronologies; private README/INDEX overlap with the daily guide, and the curated private ASUS migration repository still carries a September 2026 baseline. The [documentation map](../DOCUMENTATION-MAP.md) now centralizes navigation and source roles rather than moving/deleting records and breaking historic links.
 
+**PR #364 review correction (2026-11-03):** the Polish `docs/pl/README.md` still stated that only HCC V0.1–V0.3 had merged; this was corrected using the same independently checked PR statuses. Dated text in `CHANGELOG.md` and the 2026-10-28 section of `PROJECT-STATUS.md` now distinguishes the original Draft checkpoint from the 2026-11-03 merged-source state. The malformed trailing bold delimiter in the 2026-10-27 status paragraph was also corrected. These are **docs-only semantic consistency fixes**; no old test outcome was changed.
+
 ## October 30–31 retrospective worklog addendum
 
 At the operator's 2026-11-03 request, two missing **public chronology entries** were constructed from GitHub Draft evidence and the private October 31 diary:
