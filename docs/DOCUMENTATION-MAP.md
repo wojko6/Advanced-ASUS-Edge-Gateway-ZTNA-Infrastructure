@@ -22,6 +22,8 @@
 - **`work-log-private` (private)** — the operator's Polish daily engineering log. It can contain details not suitable for public publication; it is **not** automatically mirrored to this repository. Public worklogs are curated excerpts, not translations.
 - **`ASUS-Edge-Gateway-ZTNA` (private)** — separately curated portfolio/migration repository with its own historical baseline and gate. Its dated notes are **not** evidence that it tracks every later change from the active public engineering repo.
 
+**Full open-PR triage:** [22-PR inventory and safe review order (2026-11-03)](audits/2026-11-03-open-pr-backlog-reconciliation.md). This dated register separates CI, merge conflicts, branch ancestry, human approval and deployment safety; it does **not** change any PR state.
+
 ## PR status reconciliation — checked 2026-11-03
 
 These are **source publication states**, not deployment or feature acceptance.

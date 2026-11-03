@@ -36,6 +36,10 @@ At the operator's 2026-11-03 request, two missing **public chronology entries** 
 - At this point, the entries exist **only on this open documentation Draft branch**, not public `main`. Existing Draft heads, parentage, implementations, test results and `HOLD` boundaries were not rewritten or merged.
 - If private Oct 30 navigation is later reconstructed, label that reconstruction with its **actual later authorship date** and link the genuine underlying Drafts; do not invent the unrecorded remainder of the day.
 
+## Open PR backlog hygiene — addendum 2026-11-03
+
+A separate [22-open-Draft-PR register](2026-11-03-open-pr-backlog-reconciliation.md) records the verified `clean`/`behind`/`dirty` snapshot, five real conflicts, grouped review queues, exact stacked ancestry and explicit non-deployment rules. The present documentation cleanup does **not** merge or discard the older PRs. After any `main` merge or branch update, refresh this dated snapshot rather than treating it as self-updating.
+
 **Publication policy:** English public sanitized synopsis only, operator observations marked as such, no raw private logs, addresses, screenshots or personal home paths; docs-only Draft PR, no automatic merge or deployment.
 
 [Worklog](../worklog/2026-11-03.md) · [Boundary note](../design/local-qwen-supervised-gui-2026-11-03.md)
