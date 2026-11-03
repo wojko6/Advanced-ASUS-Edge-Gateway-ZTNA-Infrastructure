@@ -11,7 +11,7 @@ The main public repository contained **609 tracked files** at the snapshot exami
 | Qwen GUI vs C.63 agent | Risk of falsely equating local approved actions with `MODEL_ACTION_AUTHORITY=NONE` | Add explicit, independent permission/deployment boundary |
 | Monitoring follow-up | Loki 503 later rechecked at 200; Grafana empty-discovery warnings unresolved | Record bounded evidence and no proven DNS/root cause |
 | README, status, changelog | No current local GUI navigation point | Add small dated, non-production references |
-| 30–31 October worklogs | Not present on public `main`; older drafts referenced in existing records | **Do not fabricate or silently merge** |
+| 30–31 October worklogs | Absent from public `main`; **two distinct Oct 30 Drafts** (#338/#343) and multiple Oct 31 agent Drafts (#344–#346) were reviewed | Add **curated retrospective public summaries on this Draft branch**, retaining original detailed Drafts and failure history; no source merge, no backdated acceptance |
 
 **Reviewed examples:** root README, PROJECT-STATUS, CHANGELOG, docs/START-HERE, worklog index and Nov 1–2 entries, documentation policy and private diary indexing rules. Review of all 609 files' text, automated full-repo relative link checking, independent source/sandbox security assessment and live router checks **were not performed**. Older dated evidence remains intact.
 
@@ -22,6 +22,15 @@ The current-facing HCC navigation in `README.md`, `PROJECT-STATUS.md`, English/P
 A relative-link existence scan of selected canonical documentation (root README, status, changelog, EN/PL start guides, documentation model, worklog index, Polish index and recovery index) found no missing linked files among those reviewed; one `docs/case-studies/` directory pointer is a valid directory, not a missing file. Private README, index, daily guide and worklog rules, plus curated ASUS mirror README/migration/changelog, also showed no missing relative linked targets in this bounded scan. **Not** a comprehensive Markdown validator, fragment/anchor audit, external URL check or review of all 308 public Markdown files.
 
 **Structural finding:** root README and PROJECT-STATUS each contain long historical chronologies; private README/INDEX overlap with the daily guide, and the curated private ASUS migration repository still carries a September 2026 baseline. The [documentation map](../DOCUMENTATION-MAP.md) now centralizes navigation and source roles rather than moving/deleting records and breaking historic links.
+
+## October 30–31 retrospective worklog addendum
+
+At the operator's 2026-11-03 request, two missing **public chronology entries** were constructed from GitHub Draft evidence and the private October 31 diary:
+
+- [October 30](../worklog/2026-10-30.md): both HCC #338 and Local AI Agent #343 preserved as independent workstreams; later HCC Draft appendices are not presumed to have run on that same day. The Oct 30 private diary itself was not available when original main-tree coverage was checked, so a full-day reconstruction is **not** claimed.
+- [October 31](../worklog/2026-10-31.md): C.60/C.61/C.62 from #344–#346 and a **sanitized** separate macOS/OpenCore checkpoint with explicit failed boot and unrun B196. The local source packs were not added to this public PR.
+- At this point, the entries exist **only on this open documentation Draft branch**, not public `main`. Existing Draft heads, parentage, implementations, test results and `HOLD` boundaries were not rewritten or merged.
+- If private Oct 30 navigation is later reconstructed, label that reconstruction with its **actual later authorship date** and link the genuine underlying Drafts; do not invent the unrecorded remainder of the day.
 
 **Publication policy:** English public sanitized synopsis only, operator observations marked as such, no raw private logs, addresses, screenshots or personal home paths; docs-only Draft PR, no automatic merge or deployment.
 

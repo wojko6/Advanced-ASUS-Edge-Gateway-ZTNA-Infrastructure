@@ -10,7 +10,7 @@
 | How is the network designed? | [Network-design index](network-design.md) | [Architecture](architecture.md), [security](security.md) and [firewall policy](firewall-policy.md) |
 | How can the system be managed or recovered? | [Operations guide](operations.md) | [Recovery index](disaster-recovery-index.md), dated live acceptance and explicit rollback gates |
 | What is tested, simulated or pending? | [Testing](testing.md) and [requirements](requirements.md) | [Evidence collection](evidence-collection.md), [project roadmap](roadmap.md), exact GitHub PR state |
-| What happened on a particular date? | [Public worklog timeline](worklog/README.md) | Relevant dated [case study](CASE-STUDIES.md), audit and PR; do not promote historical status to current |
+| What happened on a particular date? | [Public worklog timeline](worklog/README.md) (retrospective Oct 30–31 summaries are on this **Draft branch**, not yet `main`) | Relevant dated [case study](CASE-STUDIES.md), audit and PR; do not promote historical status to current |
 | Where are the Fedora monitoring/UI labs? | [Homelab Control Center experiment](../experiments/fedora/homelab-control-center-v0.1/README.md) | [HCC status](../PROJECT-STATUS.md) and the particular draft/merged PR; no assumed permanent deployment |
 | How does the local supervised Qwen GUI differ from C.63? | [Fedora GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md) | [C.63 lab README](../experiments/fedora/local-ai-agent-v0.21/c63/README.md) and [dated worklog](worklog/2026-11-03.md); scopes remain independent |
 | Which material is written in Polish? | [Polish entry point](pl/START-HERE.md) and [Polish documentation index](pl/README.md) | [Language policy](language-policy.md) and canonical technical contract |
