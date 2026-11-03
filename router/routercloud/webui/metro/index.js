@@ -54,9 +54,15 @@ var DIR_EMPTY_NOTE;
  */
 const PARAMS = Object.fromEntries(new URLSearchParams(window.location.search).entries());
 
+// ROUTERCLOUD_FILE_IMAGE_PREVIEW_V1
+// These formats are handled by the browser's native image decoder.
+// SVG remains in the sandboxed iframe path pending separate review.
+const IMAGE_PREVIEW_FORMATS = [
+  ".ico", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp",
+];
+
 const IFRAME_FORMATS = [
-  ".pdf",
-  ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg",
+  ".pdf", ".svg",
   ".mp4", ".mov", ".avi", ".wmv", ".flv", ".webm",
   ".mp3", ".ogg", ".wav", ".m4a",
 ];
@@ -3630,6 +3636,96 @@ function setupNewFile() {
   });
 }
 
+// ROUTERCLOUD_FILE_VIEW_UX_V1
+// Single-file pages reuse the dashboard shell, but not its empty panels.
+function setupRouterCloudFileViewUx() {
+  if (DATA.kind !== "Edit" && DATA.kind !== "View") {
+    return;
+  }
+
+  document.body.classList.add("routercloud-file-view");
+  document.querySelector(".dashboard-storage")?.classList.add("hidden");
+
+  const heading = document.getElementById("recent-files-title");
+  const count = document.querySelector(".recent-files-count");
+  const contents = document.querySelector(".recent-files");
+
+  if (!heading || !contents) {
+    return;
+  }
+
+  heading.textContent = "Informacje o pliku";
+  count?.classList.add("hidden");
+  contents.replaceChildren();
+
+  const name = baseName(DATA.href || "") || "Plik";
+  const ext = extName(name);
+  const details = document.createElement("dl");
+  details.className = "routercloud-file-details";
+
+  function appendDetail(label, value) {
+    const item = document.createElement("div");
+    item.className = "routercloud-file-detail";
+    const key = document.createElement("dt");
+    const val = document.createElement("dd");
+    key.textContent = label;
+    val.textContent = value;
+    item.append(key, val);
+    details.appendChild(item);
+  }
+
+  appendDetail("Nazwa", name);
+  appendDetail("Typ", ext ? ext.slice(1).toUpperCase() : "Bez rozszerzenia");
+  appendDetail("Lokalizacja", String(DATA.href || "/"));
+  appendDetail("Tryb", DATA.kind === "Edit" ? "Edycja" : "Podgląd");
+
+  // EditData does not contain size or mtime. Do not invent either.
+  contents.appendChild(details);
+
+  // ROUTERCLOUD_FILE_VIEW_LAYOUT_V2
+  // The tall details panel must not stretch the action-tiles grid row.
+  // Move only the file-mode panel beside the actual preview/editor.
+  // Index pages keep the original dashboard/header DOM untouched.
+  const aside = document.querySelector(".dashboard-aside");
+  const editorPage = document.querySelector(".editor-page");
+  if (aside && editorPage) {
+    editorPage.appendChild(aside);
+  }
+}
+
+// ROUTERCLOUD_FILE_IMAGE_PREVIEW_V1
+// Use a same-origin direct file URL. Do not embed user data as HTML,
+// fetch third-party thumbnail services, or escalate edit permissions.
+function setupRouterCloudImagePreview(url, extension, fallback) {
+  if (!IMAGE_PREVIEW_FORMATS.includes(extension)) {
+    return false;
+  }
+
+  const editorPage = document.querySelector(".editor-page");
+  if (!editorPage || !fallback) {
+    return false;
+  }
+
+  const wrapper = document.createElement("figure");
+  wrapper.className = "routercloud-image-preview";
+  const image = document.createElement("img");
+  image.alt = `Podgląd obrazu: ${baseName(url)}`;
+  image.decoding = "async";
+  image.loading = "eager";
+
+  image.addEventListener("error", () => {
+    wrapper.remove();
+    fallback.textContent =
+      "Nie udało się wyświetlić obrazu. Możesz pobrać plik.";
+    fallback.classList.remove("hidden");
+  }, { once: true });
+
+  wrapper.appendChild(image);
+  fallback.insertAdjacentElement("afterend", wrapper);
+  image.src = url;
+  return true;
+}
+
 async function setupEditorPage() {
   // ROUTERCLOUD_FILE_VIEW_CONTEXTUAL_SHORTCUTS_V1
   // Dashboard navigation shortcuts belong to directory views.
@@ -3641,6 +3737,8 @@ async function setupEditorPage() {
     .forEach(tile => {
       tile.classList.add("hidden");
     });
+
+  setupRouterCloudFileViewUx();
 
   const url = baseUrl();
 
@@ -3682,7 +3780,11 @@ async function setupEditorPage() {
       document.querySelector(".not-editable");
 
     const ext =
-      extName(baseName(url));
+      extName(baseName(url)).toLowerCase();
+
+    if (setupRouterCloudImagePreview(url, ext, $notEditable)) {
+      return;
+    }
 
     if (
       IFRAME_FORMATS.find(
