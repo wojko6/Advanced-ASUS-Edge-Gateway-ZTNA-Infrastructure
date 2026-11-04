@@ -1,6 +1,22 @@
 # Open pull request inventory and safe review sequence — 2026-11-03
 
-**Status:** dated GitHub inventory / planning note, **not** merge authorization, CI security certification, live ASUS acceptance or production deployment evidence. Snapshot of **22 OPEN/DRAFT PRs** in [the active engineering repository](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pulls), reviewed **2026-11-03**. Re-check GitHub status whenever a branch or `main` changes.
+**Status:** dated GitHub inventory / planning note, **not** merge authorization, CI security certification, live ASUS acceptance or production deployment evidence. Initial snapshot of **22 OPEN/DRAFT PRs** in [the active engineering repository](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pulls), reviewed **2026-11-03**. Re-check GitHub status whenever a branch or `main` changes.
+
+## Post-triage merge update — 2026-11-03
+
+After the original 22-PR snapshot above, the operator approved and GitHub successfully squash-merged three documentation-only PRs:
+
+| PR | Updated HEAD checked by CI | Exact-head CI | Squash merge commit |
+| --- | --- | ---: | --- |
+| [#364](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/364) | `2fc94a44b4407082c00c73e70e4076f87bafed96` | 8/8 PASS | `b2a52aeb5899f25486745fb61626aa98036a70f4` |
+| [#361](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/361) | `d31bc1d408a85333f30f4297093ad2844d89cd99` | 8/8 PASS | `64486caaeb26472f3608a9c09034cfb179a551e7` |
+| [#362](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/362) | `0f318198bddbf83fa3c1f26d76e9b13349b0280d` | 8/8 PASS | `c7ac1ae09699e3780449613932679b2b78de7200` |
+
+For #361 and #362, their feature branches were one commit behind after #364. The active `main` ruleset requires an up-to-date branch and the `Validation suite` check. Each branch was advanced with a proper two-parent merge commit, exact-head CI was rerun, and only then was its PR squash-merged. No required check or branch rule was bypassed. The #362 supplement's reference to #361 was corrected from Draft to merged before its final CI.
+
+**Post-merge GitHub state:** `main` is `c7ac1ae09699e3780449613932679b2b78de7200`; **19 OPEN / 19 DRAFT** PRs remain. A fresh mergeability read returned **6 clean / 13 unknown** for those remaining PRs. `unknown` means GitHub had not computed a definitive state; it must not be reported as a conflict. The 22/9/8/5 table below is intentionally retained as the **initial pre-merge snapshot**, not the current queue.
+
+All three merged PRs were documentation-only. Issue #287 remains OPEN with `ISSUE287_DEPLOYMENT_GATE=HOLD`; HCC and C.63/C.64 agent deployment remain `DEPLOYMENT_GATE=HOLD`. No router, service, DNS, firewall or autonomous-agent production change was made.
 
 ## Summary and counting rules
 
@@ -63,7 +79,7 @@ These are actual GitHub base branches, **not** suggested invented dependencies:
 
 ## Safety and review checklist
 
-- No source merges, PR closures, branch deletions, retargeting, rewrite/force-push, live service changes or production rollout were performed in this triage.
+- At the initial triage checkpoint, no PR merge/closure, branch deletion, retargeting, rewrite/force-push, live service change or production rollout had been performed. The later authorized documentation-only merges of #364, #361 and #362 are recorded in the post-triage update above.
 - Before merge: verify **exact current head SHA**, target base, integration diff, branch-specific check runs, privacy review and owner approval. A passing 2026-11-03 CI result expires as evidence for a changed commit.
 - For HCC and autonomous agent, **`DEPLOYMENT_GATE=HOLD`** remains. The separate workstation Qwen GUI has its own limited user-session allowlist and is not the C.63/C.64 agent.
 - `dirty` requires intentional conflict resolution; `behind` is a signal to review rebase/merge-base freshness, not a blanket authorization to update every branch.
