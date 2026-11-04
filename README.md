@@ -2,9 +2,11 @@
 
 [![Validation suite](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml/badge.svg?branch=main)](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml)
 
-> **Documentation navigation:** [Canonical entry-point map and current PR status snapshot](docs/DOCUMENTATION-MAP.md) (reviewed 2026-11-03; not a live validation). Historical sections below preserve their originally reported test scopes.
+> **Documentation navigation:** [Canonical entry-point map and current PR status snapshot](docs/DOCUMENTATION-MAP.md) (publication links updated 2026-11-04; not a live validation). Historical sections below preserve their originally reported test scopes.
 >
 > **First time here?** Begin with the **[15–20-minute guided tour](docs/START-HERE.md)** or **[Zacznij tutaj — po polsku](docs/pl/START-HERE.md)**. These reading routes explain what to open first, what to skip, and how to distinguish tested production state from plans or lab-only work. **No installation required.**
+
+**2026-11-04 separate workstation checkpoints (not an ASUS deployment):** [sanitized dated worklog](docs/worklog/2026-11-04.md) records OpenCore/Sonoma trials with Recovery not reached, a separately approved change only on a test USB, and read-only Fedora 45/NVIDIA 620 package preflight. **B9 was not run; Fedora upgrade and macOS installer gates remain HOLD.** Documentation publication [#366/#367](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/367) does not change the router or workstation.
 
 **2026-11-03 local Qwen workstation GUI (operator-reported, NOT an ASUS deployment):** a separate Fedora KDE prototype through v0.10.1 performed bounded auto-reads/app launches and consent-gated file changes. The GUI code is **not** published or CI-audited here; the separate C.63 agent/HCC production deployment remains **HOLD**. [Dated worklog](docs/worklog/2026-11-03.md) · [Safety boundary](docs/design/local-qwen-supervised-gui-2026-11-03.md).
 

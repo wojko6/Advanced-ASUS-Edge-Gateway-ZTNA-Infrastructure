@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **2026-11-04 docs-only publication:** merged public OpenCore/Sonoma and Fedora 45 / NVIDIA 620 worklog #367 (after static check #366); retains USB-only change boundary, TSC/ACPI uncertainty, `B9=NOT_RUN`, and Fedora/macOS deployment HOLD. Updated publication-state navigation, not ASUS or workstation runtime.
+
 - **2026-11-03 workstation-only documentation (operator-reported):** bounded Fedora Qwen supervised desktop GUI v0.1–v0.10.1, no-extra-consent allowlisted reads and selected app opens, consent for file mutations, and monitoring health/manifest-watcher analysis. **GUI code is not in this repo and has no independent CI/security attestation.** No ASUS router or HCC change; separate C.63 agent authority remains NONE and deployment **HOLD**. [Worklog](docs/worklog/2026-11-03.md) · [Boundary](docs/design/local-qwen-supervised-gui-2026-11-03.md).
 
 - **2026-11-02 DNS Guard production fix (operator-verified):** [PR #350](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/350) added real `dig` failure exit-code logging; [PR #351](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/351) scopes an Entware-first library path to optional `dig` only. On the real router, firmware Cron `LD_LIBRARY_PATH` selected incompatible GLIBC and returned rc=1; corrected version passed TCP smoke and Cron-like readiness, was atomically deployed with backups, and generated no new preflight warnings during the observed 10:44–10:47 CET window. Extended soak, automatic TCP packet capture and separate WAN/#287 concerns remain open. [Nov 2 worklog](docs/worklog/2026-11-02.md).
