@@ -1,10 +1,14 @@
 # Project status
 
-**Documentation status reviewed: 2026-11-03** (source status reconciliation; latest **operator-reported ASUS production change remains 2026-11-02**). Latest operator-reported ASUS production change is the narrowly scoped DNS Guard `dig` repair: merged [PR #350](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/350) and [PR #351](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/351), with checksum-verified backups, real Cron/Entware GLIBC root-cause reproduction, successful TCP smoke test, and no repeated warning in the short observed post-fix window. No WAN, Unbound, Pi-hole, global loader or fail-open-policy change. Prior Tailscale 1.104.4, Unbound 1.26.2 R2 and WebUI #283 maintenance remain distinct. Separate WAN, #287 and other operational HOLD gates continue. This short acceptance does not certify overnight stability or packet-level Cron probe tracing. [Dated worklog](docs/worklog/2026-11-02.md).
+**Documentation status reviewed: 2026-11-04** (worklog and dated PR publication reconciliation only; **latest operator-reported ASUS production change remains 2026-11-02**) (source status reconciliation; latest **operator-reported ASUS production change remains 2026-11-02**). Latest operator-reported ASUS production change is the narrowly scoped DNS Guard `dig` repair: merged [PR #350](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/350) and [PR #351](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/351), with checksum-verified backups, real Cron/Entware GLIBC root-cause reproduction, successful TCP smoke test, and no repeated warning in the short observed post-fix window. No WAN, Unbound, Pi-hole, global loader or fail-open-policy change. Prior Tailscale 1.104.4, Unbound 1.26.2 R2 and WebUI #283 maintenance remain distinct. Separate WAN, #287 and other operational HOLD gates continue. This short acceptance does not certify overnight stability or packet-level Cron probe tracing. [Dated worklog](docs/worklog/2026-11-02.md).
 
 **Open-PR hygiene snapshot (2026-11-03):** [22 current Draft PRs and ordered human review plan](docs/audits/2026-11-03-open-pr-backlog-reconciliation.md) — 9 clean, 8 behind, 5 conflicted at the dated GitHub checkpoint. **CI PASS is not a deployment or merge gate.** Existing HCC/agent/privileged operations remain HOLD.
 
 **Publication/source navigation:** [Documentation map and PR state snapshot](docs/DOCUMENTATION-MAP.md). Old dated sections are historical observations, not up-to-date PR statuses.
+
+## 2026-11-04 — non-production workstation documentation publication
+
+Public [worklog #367](docs/worklog/2026-11-04.md) now captures the later separate Sonoma test-USB and Linux TSC/ACPI observations, plus package-only Fedora 45 / NVIDIA 620 B1–B8 preflight. `MACOS_RECOVERY=NOT_REACHED`, `FEDORA_UPGRADE_STARTED=NO`, full solver B9 **not executed**. These workstation results and docs-only merges do **not** constitute an ASUS production change or release agent/HCC deployment gates.
 
 ## 2026-11-03 — separate Fedora Qwen supervised desktop GUI (operator-reported)
 
