@@ -39,7 +39,9 @@ These are **source publication states**, not deployment or feature acceptance.
 | Issue #287 J25–J27 docs [#361](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/361), Nov 2 addendum [#362](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/362) | **OPEN / DRAFT** | No candidate deployment; no new acceptance of unknown tests |
 | Nov 3 Qwen GUI docs [#364](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/364) | **MERGED 2026-11-03** (updated review 04.11; was Draft at an earlier checkpoint) | The documentation merge did not publish GUI source or authorize autonomous agent rollout |
 
-**November 4 reconciliation:** public `docs/worklog/2026-10-30.md` and `2026-10-31.md` are now on `main` (merged #364); the `2026-11-04.md` static-check worklog was published in #366. Subsequent Nov 4 USB/ACPI/TSC and Fedora 45 updates are proposed in a **separate Draft**, not yet published on `main`. The table above is otherwise a November 3 snapshot, not current verification of every PR.\n\n**Interpretation:** a historical worklog may legitimately say “Draft” as of its own date. For the current source state, consult the actual PR and this **dated** snapshot; do not rewrite historical findings to pretend they occurred later. Source-merged ≠ on-router installed ≠ operator acceptance ≠ security audited.
+**November 4 reconciliation:** public `docs/worklog/2026-10-30.md` and `2026-10-31.md` are now on `main` (merged #364); the `2026-11-04.md` static-check worklog was published in #366. Subsequent Nov 4 USB/ACPI/TSC and Fedora 45 updates are proposed in a **separate Draft**, not yet published on `main`. The table above is otherwise a November 3 snapshot, not current verification of every PR.
+
+**Interpretation:** a historical worklog may legitimately say “Draft” as of its own date. For the current source state, consult the actual PR and this **dated** snapshot; do not rewrite historical findings to pretend they occurred later. Source-merged ≠ on-router installed ≠ operator acceptance ≠ security audited.
 
 ## Lightweight maintenance checklist
 
