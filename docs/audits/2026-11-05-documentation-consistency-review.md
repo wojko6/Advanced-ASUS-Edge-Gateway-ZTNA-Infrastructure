@@ -5,14 +5,15 @@
 ## Inventory and checks
 
 - Inspected the **complete Git-tracked tree on `main`** as of this review: **699 entries** (**619 blobs / files**, **80 tree entries / directories**). The tree was not truncated.
-- Fetched the Markdown documents on the PR branch: **318 `.md` files on the base tree plus one new November 5 worklog = 319 files**; local-path checks used the base tree plus the known PR worklog addition.
+- Fetched the Markdown documents for the initial PR-branch audit: **318 `.md` files on the base tree plus one new November 5 worklog = 319 files**. This additional audit note was created **after** that scan (therefore the completed PR now contains 320 Markdown documents). The original local-path check used the base tree plus the known PR worklog addition.
 - Reviewed **1,425 inline relative Markdown link/image target occurrences** against tracked paths, after relative path normalization. **No missing target paths were found by this bounded check.**
 - Also inspected the current entry-point and scope text in root `README.md`, `PROJECT-STATUS.md`, `CHANGELOG.md`, `docs/DOCUMENTATION-MAP.md`, English/Polish `START-HERE.md`, `docs/pl/README.md`, `docs/testing.md`, `docs/roadmap.md`, the November 3 GUI scope note, worklog chronology, and selected earlier audits/agent laboratory notes.
+- Following the documentation additions, the **13 files changed in PR #369** were fetched again and their **576 inline relative target occurrences** checked against the base tracked tree plus the two added PR files; the only initial pattern matches without targets were two literal Markdown syntax examples *in this audit note*, which were removed before the final rerun.
 - The 2026-11-03 PR inventory (22 Drafts then), older 2026-10/11 dated evidence, and state assertions in old worklogs are **point-in-time snapshots**, **not** a newly verified live count. Only the existing **#369 OPEN/DRAFT** state was explicitly confirmed for this addendum.
 
 ### Link-scanner limits
 
-The local-path scan used an intentionally narrow Markdown pattern for inline `[label](relative/path)` and `![alt](relative/path)` links outside fenced code, stripped URL fragments/query strings and checked file/directory existence in the tree. It **did not** validate heading anchors, reference-style or dynamically generated links, URL escapes outside the supported pattern, external URLs, or whether the destination content supports the source claim. Passing this check is **not** a complete Markdown parser or an archive-level historical security audit.
+The local-path scan used an intentionally narrow Markdown pattern for inline Markdown links and images (not reference-style definitions) outside fenced code, stripped URL fragments/query strings and checked file/directory existence in the tree. It **did not** validate heading anchors, reference-style or dynamically generated links, URL escapes outside the supported pattern, external URLs, or whether the destination content supports the source claim. Passing this check is **not** a complete Markdown parser or an archive-level historical security audit.
 
 ## Findings and reconciliations
 
