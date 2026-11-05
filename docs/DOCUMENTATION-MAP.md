@@ -1,6 +1,6 @@
 # Documentation map — current entry points and evidence boundaries
 
-**Status:** CURRENT navigation only · **Reviewed:** 2026-11-04 (publication state checked for #361/#362/#364/#366/#367; other PR statuses are explicitly dated rather than implicitly current). **Not** a live deployment/security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
+**Status:** CURRENT navigation only · **Reviewed:** 2026-11-05 (Nov 5 GUI/worklog indexed on Draft #369; other PR statuses retain their explicitly dated November 3–4 snapshots). **Not** a live deployment/security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
 
 ## Choose the right document
 
@@ -13,6 +13,7 @@
 | What happened on a particular date? | [Public worklog timeline](worklog/README.md) (Oct 30–31 published by [#364](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/364); Nov 4 check published in [#366](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/366), subsequent bounded checkpoints in [#367](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/367); all merged) | Relevant dated [case study](CASE-STUDIES.md), audit and PR; do not promote historical status to current |
 | Where are the Fedora monitoring/UI labs? | [Homelab Control Center experiment](../experiments/fedora/homelab-control-center-v0.1/README.md) | [HCC status](../PROJECT-STATUS.md) and the particular draft/merged PR; no assumed permanent deployment |
 | How does the local supervised Qwen GUI differ from C.63? | [Fedora GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md) | [C.63 lab README](../experiments/fedora/local-ai-agent-v0.21/c63/README.md) and [dated worklog](worklog/2026-11-03.md); scopes remain independent |
+| What was verified in the Nov 5 Fedora supervised Qwen session? | [Nov 5 sanitized GUI worklog](worklog/2026-11-05.md) — **Draft PR #369**, not merged | [GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md) and [documentation audit](audits/2026-11-05-documentation-consistency-review.md); creator-reported offline tests are not CI/security certification |
 | Which material is written in Polish? | [Polish entry point](pl/START-HERE.md) and [Polish documentation index](pl/README.md) | [Language policy](language-policy.md) and canonical technical contract |
 | What is historical or superseded? | [Documentation model](documentation-model.md) | Document's original date, lifecycle label and later accepted status; do not delete evidence to simplify navigation |
 

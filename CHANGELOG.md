@@ -1,5 +1,7 @@
 # Changelog
 
+- **2026-11-05 workstation GUI documentation follow-up (Draft [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369), not merged):** operator-reported local supervised Qwen interface through v0.12.29, fixed KWin match-category privacy boundaries, natural-language clarifications, read-only DNS and bounded HTTPS probes, resource/monitoring summaries, and 338/338 creator-reported offline PASS. Intermittent Loki `/ready` 503 was categorized `INGESTER_NOT_READY` without root-cause resolution; Grafana manifest-watcher warnings are not proof of broken dashboard search. **Docs-only, no GUI source in repo, no router changes, `DEPLOYMENT_GATE=HOLD`.** [Dated worklog](docs/worklog/2026-11-05.md).
+
 ## Unreleased
 
 - **2026-11-04 docs-only publication:** merged public OpenCore/Sonoma and Fedora 45 / NVIDIA 620 worklog #367 (after static check #366); retains USB-only change boundary, TSC/ACPI uncertainty, `B9=NOT_RUN`, and Fedora/macOS deployment HOLD. Updated publication-state navigation, not ASUS or workstation runtime.
