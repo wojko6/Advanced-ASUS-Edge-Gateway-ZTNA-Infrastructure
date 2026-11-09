@@ -5,6 +5,14 @@
 > **Platform:** Fedora 44 monitoring host. This page does **not** authorize or change ASUS firmware, Entware, DNS Guard, RouterCloud, Tailscale, NVIDIA, kernel, SSD permissions or Issue #235.  
 > **Evidence:** [2026-10-18 worklog](../worklog/2026-10-18.md) and [sanitized operator observations](../../evidence/2026-10-18/fedora-update-operator-validation.md). For the current router and wider project, see [project status](../../PROJECT-STATUS.md).
 
+## 2026-11-09 addendum — later manual maintenance (not unattended installation)
+
+The October 18 component table below remains **historical**. On November 9 the Fedora 44 operator reported a DNF5 transaction with **121 package upgrades and three installs** and a later single-package ChatGPT Desktop upgrade. The active kernel was `7.2.15-200.fc44`, KWin `6.8.2-3`, Mesa `26.2.6`, NVIDIA stayed `610.57.04` with a passing external-monitor wake test; no failed systemd units were reported. The `libheif` 1.23.7 / `libheif-freeworld` 1.23.6 dependency mismatch was left unresolved, and Fedora 45 / NVIDIA 615/620 were **not deployed**.
+
+Separately, VictoriaMetrics was manually upgraded from v1.155.0 to **v1.156.0** with a verified upstream archive hash, retained previous binary, local API snapshot and a **32M** stopped-service data backup. Service version/health and **7/7 `up=1` scrapes** passed. This is not a successful `probe_success` assessment, independent off-host restore or notification-delivery test. **`AUTO_INSTALL_GATE=HOLD` remains unchanged.**
+
+[Nov 9 worklog](../worklog/2026-11-09.md) · [VM evidence](../../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md).
+
 ## Scope and currently running components
 
 This workflow keeps package **discovery**, operator-approved **installation**, and possible future **unattended installation** separate. The Fedora host is an observability/recovery dependency; its outage reduces visibility and alerting, but does not demonstrate an ASUS dataplane fault. The router remains the production gateway.
