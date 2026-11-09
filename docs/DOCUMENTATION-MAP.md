@@ -1,19 +1,20 @@
 # Documentation map — current entry points and evidence boundaries
 
-**Status:** CURRENT navigation only · **Reviewed:** 2026-11-05 (Nov 5 GUI/worklog indexed on Draft #369; other PR statuses retain their explicitly dated November 3–4 snapshots). **Not** a live deployment/security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
+**Status:** CURRENT navigation only · **Reviewed:** 2026-11-09 (Nov 9 Fedora observability indexed; GUI/worklog merged via #369 on 2026-11-05; other historical PR status snapshots remain date-scoped). **Not** a live deployment/security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
 
 ## Choose the right document
 
 | Question | Start with | Then verify against |
 | --- | --- | --- |
 | What actually runs on the ASUS gateway? | [PROJECT-STATUS](../PROJECT-STATUS.md) | Applicable [dated evidence](../evidence/) and [operations](operations.md) |
+| What was verified on Fedora on Nov 9? | [Nov 9 worklog](worklog/2026-11-09.md) | [VM v1.156.0 operator evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md), [monitoring guide](../monitoring/README.md); not an ASUS deployment |
 | How is the network designed? | [Network-design index](network-design.md) | [Architecture](architecture.md), [security](security.md) and [firewall policy](firewall-policy.md) |
 | How can the system be managed or recovered? | [Operations guide](operations.md) | [Recovery index](disaster-recovery-index.md), dated live acceptance and explicit rollback gates |
 | What is tested, simulated or pending? | [Testing](testing.md) and [requirements](requirements.md) | [Evidence collection](evidence-collection.md), [project roadmap](roadmap.md), exact GitHub PR state |
 | What happened on a particular date? | [Public worklog timeline](worklog/README.md) (Oct 30–31 published by [#364](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/364); Nov 4 check published in [#366](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/366), subsequent bounded checkpoints in [#367](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/367); all merged) | Relevant dated [case study](CASE-STUDIES.md), audit and PR; do not promote historical status to current |
 | Where are the Fedora monitoring/UI labs? | [Homelab Control Center experiment](../experiments/fedora/homelab-control-center-v0.1/README.md) | [HCC status](../PROJECT-STATUS.md) and the particular draft/merged PR; no assumed permanent deployment |
 | How does the local supervised Qwen GUI differ from C.63? | [Fedora GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md) | [C.63 lab README](../experiments/fedora/local-ai-agent-v0.21/c63/README.md) and [dated worklog](worklog/2026-11-03.md); scopes remain independent |
-| What was verified in the Nov 5 Fedora supervised Qwen session? | [Nov 5 sanitized GUI worklog](worklog/2026-11-05.md) — **Draft PR #369**, not merged | [GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md) and [documentation audit](audits/2026-11-05-documentation-consistency-review.md); creator-reported offline tests are not CI/security certification |
+| What was verified in the Nov 5 Fedora supervised Qwen session? | [Nov 5 sanitized GUI worklog](worklog/2026-11-05.md) — **merged PR #369 (2026-11-05)** | [GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md) and [documentation audit](audits/2026-11-05-documentation-consistency-review.md); creator-reported offline tests are not CI/security certification |
 | Which material is written in Polish? | [Polish entry point](pl/START-HERE.md) and [Polish documentation index](pl/README.md) | [Language policy](language-policy.md) and canonical technical contract |
 | What is historical or superseded? | [Documentation model](documentation-model.md) | Document's original date, lifecycle label and later accepted status; do not delete evidence to simplify navigation |
 
@@ -53,3 +54,5 @@ These are **source publication states**, not deployment or feature acceptance.
 5. Revisit this index when navigation changes, rather than duplicating entire status narratives in READMEs.
 
 [Documentation review (2026-11-03)](audits/2026-11-03-documentation-review.md)
+
+[Nov 9 focused documentation reconciliation](audits/2026-11-09-documentation-reconciliation.md) (no runtime changes).
