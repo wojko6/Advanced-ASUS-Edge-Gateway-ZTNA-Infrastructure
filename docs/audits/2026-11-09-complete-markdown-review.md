@@ -46,3 +46,20 @@ This pass **read and mechanically analyzed every Markdown document** and checked
 For reproducibility, recheck from a Git clone using an HTTP-aware link checker with explicit allowlists for `.home.arpa`, RFC1918, localhost, example domains, bot-gated sites, external file downloads, and GitHub API-authenticated routes. Preserve dated status and sanitize any output before publishing.
 
 **Conclusion:** **323/323 Markdown sources scanned; 220/220 unique HTTP(S) strings categorized; 130/130 GitHub issue/PR IDs present; no missing relative file destinations; 20/20 cross-file heading anchors matched; 2 public URLs plus GitHub Actions UI remain unverified, not proved broken.** Documentation-only follow-up on existing PR #371.
+
+
+## Historical PDF/image appendix — bounded binary inspection
+
+The source tree also contains four dated historical architecture PDFs and one older PNG illustration. The public Markdown audit above is a separate 323-file source snapshot; **it does not include binary page-by-page examination**.
+
+| Historical binary | Source-level check | Link annotations |
+| --- | --- | --- |
+| `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | Valid PDF header/trailer, 15 page objects, 178,175 bytes | 11, all GitHub targets verified |
+| `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf` | Valid PDF header/trailer, 13 page objects, 132,538 bytes | 7, all GitHub targets verified |
+| `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-15-v1.2.pdf` | Valid PDF header/trailer, 17 page objects, 98,681 bytes | None detected |
+| `docs/architecture/ASUS-Edge-Gateway-Future-Flint4-ASUS-2026-10-15-v2.0.pdf` | GitHub tree object present (1,195,221 bytes); provider returned empty base64 content | **NOT_CHECKED** |
+| `docs/images/Architecture.png` | Historical illustration exists in tree (1,802,115 bytes), not visually reviewed | Not applicable to clickable PDF annotations |
+
+In the three readable PDF binaries, **18 link annotations** referenced **16 unique GitHub URLs**. Thirteen were additional to the 220 Markdown URLs, so the **known union is 233 unique HTTP(S) addresses**. Those 13 GitHub targets (main-branch files and a commit) were confirmed against repository content/history. Refer to the [PDF link addendum in the URL register](2026-11-09-external-links-register.md#additional-urls-embedded-in-historical-architecture-pdfs).
+
+**Critical limit:** No page image rendering, typography/layout inspection or deep diagram-content verification was possible through the GitHub binary connector. The larger Flint 4 PDF may contain additional links not counted here. This limitation prevents a claim that **every external URL in every binary historical artifact** has been checked. Do not change the four PDF sources, create synthetic replacement PDFs, or reinterpret historical architecture versions solely from these metadata checks.

@@ -229,3 +229,23 @@
 
 Status definitions: `GITHUB_ID_VERIFIED` = GitHub API returned matching issue/PR object; `GITHUB_FETCH_VERIFIED` = resource fetched via connected GitHub provider; `WORKFLOW_FILE_VERIFIED_PAGE_UNTESTED` = workflow source exists but web page/badge not fetched; `PUBLIC_DIRECT_VERIFIED` = public web content fetched; `PUBLIC_SEARCH_INDEX_ONLY` = indexed matching resource found despite direct fetch timeout; `PUBLIC_UNVERIFIED` = provider inaccessible during this audit, not proof of 404; `API_ENDPOINT_NON_NAVIGATIONAL` = API endpoint cannot be validated as an ordinary GET webpage; `LOCAL_EXAMPLE_NOT_REMOTE_TESTED` = intentionally non-public/test URL.
 
+
+## Additional URLs embedded in historical architecture PDFs
+
+These **13 URLs** are additional to the 220 unique HTTP(S) strings in Markdown. The first two PDFs contain **18 link annotations** pointing to 16 unique GitHub URLs, three of which already appear in the Markdown register. GitHub repository paths, PR numbers and the referenced commit were checked against their actual targets. The third retrieved PDF has zero detectable PDF link annotations. The fourth, large Flint 4 PDF could not be decoded by the available connector, so its embedded links remain **NOT_CHECKED**.
+
+| # | External target | Source PDF | Check |
+| ---: | --- | --- | --- |
+| 1 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/commit/01d6a7e00530ee8e9212820456047e2dee71a0a9) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 2 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/dns-guard-v3.2-recovery-audit-live-validation.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 3 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/architecture/dns-enforcement-flow.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 4 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/monitoring/README.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 5 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/monitoring/grafana/provisioning/alerting/asus-tuf-alerts.yml) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 6 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/centralized-logging.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 7 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/architecture/tailscale-management-exit-node-flow.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 8 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/routercloud-versioned-backup.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 9 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/network-design.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 10 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/PROJECT-STATUS.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 11 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/architecture/platform-direction-2026-10-12.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 12 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/architecture/availability-and-redundancy.md) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf` | `GITHUB_TARGET_VERIFIED` |
+| 13 | [GitHub link](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/blob/main/docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-08.pdf) | `docs/architecture/ASUS-Edge-Gateway-Architecture-2026-10-13-v1.1.pdf` | `GITHUB_TARGET_VERIFIED` |
