@@ -22,3 +22,8 @@
 | Entry-point navigation absent for Nov 9 | Added cross-links from project status, worklog/evidence indexes, PL route and monitoring operations | Full external URL audit |
 
 No changes to source-controlled production configurations, `monitoring/systemd`, firewall, router, CI pipelines or automation schedules are authorized or included. Publication and deployment remain distinct. A later full link/anchor audit can run separately without rewriting older evidence.
+
+
+## Full Markdown source / external URL follow-up — 2026-11-09
+
+A subsequent complete source-tree Markdown pass supersedes the **coverage limitation** of the focused review above *for static checks only*. It read all **323 Markdown files**, **41,277 source lines**, and categorized **220 unique HTTP(S) URLs** across **783 source appearances**. No missing relative file targets were detected; 20 cross-file heading fragments matched. All 130 referenced local repository issue/PR IDs existed when checked. External fetches remained partial for bot-restricted, binary, API-only and local/sample targets; see the [full findings](2026-11-09-complete-markdown-review.md), [per-file list](2026-11-09-markdown-file-register.md) and [URL register](2026-11-09-external-links-register.md). The new pass does **not** claim comprehensive independent verification of historical operational facts or all external server uptime.

@@ -56,3 +56,6 @@ These are **source publication states**, not deployment or feature acceptance.
 [Documentation review (2026-11-03)](audits/2026-11-03-documentation-review.md)
 
 [Nov 9 focused documentation reconciliation](audits/2026-11-09-documentation-reconciliation.md) (no runtime changes).
+
+
+**Exhaustive Markdown inventory and bounded external-link audit (2026-11-09):** [audit findings](audits/2026-11-09-complete-markdown-review.md) · [323-file source register](audits/2026-11-09-markdown-file-register.md) · [220-URL status register](audits/2026-11-09-external-links-register.md). All Markdown sources in the stated PR snapshot were scanned; external live checks carry explicit limitations. Not a live router/host security or restoration test.
