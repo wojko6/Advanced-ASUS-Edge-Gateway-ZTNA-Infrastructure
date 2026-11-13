@@ -1,0 +1,38 @@
+name: C.64.2 manually gated local VM observation — offline CI only
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/fedora/local-ai-agent-v0.21/c64/**'
+      - 'experiments/fedora/local-ai-agent-v0.21/c63/**'
+      - '.github/workflows/agent-c642-offline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  c642-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
+      - name: Verify C.63 read-only parser source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/fedora/local-ai-agent-v0.21/c63
+          sha256sum --check SHA256SUMS
+          sha256sum --check SHA256SUMS_PUBLIC_C63_11_14.txt
+      - name: Exercise C.64.2 entirely offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT=experiments/fedora/local-ai-agent-v0.21/c64/local_ai_agent_v021c64_2_manual_local_vm_gate_lab_v01.py
+          python3 -B "$SCRIPT" --self-test
+          python3 -B "$SCRIPT" --fixture-matrix
+          python3 -B "$SCRIPT" --summary-json --scenario baseline | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x["mode"]=="SYNTHETIC_OFFLINE_NO_NETWORK"; assert x["queries"]==8; assert x["model_requests"]==0; assert x["model_invoked"] is False; assert x["model_action_authority"]=="NONE"; assert x["dns_health"]=="NOT_ESTABLISHED"; assert x["root_cause"]=="UNDETERMINED"; assert x["quality_gate_decision"]=="ABSTAIN_NO_MODEL_INFERENCE"; assert x["remediation_authorized"] is False; assert x["deployment_gate"]=="HOLD"'
+          ! python3 -B "$SCRIPT" --local-vm-readonly
+          ! python3 -B "$SCRIPT" --local-vm-readonly --ack-operator-read-only
