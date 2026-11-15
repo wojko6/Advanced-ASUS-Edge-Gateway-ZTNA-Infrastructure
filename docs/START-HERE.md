@@ -14,6 +14,8 @@ This is a reproducible, security-focused Home/SMB network lab built around an **
 
 **Current navigation:** [Documentation map and source-of-truth entry points](DOCUMENTATION-MAP.md). Historical worklog entries retain their original as-of status.
 
+**Latest bounded Fedora observability checkpoint (2026-11-09):** [worklog](worklog/2026-11-09.md) and [VictoriaMetrics v1.156.0 evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md), not an ASUS router change or off-host DR acceptance.
+
 ## First visit: 15–20-minute route
 
 The times below are **reading estimates**, not benchmarks. Skim the linked sections; you are not expected to read whole documents in one sitting.
@@ -46,7 +48,7 @@ The [Homelab Control Center V0.1–V0.3 lab](../experiments/fedora/homelab-contr
 
 ### Separate supervised Qwen GUI on Fedora (Nov 5 checkpoint)
 
-The [November 5 supervised GUI worklog](worklog/2026-11-05.md), proposed within **Draft [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369)**, records an **operator-reported local v0.12.29** with bounded question routing, limited DNS/HTTPS and service checks, and a separate safety boundary. The GUI's Python source is **not** in this repository, and its creator-reported 338/338 offline tests are not independent CI or security certification. It is **not** the C.63/C.64 non-executing research agent and is **not** an ASUS router or permanent HCC deployment. [Read the GUI scope note](design/local-qwen-supervised-gui-2026-11-03.md); `DEPLOYMENT_GATE=HOLD`.
+The [November 5 supervised GUI worklog](worklog/2026-11-05.md), published through **merged [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369)**, records an **operator-reported local v0.12.29** with bounded question routing, limited DNS/HTTPS and service checks, and a separate safety boundary. The GUI's Python source is **not** in this repository, and its creator-reported 338/338 offline tests are not independent CI or security certification. It is **not** the C.63/C.64 non-executing research agent and is **not** an ASUS router or permanent HCC deployment. [Read the GUI scope note](design/local-qwen-supervised-gui-2026-11-03.md); `DEPLOYMENT_GATE=HOLD`.
 
 **PR/source status reviewed 2026-11-03:** HCC V0.4 [#318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318), offline event model [#320](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320), seven-series correlation [#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/322) and fixed V0.5 archive [#323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) are **merged source**. The separately scoped one-series preflight [#321](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/321) remains **OPEN / DRAFT**. These source states do **not** certify an HCC persistent service, ASUS configuration changes or client DNS failover; deployment remains **HOLD**. For later HCC lab branches and current navigation see the [documentation map](DOCUMENTATION-MAP.md).
 

@@ -1,5 +1,7 @@
 # Operations and recovery
 
+> **Separate Fedora observability checkpoint — 2026-11-09:** [VictoriaMetrics v1.156.0 evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md) · [Fedora maintenance policy](operations/fedora-homelab-automatic-updates.md) · [worklog](worklog/2026-11-09.md). Operator-reported 7/7 successful scrapes, not Blackbox `probe_success` or off-host restore. No ASUS router production change.
+
 ## Current reference-state status
 
 The reference deployment completed its SSD migration and controlled reboot validation on 2026-09-11. The unchanged-state observation was deliberately closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22; the project does not claim the originally planned full 14-day window through 2026-09-25.
