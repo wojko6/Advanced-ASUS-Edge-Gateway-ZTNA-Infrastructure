@@ -1,7 +1,7 @@
 # Start here — a guided tour of ASUS Edge Gateway
 
 **Status:** CURRENT / NAVIGATION ONLY  
-**Reviewed:** 2026-11-03 (documentation/PR status only; no new live router/service validation)  
+**Reviewed:** 2026-11-15 (source/document navigation only; no new live router/service validation)  
 **Language:** English reader entry point · [Wersja polska](pl/START-HERE.md)
 
 Welcome. You do **not** need to read the entire repository or run any scripts to understand this project. This page is a **reading map**, not an installation manual or permission to deploy changes.
@@ -13,6 +13,8 @@ This is a reproducible, security-focused Home/SMB network lab built around an **
 **Scope matters:** the reference ASUS is still the production gateway. This is an *enterprise-style lab*, **not** an enterprise high-availability appliance. A proposed future Flint 4/ASUS split or OPNsense replacement is **design/research**, not a completed migration. The authoritative current deployment and restrictions are in [PROJECT-STATUS.md](../PROJECT-STATUS.md).
 
 **Current navigation:** [Documentation map and source-of-truth entry points](DOCUMENTATION-MAP.md). Historical worklog entries retain their original as-of status.
+
+**Current source status (2026-11-15; not a live test):** physical Fedora 45 / KDE Plasma 6.8.2 was reported on [Nov 10](https://github.com/wojko6/fedora-workstation-setup/blob/main/docs/WORKLOG-2026-11-10.md), after the historical Fedora 44 monitoring-host snapshot below. [Nov 6 Qwen/Loki worklog](worklog/2026-11-06.md) and [Nov 13 security audit register](audits/2026-11-13-codex-engineering-followup-register.md) are now published, without new ASUS deployment or removal of security/recovery HOLD gates. [Bounded review](audits/2026-11-15-documentation-consistency.md).
 
 **Latest bounded Fedora observability checkpoint (2026-11-09):** [worklog](worklog/2026-11-09.md) and [VictoriaMetrics v1.156.0 evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md), not an ASUS router change or off-host DR acceptance.
 
