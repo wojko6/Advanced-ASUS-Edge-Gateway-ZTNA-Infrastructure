@@ -1,5 +1,25 @@
 # Project status
 
+> **Documentation/source-state reconciliation — 2026-11-15 (not a live audit):**
+> The **2026-11-09 Fedora 44** monitoring-host snapshot below is historical;
+> the workstation was subsequently reported upgraded on
+> [2026-11-10 to Fedora 45 / KDE Plasma 6.8.2 / NVIDIA 620.70.06](https://github.com/wojko6/fedora-workstation-setup/blob/main/docs/WORKLOG-2026-11-10.md).
+> The bounded [VictoriaMetrics v1.156.0 observation](evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md)
+> remains a Nov 9 result, **not** a November 15 remeasurement.
+> [Nov 6 supervised-Qwen/Loki observations](docs/worklog/2026-11-06.md)
+> are now on `main` through [PR #370](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/370);
+> the root cause of intermittent Loki readiness HTTP 503 is undetermined.
+> The [Nov 13 code/security/recovery audit register](docs/audits/2026-11-13-codex-engineering-followup-register.md)
+> was published in [PR #372](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/372);
+> **3 High / 8 Medium / 1 Low** follow-ups are still to be investigated,
+> **not** implemented mitigations or independently demonstrated exploits.
+> The latest operator-reported **ASUS router production change represented here**
+> remains the **2026-11-02** scoped DNS Guard repair (#350/#351).
+> No newly published docs authorize router deployment, HCC/agent autonomy,
+> privileged trust changes, failover or recovery promotion;
+> `DEPLOYMENT_GATE=HOLD` and `MODEL_ACTION_AUTHORITY=NONE` remain.
+> [Nov 15 review details](docs/audits/2026-11-15-documentation-consistency.md).
+
 **2026-11-09 current Fedora monitoring-host checkpoint (operator-reported, NOT an ASUS router change):** manual Fedora 44 updates retained NVIDIA 610.57.04 and passed a bounded resume/external-monitor test. Separately, VictoriaMetrics **v1.155.0 → v1.156.0** passed SHA256 staging, same-host backup and snapshot, post-upgrade health and seven `up=1` scrapes. This does **not** prove Blackbox `probe_success`, off-host database restore or alert delivery. The `libheif` update remains deferred; Fedora 45 migration and unattended updates remain HOLD. [Worklog](docs/worklog/2026-11-09.md) · [VM evidence](evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md). The latest reported **ASUS router** production change remains 2026-11-02.
 
 **Documentation status reviewed: 2026-11-09** (Nov 5 GUI/worklog Draft reconciliation plus previously checked PR publication; no new ASUS production verification; **latest operator-reported ASUS production change remains 2026-11-02**). Latest operator-reported ASUS production change is the narrowly scoped DNS Guard `dig` repair: merged [PR #350](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/350) and [PR #351](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/351), with checksum-verified backups, real Cron/Entware GLIBC root-cause reproduction, successful TCP smoke test, and no repeated warning in the short observed post-fix window. No WAN, Unbound, Pi-hole, global loader or fail-open-policy change. Prior Tailscale 1.104.4, Unbound 1.26.2 R2 and WebUI #283 maintenance remain distinct. Separate WAN, #287 and other operational HOLD gates continue. This short acceptance does not certify overnight stability or packet-level Cron probe tracing. [Dated worklog](docs/worklog/2026-11-02.md).

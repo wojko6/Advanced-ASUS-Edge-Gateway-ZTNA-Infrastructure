@@ -1,12 +1,13 @@
 # Documentation map — current entry points and evidence boundaries
 
-**Status:** CURRENT navigation only · **Reviewed:** 2026-11-13 (Codex ASUS audit follow-up register indexed; 2026-11-09 Fedora observability and older PR-status snapshots remain separately date-scoped). **Not** a live deployment/security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
+**Status:** CURRENT navigation only · **Reviewed:** 2026-11-15 (Nov 10 Fedora 45 status reconciled, Nov 6 GUI worklog #370 and Nov 13 audit #372 indexed; historical Nov 9 monitoring and older PR snapshots retain their original dates). **Not** a live deployment/security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
 
 ## Choose the right document
 
 | Question | Start with | Then verify against |
 | --- | --- | --- |
 | What actually runs on the ASUS gateway? | [PROJECT-STATUS](../PROJECT-STATUS.md) | Applicable [dated evidence](../evidence/) and [operations](operations.md) |
+| What is the cross-repository status as of Nov 15? | [Bounded reconciliation](audits/2026-11-15-documentation-consistency.md) and [PROJECT-STATUS](../PROJECT-STATUS.md) | Fedora 45 was reported active on Nov 10; the Nov 9 Fedora 44/VM record remains historical; latest documented ASUS production change remains Nov 2 |
 | What was verified on Fedora on Nov 9? | [Nov 9 worklog](worklog/2026-11-09.md) | [VM v1.156.0 operator evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md), [monitoring guide](../monitoring/README.md); not an ASUS deployment |
 | How is the network designed? | [Network-design index](network-design.md) | [Architecture](architecture.md), [security](security.md) and [firewall policy](firewall-policy.md) |
 | How can the system be managed or recovered? | [Operations guide](operations.md) | [Recovery index](disaster-recovery-index.md), dated live acceptance and explicit rollback gates |
@@ -16,6 +17,7 @@
 | Where are the Fedora monitoring/UI labs? | [Homelab Control Center experiment](../experiments/fedora/homelab-control-center-v0.1/README.md) | [HCC status](../PROJECT-STATUS.md) and the particular draft/merged PR; no assumed permanent deployment |
 | How does the local supervised Qwen GUI differ from C.63? | [Fedora GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md) | [C.63 lab README](../experiments/fedora/local-ai-agent-v0.21/c63/README.md) and [dated worklog](worklog/2026-11-03.md); scopes remain independent |
 | What was verified in the Nov 5 Fedora supervised Qwen session? | [Nov 5 sanitized GUI worklog](worklog/2026-11-05.md) — **merged PR #369 (2026-11-05)** | [GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md) and [documentation audit](audits/2026-11-05-documentation-consistency-review.md); creator-reported offline tests are not CI/security certification |
+| What happened in the Nov 6 supervised Qwen/Loki follow-up? | [Nov 6 bounded worklog](worklog/2026-11-06.md), published in [merged #370](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/370) | No verified Loki RCA, GUI source publication or autonomous agent rollout |
 | Which material is written in Polish? | [Polish entry point](pl/START-HERE.md) and [Polish documentation index](pl/README.md) | [Language policy](language-policy.md) and canonical technical contract |
 | What is historical or superseded? | [Documentation model](documentation-model.md) | Document's original date, lifecycle label and later accepted status; do not delete evidence to simplify navigation |
 
@@ -60,3 +62,5 @@ These are **source publication states**, not deployment or feature acceptance.
 
 
 **Exhaustive Markdown inventory and bounded external-link audit (2026-11-09):** [audit findings](audits/2026-11-09-complete-markdown-review.md) · [323-file source register](audits/2026-11-09-markdown-file-register.md) · [220-URL status register](audits/2026-11-09-external-links-register.md). All Markdown sources in the stated PR snapshot were scanned; external live checks carry explicit limitations. Not a live router/host security or restoration test.
+
+**November 15 source-state reconciliation:** [Documentation review](audits/2026-11-15-documentation-consistency.md) incorporates the [merged Nov 6 GUI worklog #370](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/370) and [merged Nov 13 audit register #372](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/372). Older November 3/4 tables remain deliberately historical; [#365](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/365) is still a separate Draft. No newly merged documentation is proof of new ASUS production activity.
