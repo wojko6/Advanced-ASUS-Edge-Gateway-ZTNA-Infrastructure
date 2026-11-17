@@ -4,6 +4,20 @@
 
 ## Unreleased
 
+- **2026-11-17 controlled ASUS Tailscale ARMv7 deployment (operator-verified):**
+  manually built and staged upstream `v1.104.7` (Go 1.27.4), backed up
+  1.104.4 binary/state material, restarted the existing service, checked
+  CLI and running daemon version/hashes, Local API `Running` and preserved
+  IPv4 identity. Mobile cellular exit-node public-IPv4 smoke PASS; ASUS WAN
+  IPv6 disabled/no default IPv6 route. Entware package metadata remains
+  `1.96.1-1` (manual binary/version drift). DNS pipeline, reboot
+  persistence, automatic-rollback exercise and long soak **not tested**.
+  This documentation entry records an operator-performed change, not
+  source-code deployment from this PR.
+  [Worklog](docs/worklog/2026-11-17.md) ·
+  [maintenance note](docs/tailscale-maintenance.md).
+
+
 - **2026-11-09 Fedora/VM manual checkpoint (operator-reported):** documented Fedora 44 service and suspend/resume validation, plus VictoriaMetrics **v1.155.0 → v1.156.0** after artifact SHA256 verification and same-host backup/snapshot. Seven scrape targets `up=1` were checked; `probe_success`, off-host restore and full alert delivery remain unverified. Fedora 45, unattended updates and `libheif` mismatch remain HOLD. Docs-only, no router change. [Worklog](docs/worklog/2026-11-09.md) · [VM evidence](evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md).
 
 - **2026-11-04 docs-only publication:** merged public OpenCore/Sonoma and Fedora 45 / NVIDIA 620 worklog #367 (after static check #366); retains USB-only change boundary, TSC/ACPI uncertainty, `B9=NOT_RUN`, and Fedora/macOS deployment HOLD. Updated publication-state navigation, not ASUS or workstation runtime.

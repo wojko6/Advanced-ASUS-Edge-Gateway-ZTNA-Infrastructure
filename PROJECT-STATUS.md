@@ -1,5 +1,25 @@
 # Project status
 
+> **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
+> a separately authorized, attended ARMv7 Tailscale manual binary update
+> **1.104.4 → 1.104.7** was deployed on the reference TUF-AX5400 (Go
+> 1.27.4); the active daemon executable/version and both binary SHA-256
+> hashes were verified after restart. Local API reported
+> `BackendState=Running`, exit-node advertising remained present,
+> and a mobile/cellular public-IPv4 comparison confirmed the home egress
+> when the ASUS exit node was selected. ASUS WAN IPv6 remained
+> `disabled` with no default IPv6 route. The pre-change binaries/state
+> were backed up locally; **rollback execution, reboot persistence,
+> Pi-hole/Unbound/DNS Guard path validation and long-term soak were
+> not tested**. Entware package metadata continues to show its older
+> 1.96.1-1 release. This bounded router runtime change **supersedes the
+> dated Nov 2 statement below only as the latest ASUS production-change
+> date**; Nov 2 remains the latest DNS Guard repair, and no HCC/agent,
+> privileged storage, router DR or unrelated deployment HOLD was lifted.
+> [Dated worklog](docs/worklog/2026-11-17.md) ·
+> [maintenance record](docs/tailscale-maintenance.md).
+
+
 > **Documentation/source-state reconciliation — 2026-11-15 (not a live audit):**
 > The **2026-11-09 Fedora 44** monitoring-host snapshot below is historical;
 > the workstation was subsequently reported upgraded on
