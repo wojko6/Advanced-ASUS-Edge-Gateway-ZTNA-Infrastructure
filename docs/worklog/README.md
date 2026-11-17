@@ -12,6 +12,8 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
+- [2026-11-17](2026-11-17.md) — operator-verified ASUS TUF-AX5400 ARMv7 Tailscale 1.104.4 → 1.104.7 manual deployment; verified daemon hashes, state continuity and cellular IPv4 exit-node smoke. DNS path, rollback execution and reboot persistence not tested.
+
 - [2026-11-09](2026-11-09.md) — Fedora 44 manual maintenance and independent VictoriaMetrics v1.156.0 deployment; preserved old binary/same-host data, verified 7/7 scrape targets; not an ASUS deployment.
 
 **Legacy #151 source archive (2026-10-15):** the [RouterCloud historical PR comparison](../audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md) preserves the [September 30 #137 acceptance evidence](../../evidence/2026-09-30/issue-137-routercloud-browser-access-validation.md) and [original dated design notes](../history/routercloud-browser-access-2026-09-30.md) without installing obsolete startup scripts or changing the production router.
