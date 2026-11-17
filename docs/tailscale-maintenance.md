@@ -42,6 +42,23 @@ See the [dated worklog](worklog/2026-11-17.md) for the exact acceptance
 boundary. Do not use the historical October `1.102.3` example below as
 the current live version.
 
+## Post-reboot operator checkpoint — 2026-11-17 (G9K)
+
+Later that day, the operator rebooted the reference ASUS and ran a
+read-only post-start audit. Both active Tailscale executable versions
+remained **1.104.7** and both live SHA-256 checksums matched their
+pre-reboot values. Local API reported `BackendState=Running` and the
+tailnet IPv4 was unchanged. `tailscaled`, `pihole-FTL`, `unbound`
+and `dnsmasq` were present as running processes; WAN IPv6 remained
+disabled with no default IPv6 route.
+
+This **closes the bounded post-reboot startup/persistence gate** for the
+manual 1.104.7 installation only. Full DNS path validation, active
+client IPv4 forwarding **after** the reboot, rollback execution,
+disaster-recovery restoration and extended soak remain untested.
+The original deployment occurred without a reboot; G9K was a
+**separate later reboot**. [G9K worklog](worklog/2026-11-17.md).
+
 ## Why
 
 The reference router has demonstrated real package/live-version drift:
