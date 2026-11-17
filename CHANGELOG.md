@@ -12,6 +12,16 @@
   post-reboot cellular exit-node forwarding, rollback and extended soak
   remain untested. [Dated addendum](docs/worklog/2026-11-17.md).
 
+
+- **2026-11-17 G9L–G9O mobile post-reboot validation (operator-reported):**
+  phone internet access and home-WAN IPv4 egress with ASUS exit
+  node PASS; DNS Guard v3.2 local Pi-hole resolver state and
+  Pi-hole/Unbound checks PASS; unique client test-domain query
+  appeared in Pi-hole, followed by a block decision for a known
+  advertising hostname. Bounded filtering-path acceptance only;
+  exact rule, encrypted-DNS/app-wide leak assessment and
+  extended soak remain open. [Dated worklog](docs/worklog/2026-11-17.md).
+
 ## Unreleased
 
 - **2026-11-17 controlled ASUS Tailscale ARMv7 deployment (operator-verified):**
