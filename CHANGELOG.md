@@ -2,6 +2,16 @@
 
 - **2026-11-05 workstation GUI documentation follow-up (merged [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369) 2026-11-05):** operator-reported local supervised Qwen interface through v0.12.29, fixed KWin match-category privacy boundaries, natural-language clarifications, read-only DNS and bounded HTTPS probes, resource/monitoring summaries, and 338/338 creator-reported offline PASS. Intermittent Loki `/ready` 503 was categorized `INGESTER_NOT_READY` without root-cause resolution; Grafana manifest-watcher warnings are not proof of broken dashboard search. **Docs-only, no GUI source in repo, no router changes, `DEPLOYMENT_GATE=HOLD`.** [Dated worklog](docs/worklog/2026-11-05.md).
 
+
+- **2026-11-17 follow-up G9K (ordinary ASUS reboot):**
+  operator-reported read-only post-reboot verification of both
+  live Tailscale 1.104.7 executables/hashes, Local API `Running`,
+  retained tailnet IPv4, and presence of Tailscale/Pi-hole FTL/
+  Unbound/dnsmasq processes. WAN IPv6 still disabled, no default IPv6
+  route. **Bounded startup persistence PASS**. DNS correctness,
+  post-reboot cellular exit-node forwarding, rollback and extended soak
+  remain untested. [Dated addendum](docs/worklog/2026-11-17.md).
+
 ## Unreleased
 
 - **2026-11-17 controlled ASUS Tailscale ARMv7 deployment (operator-verified):**
