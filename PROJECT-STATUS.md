@@ -1,4 +1,18 @@
 
+> **Subsequent same-day G9L–G9O Android DNS/filtering acceptance
+> (operator-reported):** over mobile data with the ASUS exit node
+> selected, the browser loaded internet pages and showed the
+> router's current WAN public IPv4. DNS Guard v3.2 returned
+> `LOCAL_DNS_READY` with local Pi-hole and Unbound query/listener
+> checks PASS. A unique phone-browser test hostname appeared
+> in Pi-hole's Query Log under the ASUS router client identity;
+> a known advertising hostname was separately displayed as
+> **blocked** by Pi-hole. **Bounded post-reboot client IPv4 egress,
+> router resolver health, Pi-hole query correlation and filtering
+> smoke = PASS.** Exact blocking-list provenance, app-wide DoH
+> leak coverage, packet capture, failover and long-term soak
+> remain untested. [Dated evidence](docs/worklog/2026-11-17.md).
+>
 > **Later 2026-11-17 G9K after-reboot checkpoint (operator-reported):**
 > after an ordinary reboot of the reference ASUS, CLI and the actual
 > running daemon remained **Tailscale 1.104.7** with both live binary
