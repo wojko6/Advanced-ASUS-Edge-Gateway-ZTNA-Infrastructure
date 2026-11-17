@@ -1,3 +1,18 @@
+
+> **Later 2026-11-17 G9K after-reboot checkpoint (operator-reported):**
+> after an ordinary reboot of the reference ASUS, CLI and the actual
+> running daemon remained **Tailscale 1.104.7** with both live binary
+> hashes unchanged. Local API returned `BackendState=Running` and
+> the previous tailnet IPv4 was preserved; `tailscaled`,
+> `pihole-FTL`, `unbound`, and `dnsmasq` processes were present.
+> WAN IPv6 remained disabled and lacked a default route.
+> **Bounded Tailscale startup persistence = PASS.** No fresh
+> post-reboot cellular exit-node packet/egress test, DNS path validation,
+> full healthcheck, rollback drill or extended soak was performed.
+> The earlier 2026-11-17 `reboot persistence not tested` note below
+> records the state *before* G9K and is superseded for that one gate.
+> [Same-day G9K addendum](docs/worklog/2026-11-17.md).
+
 # Project status
 
 > **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
