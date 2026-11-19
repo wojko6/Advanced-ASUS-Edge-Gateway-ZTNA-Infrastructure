@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- **2026-11-19 syslog-ng 4.13.0 ARMv7 off-router build checkpoint (operator-reported; documentation only):** Completed and audited seven-stage GCC 8.4.0/glibc 2.27 cross-toolchain with **44/44 host stamps**, then built **6/8** direct ARM libraries (ivykis, libpcre2, libjson-c, libdbi, libuuid, libopenssl 3.5.9-3) with ELF32/staging/IPK checks. Target zlib and native ncurses/host are also ready. A82 and A85 false-negative file/stamp checks were resolved without rebuilding. **libcurl/GLib2 and syslog-ng IPK remain pending; no ASUS production change or deployment approval.** [Worklog](docs/worklog/2026-11-19.md).
+
 - **2026-11-17 controlled ASUS Tailscale ARMv7 deployment (operator-verified):**
   manually built and staged upstream `v1.104.7` (Go 1.27.4), backed up
   1.104.4 binary/state material, restarted the existing service, checked

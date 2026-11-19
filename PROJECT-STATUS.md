@@ -1,5 +1,10 @@
 # Project status
 
+> **2026-11-19 Fedora-only ARMv7 syslog-ng build LAB (operator-reported; no ASUS change):**
+> Entware armv7-3.2/glibc 2.27 completed **44/44 host tools** and **7/7 GCC 8.4.0/binutils 2.34/Linux 3.2.40/glibc 2.27 toolchain stages**; independent stage A77 smoke audit PASS. Six of eight direct syslog-ng **4.13.0** target dependencies have valid ARM ELF32/staging/IPK checks: ivykis, libpcre2, libjson-c, libdbi, libuuid and libopenssl **3.5.9-3** (A90 PASS). Transitive zlib and native ncurses/host are also built.
+> **libcurl and GLib2 remain; no syslog-ng 4.13.0 IPK was built or tested on ARM hardware.** This workstation-only checkpoint does not supersede the Nov 17 ASUS Tailscale production update above. `ROUTER_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD`.
+> [Sanitized worklog](docs/worklog/2026-11-19.md).
+
 > **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
 > a separately authorized, attended ARMv7 Tailscale manual binary update
 > **1.104.4 → 1.104.7** was deployed on the reference TUF-AX5400 (Go
