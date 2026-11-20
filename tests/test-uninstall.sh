@@ -171,3 +171,180 @@ grep -qx 'cru d AsusEdgeDNSGuard' "$MOCK_LOG"
 rm -f "$FAIL_CRU_DELETE"
 
 echo "PASS: uninstall restores independent DNS before watchdog and firewall cleanup"
+
+# Issue #285 / Fedora-only synthetic NAT laboratory. Replace the disposable
+# IPv4 mock (never real iptables) with a stateful one *after* the existing tests.
+# Historical no-interface ownership is NOT proven: RED cases characterize the
+# present deinstaller behavior and must not be treated as authorization to fix.
+cat >"$TMP_DIR/iptables" <<'PY_MOCK'
+#!/usr/bin/env python3
+import json
+import os
+from pathlib import Path
+import sys
+
+args = sys.argv[1:]
+with open(os.environ["MOCK_LOG"], "a", encoding="utf-8") as log:
+    log.write("iptables " + " ".join(args) + "\n")
+if len(args) < 4 or args[0] != "-t" or args[2] not in ("-D", "-F", "-X"):
+    sys.exit(2)
+key = args[1] + "/" + args[3]
+action = args[2]
+state_path = Path(os.environ["MOCK_NAT_STATE"])
+state = json.loads(state_path.read_text(encoding="utf-8"))
+if key not in state:
+    sys.exit(1)  # this mock models only the selected NAT chains
+rules = state[key]
+
+if action == "-D":
+    candidate = " ".join(args[4:])
+    if os.environ.get("MOCK_DENY_DELETE", "") == key + "|" + candidate:
+        sys.exit(1)
+    if candidate not in rules:
+        sys.exit(1)
+    rules.remove(candidate)
+elif action == "-F":
+    if len(args) != 4:
+        sys.exit(2)
+    state[key] = []
+else:  # -X must fail if the chain still has referencing jumps
+    if len(args) != 4 or rules:
+        sys.exit(1)
+    target = args[3]
+    for existing in state.values():
+        if any((" -j " + target + " ") in (" " + item + " ") or
+               (" -g " + target + " ") in (" " + item + " ")
+               for item in existing):
+            sys.exit(1)
+    del state[key]
+
+state_path.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+PY_MOCK
+chmod 0700 "$TMP_DIR/iptables"
+MOCK_NAT_STATE="$TMP_DIR/nat-state.json"
+export MOCK_NAT_STATE
+
+seed_nat_state() {
+    python3 - "$MOCK_NAT_STATE" "$1" <<'PY_SEED'
+import json
+from pathlib import Path
+import sys
+state = {
+    "nat/PREROUTING": [
+        "-i tailscale-test -j EDGE_TS_PREROUTING",
+        "-i lan-test -j EDGE_LAN_DNS_PREROUTING",
+        "-p udp --dport 123 -j FOREIGN_NAT",
+    ],
+    "nat/EDGE_TS_PREROUTING": [
+        "-p tcp --dport 53 -j REDIRECT --to-ports 53"
+    ],
+    "nat/EDGE_LAN_DNS_PREROUTING": ["-j RETURN"],
+    "nat/FOREIGN_NAT": ["-j RETURN"],
+}
+mode = sys.argv[2]
+if mode == "duplicates":
+    state["nat/PREROUTING"].insert(
+        0, "-i tailscale-test -j EDGE_TS_PREROUTING")
+elif mode == "hypothetical-legacy":
+    state["nat/PREROUTING"].insert(0, "-j EDGE_TS_PREROUTING")
+elif mode not in ("current", "denied"):
+    raise SystemExit("unexpected synthetic NAT mode")
+Path(sys.argv[1]).write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+PY_SEED
+}
+
+assert_nat_case() {
+    python3 - "$MOCK_NAT_STATE" "$1" <<'PY_ASSERT'
+import json
+from pathlib import Path
+import sys
+state = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+mode = sys.argv[2]
+jump = "-i tailscale-test -j EDGE_TS_PREROUTING"
+legacy = "-j EDGE_TS_PREROUTING"
+parent = state["nat/PREROUTING"]
+assert "-p udp --dport 123 -j FOREIGN_NAT" in parent
+assert state["nat/FOREIGN_NAT"] == ["-j RETURN"]
+assert "-i lan-test -j EDGE_LAN_DNS_PREROUTING" not in parent
+assert "nat/EDGE_LAN_DNS_PREROUTING" not in state
+if mode in ("current", "duplicates", "repeat"):
+    assert jump not in parent
+    assert legacy not in parent
+    assert "nat/EDGE_TS_PREROUTING" not in state
+    print("PASS: NAT owned scoped rule removed; unrelated NAT preserved:", mode)
+elif mode == "hypothetical-legacy":
+    assert legacy in parent
+    assert jump not in parent
+    assert state["nat/EDGE_TS_PREROUTING"] == []
+    print("EXPECTED_RED: unqualified synthetic NAT jump prevents -X cleanup")
+    print("HOLD: historical syntax/project ownership not verified")
+elif mode == "denied":
+    assert jump in parent
+    assert state["nat/EDGE_TS_PREROUTING"] == []
+    print("EXPECTED_RED: exact -D failure leaves jump; ignored -X failure")
+else:
+    raise AssertionError("unknown case")
+PY_ASSERT
+}
+
+# Only an isolated root and copied deinstaller may be used. These fixtures do
+# not connect to the ASUS, alter Linux iptables or touch any live JFFS paths.
+NAT_LAB_ROOT="$TMP_DIR/nat-lab-root"
+prepare_root "$NAT_LAB_ROOT"
+: >"$CRON_FILE"
+: >"$MOCK_LOG"
+seed_nat_state current
+run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/nat-current.out" "$TMP_DIR/nat-current.err"
+assert_nat_case current
+grep -Fx 'dns-guard fallback' "$MOCK_LOG" >/dev/null
+grep -F 'ip6tables -t filter -D INPUT -i tailscale-test -j EDGE_TS6_INPUT' "$MOCK_LOG" >/dev/null
+grep -F 'Runtime rules removed' "$TMP_DIR/nat-current.out" >/dev/null
+printf 'PASS: DNS fallback and IPv6 mock calls preserved in NAT lab\n'
+
+# Run twice: absent managed chains should remain absent (no new mutations).
+cp "$MOCK_NAT_STATE" "$TMP_DIR/nat-before-second.json"
+: >"$MOCK_LOG"
+run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/nat-repeat.out" "$TMP_DIR/nat-repeat.err"
+cmp "$MOCK_NAT_STATE" "$TMP_DIR/nat-before-second.json"
+assert_nat_case repeat
+
+seed_nat_state duplicates
+: >"$MOCK_LOG"
+run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/nat-dupes.out" "$TMP_DIR/nat-dupes.err"
+assert_nat_case duplicates
+
+# Hypothetical unqualified jump: existing deinstaller only deletes -i scoped
+# jumps. It reports success even though -X cannot remove the referenced chain.
+seed_nat_state hypothetical-legacy
+: >"$MOCK_LOG"
+run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/nat-legacy.out" "$TMP_DIR/nat-legacy.err"
+assert_nat_case hypothetical-legacy
+grep -F 'iptables -t nat -X EDGE_TS_PREROUTING' "$MOCK_LOG" >/dev/null
+grep -F 'Runtime rules removed' "$TMP_DIR/nat-legacy.out" >/dev/null
+
+# Exact scoped -D failure should not be misreported as a complete cleanup.
+seed_nat_state denied
+: >"$MOCK_LOG"
+MOCK_DENY_DELETE='nat/PREROUTING|-i tailscale-test -j EDGE_TS_PREROUTING'
+export MOCK_DENY_DELETE
+run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/nat-denied.out" "$TMP_DIR/nat-denied.err"
+unset MOCK_DENY_DELETE
+assert_nat_case denied
+grep -F 'iptables -t nat -X EDGE_TS_PREROUTING' "$MOCK_LOG" >/dev/null
+grep -F 'Runtime rules removed' "$TMP_DIR/nat-denied.out" >/dev/null
+
+# DNS Guard fallback failure must stop before any fake IPv4/IPv6 operations.
+seed_nat_state current
+cp "$MOCK_NAT_STATE" "$TMP_DIR/nat-before-fail.json"
+: >"$MOCK_LOG"
+: >"$FAIL_GUARD"
+if run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/nat-dnsfail.out" "$TMP_DIR/nat-dnsfail.err"; then
+    echo "FAIL: NAT lab allowed uninstall after DNS fallback failure" >&2
+    exit 1
+fi
+rm -f "$FAIL_GUARD"
+cmp "$MOCK_NAT_STATE" "$TMP_DIR/nat-before-fail.json"
+! grep -E '^(iptables|ip6tables) ' "$MOCK_LOG" >/dev/null
+grep -Fx 'dns-guard fallback' "$MOCK_LOG" >/dev/null
+echo "PASS: NAT lab fail-closed on DNS bootstrap failure"
+echo "ISSUE285_LAB=PASS_WITH_EXPECTED_RED_AND_DEPLOYMENT_HOLD"
