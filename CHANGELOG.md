@@ -2,27 +2,11 @@
 
 - **2026-11-05 workstation GUI documentation follow-up (merged [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369) 2026-11-05):** operator-reported local supervised Qwen interface through v0.12.29, fixed KWin match-category privacy boundaries, natural-language clarifications, read-only DNS and bounded HTTPS probes, resource/monitoring summaries, and 338/338 creator-reported offline PASS. Intermittent Loki `/ready` 503 was categorized `INGESTER_NOT_READY` without root-cause resolution; Grafana manifest-watcher warnings are not proof of broken dashboard search. **Docs-only, no GUI source in repo, no router changes, `DEPLOYMENT_GATE=HOLD`.** [Dated worklog](docs/worklog/2026-11-05.md).
 
-
-- **2026-11-17 follow-up G9K (ordinary ASUS reboot):**
-  operator-reported read-only post-reboot verification of both
-  live Tailscale 1.104.7 executables/hashes, Local API `Running`,
-  retained tailnet IPv4, and presence of Tailscale/Pi-hole FTL/
-  Unbound/dnsmasq processes. WAN IPv6 still disabled, no default IPv6
-  route. **Bounded startup persistence PASS**. DNS correctness,
-  post-reboot cellular exit-node forwarding, rollback and extended soak
-  remain untested. [Dated addendum](docs/worklog/2026-11-17.md).
-
-
-- **2026-11-17 G9L–G9O mobile post-reboot validation (operator-reported):**
-  phone internet access and home-WAN IPv4 egress with ASUS exit
-  node PASS; DNS Guard v3.2 local Pi-hole resolver state and
-  Pi-hole/Unbound checks PASS; unique client test-domain query
-  appeared in Pi-hole, followed by a block decision for a known
-  advertising hostname. Bounded filtering-path acceptance only;
-  exact rule, encrypted-DNS/app-wide leak assessment and
-  extended soak remain open. [Dated worklog](docs/worklog/2026-11-17.md).
-
 ## Unreleased
+
+- **2026-11-20 syslog-ng 4.13.0 ARMv7 reference-router deployment (operator-reported):** Fedora 45 build and package checks PASS; ASUS Entware upgrade **4.12.0-3 → 4.13.0-1**, preserved custom config, matching package/runtime version, two service processes and one ASUS → Fedora/Loki/Grafana message PASS. Original IPK, on/off-router configuration and TLS backups plus stopped-state queue snapshot retained. **Rollback, queue replay, reboot and extended soak not tested**; unrelated HOLD gates remain. The repo change is documentation-only, not a second deployment. [Worklog](docs/worklog/2026-11-20.md) · [operations](docs/operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
+- **2026-11-19 syslog-ng 4.13.0 ARMv7 off-router build checkpoint (operator-reported; documentation only):** Completed and audited seven-stage GCC 8.4.0/glibc 2.27 cross-toolchain with **44/44 host stamps**, then built **6/8** direct ARM libraries (ivykis, libpcre2, libjson-c, libdbi, libuuid, libopenssl 3.5.9-3) with ELF32/staging/IPK checks. Target zlib and native ncurses/host are also ready. A82 and A85 false-negative file/stamp checks were resolved without rebuilding. **libcurl/GLib2 and syslog-ng IPK remain pending; no ASUS production change or deployment approval.** [Worklog](docs/worklog/2026-11-19.md).
 
 - **2026-11-17 controlled ASUS Tailscale ARMv7 deployment (operator-verified):**
   manually built and staged upstream `v1.104.7` (Go 1.27.4), backed up
@@ -37,6 +21,16 @@
   [Worklog](docs/worklog/2026-11-17.md) ·
   [maintenance note](docs/tailscale-maintenance.md).
 
+
+- **2026-11-17 later G9K–G9O post-reboot Tailscale/DNS smoke (operator-reported, separate from original deployment):**
+  after an ordinary ASUS reboot, both Tailscale 1.104.7 binaries and hashes,
+  Local API `Running` and network/DNS process presence passed bounded checks
+  (G9K). Subsequent mobile-data exit-node IPv4 egress, DNS Guard
+  `LOCAL_DNS_READY`, uniquely correlated Pi-hole test query and an observed
+  advertising-domain block passed bounded G9L–G9O smoke. Not established:
+  app-wide DoH/DoT coverage, full-path packet captures, individual blocking
+  rule, failover, restore/rollback or sustained soak.
+  [Nov 17 supplemental worklog](docs/worklog/2026-11-17.md).
 
 - **2026-11-09 Fedora/VM manual checkpoint (operator-reported):** documented Fedora 44 service and suspend/resume validation, plus VictoriaMetrics **v1.155.0 → v1.156.0** after artifact SHA256 verification and same-host backup/snapshot. Seven scrape targets `up=1` were checked; `probe_success`, off-host restore and full alert delivery remain unverified. Fedora 45, unattended updates and `libheif` mismatch remain HOLD. Docs-only, no router change. [Worklog](docs/worklog/2026-11-09.md) · [VM evidence](evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md).
 

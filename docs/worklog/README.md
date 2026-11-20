@@ -12,7 +12,11 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
-- [2026-11-17](2026-11-17.md) — operator-verified ASUS TUF-AX5400 ARMv7 Tailscale 1.104.4 → 1.104.7 manual deployment, validated hashes and cellular IPv4 exit-node smoke; **later same-day G9K reboot: CLI/daemon startup persistence, Local API and process-presence PASS**. DNS path, rollback execution and G9L–G9O phone IPv4 exit-node access, DNS Guard local resolver, unique Pi-hole query and advertising-domain block smoke PASS; exhaustive encrypted-DNS/app coverage, rollback and long soak remain untested.
+- [2026-11-20](2026-11-20.md) — ARMv7 syslog-ng **4.13.0-1** build and attended ASUS **4.12.0-3 → 4.13.0-1** upgrade; old/new IPKs, configuration/TLS/queue backup, current binary/process and one Loki-delivered router test message passed. Downgrade, queue replay, reboot and soak untested. [Recovery record](../operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
+- [2026-11-19](2026-11-19.md) — Fedora-only syslog-ng 4.13.0 ARMv7 toolchain completed; 6/8 direct libraries and transitive zlib built; no syslog-ng IPK or ASUS deployment.
+- [2026-11-17](2026-11-17.md) — manual ARMv7 Tailscale 1.104.4 → 1.104.7 deployment, checked binaries, state and initial cellular IPv4 exit-node smoke; **later G9K ordinary reboot** retained Tailscale 1.104.7 and process readiness. Subsequent **G9L–G9O** mobile exit-node IPv4 egress, DNS Guard local resolver, unique Pi-hole Query Log and advertising-domain block smoke PASS_BOUNDED. App-wide DoH/DoT verification, exact filter rule, rollback and long soak untested.
+- [2026-11-17 — syslog-ng 4.13.0 Fedora + Entware ARMv7 build lab](../operations/syslog-ng-4.13.0-armv7-build-checkpoint-2026-11-17.md) — operator-reported Fedora collector bounded mTLS acceptance and isolated ARMv7 source/host-tool preparation through S13-A21R; ARM toolchain and router IPK not built; ASUS syslog-ng remains 4.12.0-3; deployment HOLD.
 
 - [2026-11-09](2026-11-09.md) — Fedora 44 manual maintenance and independent VictoriaMetrics v1.156.0 deployment; preserved old binary/same-host data, verified 7/7 scrape targets; not an ASUS deployment.
 

@@ -53,8 +53,8 @@ and `dnsmasq` were present as running processes; WAN IPv6 remained
 disabled with no default IPv6 route.
 
 This **closes the bounded post-reboot startup/persistence gate** for the
-manual 1.104.7 installation only. Full DNS path validation, active
-client IPv4 forwarding **after** the reboot, rollback execution,
+manual 1.104.7 installation only. At this G9K checkpoint, full DNS path validation and active
+client IPv4 forwarding **after** the reboot were not yet tested; rollback execution,
 disaster-recovery restoration and extended soak remain untested.
 The original deployment occurred without a reboot; G9K was a
 **separate later reboot**. [G9K worklog](worklog/2026-11-17.md).

@@ -1,34 +1,41 @@
-
-> **Subsequent same-day G9L–G9O Android DNS/filtering acceptance
-> (operator-reported):** over mobile data with the ASUS exit node
-> selected, the browser loaded internet pages and showed the
-> router's current WAN public IPv4. DNS Guard v3.2 returned
-> `LOCAL_DNS_READY` with local Pi-hole and Unbound query/listener
-> checks PASS. A unique phone-browser test hostname appeared
-> in Pi-hole's Query Log under the ASUS router client identity;
-> a known advertising hostname was separately displayed as
-> **blocked** by Pi-hole. **Bounded post-reboot client IPv4 egress,
-> router resolver health, Pi-hole query correlation and filtering
-> smoke = PASS.** Exact blocking-list provenance, app-wide DoH
-> leak coverage, packet capture, failover and long-term soak
-> remain untested. [Dated evidence](docs/worklog/2026-11-17.md).
->
-> **Later 2026-11-17 G9K after-reboot checkpoint (operator-reported):**
-> after an ordinary reboot of the reference ASUS, CLI and the actual
-> running daemon remained **Tailscale 1.104.7** with both live binary
-> hashes unchanged. Local API returned `BackendState=Running` and
-> the previous tailnet IPv4 was preserved; `tailscaled`,
-> `pihole-FTL`, `unbound`, and `dnsmasq` processes were present.
-> WAN IPv6 remained disabled and lacked a default route.
-> **Bounded Tailscale startup persistence = PASS.** No fresh
-> post-reboot cellular exit-node packet/egress test, DNS path validation,
-> full healthcheck, rollback drill or extended soak was performed.
-> The earlier 2026-11-17 `reboot persistence not tested` note below
-> records the state *before* G9K and is superseded for that one gate.
-> [Same-day G9K addendum](docs/worklog/2026-11-17.md).
-
 # Project status
 
+> **Current operator-reported ASUS router production checkpoint — 2026-11-20:** a
+> separately performed, attended Entware ARMv7 syslog-ng upgrade
+> **4.12.0-3 → 4.13.0-1** passed new package/binary version, two running
+> service processes, unchanged custom configuration hash, and one router log
+> observed in Fedora Loki via Grafana Explore. Original IPK, on/off-router
+> installation and TLS backups and a stopped-state reliable queue snapshot
+> were preserved. **Downgrade/restore and queued-message replay, control
+> socket statistics, reboot/power-loss persistence, extended soak, and
+> full positive/negative mTLS regression remain unverified.** This is the
+> latest dated ASUS change; Nov 17 Tailscale and Nov 2 DNS Guard results
+> below are historical and still valid within their scopes. No unrelated
+> Issue #235, HCC/agent, DNS, privileged trust or router DR HOLD is lifted.
+> [Worklog](docs/worklog/2026-11-20.md) ·
+> [Operational record](docs/operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
+
+> **2026-11-19 Fedora-only ARMv7 syslog-ng build LAB (operator-reported; no ASUS change):**
+> Entware armv7-3.2/glibc 2.27 completed **44/44 host tools** and **7/7 GCC 8.4.0/binutils 2.34/Linux 3.2.40/glibc 2.27 toolchain stages**; independent stage A77 smoke audit PASS. Six of eight direct syslog-ng **4.13.0** target dependencies have valid ARM ELF32/staging/IPK checks: ivykis, libpcre2, libjson-c, libdbi, libuuid and libopenssl **3.5.9-3** (A90 PASS). Transitive zlib and native ncurses/host are also built.
+> **As of 2026-11-19, libcurl and GLib2 remained; no syslog-ng 4.13.0 IPK had yet been built or tested on ARM hardware.** At this dated checkpoint, the separately reported Nov 17 ASUS Tailscale deployment remained the latest router change; later events are documented in their own dated entries. `ROUTER_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD` for this LAB stage.
+> [Sanitized worklog](docs/worklog/2026-11-19.md).
+
+> **2026-11-17 — późniejsze testy G9K–G9O po restarcie ASUS (operator-reported):**
+> po zwykłym restarcie oba aktywne programy Tailscale nadal zgłaszały
+> **1.104.7**, sumy SHA-256 były niezmienione, Local API = `Running`,
+> tożsamość IPv4 tailnet pozostała taka sama, a procesy Tailscale,
+> Pi-hole FTL, Unbound i dnsmasq działały (`G9K=PASS_BOUNDED`).
+> Następnie telefon z sieci komórkowej, przy wybranym ASUS exit node,
+> uzyskał publiczny IPv4 routera; DNS Guard v3.2 zgłaszał
+> `LOCAL_DNS_READY`; w Pi-hole widać było unikatowe zapytanie
+> wygenerowane przez telefon oraz decyzję blokującą domenę reklamową
+> (`G9L–G9O=PASS_BOUNDED`). Nie wykazano pełnego braku wycieków
+> DoH/DoT, wszystkich aplikacji, identyfikacji konkretnej listy
+> blokującej, failoveru, rollbacku ani długiego soak.
+> **To uzupełnia — nie zmienia wstecz — pierwotny wynik G9H–G9J**.
+> [Dziennik i zakres dowodów](docs/worklog/2026-11-17.md).
+>
 > **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
 > a separately authorized, attended ARMv7 Tailscale manual binary update
 > **1.104.4 → 1.104.7** was deployed on the reference TUF-AX5400 (Go
@@ -38,9 +45,10 @@
 > and a mobile/cellular public-IPv4 comparison confirmed the home egress
 > when the ASUS exit node was selected. ASUS WAN IPv6 remained
 > `disabled` with no default IPv6 route. The pre-change binaries/state
-> were backed up locally; **rollback execution, reboot persistence,
-> Pi-hole/Unbound/DNS Guard path validation and long-term soak were
-> not tested**. Entware package metadata continues to show its older
+> were backed up locally; **at the original G9H–G9J checkpoint,
+> rollback execution, reboot persistence and DNS path validation were
+> not yet tested**. The subsequent G9K–G9O bounded outcomes are noted
+> immediately above. Rollback exercise and long-term soak remain untested. Entware package metadata continues to show its older
 > 1.96.1-1 release. This bounded router runtime change **supersedes the
 > dated Nov 2 statement below only as the latest ASUS production-change
 > date**; Nov 2 remains the latest DNS Guard repair, and no HCC/agent,
