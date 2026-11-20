@@ -2,13 +2,15 @@
 
 **Status:** CURRENT
 
-**Last reviewed:** 2026-10-28 (branch-publication and source-of-truth reconciliation; documentation-only, not a router acceptance run). See [October 24 navigation closeout](audits/2026-10-24-current-navigation-closeout.md), the [post-audit DR/Unbound correction](audits/2026-10-24-unbound-dr-post-audit-reconciliation.md) and the [earlier source-of-truth audit](audits/2026-10-16-repository-documentation-review.md).
+**Last reviewed:** 2026-11-03 (source-of-truth precedence unchanged; navigation/PR status reconciliation only, not a router acceptance run). See [October 24 navigation closeout](audits/2026-10-24-current-navigation-closeout.md), the [post-audit DR/Unbound correction](audits/2026-10-24-unbound-dr-post-audit-reconciliation.md) and the [earlier source-of-truth audit](audits/2026-10-16-repository-documentation-review.md).
 
 **Applies to:** `main`
 
 This project deliberately separates current state, implementation, live evidence, plans and historical engineering records. When documents disagree, use the precedence below instead of merging claims from different evidence classes.
 
 **Branch-aware publication rule (reviewed 2026-10-28):** An OPEN/DRAFT PR, including a stacked PR targeting another experimental branch, is **not** evidence that its files or functionality exist on `main`. Report its current branch and base, and distinguish merged source, manual lab observation, published documentation and separately approved production changes. Do not link proposed `docs/worklog/YYYY-MM-DD.md` as a `main` file before merging; link the actual PR meanwhile. A GitHub CI PASS for a draft does not certify the reference ASUS or grant deployment approval.
+
+**Findability:** [Documentation map](DOCUMENTATION-MAP.md) summarizes canonical entry points and a dated PR snapshot; it is not a ninth, competing source of truth. Historic PR claims retain their original evidence date.
 
 ## Source-of-truth precedence
 

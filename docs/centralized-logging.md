@@ -4,6 +4,8 @@ This design forwards the Asuswrt local log to a Linux collector over Tailscale a
 
 > **Reference-router status:** live end-to-end mTLS logging was validated on **2026-09-27**. On **2026-10-01**, a longer troubleshooting/fault-injection session identified and remediated a local-archive availability defect caused by hard flow-control coupling the local archive to the remote destination. Post-fix tests validated normal delivery, continued local archival while the collector was intentionally unreachable, and delayed delivery from the reliable buffer after collector recovery. Reboot persistence of this specific logging path remains a separate validation item.
 
+> **2026-11-20 package-maintenance checkpoint (later than historical tests below):** operator-reported ASUS sender **syslog-ng 4.12.0-3 → 4.13.0-1**, retaining its custom configuration, with working supervisor/worker and one unique router message observed in Loki/Grafana. Recovery IPK, installation/TLS backups and stopped-state reliable queue snapshot were preserved. This proves **one post-upgrade delivery smoke**, not complete mTLS regression, every log source, queue replay, reboot persistence or sustained operation. The old control socket was missing, preventing queue-depth stats. [Worklog](worklog/2026-11-20.md) · [recovery record](operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
 ## Data path
 
 ```text

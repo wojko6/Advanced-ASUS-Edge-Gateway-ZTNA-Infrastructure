@@ -1,20 +1,109 @@
 # Project status
 
-**Status date: 2026-10-28.** Most recent operator-reported **ASUS production maintenance** was the separately approved **stable Tailscale 1.104.4 ARMv7 paired-binary upgrade** on October 28, including runtime/daemon hash validation and project healthcheck 0 failures / 0 warnings; the previous **WebUI-only Issue #283** three-file publication on October 25 remains the latest WebUI change. The last **DNS service** change remains October 24 **Unbound 1.26.2-1 R2** with bounded UDP/TCP DNSSEC acceptance. Tailscale cold boot, extended soak, IPv6 and forced rollback are **NOT TESTED**. No new HCC permanent deployment, RouterCloud/DUFS, DNS Guard or firewall feature is implied by merging documentation. Unplanned October 24 DNS Guard resolver fail-open/failback was observed, not controlled client DNS continuity. Existing #235/#278/#287/#298/#299 and HCC gates remain HOLD.
+> **Current operator-reported ASUS router production checkpoint — 2026-11-20:** a
+> separately performed, attended Entware ARMv7 syslog-ng upgrade
+> **4.12.0-3 → 4.13.0-1** passed new package/binary version, two running
+> service processes, unchanged custom configuration hash, and one router log
+> observed in Fedora Loki via Grafana Explore. Original IPK, on/off-router
+> installation and TLS backups and a stopped-state reliable queue snapshot
+> were preserved. **Downgrade/restore and queued-message replay, control
+> socket statistics, reboot/power-loss persistence, extended soak, and
+> full positive/negative mTLS regression remain unverified.** This is the
+> latest dated ASUS change; Nov 17 Tailscale and Nov 2 DNS Guard results
+> below are historical and still valid within their scopes. No unrelated
+> Issue #235, HCC/agent, DNS, privileged trust or router DR HOLD is lifted.
+> [Worklog](docs/worklog/2026-11-20.md) ·
+> [Operational record](docs/operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
+
+> **2026-11-19 Fedora-only ARMv7 syslog-ng build LAB (operator-reported; no ASUS change):**
+> Entware armv7-3.2/glibc 2.27 completed **44/44 host tools** and **7/7 GCC 8.4.0/binutils 2.34/Linux 3.2.40/glibc 2.27 toolchain stages**; independent stage A77 smoke audit PASS. Six of eight direct syslog-ng **4.13.0** target dependencies have valid ARM ELF32/staging/IPK checks: ivykis, libpcre2, libjson-c, libdbi, libuuid and libopenssl **3.5.9-3** (A90 PASS). Transitive zlib and native ncurses/host are also built.
+> **As of 2026-11-19, libcurl and GLib2 remained; no syslog-ng 4.13.0 IPK had yet been built or tested on ARM hardware.** At this dated checkpoint, the separately reported Nov 17 ASUS Tailscale deployment remained the latest router change; later events are documented in their own dated entries. `ROUTER_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD` for this LAB stage.
+> [Sanitized worklog](docs/worklog/2026-11-19.md).
+
+> **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
+> a separately authorized, attended ARMv7 Tailscale manual binary update
+> **1.104.4 → 1.104.7** was deployed on the reference TUF-AX5400 (Go
+> 1.27.4); the active daemon executable/version and both binary SHA-256
+> hashes were verified after restart. Local API reported
+> `BackendState=Running`, exit-node advertising remained present,
+> and a mobile/cellular public-IPv4 comparison confirmed the home egress
+> when the ASUS exit node was selected. ASUS WAN IPv6 remained
+> `disabled` with no default IPv6 route. The pre-change binaries/state
+> were backed up locally; **rollback execution, reboot persistence,
+> Pi-hole/Unbound/DNS Guard path validation and long-term soak were
+> not tested**. Entware package metadata continues to show its older
+> 1.96.1-1 release. This bounded router runtime change **supersedes the
+> dated Nov 2 statement below only as the latest ASUS production-change
+> date**; Nov 2 remains the latest DNS Guard repair, and no HCC/agent,
+> privileged storage, router DR or unrelated deployment HOLD was lifted.
+> [Dated worklog](docs/worklog/2026-11-17.md) ·
+> [maintenance record](docs/tailscale-maintenance.md).
+
+
+> **Documentation/source-state reconciliation — 2026-11-15 (not a live audit):**
+> The **2026-11-09 Fedora 44** monitoring-host snapshot below is historical;
+> the workstation was subsequently reported upgraded on
+> [2026-11-10 to Fedora 45 / KDE Plasma 6.8.2 / NVIDIA 620.70.06](https://github.com/wojko6/fedora-workstation-setup/blob/main/docs/WORKLOG-2026-11-10.md).
+> The bounded [VictoriaMetrics v1.156.0 observation](evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md)
+> remains a Nov 9 result, **not** a November 15 remeasurement.
+> [Nov 6 supervised-Qwen/Loki observations](docs/worklog/2026-11-06.md)
+> are now on `main` through [PR #370](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/370);
+> the root cause of intermittent Loki readiness HTTP 503 is undetermined.
+> The [Nov 13 code/security/recovery audit register](docs/audits/2026-11-13-codex-engineering-followup-register.md)
+> was published in [PR #372](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/372);
+> **3 High / 8 Medium / 1 Low** follow-ups are still to be investigated,
+> **not** implemented mitigations or independently demonstrated exploits.
+> The latest operator-reported **ASUS router production change represented here**
+> remains the **2026-11-02** scoped DNS Guard repair (#350/#351).
+> No newly published docs authorize router deployment, HCC/agent autonomy,
+> privileged trust changes, failover or recovery promotion;
+> `DEPLOYMENT_GATE=HOLD` and `MODEL_ACTION_AUTHORITY=NONE` remain.
+> [Nov 15 review details](docs/audits/2026-11-15-documentation-consistency.md).
+
+**2026-11-09 current Fedora monitoring-host checkpoint (operator-reported, NOT an ASUS router change):** manual Fedora 44 updates retained NVIDIA 610.57.04 and passed a bounded resume/external-monitor test. Separately, VictoriaMetrics **v1.155.0 → v1.156.0** passed SHA256 staging, same-host backup and snapshot, post-upgrade health and seven `up=1` scrapes. This does **not** prove Blackbox `probe_success`, off-host database restore or alert delivery. The `libheif` update remains deferred; Fedora 45 migration and unattended updates remain HOLD. [Worklog](docs/worklog/2026-11-09.md) · [VM evidence](evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md). The latest reported **ASUS router** production change remains 2026-11-02.
+
+**Documentation status reviewed: 2026-11-09** (Nov 5 GUI/worklog Draft reconciliation plus previously checked PR publication; no new ASUS production verification; **latest operator-reported ASUS production change remains 2026-11-02**). Latest operator-reported ASUS production change is the narrowly scoped DNS Guard `dig` repair: merged [PR #350](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/350) and [PR #351](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/351), with checksum-verified backups, real Cron/Entware GLIBC root-cause reproduction, successful TCP smoke test, and no repeated warning in the short observed post-fix window. No WAN, Unbound, Pi-hole, global loader or fail-open-policy change. Prior Tailscale 1.104.4, Unbound 1.26.2 R2 and WebUI #283 maintenance remain distinct. Separate WAN, #287 and other operational HOLD gates continue. This short acceptance does not certify overnight stability or packet-level Cron probe tracing. [Dated worklog](docs/worklog/2026-11-02.md).
+
+**Historical open-PR snapshot (2026-11-03):** [22 Draft PRs at that checkpoint and an ordered human review plan](docs/audits/2026-11-03-open-pr-backlog-reconciliation.md) — 9 clean, 8 behind, 5 conflicted at the dated GitHub checkpoint. **CI PASS is not a deployment or merge gate.** Existing HCC/agent/privileged operations remain HOLD.
+
+**Publication/source navigation:** [Documentation map and PR state snapshot](docs/DOCUMENTATION-MAP.md). Old dated sections are historical observations, not up-to-date PR statuses.
+
+## 2026-11-05 — workstation-only Qwen supervised GUI follow-up (operator-reported)
+
+The separate Fedora/KDE local GUI reached **v0.12.29** with bounded question routing, fixed DNS/HTTPS checks, monitoring summaries, and distinct execution-versus-health labels. The operator's screen-based acceptance covered the reported GUI paths; the latest creator-reported offline suite was **338/338 PASS**, **not** independent GitHub CI/security attestation. A Loki readiness investigation captured repeated `/ready` HTTP 503 categorized `INGESTER_NOT_READY` while 16 internal components remained `Running`; later all-200 samples did **not** establish a fix. Grafana manifest-watcher empty-discovery warnings were separate from manually tested dashboard search. [Dated evidence boundary](docs/worklog/2026-11-05.md) · [supervised GUI scope](docs/design/local-qwen-supervised-gui-2026-11-03.md).
+
+This is **not** the C.63/C.64 agent's `MODEL_ACTION_AUTHORITY=NONE` laboratory track, does **not** publish the workstation GUI Python source, and does **not** change the latest ASUS production checkpoint (2026-11-02), the HCC state, or any router security control. **No GUI autostart, deployment approval or security audit; `DEPLOYMENT_GATE=HOLD`.** The Nov 5 docs are published in **merged PR [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369)**, on `main` since 2026-11-05, not proof of GUI deployment.
+
+## 2026-11-04 — non-production workstation documentation publication
+
+Public [worklog #367](docs/worklog/2026-11-04.md) now captures the later separate Sonoma test-USB and Linux TSC/ACPI observations, plus package-only Fedora 45 / NVIDIA 620 B1–B8 preflight. `MACOS_RECOVERY=NOT_REACHED`, `FEDORA_UPGRADE_STARTED=NO`, full solver B9 **not executed**. These workstation results and docs-only merges do **not** constitute an ASUS production change or release agent/HCC deployment gates.
+
+## 2026-11-03 — separate Fedora Qwen supervised desktop GUI (operator-reported)
+
+The operator reported a working local Qwen3.5 4B browser UI through v0.10.1 with fixed automatic diagnostics/app launches and explicit consent for bounded file mutations. One historical Loki 503 was later checked at HTTP 200; Grafana manifest-discovery WARN remains component-scoped while ordinary dashboard search works. **GUI source and its offline self-tests are not part of this repo or independently CI-verified.** This local GUI has **limited allowlisted user-session execution authority**, unlike the distinct source-merged C.63 agent at `MODEL_ACTION_AUTHORITY=NONE`. No router/HCC autonomy, `sudo`, wide filesystem permission or Wayland input control was approved. **`DEPLOYMENT_GATE=HOLD`**. [Worklog](docs/worklog/2026-11-03.md) · [Security boundary](docs/design/local-qwen-supervised-gui-2026-11-03.md).
+
+## 2026-11-01 — C.63 source publication and independent Fedora storage recovery
+
+- **Source-only agent integration, not a deployment:** merged [PR #347](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/347) into `main` as `69c3050`, with 13 C.63.0–C.63.10 modules, secure JSON parsing and timestamp/gap-evidence hardening; **507/507** offline tests. Merged [PR #348](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/348) as `f8b7142` with four sanitized synthetic-only C.63.11–C.63.14 modules, one invented JSON fixture, and a 17-module offline CI check; **658/658** offline tests. Each final pre-merge head passed **9/9** GitHub checks. No private historical incident snapshot was published. **`MODEL_ACTION_AUTHORITY=NONE`; `DEPLOYMENT_GATE=HOLD`.**
+- **Explicitly separate operational repair, operator-reported:** a Fedora-local RouterCloud backup filesystem mount was restored after a missing persistent mount entry was found; the subsequent manual backup and maintenance/check each passed with return code **0**, and their VictoriaMetrics exported metrics reported success. The performed Restic check covered **29 snapshots / 14 packs** with no reported errors, and Grafana alerts normalized. [Bounded day-scoped note](docs/operations/routercloud-backup-mount-recovery-2026-11-01.md). A real restore, future scheduled runs and extended soak are **not** certified.
+- **Unrelated workstation observations, operator-reported:** OpenCore 1.0.8/Sequoia USB validation passed, but the machine **did not reach Recovery**, so there was no successful macOS installation. A separate KDE Wallet/Secret Service application integration was restored; neither observation is a new router release.
+- **Open Draft review chain:** #343 → #344 → #345 and independent C.62 docs #346 remain unmerged, with a separate ancestry/review plan. Independent human security/privacy sign-off and removal of unreachable historical read code remain required before considering any agent deployment or widening its authority. A successful source merge does **not** change router DNS, firewall, Tailscale, HCC services or agent privileges.
+- [Sanitized complete worklog for 2026-11-01](docs/worklog/2026-11-01.md). This dated note is additive and does not silently publish still-draft October 30–31 worklogs.
 
 ## 2026-10-28 — operator-reported Tailscale maintenance and scoped Android acceptance
 
 - **ASUS GNUton ARMv7:** stable **1.104.2 → 1.104.4** built from a pinned upstream tag using isolated cross-toolchain checks, ARMv7 QEMU and read-only staged/rollback preflight, followed by a separately approved paired-binary publication and project-managed Tailscale restart. The operator reported matched live binary/daemon provenance, active `tailscale0`, connected exit-node/IPv4 forwarding prerequisites and healthcheck **0 failures / 0 warnings**. This is **bounded live runtime acceptance**, not an untested cold reboot, full failover soak or rollback exercise.
 - **Fedora and Android:** Fedora Tailscale stable **1.104.4** passed a scoped client service/peer/DNS smoke with `--accept-dns=false` retained. A distinctly signed Android Lab package **1.105.135** retained the experimental PR #883 DNS fix; actual phone-client Pi-hole/Gravity queries and LTE/5G IPv4 egress through the ASUS exit node passed operator checks. The Android Core uses **development** source and is not certified equivalent to stable; Windows was excluded.
-- **Publication / boundaries:** these are sanitized **operator-supplied** observations published in [October 28 worklog](docs/worklog/2026-10-28.md) through [merged docs PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326), not a new deployment made by this documentation PR. No verification of cold boot, long soak, independent rollback, IPv6 or every encrypted-DNS route; no automatic upgrade or unrelated router DNS/firewall changes authorized. HCC source V0.4/V0.5 and privileged storage changes remain independent **Draft/HOLD**.
+- **Publication / boundaries:** these are sanitized **operator-supplied** observations published in [October 28 worklog](docs/worklog/2026-10-28.md) through [merged docs PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326), not a new deployment made by this documentation PR. No verification of cold boot, long soak, independent rollback, IPv6 or every encrypted-DNS route; no automatic upgrade or unrelated router DNS/firewall changes authorized. At this **2026-10-28** checkpoint HCC V0.4/V0.5 sources were Draft; by the separately verified **2026-11-03** source-state review, #318/#320/#322/#323 had merged while #321 remained OPEN/DRAFT. HCC persistent deployment and unrelated privileged storage changes remain **HOLD**.
 
 ## 2026-10-27 — Fedora VictoriaMetrics 1.155.0 and manually accepted HCC V0.5 archive (Draft only)
 
 - **Separate Fedora production maintenance, not an HCC deployment:** the operator reports a controlled upgrade of Fedora-host VictoriaMetrics **1.154.1 → 1.155.0**, preceded by local backup of the binary/config and stopped-service database copy. Version, local health, **7/7** scraped targets and Grafana API health passed bounded postflight. The same-host backup is not a tested independent restoration. The operator also reported selective 12-package Fedora RPM maintenance and Flatpak updates; kernel **7.2.9-200** and NVIDIA **610.57.04** remained unchanged. A temporary HCC HTTPS 502 was traced to the **manual HCC backend not listening** on port 8788, rather than a demonstrated VictoriaMetrics regression; manual restart restored its HTTPS API access.
-- **HCC V0.4 sources still NOT merged:** [Draft PR #318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318) adds a third local Blackbox probe tile reporting only one router-DNS UDP A lookup, separately from scrape targets and reported DNS Guard mode. **106/106 scoped CI tests**, a local browser/HTTPS smoke, and negative cross-site HTTP 403 were reported. A transient DNS Guard **BOOTSTRAP** observation with successful DNS Blackbox probe is not contradictory; the existing sustained-bootstrap alert requires 10 minutes and does not report every short mode transition.
+- **Historical October 27 HCC V0.4 lab checkpoint (then Draft; #318 merged by 2026-11-03):** [Draft PR #318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318) adds a third local Blackbox probe tile reporting only one router-DNS UDP A lookup, separately from scrape targets and reported DNS Guard mode. **106/106 scoped CI tests**, a local browser/HTTPS smoke, and negative cross-site HTTP 403 were reported. A transient DNS Guard **BOOTSTRAP** observation with successful DNS Blackbox probe is not contradictory; the existing sustained-bootstrap alert requires 10 minutes and does not report every short mode transition.
 - **Issue #319 historical telemetry: limited REAL observations, no persistent event recorder.** Offline event model [Draft #320](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320), raw one-series [Draft #321](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/321), and stacked seven-series [Draft #322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/322) yielded **113 raw samples per metric** and **two source-corroborated sampled mode changes** on Oct 27, with no model gaps/unknowns at the sampled cadence. LOCAL→BOOTSTRAP lies between **17:01:35.572–17:02:39.162 CET** (reported mode timestamp 17:02:11); BOOTSTRAP→LOCAL between **17:04:48.836–17:05:55.563 CET** (reported timestamp 17:05:01). These are observation bounds, not proven exact event times or full LAN-client DNS behavior.
 - **HCC V0.5 manual archive positive-path accepted, NOT installed:** [Draft PR #323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) preserves three source-backed V0.4 LIVE panels, DEMO hidden by default, and a distinctly labelled **fixed 27 Oct ARCHIVE** read initiated only by a manual click. Exact-head GitHub tests: **113/113 Python, 44/44 Node, 2/2 workflows SUCCESS**. Operator browser screenshots showed the archive render **113 samples per series / two events**, with a separate HTTPS cross-site request returning **403**. Later DNS Guard and Blackbox point-in-time tiles marked **STALE** correctly; this was not a confirmed DNS failure. No rolling lookback, autostart/service unit, notification, remote access, restart persistence or broad application security audit was validated.
-- **Next work remains gated:** design bounded rolling history and duplicate-safe event identity (proposed V0.6) separately; evaluate live Grafana Email+Telegram notification policy and receiver parity under [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) before any enabled alerts. **PRs #318/#320/#321/#322/#323 are Draft and unmerged; no router/ASUS, Caddy or Grafana alerting change during HCC tests. `DEPLOYMENT_GATE=HOLD`.** [Dated worklog](docs/worklog/2026-10-27.md).
+- **Next work remains gated:** design bounded rolling history and duplicate-safe event identity (proposed V0.6) separately; evaluate live Grafana Email+Telegram notification policy and receiver parity under [#236](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/236) before any enabled alerts. **At the time of these 27 October tests these PRs were Draft. As verified 2026-11-03, #318/#320/#322/#323 are merged; #321 remains OPEN/DRAFT.** No router/ASUS, Caddy or Grafana alerting change during these HCC tests. **`DEPLOYMENT_GATE=HOLD`.** [Dated worklog](docs/worklog/2026-10-27.md).
 
 ## 2026-10-26 — HCC V0.3 source merged; Fedora-only manual telemetry
 
@@ -29,7 +118,7 @@
 - **HCC #303 (separate Fedora scope):** [PRs #305–#307](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/303) merged V0.1 offline demo and a V0.2 **non-root manually run loopback** VictoriaMetrics aggregate tile; a 7/7 scrape-target observation is not all-service availability. [PR #308 design and operator report](docs/design/homelab-control-center-local-https-alias-2026-10-25.md) records an actual, explicitly approved **Fedora-local** `/etc/hosts` + loopback Caddy site activation and Caddy reload: HTTPS route response 200 and browser address reported working. No persistent HCC unit/autostart, remote access, LAN/Tailscale exposure or router DNS changes. **HCC permanent deployment HOLD; Black Box #304 remains unimplemented.**
 - **Independent risk/acceptance boundaries:** Fedora Recovery root Btrfs received in isolation but **booted-OS/SELinux full restore not accepted**; Fedora Tailscale 1.104.2 needed a host-local nftables-mode correction and has **not** been proven across a subsequent Fedora reboot. Keep all accepted results tied to their individual dates, runtime targets and evidence types.
 
-## Current DNS Guard / monitoring checkpoint — 2026-10-24
+## Historical DNS Guard / monitoring checkpoint — 2026-10-24
 
 **Unbound R2 production: accepted in bounded version/DNSSEC/client scope** (5/5 `1.26.2-1`, TCP/UDP and one observed router reboot); no need to repeat the upgrade for unrelated hardening. **DNS Guard v3.2 production remains unchanged.** During the earlier, unplanned resolver incident, the router **actually** selected independent WAN bootstrap at **10:25:02** and local Pi-hole at **11:08:01**, without establishing client DNS failover or full controlled fault-injection acceptance. Observed direct dnsmasq DNS Blackbox failures and delayed Grafana notification delivery remain separate monitoring/redundancy findings. [Incident and alert-delivery analysis](docs/case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md) · [DNS Guard operational limits](docs/dns-guard-v3.2-recovery-audit.md).
 

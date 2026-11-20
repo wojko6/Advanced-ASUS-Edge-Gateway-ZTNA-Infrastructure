@@ -1,10 +1,41 @@
 # Roadmap
 
-### 2026-10-28 — active candidate branches and publication boundaries (NOT MERGED / HOLD)
+### 2026-11-15 — current source/publication boundaries (review only)
 
-- **HCC source boundary:** `main` contains V0.1–V0.3 only. [V0.4 Draft PR #318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318) adds a candidate third source-labelled router-DNS Blackbox LIVE tile; [V0.5 Draft PR #323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) is stacked on #318 and proposes a manually opened **fixed October 27 archive**, explicitly not LIVE. These candidates do **not** install a persistent HCC daemon, validate client-side automatic DNS failover, or approve remote exposure. [Issue #319](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/319) holds the separate DNS Guard transition-history work; [Draft PRs #320](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320), [#321](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/321) and [#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/322) are **not** interchangeable, merged or production-integrated.
+- **Fedora workstation:** the November 9 Fedora 44 / NVIDIA 610.57.04
+  monitoring snapshot is historical. The subsequent
+  [November 10 physical Fedora 45/KDE upgrade](https://github.com/wojko6/fedora-workstation-setup/blob/main/docs/WORKLOG-2026-11-10.md)
+  was boundedly operator-accepted; Fedora 45 clean-room reproducibility remains
+  **HOLD**. No November 15 live host verification is implied.
+- **Supervised GUI:** the [November 5 worklog](worklog/2026-11-05.md) was
+  published in merged [PR #369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369);
+  the [November 6 follow-up](worklog/2026-11-06.md) was published in merged
+  [PR #370](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/370).
+  These are bounded observations, not source deployment or resolved Loki RCA.
+- **ASUS security/recovery:** [PR #372](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/372)
+  published the [Nov 13 audit follow-up register](audits/2026-11-13-codex-engineering-followup-register.md):
+  3 High / 8 Medium / 1 Low priorities. #235 owner/trust, #129 durable
+  restoration and related bounded tests remain separate **HOLD** gates.
+- **Historical HCC PR states:** #318, #320, #322 and #323 are now merged;
+  [#321](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/321)
+  remains open Draft. Their October 28 Draft statuses below describe
+  that date only; none proves a permanently deployed HCC service.
+- **Deployment:** latest documented operator-reported ASUS production
+  change remains November 2 DNS Guard; no code/config/install changes were
+  made by this source audit. [Reconciliation](audits/2026-11-15-documentation-consistency.md).
+
+### 2026-11-05 — supervised local Qwen GUI checkpoint and next review (not a deployment)
+
+- **Observed scope:** operator-reported Fedora/KDE supervised Qwen GUI reached **v0.12.29**, with limited context-aware questions, fixed DNS/HTTPS tests, local service readiness versus active-state checks, safe KWin metadata aggregates, and readable RAM/disk/monitoring status labels. Latest creator-reported offline tests: **338/338 PASS**. This is not published GUI source or independent CI/security acceptance. [Dated worklog](worklog/2026-11-05.md) · [GUI boundary](design/local-qwen-supervised-gui-2026-11-03.md).
+- **Remaining validation:** browser-origin/CSRF and approval-token lifecycle review, private-data flow from WindowsRunner/diagnostic logs, race/symlink protections for approved file changes, bounded host/network access controls, and a realistic rollback/negative-test plan. **No permission escalation, arbitrary tool planning, router operation, auto-start or input control** is authorized by roadmap text.
+- **Operational uncertainty:** Loki ingester readiness sometimes yielded 503 (cause unknown); Grafana manifest-discovery warnings persist independently of user-tested dashboard search. Do not mark either fixed without dedicated evidence.
+- **Publication status correction (verified 2026-11-15):** the November 5 documentation was **merged via [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369)**; the November 6 follow-up was **merged via [#370](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/370)**. The separate C.63/C.64 agent remains `MODEL_ACTION_AUTHORITY=NONE`; both agent deployment gates stay **HOLD**.
+
+### Historical 2026-10-28 — candidate branches and publication boundaries (as of that date; subsequent PR states differ)
+
+- **HCC source boundary (historical 2026-10-28):** `main` contained V0.1–V0.3 only. [V0.4 Draft PR #318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318) adds a candidate third source-labelled router-DNS Blackbox LIVE tile; [V0.5 Draft PR #323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) is stacked on #318 and proposes a manually opened **fixed October 27 archive**, explicitly not LIVE. These candidates do **not** install a persistent HCC daemon, validate client-side automatic DNS failover, or approve remote exposure. [Issue #319](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/319) holds the separate DNS Guard transition-history work; [Draft PRs #320](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320), [#321](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/321) and [#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/322) are **not** interchangeable, merged or production-integrated.
 - **RouterCloud UI idea:** [Issue #327](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/327) proposes a read-only disk-usage TreeMap for the Polish Metro interface. This is a proposed **isolated Fedora prototype**, not a shipped visualization or a justification for modifying DUFS/RouterCloud production storage.
-- **Evidence vs. publication:** [PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324) merged bounded October 27 Grafana/Loki monitoring evidence; the separate [October 27 Fedora/HCC worklog](worklog/2026-10-27.md) is now on `main` through [merged PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325), incorporating the relevant details from superseded partial [Draft PR #317](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/317). The [October 28 Tailscale worklog](worklog/2026-10-28.md) is on `main` through [merged PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326). These are operator-reported, date- and device-scoped acceptance records; publication does not prove cold boot, long soak or Android IPv6. HCC source PRs #318/#320–#323 remain unmerged and independent.
+- **Evidence vs. publication:** [PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324) merged bounded October 27 Grafana/Loki monitoring evidence; the separate [October 27 Fedora/HCC worklog](worklog/2026-10-27.md) is now on `main` through [merged PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325), incorporating the relevant details from superseded partial [Draft PR #317](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/317). The [October 28 Tailscale worklog](worklog/2026-10-28.md) is on `main` through [merged PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326). These are operator-reported, date- and device-scoped acceptance records; publication does not prove cold boot, long soak or Android IPv6. At this October 28 checkpoint the HCC source PRs were not yet all merged; as of November 15, #318/#320/#322/#323 are merged while #321 remains Draft.
 - **Release/deployment gate:** no automatic PR merge, cross-branch cherry-pick, Fedora permanent HCC service, ASUS DNS/security change, or RouterCloud production modification is authorized here. Existing #235, #287, #298/#299, #304 and #319 gates remain independent.
 
 ### Homelab Control Center — 2026-10-26 (V0.3 source merged; deployment HOLD)
