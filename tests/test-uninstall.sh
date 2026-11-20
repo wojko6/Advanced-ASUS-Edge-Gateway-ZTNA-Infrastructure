@@ -87,6 +87,35 @@ run_uninstall() {
     cp "$REPO_DIR/scripts/uninstall.sh" "$TMP_DIR/uninstall.sh"
     sed -i 's/^uid="$(current_uid)".*$/uid=0/' "$TMP_DIR/uninstall.sh"
 
+    # Issue #285 stage 1: patch only the copied uninstaller for an isolated
+    # diagnostic candidate. The repository's scripts/uninstall.sh is unchanged.
+    if [ "$ISSUE285_STRICT_NAT_FIXTURE" = "1" ]; then
+        python3 - "$TMP_DIR/uninstall.sh" <<'PY_NAT_CANDIDATE'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+source = path.read_text(encoding="utf-8")
+needle = 'remove_jump_and_chain nat PREROUTING "$EDGE_TS_IF" EDGE_TS_PREROUTING\n'
+if source.count(needle) != 1:
+    raise SystemExit("FAIL: candidate must find exactly one NAT cleanup call")
+# Do NOT delete ambiguous -i-less jumps. Verify the chain was actually
+# removed and report a nonzero result if it remains. A failed inspection is
+# a HOLD, not a green cleanup claim. This is a diagnostic-only candidate,
+# not a full transaction/rollback implementation.
+postcheck = """\
+if ! "$IPTABLES" -t nat -S PREROUTING >/dev/null 2>&1; then
+    echo "ERROR: ISSUE285 NAT parent inspection unavailable; cleanup state unknown" >&2
+    exit 1
+fi
+if "$IPTABLES" -t nat -S EDGE_TS_PREROUTING >/dev/null 2>&1; then
+    echo "ERROR: ISSUE285 managed NAT chain remains; cleanup incomplete" >&2
+    exit 1
+fi
+"""
+path.write_text(source.replace(needle, needle + postcheck, 1), encoding="utf-8")
+PY_NAT_CANDIDATE
+    fi
+
     EDGE_TEST_ROOT="$root" \
     EDGE_IPTABLES="$TMP_DIR/iptables" \
     EDGE_IP6TABLES="$TMP_DIR/ip6tables" \
@@ -186,7 +215,7 @@ import sys
 args = sys.argv[1:]
 with open(os.environ["MOCK_LOG"], "a", encoding="utf-8") as log:
     log.write("iptables " + " ".join(args) + "\n")
-if len(args) < 4 or args[0] != "-t" or args[2] not in ("-D", "-F", "-X"):
+if len(args) < 4 or args[0] != "-t" or args[2] not in ("-D", "-F", "-X", "-S"):
     sys.exit(2)
 key = args[1] + "/" + args[3]
 action = args[2]
@@ -195,6 +224,13 @@ state = json.loads(state_path.read_text(encoding="utf-8"))
 if key not in state:
     sys.exit(1)  # this mock models only the selected NAT chains
 rules = state[key]
+
+if action == "-S":
+    if len(args) != 4 or os.environ.get("MOCK_DENY_INSPECT", "") == key:
+        sys.exit(1)
+    for rule in rules:
+        print("-A " + args[3] + " " + rule)
+    sys.exit(0)
 
 if action == "-D":
     candidate = " ".join(args[4:])
@@ -347,4 +383,74 @@ cmp "$MOCK_NAT_STATE" "$TMP_DIR/nat-before-fail.json"
 ! grep -E '^(iptables|ip6tables) ' "$MOCK_LOG" >/dev/null
 grep -Fx 'dns-guard fallback' "$MOCK_LOG" >/dev/null
 echo "PASS: NAT lab fail-closed on DNS bootstrap failure"
+# Stage 1 candidate: a disposable, root-check-transformed copy of uninstall
+# only. It reports failed NAT-chain cleanup instead of hiding the failure.
+# Production scripts/uninstall.sh remains untouched. No unqualified jump is
+# deleted, and the candidate does NOT implement transactional rollback.
+echo "=== issue #285 / diagnostic-only strict NAT postflight candidate ==="
+ISSUE285_STRICT_NAT_FIXTURE=1
+export ISSUE285_STRICT_NAT_FIXTURE
+seed_nat_state current
+: >"$MOCK_LOG"
+run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/strict-current.out" "$TMP_DIR/strict-current.err"
+assert_nat_case current
+grep -F 'Runtime rules removed' "$TMP_DIR/strict-current.out" >/dev/null
+grep -F 'iptables -t nat -S PREROUTING' "$MOCK_LOG" >/dev/null
+grep -F 'ip6tables -t filter -D INPUT -i tailscale-test -j EDGE_TS6_INPUT' "$MOCK_LOG" >/dev/null
+echo "PASS: strict candidate removes scoped NAT and preserves IPv6 mock invocation"
+
+cp "$MOCK_NAT_STATE" "$TMP_DIR/strict-before-repeat.json"
+run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/strict-repeat.out" "$TMP_DIR/strict-repeat.err"
+cmp "$MOCK_NAT_STATE" "$TMP_DIR/strict-before-repeat.json"
+echo "PASS: strict candidate is idempotent on missing managed NAT chain"
+
+# Unverified historical jump is intentionally preserved; a nonzero status
+# replaces the previous misleading "Runtime rules removed" success verdict.
+seed_nat_state hypothetical-legacy
+if run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/strict-legacy.out" "$TMP_DIR/strict-legacy.err"; then
+    echo "FAIL: strict candidate claimed success for unqualified jump" >&2
+    exit 1
+fi
+grep -F 'ERROR: ISSUE285 managed NAT chain remains' "$TMP_DIR/strict-legacy.err" >/dev/null
+! grep -F 'Runtime rules removed' "$TMP_DIR/strict-legacy.out" >/dev/null
+python3 - "$MOCK_NAT_STATE" <<'PY_STRICT_ASSERT'
+import json
+from pathlib import Path
+import sys
+s = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert "-j EDGE_TS_PREROUTING" in s["nat/PREROUTING"]
+assert "-p udp --dport 123 -j FOREIGN_NAT" in s["nat/PREROUTING"]
+assert "nat/EDGE_TS_PREROUTING" in s
+assert "-i lan-test -j EDGE_LAN_DNS_PREROUTING" in s["nat/PREROUTING"], "partial cleanup must be explicit"
+PY_STRICT_ASSERT
+echo "PASS: strict candidate reports incomplete cleanup, does not delete ambiguous NAT jump"
+
+seed_nat_state denied
+MOCK_DENY_DELETE='nat/PREROUTING|-i tailscale-test -j EDGE_TS_PREROUTING'
+export MOCK_DENY_DELETE
+if run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/strict-denied.out" "$TMP_DIR/strict-denied.err"; then
+    echo "FAIL: strict candidate hid exact deletion failure" >&2
+    exit 1
+fi
+unset MOCK_DENY_DELETE
+grep -F 'ERROR: ISSUE285 managed NAT chain remains' "$TMP_DIR/strict-denied.err" >/dev/null
+! grep -F 'Runtime rules removed' "$TMP_DIR/strict-denied.out" >/dev/null
+echo "PASS: strict candidate reports failed exact deletion"
+
+# If even the parent-rule inspection fails, the postflight must report
+# unknown rather than success. This is deliberately not treated as absence.
+seed_nat_state current
+MOCK_DENY_INSPECT='nat/PREROUTING'
+export MOCK_DENY_INSPECT
+if run_uninstall "$NAT_LAB_ROOT" "$TMP_DIR/strict-inspect.out" "$TMP_DIR/strict-inspect.err"; then
+    echo "FAIL: strict candidate treated unreadable NAT parent as clean" >&2
+    exit 1
+fi
+unset MOCK_DENY_INSPECT
+grep -F 'ERROR: ISSUE285 NAT parent inspection unavailable' "$TMP_DIR/strict-inspect.err" >/dev/null
+! grep -F 'Runtime rules removed' "$TMP_DIR/strict-inspect.out" >/dev/null
+echo "PASS: strict candidate fails closed when postflight parent inspection is unavailable"
+unset ISSUE285_STRICT_NAT_FIXTURE
+echo "ISSUE285_CANDIDATE=PASS_LAB_ONLY_DEPLOYMENT_HOLD"
+
 echo "ISSUE285_LAB=PASS_WITH_EXPECTED_RED_AND_DEPLOYMENT_HOLD"
