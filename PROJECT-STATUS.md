@@ -21,20 +21,21 @@
 > **As of 2026-11-19, libcurl and GLib2 remained; no syslog-ng 4.13.0 IPK had yet been built or tested on ARM hardware.** At this dated checkpoint, the separately reported Nov 17 ASUS Tailscale deployment remained the latest router change; later events are documented in their own dated entries. `ROUTER_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD` for this LAB stage.
 > [Sanitized worklog](docs/worklog/2026-11-19.md).
 
-> **2026-11-17 — późniejsze testy G9K–G9O po restarcie ASUS (operator-reported):**
-> po zwykłym restarcie oba aktywne programy Tailscale nadal zgłaszały
-> **1.104.7**, sumy SHA-256 były niezmienione, Local API = `Running`,
-> tożsamość IPv4 tailnet pozostała taka sama, a procesy Tailscale,
-> Pi-hole FTL, Unbound i dnsmasq działały (`G9K=PASS_BOUNDED`).
-> Następnie telefon z sieci komórkowej, przy wybranym ASUS exit node,
-> uzyskał publiczny IPv4 routera; DNS Guard v3.2 zgłaszał
-> `LOCAL_DNS_READY`; w Pi-hole widać było unikatowe zapytanie
-> wygenerowane przez telefon oraz decyzję blokującą domenę reklamową
-> (`G9L–G9O=PASS_BOUNDED`). Nie wykazano pełnego braku wycieków
-> DoH/DoT, wszystkich aplikacji, identyfikacji konkretnej listy
-> blokującej, failoveru, rollbacku ani długiego soak.
-> **To uzupełnia — nie zmienia wstecz — pierwotny wynik G9H–G9J**.
-> [Dziennik i zakres dowodów](docs/worklog/2026-11-17.md).
+> **Later 2026-11-17 G9K–G9O post-reboot checks (operator-reported):**
+> Following an ordinary ASUS restart, both active Tailscale executables
+> still reported **1.104.7** and retained their SHA-256 hashes; Local
+> API returned `Running`, tailnet IPv4 identity was unchanged and the
+> Tailscale, Pi-hole FTL, Unbound and dnsmasq processes were present
+> (`G9K=PASS_BOUNDED`). Subsequently a cellular client using the ASUS
+> exit node observed the router WAN public IPv4. DNS Guard v3.2
+> reported `LOCAL_DNS_READY`; a unique phone-requested hostname
+> appeared in Pi-hole's Query Log, and an advertising hostname was
+> observed with a blocking decision (`G9L–G9O=PASS_BOUNDED`).
+> This does **not** prove all-app or encrypted-DNS DoH/DoT coverage,
+> identify the precise blocking rule, or validate failover, rollback,
+> full restoration or an extended soak.
+> **These are later dated supplements, not retroactive G9H–G9J tests.**
+> [Dated evidence and scope](docs/worklog/2026-11-17.md).
 >
 > **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
 > a separately authorized, attended ARMv7 Tailscale manual binary update
