@@ -1,6 +1,6 @@
 # Documentation map — current entry points and evidence boundaries
 
-**Status:** CURRENT navigation only · **Reviewed:** 2026-11-15 (Nov 10 Fedora 45 status reconciled, Nov 6 GUI worklog #370 and Nov 13 audit #372 indexed; historical Nov 9 monitoring and older PR snapshots retain their original dates). **Not** a live deployment/security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
+**Status:** CURRENT navigation only · **Full source-state reconciliation last reviewed:** 2026-11-15 (Fedora 45, GUI and security worklogs; historical Nov 9 monitoring / PR snapshots retained) · **Targeted documentation update:** 2026-11-20 (operator-reported syslog-ng 4.13.0 ASUS upgrade, acceptance and merged documentation PRs #377–#379). **Not** a new full-source audit, live deployment or security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
 
 ## Choose the right document
 
@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | What happened in the 2026-11-20 ASUS syslog-ng update? | [ARMv7 4.13.0 production worklog](worklog/2026-11-20.md) | [Upgrade and rollback boundaries](operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md), [logging design](centralized-logging.md); one Loki smoke PASS, rollback/reboot/soak untested |
 | What actually runs on the ASUS gateway? | [PROJECT-STATUS](../PROJECT-STATUS.md) | Applicable [dated evidence](../evidence/) and [operations](operations.md) |
-| What is the cross-repository status as of Nov 15? | [Bounded reconciliation](audits/2026-11-15-documentation-consistency.md) and [PROJECT-STATUS](../PROJECT-STATUS.md) | Fedora 45 was reported active on Nov 10; the Nov 9 Fedora 44/VM record remains historical; latest documented ASUS production change remains Nov 2 |
+| What was the cross-repository status **as of Nov 15** (historical)? | [Bounded reconciliation from Nov 15](audits/2026-11-15-documentation-consistency.md) | Fedora 45 was active from Nov 10; the Nov 9 Fedora 44/VM record remains historical. **The Nov 2 ASUS assertion applies only to that old reconciliation**; the [current dated status](../PROJECT-STATUS.md) now records the Nov 20 syslog-ng production change. |
 | What was verified on Fedora on Nov 9? | [Nov 9 worklog](worklog/2026-11-09.md) | [VM v1.156.0 operator evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md), [monitoring guide](../monitoring/README.md); not an ASUS deployment |
 | How is the network designed? | [Network-design index](network-design.md) | [Architecture](architecture.md), [security](security.md) and [firewall policy](firewall-policy.md) |
 | How can the system be managed or recovered? | [Operations guide](operations.md) | [Recovery index](disaster-recovery-index.md), dated live acceptance and explicit rollback gates |
