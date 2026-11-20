@@ -81,6 +81,12 @@ assert_rule_helper_regressions() {
         exit 1
     fi
 
+    printf '%s\n' "-A EDGE_TS_FORWARD -d 192.168.50.10 -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT" >"$negative_log"
+    (MOCK_IPTABLES_LOG="$negative_log"; assert_rule_prefix "-A EDGE_TS_FORWARD -d 192.168.50.10 -p tcp --dport 443") || {
+        echo "FAIL: prefix assertion rejected valid rule with extra arguments" >&2
+        exit 1
+    }
+
     printf '%s\n' "unexpected-prefix $expected" >"$negative_log"
     if (MOCK_IPTABLES_LOG="$negative_log"; assert_rule_prefix "-A EDGE_TS_FORWARD -i tailscale0") >/dev/null 2>&1; then
         echo "FAIL: prefix assertion matched middle of line" >&2
