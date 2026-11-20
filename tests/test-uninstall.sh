@@ -89,7 +89,7 @@ run_uninstall() {
 
     # Issue #285 stage 1: patch only the copied uninstaller for an isolated
     # diagnostic candidate. The repository's scripts/uninstall.sh is unchanged.
-    if [ "$ISSUE285_STRICT_NAT_FIXTURE" = "1" ]; then
+    if [ "${ISSUE285_STRICT_NAT_FIXTURE:-0}" = "1" ]; then
         python3 - "$TMP_DIR/uninstall.sh" <<'PY_NAT_CANDIDATE'
 from pathlib import Path
 import sys
