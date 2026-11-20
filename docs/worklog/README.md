@@ -12,6 +12,8 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
+- [2026-11-19](2026-11-19.md) — Fedora-only syslog-ng 4.13.0 ARMv7 toolchain completed; 6/8 direct libraries and transitive zlib built; no syslog-ng IPK or ASUS deployment.
+
 - [2026-11-17](2026-11-17.md) — operator-verified ASUS TUF-AX5400 ARMv7 Tailscale 1.104.4 → 1.104.7 manual deployment; verified daemon hashes, state continuity and cellular IPv4 exit-node smoke. DNS path, rollback execution and reboot persistence not tested.
 - [2026-11-17 — syslog-ng 4.13.0 Fedora + Entware ARMv7 build lab](../operations/syslog-ng-4.13.0-armv7-build-checkpoint-2026-11-17.md) — operator-reported Fedora collector bounded mTLS acceptance and isolated ARMv7 source/host-tool preparation through S13-A21R; ARM toolchain and router IPK not built; ASUS syslog-ng remains 4.12.0-3; deployment HOLD.
 
