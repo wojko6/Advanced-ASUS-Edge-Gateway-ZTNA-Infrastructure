@@ -21,20 +21,21 @@
 > **As of 2026-11-19, libcurl and GLib2 remained; no syslog-ng 4.13.0 IPK had yet been built or tested on ARM hardware.** At this dated checkpoint, the separately reported Nov 17 ASUS Tailscale deployment remained the latest router change; later events are documented in their own dated entries. `ROUTER_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD` for this LAB stage.
 > [Sanitized worklog](docs/worklog/2026-11-19.md).
 
-> **2026-11-17 — późniejsze testy G9K–G9O po restarcie ASUS (operator-reported):**
-> po zwykłym restarcie oba aktywne programy Tailscale nadal zgłaszały
-> **1.104.7**, sumy SHA-256 były niezmienione, Local API = `Running`,
-> tożsamość IPv4 tailnet pozostała taka sama, a procesy Tailscale,
-> Pi-hole FTL, Unbound i dnsmasq działały (`G9K=PASS_BOUNDED`).
-> Następnie telefon z sieci komórkowej, przy wybranym ASUS exit node,
-> uzyskał publiczny IPv4 routera; DNS Guard v3.2 zgłaszał
-> `LOCAL_DNS_READY`; w Pi-hole widać było unikatowe zapytanie
-> wygenerowane przez telefon oraz decyzję blokującą domenę reklamową
-> (`G9L–G9O=PASS_BOUNDED`). Nie wykazano pełnego braku wycieków
-> DoH/DoT, wszystkich aplikacji, identyfikacji konkretnej listy
-> blokującej, failoveru, rollbacku ani długiego soak.
-> **To uzupełnia — nie zmienia wstecz — pierwotny wynik G9H–G9J**.
-> [Dziennik i zakres dowodów](docs/worklog/2026-11-17.md).
+> **Later 2026-11-17 G9K–G9O post-reboot checks (operator-reported):**
+> Following an ordinary ASUS restart, both active Tailscale executables
+> still reported **1.104.7** and retained their SHA-256 hashes; Local
+> API returned `Running`, tailnet IPv4 identity was unchanged and the
+> Tailscale, Pi-hole FTL, Unbound and dnsmasq processes were present
+> (`G9K=PASS_BOUNDED`). Subsequently a cellular client using the ASUS
+> exit node observed the router WAN public IPv4. DNS Guard v3.2
+> reported `LOCAL_DNS_READY`; a unique phone-requested hostname
+> appeared in Pi-hole's Query Log, and an advertising hostname was
+> observed with a blocking decision (`G9L–G9O=PASS_BOUNDED`).
+> This does **not** prove all-app or encrypted-DNS DoH/DoT coverage,
+> identify the precise blocking rule, or validate failover, rollback,
+> full restoration or an extended soak.
+> **These are later dated supplements, not retroactive G9H–G9J tests.**
+> [Dated evidence and scope](docs/worklog/2026-11-17.md).
 >
 > **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
 > a separately authorized, attended ARMv7 Tailscale manual binary update
@@ -81,7 +82,7 @@
 
 **Documentation status reviewed: 2026-11-09** (Nov 5 GUI/worklog Draft reconciliation plus previously checked PR publication; no new ASUS production verification; **latest operator-reported ASUS production change remains 2026-11-02**). Latest operator-reported ASUS production change is the narrowly scoped DNS Guard `dig` repair: merged [PR #350](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/350) and [PR #351](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/351), with checksum-verified backups, real Cron/Entware GLIBC root-cause reproduction, successful TCP smoke test, and no repeated warning in the short observed post-fix window. No WAN, Unbound, Pi-hole, global loader or fail-open-policy change. Prior Tailscale 1.104.4, Unbound 1.26.2 R2 and WebUI #283 maintenance remain distinct. Separate WAN, #287 and other operational HOLD gates continue. This short acceptance does not certify overnight stability or packet-level Cron probe tracing. [Dated worklog](docs/worklog/2026-11-02.md).
 
-**Historyczny stan PR-ów — 2026-11-03 (dwie migawki):** początkowy [rejestr 22 Draft PR-ów](docs/audits/2026-11-03-open-pr-backlog-reconciliation.md) wykazał 9 clean / 8 behind / 5 dirty. Następnie, **tego samego dnia**, po odrębnej akceptacji scalono dokumentacyjne PR [#364](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/364), [#361](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/361) i [#362](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/362), każdy po 8/8 exact-head CI PASS. **Wtedy** pozostało 19 OPEN/DRAFT (6 clean / 13 unknown); `unknown` nie oznacza konfliktu. Obie liczby są **historyczne**, nie opisują kolejki w listopadzie 20. CI PASS nie jest zgodą na wdrożenie; HCC, agent i uprzywilejowane operacje nadal HOLD.
+**Historical pull-request hygiene — 2026-11-03 (two distinct snapshots):** the initial [22-Draft review](docs/audits/2026-11-03-open-pr-backlog-reconciliation.md) recorded 9 clean, 8 behind and 5 conflicting branches. **Later on Nov 3**, separately approved documentation-only PRs [#364](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/364), [#361](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/361) and [#362](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/362) were squash-merged following 8/8 exact-head CI PASS per PR. At that **historical post-merge checkpoint**, 19 OPEN/DRAFT PRs remained (6 clean / 13 unknown); `unknown` was **not** a confirmed conflict. These totals are **not the current November 20 PR queue**. CI PASS is not deployment authorization, and HCC/agent/privileged operations retain HOLD.
 
 **Publication/source navigation:** [Documentation map and PR state snapshot](docs/DOCUMENTATION-MAP.md). Old dated sections are historical observations, not up-to-date PR statuses.
 
