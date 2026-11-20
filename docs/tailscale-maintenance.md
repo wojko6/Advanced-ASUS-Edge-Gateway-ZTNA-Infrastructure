@@ -42,6 +42,41 @@ See the [dated worklog](worklog/2026-11-17.md) for the exact acceptance
 boundary. Do not use the historical October `1.102.3` example below as
 the current live version.
 
+## Post-reboot operator checkpoint — 2026-11-17 (G9K)
+
+Later that day, the operator rebooted the reference ASUS and ran a
+read-only post-start audit. Both active Tailscale executable versions
+remained **1.104.7** and both live SHA-256 checksums matched their
+pre-reboot values. Local API reported `BackendState=Running` and the
+tailnet IPv4 was unchanged. `tailscaled`, `pihole-FTL`, `unbound`
+and `dnsmasq` were present as running processes; WAN IPv6 remained
+disabled with no default IPv6 route.
+
+This **closes the bounded post-reboot startup/persistence gate** for the
+manual 1.104.7 installation only. At this G9K checkpoint, full DNS path validation and active
+client IPv4 forwarding **after** the reboot were not yet tested; rollback execution,
+disaster-recovery restoration and extended soak remain untested.
+The original deployment occurred without a reboot; G9K was a
+**separate later reboot**. [G9K worklog](worklog/2026-11-17.md).
+
+## Post-reboot Android DNS and filtering check — 2026-11-17 (G9L–G9O)
+
+After G9K, the operator confirmed cellular-client internet access
+using the ASUS as Tailscale exit node, with public IPv4 matching
+the router's WAN egress. The active DNS Guard v3.2 state was
+`LOCAL_DNS_READY` and local Pi-hole resolver checks
+(`UNBOUND`, `PIHOLE_LISTENER`, `PIHOLE_QUERY`) passed.
+An operator-supplied Pi-hole Query Log screenshot showed an
+exact unique test domain from the phone/browser under the
+router's DNS-client identity; a second showed a controlled
+advertising hostname blocked for that source.
+
+These are **bounded post-reboot mobile DNS and filtering smoke
+tests**, not exhaustive client DNS-leak, encrypted-DNS,
+packet-capture or all-application validation. The exact
+blocklist/rule responsible for the denied hostname was not
+identified. [G9L–G9O dated evidence](worklog/2026-11-17.md).
+
 ## Why
 
 The reference router has demonstrated real package/live-version drift:

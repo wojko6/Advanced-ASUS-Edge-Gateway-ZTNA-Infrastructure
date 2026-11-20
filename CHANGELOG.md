@@ -22,6 +22,16 @@
   [maintenance note](docs/tailscale-maintenance.md).
 
 
+- **2026-11-17 later G9K–G9O post-reboot Tailscale/DNS smoke (operator-reported, separate from original deployment):**
+  after an ordinary ASUS reboot, both Tailscale 1.104.7 binaries and hashes,
+  Local API `Running` and network/DNS process presence passed bounded checks
+  (G9K). Subsequent mobile-data exit-node IPv4 egress, DNS Guard
+  `LOCAL_DNS_READY`, uniquely correlated Pi-hole test query and an observed
+  advertising-domain block passed bounded G9L–G9O smoke. Not established:
+  app-wide DoH/DoT coverage, full-path packet captures, individual blocking
+  rule, failover, restore/rollback or sustained soak.
+  [Nov 17 supplemental worklog](docs/worklog/2026-11-17.md).
+
 - **2026-11-09 Fedora/VM manual checkpoint (operator-reported):** documented Fedora 44 service and suspend/resume validation, plus VictoriaMetrics **v1.155.0 → v1.156.0** after artifact SHA256 verification and same-host backup/snapshot. Seven scrape targets `up=1` were checked; `probe_success`, off-host restore and full alert delivery remain unverified. Fedora 45, unattended updates and `libheif` mismatch remain HOLD. Docs-only, no router change. [Worklog](docs/worklog/2026-11-09.md) · [VM evidence](evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md).
 
 - **2026-11-04 docs-only publication:** merged public OpenCore/Sonoma and Fedora 45 / NVIDIA 620 worklog #367 (after static check #366); retains USB-only change boundary, TSC/ACPI uncertainty, `B9=NOT_RUN`, and Fedora/macOS deployment HOLD. Updated publication-state navigation, not ASUS or workstation runtime.
