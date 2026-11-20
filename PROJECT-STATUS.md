@@ -1,5 +1,21 @@
 # Project status
 
+> **Current operator-reported ASUS router production checkpoint — 2026-11-20:** a
+> separately performed, attended Entware ARMv7 syslog-ng upgrade
+> **4.12.0-3 → 4.13.0-1** passed new package/binary version, two running
+> service processes, unchanged custom configuration hash, and one router log
+> observed in Fedora Loki via Grafana Explore. Original IPK, on/off-router
+> installation and TLS backups and a stopped-state reliable queue snapshot
+> were preserved. **Downgrade/restore and queued-message replay, control
+> socket statistics, reboot/power-loss persistence, extended soak, and
+> full positive/negative mTLS regression remain unverified.** This is the
+> latest dated ASUS change; Nov 17 Tailscale and Nov 2 DNS Guard results
+> below are historical and still valid within their scopes. No unrelated
+> Issue #235, HCC/agent, DNS, privileged trust or router DR HOLD is lifted.
+> [Worklog](docs/worklog/2026-11-20.md) ·
+> [Operational record](docs/operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
+
 > **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
 > a separately authorized, attended ARMv7 Tailscale manual binary update
 > **1.104.4 → 1.104.7** was deployed on the reference TUF-AX5400 (Go
