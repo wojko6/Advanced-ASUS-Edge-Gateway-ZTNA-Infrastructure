@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- **2026-11-20 syslog-ng 4.13.0 ARMv7 reference-router deployment (operator-reported):** Fedora 45 build and package checks PASS; ASUS Entware upgrade **4.12.0-3 → 4.13.0-1**, preserved custom config, matching package/runtime version, two service processes and one ASUS → Fedora/Loki/Grafana message PASS. Original IPK, on/off-router configuration and TLS backups plus stopped-state queue snapshot retained. **Rollback, queue replay, reboot and extended soak not tested**; unrelated HOLD gates remain. The repo change is documentation-only, not a second deployment. [Worklog](docs/worklog/2026-11-20.md) · [operations](docs/operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
 - **2026-11-19 syslog-ng 4.13.0 ARMv7 off-router build checkpoint (operator-reported; documentation only):** Completed and audited seven-stage GCC 8.4.0/glibc 2.27 cross-toolchain with **44/44 host stamps**, then built **6/8** direct ARM libraries (ivykis, libpcre2, libjson-c, libdbi, libuuid, libopenssl 3.5.9-3) with ELF32/staging/IPK checks. Target zlib and native ncurses/host are also ready. A82 and A85 false-negative file/stamp checks were resolved without rebuilding. **libcurl/GLib2 and syslog-ng IPK remain pending; no ASUS production change or deployment approval.** [Worklog](docs/worklog/2026-11-19.md).
 
 - **2026-11-17 controlled ASUS Tailscale ARMv7 deployment (operator-verified):**

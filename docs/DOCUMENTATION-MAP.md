@@ -6,6 +6,7 @@
 
 | Question | Start with | Then verify against |
 | --- | --- | --- |
+| What happened in the 2026-11-20 ASUS syslog-ng update? | [ARMv7 4.13.0 production worklog](worklog/2026-11-20.md) | [Upgrade and rollback boundaries](operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md), [logging design](centralized-logging.md); one Loki smoke PASS, rollback/reboot/soak untested |
 | What actually runs on the ASUS gateway? | [PROJECT-STATUS](../PROJECT-STATUS.md) | Applicable [dated evidence](../evidence/) and [operations](operations.md) |
 | What is the cross-repository status as of Nov 15? | [Bounded reconciliation](audits/2026-11-15-documentation-consistency.md) and [PROJECT-STATUS](../PROJECT-STATUS.md) | Fedora 45 was reported active on Nov 10; the Nov 9 Fedora 44/VM record remains historical; latest documented ASUS production change remains Nov 2 |
 | What was verified on Fedora on Nov 9? | [Nov 9 worklog](worklog/2026-11-09.md) | [VM v1.156.0 operator evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md), [monitoring guide](../monitoring/README.md); not an ASUS deployment |

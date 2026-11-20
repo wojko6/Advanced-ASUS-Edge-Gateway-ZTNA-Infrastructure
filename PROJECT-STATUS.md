@@ -1,5 +1,21 @@
 # Project status
 
+> **Current operator-reported ASUS router production checkpoint — 2026-11-20:** a
+> separately performed, attended Entware ARMv7 syslog-ng upgrade
+> **4.12.0-3 → 4.13.0-1** passed new package/binary version, two running
+> service processes, unchanged custom configuration hash, and one router log
+> observed in Fedora Loki via Grafana Explore. Original IPK, on/off-router
+> installation and TLS backups and a stopped-state reliable queue snapshot
+> were preserved. **Downgrade/restore and queued-message replay, control
+> socket statistics, reboot/power-loss persistence, extended soak, and
+> full positive/negative mTLS regression remain unverified.** This is the
+> latest dated ASUS change; Nov 17 Tailscale and Nov 2 DNS Guard results
+> below are historical and still valid within their scopes. No unrelated
+> Issue #235, HCC/agent, DNS, privileged trust or router DR HOLD is lifted.
+> [Worklog](docs/worklog/2026-11-20.md) ·
+> [Operational record](docs/operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
+
 > **2026-11-19 Fedora-only ARMv7 syslog-ng build LAB (operator-reported; no ASUS change):**
 > Entware armv7-3.2/glibc 2.27 completed **44/44 host tools** and **7/7 GCC 8.4.0/binutils 2.34/Linux 3.2.40/glibc 2.27 toolchain stages**; independent stage A77 smoke audit PASS. Six of eight direct syslog-ng **4.13.0** target dependencies have valid ARM ELF32/staging/IPK checks: ivykis, libpcre2, libjson-c, libdbi, libuuid and libopenssl **3.5.9-3** (A90 PASS). Transitive zlib and native ncurses/host are also built.
 > **As of 2026-11-19, libcurl and GLib2 remained; no syslog-ng 4.13.0 IPK had yet been built or tested on ARM hardware.** At this dated checkpoint, the separately reported Nov 17 ASUS Tailscale deployment remained the latest router change; later events are documented in their own dated entries. `ROUTER_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD` for this LAB stage.
