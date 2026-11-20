@@ -1,6 +1,30 @@
 # Changelog
 
+- **2026-11-05 workstation GUI documentation follow-up (merged [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369) 2026-11-05):** operator-reported local supervised Qwen interface through v0.12.29, fixed KWin match-category privacy boundaries, natural-language clarifications, read-only DNS and bounded HTTPS probes, resource/monitoring summaries, and 338/338 creator-reported offline PASS. Intermittent Loki `/ready` 503 was categorized `INGESTER_NOT_READY` without root-cause resolution; Grafana manifest-watcher warnings are not proof of broken dashboard search. **Docs-only, no GUI source in repo, no router changes, `DEPLOYMENT_GATE=HOLD`.** [Dated worklog](docs/worklog/2026-11-05.md).
+
 ## Unreleased
+
+- **2026-11-20 syslog-ng 4.13.0 ARMv7 reference-router deployment (operator-reported):** Fedora 45 build and package checks PASS; ASUS Entware upgrade **4.12.0-3 → 4.13.0-1**, preserved custom config, matching package/runtime version, two service processes and one ASUS → Fedora/Loki/Grafana message PASS. Original IPK, on/off-router configuration and TLS backups plus stopped-state queue snapshot retained. **Rollback, queue replay, reboot and extended soak not tested**; unrelated HOLD gates remain. The repo change is documentation-only, not a second deployment. [Worklog](docs/worklog/2026-11-20.md) · [operations](docs/operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
+
+- **2026-11-19 syslog-ng 4.13.0 ARMv7 off-router build checkpoint (operator-reported; documentation only):** Completed and audited seven-stage GCC 8.4.0/glibc 2.27 cross-toolchain with **44/44 host stamps**, then built **6/8** direct ARM libraries (ivykis, libpcre2, libjson-c, libdbi, libuuid, libopenssl 3.5.9-3) with ELF32/staging/IPK checks. Target zlib and native ncurses/host are also ready. A82 and A85 false-negative file/stamp checks were resolved without rebuilding. **libcurl/GLib2 and syslog-ng IPK remain pending; no ASUS production change or deployment approval.** [Worklog](docs/worklog/2026-11-19.md).
+
+- **2026-11-17 controlled ASUS Tailscale ARMv7 deployment (operator-verified):**
+  manually built and staged upstream `v1.104.7` (Go 1.27.4), backed up
+  1.104.4 binary/state material, restarted the existing service, checked
+  CLI and running daemon version/hashes, Local API `Running` and preserved
+  IPv4 identity. Mobile cellular exit-node public-IPv4 smoke PASS; ASUS WAN
+  IPv6 disabled/no default IPv6 route. Entware package metadata remains
+  `1.96.1-1` (manual binary/version drift). DNS pipeline, reboot
+  persistence, automatic-rollback exercise and long soak **not tested**.
+  This documentation entry records an operator-performed change, not
+  source-code deployment from this PR.
+  [Worklog](docs/worklog/2026-11-17.md) ·
+  [maintenance note](docs/tailscale-maintenance.md).
+
+
+- **2026-11-09 Fedora/VM manual checkpoint (operator-reported):** documented Fedora 44 service and suspend/resume validation, plus VictoriaMetrics **v1.155.0 → v1.156.0** after artifact SHA256 verification and same-host backup/snapshot. Seven scrape targets `up=1` were checked; `probe_success`, off-host restore and full alert delivery remain unverified. Fedora 45, unattended updates and `libheif` mismatch remain HOLD. Docs-only, no router change. [Worklog](docs/worklog/2026-11-09.md) · [VM evidence](evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md).
+
+- **2026-11-04 docs-only publication:** merged public OpenCore/Sonoma and Fedora 45 / NVIDIA 620 worklog #367 (after static check #366); retains USB-only change boundary, TSC/ACPI uncertainty, `B9=NOT_RUN`, and Fedora/macOS deployment HOLD. Updated publication-state navigation, not ASUS or workstation runtime.
 
 - **2026-11-03 workstation-only documentation (operator-reported):** bounded Fedora Qwen supervised desktop GUI v0.1–v0.10.1, no-extra-consent allowlisted reads and selected app opens, consent for file mutations, and monitoring health/manifest-watcher analysis. **GUI code is not in this repo and has no independent CI/security attestation.** No ASUS router or HCC change; separate C.63 agent authority remains NONE and deployment **HOLD**. [Worklog](docs/worklog/2026-11-03.md) · [Boundary](docs/design/local-qwen-supervised-gui-2026-11-03.md).
 

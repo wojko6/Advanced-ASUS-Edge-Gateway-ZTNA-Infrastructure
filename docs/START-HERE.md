@@ -1,7 +1,7 @@
 # Start here — a guided tour of ASUS Edge Gateway
 
 **Status:** CURRENT / NAVIGATION ONLY  
-**Reviewed:** 2026-11-03 (documentation/PR status only; no new live router/service validation)  
+**Reviewed:** 2026-11-15 (source/document navigation only; no new live router/service validation)  
 **Language:** English reader entry point · [Wersja polska](pl/START-HERE.md)
 
 Welcome. You do **not** need to read the entire repository or run any scripts to understand this project. This page is a **reading map**, not an installation manual or permission to deploy changes.
@@ -13,6 +13,10 @@ This is a reproducible, security-focused Home/SMB network lab built around an **
 **Scope matters:** the reference ASUS is still the production gateway. This is an *enterprise-style lab*, **not** an enterprise high-availability appliance. A proposed future Flint 4/ASUS split or OPNsense replacement is **design/research**, not a completed migration. The authoritative current deployment and restrictions are in [PROJECT-STATUS.md](../PROJECT-STATUS.md).
 
 **Current navigation:** [Documentation map and source-of-truth entry points](DOCUMENTATION-MAP.md). Historical worklog entries retain their original as-of status.
+
+**Current source status (2026-11-15; not a live test):** physical Fedora 45 / KDE Plasma 6.8.2 was reported on [Nov 10](https://github.com/wojko6/fedora-workstation-setup/blob/main/docs/WORKLOG-2026-11-10.md), after the historical Fedora 44 monitoring-host snapshot below. [Nov 6 Qwen/Loki worklog](worklog/2026-11-06.md) and [Nov 13 security audit register](audits/2026-11-13-codex-engineering-followup-register.md) are now published, without new ASUS deployment or removal of security/recovery HOLD gates. [Bounded review](audits/2026-11-15-documentation-consistency.md).
+
+**Latest bounded Fedora observability checkpoint (2026-11-09):** [worklog](worklog/2026-11-09.md) and [VictoriaMetrics v1.156.0 evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md), not an ASUS router change or off-host DR acceptance.
 
 ## First visit: 15–20-minute route
 
@@ -43,6 +47,10 @@ The times below are **reading estimates**, not benchmarks. Skim the linked secti
 ### Optional Fedora monitoring UI lab
 
 The [Homelab Control Center V0.1–V0.3 lab](../experiments/fedora/homelab-control-center-v0.1/README.md) is **not** the ASUS router WebUI or a permanently running service. The merged V0.3 experiment has two local-source-backed read-only telemetry panels; synthetic service, incident and recovery widgets remain hidden until DEMO opt-in. The [V0.3 HTTPS test record](../experiments/fedora/homelab-control-center-v0.1/V0.3-DNS-GUARD-PREFLIGHT.md) describes what the manual checks prove—and do not prove. Permanent deployment remains HOLD.
+
+### Separate supervised Qwen GUI on Fedora (Nov 5 checkpoint)
+
+The [November 5 supervised GUI worklog](worklog/2026-11-05.md), published through **merged [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369)**, records an **operator-reported local v0.12.29** with bounded question routing, limited DNS/HTTPS and service checks, and a separate safety boundary. The GUI's Python source is **not** in this repository, and its creator-reported 338/338 offline tests are not independent CI or security certification. It is **not** the C.63/C.64 non-executing research agent and is **not** an ASUS router or permanent HCC deployment. [Read the GUI scope note](design/local-qwen-supervised-gui-2026-11-03.md); `DEPLOYMENT_GATE=HOLD`.
 
 **PR/source status reviewed 2026-11-03:** HCC V0.4 [#318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318), offline event model [#320](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320), seven-series correlation [#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/322) and fixed V0.5 archive [#323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) are **merged source**. The separately scoped one-series preflight [#321](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/321) remains **OPEN / DRAFT**. These source states do **not** certify an HCC persistent service, ASUS configuration changes or client DNS failover; deployment remains **HOLD**. For later HCC lab branches and current navigation see the [documentation map](DOCUMENTATION-MAP.md).
 

@@ -2,6 +2,12 @@
 
 ## Test boundaries
 
+### Separate supervised Qwen GUI evidence — 2026-11-05
+
+The [operator-reported Fedora GUI v0.12.29 worklog](worklog/2026-11-05.md) describes **338/338 creator-run offline tests**, limited simulated local HTTP/UI checks and separate real-Fedora browser/terminal observations. These are distinct evidence classes: a simulated PASS does not prove real DNS/Internet/service availability; a user screenshot demonstrates the displayed UI path but not a source-code security audit. The GUI Python implementation is **not** versioned in this repository. Do not present its test count as this repository's CI, an autonomous-agent acceptance test, or a production ASUS maintenance result. [GUI authority boundary](design/local-qwen-supervised-gui-2026-11-03.md) · `DEPLOYMENT_GATE=HOLD`.
+
+The bounded service checks differentiate command completion, systemd `active`, `/ready` HTTP readiness and end-to-end functionality. Loki 503 `INGESTER_NOT_READY` and its later 200 samples remain **intermittent observation / root cause unknown**; Grafana manifest-watcher warnings are not proof of failed ordinary dashboard search.
+
 **Off-router package-maintenance evidence (2026-10-18):** the [Fedora update runbook](operations/fedora-homelab-automatic-updates.md) keeps check-only timer deployment, a real operator-approved Grafana upgrade, synthetic cross-UID lock laboratories and unverified end-to-end service gates separate. A 12/12 descendant laboratory test is not production backup cooperation or authorization for an unattended installer. See [dated evidence](../evidence/2026-10-18/fedora-update-operator-validation.md).
 
 This repository uses separate validation tracks. A PASS in one track must not be promoted into a claim about another layer.

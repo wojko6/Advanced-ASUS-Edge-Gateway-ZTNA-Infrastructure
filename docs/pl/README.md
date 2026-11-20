@@ -7,11 +7,19 @@ Ten katalog ułatwia znalezienie polskich instrukcji administracyjnych. Nie jest
 
 **Mapa wszystkich dokumentów:** [DOCUMENTATION-MAP.md](../DOCUMENTATION-MAP.md) — źródła prawdy, historia, laboratoria i aktualny na 03.11.2026 stan wybranych PR. Nie jest to osobny dokument produkcyjny.
 
+## Aktualizacja monitoringu Fedora — 9 listopada 2026
+
+Operator potwierdził ręczną aktualizację Fedory 44 bez zmiany NVIDIA 610.57.04 oraz osobne wdrożenie VictoriaMetrics **v1.156.0**. Siedem celów zgłosiło `up=1`, co oznacza powodzenie pobierania metryk, **nie** automatycznie powodzenie wszystkich sond Blackbox (`probe_success`). Zachowano kopię na tym samym komputerze, bez testu odtwarzania poza nim; router ASUS pozostał bez zmian, automatyczne instalowanie pozostaje **HOLD**. [Dziennik (EN)](../worklog/2026-11-09.md) · [dowody (EN)](../../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md).
+
 ## Pierwsza wizyta — od czego zacząć?
 
 **Nowy czytelnik?** Otwórz **[Zacznij tutaj — przewodnik na 15–20 minut](START-HERE.md)** ([English](../START-HERE.md)). To bezpieczna ścieżka poznania projektu: od celu i diagramu architektury po aktualny stan, ograniczenia i dobór dalszych materiałów. **Nie wymaga instalacji ani poleceń na routerze.**
 
 Jeżeli szukasz konkretnej procedury operatora, przejdź do poniższych indeksów; status produkcyjny nadal wyznaczają [PROJECT-STATUS.md](../../PROJECT-STATUS.md) i datowane dowody.
+
+## Osobna sesja AI na Fedorze — 5 listopada 2026
+
+[Zanonimizowany dziennik prac nad nadzorowanym GUI Qwen v0.12.29 (EN)](../worklog/2026-11-05.md) oraz [granice jego uprawnień (EN)](../design/local-qwen-supervised-gui-2026-11-03.md) stanowią dokumentację **laboratoryjnej stacji Fedora**, nie zmian na ASUS-ie. Dziennik został opublikowany przez [scalony PR #369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369), i znajduje się na `main` od 5 listopada 2026; zakres dowodów pozostaje ograniczony. Operator potwierdził wybrane scenariusze GUI; **338/338 testów offline** to wynik zgłoszony przez autora, nie niezależna certyfikacja. Nie opublikowano źródeł Python GUI, nie rozszerzono uprawnień agenta laboratoryjnego C.63/C.64, `DEPLOYMENT_GATE=HOLD`.
 
 ## Dostępne instrukcje administracyjne
 

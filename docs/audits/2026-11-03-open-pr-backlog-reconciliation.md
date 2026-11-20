@@ -79,7 +79,7 @@ These are actual GitHub base branches, **not** suggested invented dependencies:
 
 ## Safety and review checklist
 
-- At the initial triage checkpoint, no PR merge/closure, branch deletion, retargeting, rewrite/force-push, live service change or production rollout had been performed. The later authorized documentation-only merges of #364, #361 and #362 are recorded in the post-triage update above.
+- At the initial triage checkpoint, no PR merges/closures, branch deletions, rewrite/force-push, service changes or production rollout were performed. The later **separately authorized** Nov 3 documentation-only merges of #364/#361/#362 are recorded in the post-triage update above.
 - Before merge: verify **exact current head SHA**, target base, integration diff, branch-specific check runs, privacy review and owner approval. A passing 2026-11-03 CI result expires as evidence for a changed commit.
 - For HCC and autonomous agent, **`DEPLOYMENT_GATE=HOLD`** remains. The separate workstation Qwen GUI has its own limited user-session allowlist and is not the C.63/C.64 agent.
 - `dirty` requires intentional conflict resolution; `behind` is a signal to review rebase/merge-base freshness, not a blanket authorization to update every branch.
