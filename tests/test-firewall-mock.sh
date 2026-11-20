@@ -39,32 +39,82 @@ EDGE_IP6TABLES="$TEST_DIR/mocks/ip6tables" \
 EDGE_LOGGER="$TEST_DIR/mocks/logger" \
 sh "$REPO_DIR/router/scripts/firewall-start"
 
-assert_rule() {
-    grep -F -- "$1" "$MOCK_IPTABLES_LOG" >/dev/null || {
-        echo "FAIL: missing rule: $1" >&2
+# Exact means the complete mock argv line; prefix checks are intentional
+# and only verify the stated portion of an otherwise longer rule.
+assert_rule_exact() {
+    grep -Fxq -- "$1" "$MOCK_IPTABLES_LOG" || {
+        echo "FAIL: missing exact rule: $1" >&2
         exit 1
     }
 }
 
-assert_rule "-A EDGE_TS_INPUT -s 100.64.0.10/32 -d 192.168.50.1 -p tcp --dport 443"
-assert_rule "-A EDGE_TS_INPUT -s 100.64.0.10/32 -d 198.51.100.254 -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT"
-assert_rule "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.10/32 -p tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:443"
-assert_rule "-t filter -D INPUT -i tailscale+ -j ACCEPT"
-assert_rule "-t filter -D FORWARD -i tailscale+ -j ACCEPT"
-assert_rule "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 53 -j DNAT --to-destination 192.168.50.1:53"
-assert_rule "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:8443"
-assert_rule "-A EDGE_TS_FORWARD -d 192.168.50.10 -p tcp --dport 443"
-assert_rule "-A EDGE_TS_FORWARD -d 192.168.50.10 -p udp --dport 123"
-assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT"
-assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p tcp --dport 631 -m conntrack --ctstate NEW -j ACCEPT"
-assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p tcp --dport 9100 -m conntrack --ctstate NEW -j ACCEPT"
-assert_rule "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p udp --dport 161 -j ACCEPT"
-assert_rule "-A EDGE_TS_FORWARD -o eth0 -j ACCEPT"
-assert_rule "-A EDGE_TS_FORWARD -j DROP"
-assert_rule "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.20/32 -p udp --dport 53 -j DNAT --to-destination 198.51.100.53:53"
-assert_rule "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.20/32 -p tcp --dport 53 -j DNAT --to-destination 198.51.100.53:53"
-assert_rule "-t nat -A EDGE_TS_PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53"
-assert_rule "-t nat -A EDGE_TS_PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53"
+assert_rule_prefix() {
+    while IFS= read -r actual_rule; do
+        case "$actual_rule" in
+            "$1"|"$1 "*) return 0 ;;
+        esac
+    done <"$MOCK_IPTABLES_LOG"
+    echo "FAIL: missing rule prefix: $1" >&2
+    exit 1
+}
+
+# Test both helpers against disposable, intentionally malformed log lines.
+# This does not call iptables and cannot change real firewall state.
+assert_rule_helper_regressions() {
+    expected="-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT"
+    negative_log="$TMP_DIR/assertion-regression.log"
+    printf '%s\n' "$expected" >"$negative_log"
+    (MOCK_IPTABLES_LOG="$negative_log"; assert_rule_exact "$expected") || {
+        echo "FAIL: exact assertion rejected valid synthetic rule" >&2
+        exit 1
+    }
+
+    printf '%s\n' "$expected -m comment --comment extra" >"$negative_log"
+    if (MOCK_IPTABLES_LOG="$negative_log"; assert_rule_exact "$expected") >/dev/null 2>&1; then
+        echo "FAIL: exact assertion accepted extra suffix" >&2
+        exit 1
+    fi
+
+    printf '%s\n' "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -d 198.51.100.140 -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT" >"$negative_log"
+    if (MOCK_IPTABLES_LOG="$negative_log"; assert_rule_exact "$expected") >/dev/null 2>&1; then
+        echo "FAIL: exact assertion accepted missing source field" >&2
+        exit 1
+    fi
+
+    printf '%s\n' "unexpected-prefix $expected" >"$negative_log"
+    if (MOCK_IPTABLES_LOG="$negative_log"; assert_rule_prefix "-A EDGE_TS_FORWARD -i tailscale0") >/dev/null 2>&1; then
+        echo "FAIL: prefix assertion matched middle of line" >&2
+        exit 1
+    fi
+
+    printf '%s\n' "-A EDGE_TS_FORWARD -d 192.168.50.10 -p tcp --dport 4430 -j ACCEPT" >"$negative_log"
+    if (MOCK_IPTABLES_LOG="$negative_log"; assert_rule_prefix "-A EDGE_TS_FORWARD -d 192.168.50.10 -p tcp --dport 443") >/dev/null 2>&1; then
+        echo "FAIL: prefix assertion accepted a different port sharing a prefix" >&2
+        exit 1
+    fi
+    echo "PASS: exact/prefix rule regression fixtures"
+}
+assert_rule_helper_regressions
+
+assert_rule_prefix "-A EDGE_TS_INPUT -s 100.64.0.10/32 -d 192.168.50.1 -p tcp --dport 443"
+assert_rule_exact "-A EDGE_TS_INPUT -s 100.64.0.10/32 -d 198.51.100.254 -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT"
+assert_rule_exact "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.10/32 -p tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:443"
+assert_rule_exact "-t filter -D INPUT -i tailscale+ -j ACCEPT"
+assert_rule_exact "-t filter -D FORWARD -i tailscale+ -j ACCEPT"
+assert_rule_exact "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 53 -j DNAT --to-destination 192.168.50.1:53"
+assert_rule_exact "-t nat -D PREROUTING -i tailscale+ -p tcp -m tcp --dport 8443 -j DNAT --to-destination 192.168.50.1:8443"
+assert_rule_prefix "-A EDGE_TS_FORWARD -d 192.168.50.10 -p tcp --dport 443"
+assert_rule_prefix "-A EDGE_TS_FORWARD -d 192.168.50.10 -p udp --dport 123"
+assert_rule_exact "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT"
+assert_rule_exact "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p tcp --dport 631 -m conntrack --ctstate NEW -j ACCEPT"
+assert_rule_exact "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p tcp --dport 9100 -m conntrack --ctstate NEW -j ACCEPT"
+assert_rule_exact "-A EDGE_TS_FORWARD -i tailscale0 -o br0 -s 192.0.2.95/32 -d 198.51.100.140 -p udp --dport 161 -j ACCEPT"
+assert_rule_exact "-A EDGE_TS_FORWARD -o eth0 -j ACCEPT"
+assert_rule_exact "-A EDGE_TS_FORWARD -j DROP"
+assert_rule_exact "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.20/32 -p udp --dport 53 -j DNAT --to-destination 198.51.100.53:53"
+assert_rule_exact "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.20/32 -p tcp --dport 53 -j DNAT --to-destination 198.51.100.53:53"
+assert_rule_exact "-t nat -A EDGE_TS_PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53"
+assert_rule_exact "-t nat -A EDGE_TS_PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53"
 
 pihole_udp_line="$(grep -nF -- "-t nat -A EDGE_TS_PREROUTING -s 100.64.0.20/32 -p udp --dport 53 -j DNAT" "$MOCK_IPTABLES_LOG" | head -n 1 | cut -d: -f1)"
 fallback_udp_line="$(grep -nF -- "-t nat -A EDGE_TS_PREROUTING -p udp --dport 53 -j REDIRECT" "$MOCK_IPTABLES_LOG" | head -n 1 | cut -d: -f1)"
@@ -74,19 +124,19 @@ if [ -z "$pihole_udp_line" ] || [ -z "$fallback_udp_line" ] ||
     echo "FAIL: source-scoped Pi-hole DNAT is not before generic DNS REDIRECT" >&2
     exit 1
 fi
-assert_rule "-t nat -A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p udp --dport 53 -j RETURN"
-assert_rule "-t nat -A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p tcp --dport 53 -j RETURN"
-assert_rule "-t nat -A EDGE_LAN_DNS_PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53"
-assert_rule "-t nat -A EDGE_LAN_DNS_PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53"
-assert_rule "-t nat -I PREROUTING 1 -i br0 -j EDGE_LAN_DNS_PREROUTING"
-assert_rule "-t filter -A EDGE_LAN_DOT_FORWARD -p tcp --dport 853 -j REJECT --reject-with tcp-reset"
-assert_rule "-t filter -I FORWARD 2 -i br0 -j EDGE_LAN_DOT_FORWARD"
-assert_rule "ip6 -t filter -A EDGE_TS6_INPUT -j DROP"
-assert_rule "ip6 -t filter -A EDGE_TS6_FORWARD -j DROP"
-assert_rule "ip6 -t filter -I INPUT 1 -i tailscale0 -j DROP"
-assert_rule "ip6 -t filter -I FORWARD 1 -i tailscale0 -j DROP"
-assert_rule "ip6 -t filter -D INPUT -i tailscale0 -j DROP"
-assert_rule "ip6 -t filter -D FORWARD -i tailscale0 -j DROP"
+assert_rule_exact "-t nat -A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p udp --dport 53 -j RETURN"
+assert_rule_exact "-t nat -A EDGE_LAN_DNS_PREROUTING -d 192.168.50.1/32 -p tcp --dport 53 -j RETURN"
+assert_rule_exact "-t nat -A EDGE_LAN_DNS_PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53"
+assert_rule_exact "-t nat -A EDGE_LAN_DNS_PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53"
+assert_rule_exact "-t nat -I PREROUTING 1 -i br0 -j EDGE_LAN_DNS_PREROUTING"
+assert_rule_exact "-t filter -A EDGE_LAN_DOT_FORWARD -p tcp --dport 853 -j REJECT --reject-with tcp-reset"
+assert_rule_exact "-t filter -I FORWARD 2 -i br0 -j EDGE_LAN_DOT_FORWARD"
+assert_rule_exact "ip6 -t filter -A EDGE_TS6_INPUT -j DROP"
+assert_rule_exact "ip6 -t filter -A EDGE_TS6_FORWARD -j DROP"
+assert_rule_exact "ip6 -t filter -I INPUT 1 -i tailscale0 -j DROP"
+assert_rule_exact "ip6 -t filter -I FORWARD 1 -i tailscale0 -j DROP"
+assert_rule_exact "ip6 -t filter -D INPUT -i tailscale0 -j DROP"
+assert_rule_exact "ip6 -t filter -D FORWARD -i tailscale0 -j DROP"
 
 if grep -F -- "-d 198.51.100.140" "$MOCK_IPTABLES_LOG" |
     grep -F -- "-j ACCEPT" |
