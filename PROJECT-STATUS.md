@@ -21,6 +21,22 @@
 > **As of 2026-11-19, libcurl and GLib2 remained; no syslog-ng 4.13.0 IPK had yet been built or tested on ARM hardware.** At this dated checkpoint, the separately reported Nov 17 ASUS Tailscale deployment remained the latest router change; later events are documented in their own dated entries. `ROUTER_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD` for this LAB stage.
 > [Sanitized worklog](docs/worklog/2026-11-19.md).
 
+> **Later 2026-11-17 G9K–G9O post-reboot checks (operator-reported):**
+> Following an ordinary ASUS restart, both active Tailscale executables
+> still reported **1.104.7** and retained their SHA-256 hashes; Local
+> API returned `Running`, tailnet IPv4 identity was unchanged and the
+> Tailscale, Pi-hole FTL, Unbound and dnsmasq processes were present
+> (`G9K=PASS_BOUNDED`). Subsequently a cellular client using the ASUS
+> exit node observed the router WAN public IPv4. DNS Guard v3.2
+> reported `LOCAL_DNS_READY`; a unique phone-requested hostname
+> appeared in Pi-hole's Query Log, and an advertising hostname was
+> observed with a blocking decision (`G9L–G9O=PASS_BOUNDED`).
+> This does **not** prove all-app or encrypted-DNS DoH/DoT coverage,
+> identify the precise blocking rule, or validate failover, rollback,
+> full restoration or an extended soak.
+> **These are later dated supplements, not retroactive G9H–G9J tests.**
+> [Dated evidence and scope](docs/worklog/2026-11-17.md).
+>
 > **Current operator-reported ASUS runtime checkpoint — 2026-11-17:**
 > a separately authorized, attended ARMv7 Tailscale manual binary update
 > **1.104.4 → 1.104.7** was deployed on the reference TUF-AX5400 (Go
@@ -30,9 +46,10 @@
 > and a mobile/cellular public-IPv4 comparison confirmed the home egress
 > when the ASUS exit node was selected. ASUS WAN IPv6 remained
 > `disabled` with no default IPv6 route. The pre-change binaries/state
-> were backed up locally; **rollback execution, reboot persistence,
-> Pi-hole/Unbound/DNS Guard path validation and long-term soak were
-> not tested**. Entware package metadata continues to show its older
+> were backed up locally; **at the original G9H–G9J checkpoint,
+> rollback execution, reboot persistence and DNS path validation were
+> not yet tested**. The subsequent G9K–G9O bounded outcomes are noted
+> immediately above. Rollback exercise and long-term soak remain untested. Entware package metadata continues to show its older
 > 1.96.1-1 release. This bounded router runtime change **supersedes the
 > dated Nov 2 statement below only as the latest ASUS production-change
 > date**; Nov 2 remains the latest DNS Guard repair, and no HCC/agent,
