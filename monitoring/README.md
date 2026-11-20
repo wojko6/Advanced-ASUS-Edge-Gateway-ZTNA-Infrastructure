@@ -85,6 +85,28 @@ Never commit the Caddy CA private key or other files from the live Caddy storage
 directory.
 
 
+## Fedora VictoriaMetrics current operator checkpoint — 2026-11-09
+
+The operator reported a separately approved, manual upgrade from **v1.155.0 to v1.156.0** on the Fedora 44 monitoring host, using the official Linux AMD64 release artifact (archive SHA256 `54409ea381db0316f0bf6f242c718bc498085eb1eb37520b73526e6d86891601`, verified locally). The previous executable checksum and backup matched. An API snapshot and a separately copied **32M** stopped-service data directory were retained, all **on the same host**, without an off-host restore rehearsal. The production unit kept `-retentionPeriod=90d`, `127.0.0.1:8428` and the existing Prometheus scrape config. **No router, Grafana alert routing, Alloy or Loki configuration changed.**
+
+The deployed systemd unit at `/etc/systemd/system/victoriametrics.service` includes additional hardening and a 30-second stop timeout (`KillSignal=15`/SIGTERM). The repository's `systemd/victoriametrics.service` is a *reference*, not a byte-identical live copy. Do not overwrite the live unit from this documentation checkpoint.
+
+Post-upgrade `vm_app_version` reported **v1.156.0**, `/health` passed, and `/api/v1/targets` had **7/7 `health=up`**; an instant `up` query returned seven series of value `1`. The database startup log reported `rowsCount=24025030`. **Scrape success is not the same as Blackbox probe success:** the separate `probe_success` metric for ICMP, DNS and HTTPS was **not** checked in that evidence. Backup recovery, full Grafana alert delivery, reboot persistence and an extended soak remain untested.
+
+Read-only operational smoke checks (run individually in a terminal; avoid persistent shell option changes):
+
+```sh
+systemctl is-active victoriametrics
+curl -fsS http://127.0.0.1:8428/health
+curl -fsS http://127.0.0.1:8428/metrics | grep '^vm_app_version'
+curl -fsSG http://127.0.0.1:8428/api/v1/query --data-urlencode 'query=up'
+curl -fsSG http://127.0.0.1:8428/api/v1/query --data-urlencode 'query=probe_success'
+```
+
+Do not automate binary replacement or remove the original rollback copy. A snapshot is not a stand-alone off-host backup, and a downgrade requires checking binary/storage-format compatibility. Use explicit operator approval and an independently tested recovery plan for subsequent changes.
+
+[Full Nov 9 evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md) · [worklog](../docs/worklog/2026-11-09.md) · [Fedora update policy](../docs/operations/fedora-homelab-automatic-updates.md).
+
 ## Fedora VictoriaMetrics manual upgrade (2026-10-21)
 
 **Operator-reported production acceptance:** VictoriaMetrics was upgraded from the previously recorded `1.153.0` baseline to **`1.154.1`** on Fedora 44. A backup and isolated `vmrestore` trial returned `RESTORE_TEST=PASS` (17,100,289 bytes restored); the installer then returned `DEPLOYMENT=PASS`, `SERVICE=ACTIVE`, `HTTP_HEALTH=PASS`, `QUERY_API=PASS`, `DATA_CONFIG_CHANGED=NO` and `OTHER_SERVICES_RESTARTED=NO`. A rollback/data directory was retained on Fedora. No router runtime or other monitoring service was intentionally modified by this VictoriaMetrics installer. This does not prove a cold-boot return or long-term scrape freshness. See [dated evidence](../evidence/2026-10-21/fedora-victoriametrics-1.154.1-live-upgrade.md).
