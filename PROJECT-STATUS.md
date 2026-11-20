@@ -16,6 +16,21 @@
 > [Operational record](docs/operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
 
 
+> **Separate 2026-11-20 GitHub-only engineering (no router change):**
+> [Issue #286](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/286)
+> was closed after [test-only PR #382](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/382)
+> merged (commit `772ce2f`, 4/4 CI PASS). Firewall assertion and isolated
+> installer test improvements did **not** change production code.
+> [Issue #285](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/285)
+> remains OPEN, with [test/documentation-only Draft PR #383](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/383)
+> unmerged (4/4 CI PASS). Its synthetic NAT tests reproduced masked `-X`
+> cleanup errors; a diagnostic-only copied-uninstaller postflight succeeded
+> in the isolated lab. An interface-unqualified historical project-owned jump
+> is **not verified**; no broadened deletion, production uninstaller patch,
+> actual firewall change, or deployment is authorized. `DEPLOYMENT_GATE=HOLD`
+> for #285 and unrelated security work. [Dated worklog](docs/worklog/2026-11-20.md).
+
+
 > **2026-11-19 Fedora-only ARMv7 syslog-ng build LAB (operator-reported; no ASUS change):**
 > Entware armv7-3.2/glibc 2.27 completed **44/44 host tools** and **7/7 GCC 8.4.0/binutils 2.34/Linux 3.2.40/glibc 2.27 toolchain stages**; independent stage A77 smoke audit PASS. Six of eight direct syslog-ng **4.13.0** target dependencies have valid ARM ELF32/staging/IPK checks: ivykis, libpcre2, libjson-c, libdbi, libuuid and libopenssl **3.5.9-3** (A90 PASS). Transitive zlib and native ncurses/host are also built.
 > **As of 2026-11-19, libcurl and GLib2 remained; no syslog-ng 4.13.0 IPK had yet been built or tested on ARM hardware.** At this dated checkpoint, the separately reported Nov 17 ASUS Tailscale deployment remained the latest router change; later events are documented in their own dated entries. `ROUTER_MODIFIED=NO`, `DEPLOYMENT_GATE=HOLD` for this LAB stage.
