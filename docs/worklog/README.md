@@ -12,6 +12,8 @@ The worklog complements PROJECT-STATUS.md, CHANGELOG.md, evidence/, and the deep
 
 ## Timeline
 
+- [2026-11-26](2026-11-26.md) — read-only ASUS runtime/DNS/RouterCloud checkpoint; separate Fedora logrotate conflict repaired. No router changes or new end-to-end forwarding/telemetry proof; existing HOLD gates unchanged.
+
 - [2026-11-20](2026-11-20.md) — ARMv7 syslog-ng **4.13.0-1** build and attended ASUS **4.12.0-3 → 4.13.0-1** upgrade; old/new IPKs, configuration/TLS/queue backup, current binary/process and one Loki-delivered router test message passed. Downgrade, queue replay, reboot and soak untested. **Separate GitHub-only work:** #286 firewall/installer test hardening ([PR #382 merged](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/382); issue closed; 4/4 CI) and #285 disposable legacy NAT mock + diagnostic postflight ([Draft PR #383](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/383); 4/4 CI; issue open, deployment HOLD). Neither GitHub-only workstream changed the production router. [Recovery record](../operations/syslog-ng-4.13.0-production-upgrade-2026-11-20.md).
 
 - [2026-11-19](2026-11-19.md) — Fedora-only syslog-ng 4.13.0 ARMv7 toolchain completed; 6/8 direct libraries and transitive zlib built; no syslog-ng IPK or ASUS deployment.
