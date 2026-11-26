@@ -2,6 +2,8 @@
 
 **Status:** CURRENT navigation only · **Comprehensive source review:** 2026-11-15 (Fedora 45, Nov 6 GUI worklog and Nov 13 audit). **Targeted navigation refresh:** 2026-11-20 (ARMv7 syslog-ng 4.13.0 production documentation merged through #377–#379; this was not a new comprehensive audit). Older November 9 monitoring data and historical PR snapshots retain their original dates. **Not** a live deployment/security audit. This is a **finding aid, not a new authoritative source**. The [documentation model](documentation-model.md) defines evidence precedence; [PROJECT-STATUS](../PROJECT-STATUS.md) describes the accepted present state.
 
+> **2026-11-26 source-state refresh (no new runtime validation):** 18 open PRs, all drafts, in the reviewed repository snapshot. [#376](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/376) is merged: bounded post-reboot Tailscale/Android DNS evidence G9K–G9O; [#383](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/383) remains OPEN/DRAFT for isolated legacy NAT EXPECTED_RED, not a router fix. HCC #321/#338/#342, agent #343–#345/#353–#359, security #245/#270, RouterCloud #226 and Unbound #202 are also still OPEN/DRAFT. Historical PR tables below remain snapshots of their original dates. The latest documented operator-reported router production change in PROJECT-STATUS remains the Nov 20 syslog-ng 4.13.0-1 upgrade, with rollback/replay/reboot/soak limitations; no new production acceptance or change to HOLD.
+
 ## Choose the right document
 
 | Question | Start with | Then verify against |
