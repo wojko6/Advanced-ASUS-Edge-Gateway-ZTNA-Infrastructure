@@ -2,7 +2,7 @@
 
 [![Validation suite](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml/badge.svg?branch=main)](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions/workflows/shellcheck.yml)
 
-> **Documentation navigation:** [Canonical entry-point map and current PR status snapshot](docs/DOCUMENTATION-MAP.md) (source/document links reviewed 2026-11-15; not a live validation). Historical sections below preserve their originally reported test scopes.
+> **Documentation navigation:** [Canonical entry-point map and current PR status snapshot](docs/DOCUMENTATION-MAP.md) (current navigation refreshed 2026-11-26; no new live validation). Historical sections below preserve their originally reported test scopes.
 >
 > **First time here?** Begin with the **[15–20-minute guided tour](docs/START-HERE.md)** or **[Zacznij tutaj — po polsku](docs/pl/START-HERE.md)**. These reading routes explain what to open first, what to skip, and how to distinguish tested production state from plans or lab-only work. **No installation required.**
 
