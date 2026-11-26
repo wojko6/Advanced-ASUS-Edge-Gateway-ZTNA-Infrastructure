@@ -23,6 +23,8 @@ jobs:
         run: timeout -k 5s 90s sh tests/test-dns-supervisor.sh
       - name: Verify packaged ARMv7 DNS supervisor
         run: sh tests/test-dns-supervisor-artifact.sh
+      - name: Validate Unbound ARMv7 rebuild recipe and historical manifest
+        run: sh tests/test-unbound-rebuild-contract.sh
       - name: Run Personal Cloud static policy test
         run: sh tests/test-personal-cloud-static.sh
       - name: Run RouterCloud login UI static test
