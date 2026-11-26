@@ -1,7 +1,7 @@
 # Zacznij tutaj — przewodnik po repozytorium ASUS Edge Gateway
 
 **Status:** CURRENT / TYLKO NAWIGACJA  
-**Przegląd:** 2026-10-19 (wyłącznie dokumentacja; bez nowych testów usług lub routera)  
+**Przegląd:** 2026-11-03 (nawigacja i statusy PR, bez nowych testów routera ani usług)  
 **Język:** polski przewodnik dla czytelnika · [English version](../START-HERE.md)
 
 Nie musisz czytać całego repozytorium ani uruchamiać żadnych poleceń, żeby zrozumieć projekt. Ta strona jest **mapą lektury**, a nie instrukcją instalacji czy zgodą na wdrożenie.
@@ -11,6 +11,8 @@ Nie musisz czytać całego repozytorium ani uruchamiać żadnych poleceń, żeby
 To rozbudowane laboratorium sieciowe Home/SMB oparte na **ASUS TUF-AX5400** z oprogramowaniem GNUton Asuswrt-Merlin. Łączy kontrolę ruchu i dostępów, zdalny dostęp Tailscale, DNS z Pi-hole i Unbound, RouterCloud, procedury odtwarzania oraz monitoring na oddzielnym komputerze Fedora. Ważne są nie tylko funkcje, lecz również udokumentowane decyzje i wyniki testów.
 
 **Ważna granica:** ASUS pozostaje działającą bramą sieciową. To *laboratorium o podejściu zbliżonym do rozwiązań firmowych*, ale **nie** infrastruktura o wysokiej dostępności (HA). Wariant Flint 4 + ASUS oraz przyszły OPNsense to **projekty i badania**, a nie wykonana migracja. Aktualny stan opisuje [PROJECT-STATUS.md](../../PROJECT-STATUS.md).
+
+**Nawigacja bieżąca:** [mapa dokumentacji i źródła prawdy](../DOCUMENTATION-MAP.md). Starsze dzienniki zachowują statusy właściwe dla daty wykonania.
 
 ## Pierwsza wizyta: trasa na 15–20 minut
 
@@ -37,6 +39,18 @@ Podane czasy to orientacyjne **czasy czytania**, nie wyniki testów. Przeglądaj
 | Awarie / odzyskiwanie | [Indeks Disaster Recovery](../disaster-recovery-index.md) → [techniczna procedura DR](../router-disaster-recovery.md) | Odtwarzanie działającego routera: pełna odbudowa pustego urządzenia nie jest jeszcze potwierdzona |
 | Testy / odtwarzalność | [Strategia testów](../testing.md) → [wymagania i kryteria akceptacji](../requirements.md) → [zbieranie dowodów](../evidence-collection.md) | Archiwum dowodów, dopóki nie weryfikujesz konkretnej tezy |
 | Historia / plany | [Roadmap](../roadmap.md) → [dziennik prac](../worklog/README.md) | Traktowanie historycznego pomysłu lub wyniku PASS w laboratorium jako stanu produkcyjnego |
+
+### Opcjonalne laboratorium panelu monitoringu Fedora
+
+[Homelab Control Center V0.1–V0.3](../../experiments/fedora/homelab-control-center-v0.1/README.md) to **nie** interfejs WebUI ASUS-a ani usługa uruchamiana automatycznie. W scalonej wersji V0.3 tylko dwa panele korzystają z ograniczonej, rzeczywistej telemetrii VictoriaMetrics i DNS Guard. Pozostałe dane DEMO są domyślnie ukryte i wymagają świadomego włączenia. [Testy HTTPS i granice wnioskowania (EN)](../../experiments/fedora/homelab-control-center-v0.1/V0.3-DNS-GUARD-PREFLIGHT.md) nie oznaczają pełnej weryfikacji DNS ani stałego wdrożenia. **DEPLOYMENT_GATE=HOLD.**
+
+### Oddzielny nadzorowany interfejs Qwen na Fedorze (stan z 5 listopada)
+
+[Publiczny dziennik GUI z 5 listopada](../worklog/2026-11-05.md), przygotowany w istniejącym **Draft [#369](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/369)**, opisuje **zgłoszone przez operatora** działanie lokalnej wersji v0.12.29: ograniczone pytania w języku naturalnym, pomiary DNS/HTTPS i gotowości usług oraz karty diagnostyczne. Kod Python GUI **nie znajduje się w tym repozytorium**, a zgłoszone 338/338 testów offline nie stanowią niezależnego audytu bezpieczeństwa. To nie jest agent laboratoryjny C.63/C.64, produkcyjna operacja ASUS-a ani stałe wdrożenie HCC. [Granice uprawnień GUI (EN)](../design/local-qwen-supervised-gui-2026-11-03.md); `DEPLOYMENT_GATE=HOLD`.
+
+**Status publikacji sprawdzony 03.11.2026:** HCC V0.4 [#318](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/318), model zdarzeń [#320](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/320), korelacja siedmiu serii [#322](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/322) i archiwum V0.5 [#323](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/323) zostały **scalone do źródeł**. Osobny PR [#321](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/321) nadal jest **otwartym Draft PR**. Scalenie źródeł **nie** oznacza uruchomienia HCC jako stałej usługi, zmiany ASUS-a ani potwierdzenia failover DNS; wdrożenie pozostaje **HOLD**. Kolejne laboratoria i stan odnośników zestawia [mapa dokumentacji](../DOCUMENTATION-MAP.md).
+
+**Granica publikacji:** [Dziennik z 27 października](../worklog/2026-10-27.md) jest już na `main` po [scaleniu PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325); [dziennik z 28 października](../worklog/2026-10-28.md) opublikowano przez [PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326). Wcześniejszy częściowy [Draft PR #317](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/317) został merytorycznie uwzględniony w pełniejszym #325 i nie należy scalać obu wersji osobno. [Scalone PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324) dotyczy osobnego monitoringu Grafana/Loki. TreeMap zajętości dysków w RouterCloud [#327](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/327) nadal pozostaje pomysłem.
 
 ## Mapa katalogów
 

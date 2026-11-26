@@ -292,6 +292,43 @@ The case demonstrates a full vulnerability-remediation lifecycle: detection,
 risk analysis, upstream coordination, reproducible build engineering, staged
 deployment, rollback readiness and bounded post-change claims.
 
+## 15. Fedora Wi-Fi profile and ASUS management access recovery — RESOLVED
+
+**File:** [Fedora HTTPS/SSH recovery after switching to the authorized 5 GHz Wi-Fi profile (2026-10-21)](case-studies/fedora-asus-lan-management-dhcp-allowlist-2026-10-21.md)
+
+A resolved operational LAN-management incident covering:
+
+- successful Internet/ICMP gateway connectivity despite ASUS HTTPS/SSH timeouts from Fedora's 2.4 GHz Wi-Fi profile;
+- Wi-Fi packet capture showing repeated unanswered SYNs for the management ports;
+- a still-present DHCP reservation for the administrative workstation and **distinct MAC/IP identities across its 2.4 and 5 GHz profiles**;
+- the operator's identification of 5 GHz as the intended management Wi-Fi path;
+- real 5 GHz reconnection restoring the historically reserved admin IP, **HTTPS HTTP 200** and **SSH_ACCESS_OK**, without modifying router settings;
+- a separate, earlier Fedora Tailscale-DNS issue resolved independently of router administration.
+
+**Status: OPERATIONALLY RESOLVED.** The 2.4 GHz timeout and 5 GHz positive test are verified, but they changed both source IP/MAC and the Wi-Fi profile. The **exact router-side enforcement mechanism** (SSID/segment policy versus source-IP allowlist, or both) and post-reboot persistence were not separately tested. No production firewall or DHCP settings were changed.
+
+## 16. DNS Guard fail-open and delayed Grafana alerts during the Unbound incident
+
+**File:** [DNS Guard Fail-open and Delayed Grafana Alert Delivery — 2026-10-24](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md)
+
+A separate production-incident forensics case covering:
+
+- spontaneous WAN/bootstrap selection by DNS Guard at 10:25:02 and local Pi-hole promotion at 11:08:01 during the earlier, unsuccessful Unbound upgrade;
+- client-facing firmware dnsmasq probe **83/121 FAIL** while independent HTTPS and ICMP each remained **121/121 PASS**;
+- Grafana alert metadata, delayed FIRING/RESOLVED delivery and **14** notifier DNS lookup/timeout/retry errors;
+- limits of the historical Fedora resolver and delivery-channel attribution; no claim of proven `tuf_probe_failed` Firing state;
+- an independent pre-existing `dig -v` wrapper anomaly that skips the optional DNS Guard TCP health probe;
+- the difference between router system DNS recovery, LAN/Tailscale client DNS failover and independent alert delivery.
+
+**Status:** historical failure/recovery and notification forensics documented; controlled fault-injection, independent monitoring DNS and the TCP-probe fix **remain open**. This complements rather than duplicates the [Unbound trust-anchor/opkg recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+
+
+## 17. Unbound DNSSEC trust-anchor permission incident and successful R2 recovery (2026-10-24)
+
+**Status: DOCUMENTED / PR [#297](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/297) MERGED; bounded production R2 acceptance PASS:** [Unbound DNSSEC trust-anchor outage, opkg metadata and controlled R2 recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+
+The case preserves an initial failed 1.26.2 upgrade, package-only rollback that did not immediately restore DNS, targeted writable-anchor remediation and an isolated real-ARMv7 opkg directory-reset reproduction. **Later that day**, full-dependency V6–V9 validation supported a separate successful, operator-authorized five-package production R2 upgrade to **Unbound 1.26.2-1**. Direct real-router DNSSEC good AD / bogus SERVFAIL through **UDP and TCP**, dnsmasq and Pi-hole client DNS passed. [Read the bounded R2 production acceptance](operations/unbound-1.26.2-production-deployment-2026-10-24.md). Historical pre-upgrade chroot metadata remain unknown. Subsequent read-only log forensics confirmed **unplanned** DNS Guard system-resolver fail-open/failback; **controlled** failover injection, LAN client DNS continuity, power-loss cold boot, uninterrupted startup DNS and long soak remain untested. A later real ASUS reboot **did** pass bounded package/service/DNSSEC/client-path checks, but found the RFC 5011 `root.key` mode `0666` inside a restricted `0700` parent. Follow-up [#298](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/298) / [#299](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/299) remains **OPEN / production hardening HOLD**. See the [separate monitoring consequence case study](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md).
+
 ## How to read these cases
 
 Where applicable, case studies separate:

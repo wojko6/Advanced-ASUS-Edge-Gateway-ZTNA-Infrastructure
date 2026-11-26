@@ -100,6 +100,14 @@ flowchart TD
 - DoH/HTTPS 443, DoQ/QUIC, VPN-carried DNS, application-specific encrypted
   resolvers and IPv6 resolver paths remain separate assessment items.
 
+## 2026-10-24 production incident: observed router fail-open, not client DNS failover
+
+During the first failed Unbound package-update attempt, archived router logs and Fedora metrics later documented the **actual router-system DNS Guard v3.2** change from local Pi-hole to independent WAN bootstrap DNS at **10:25:02 CEST**, followed by a return to local Pi-hole at **11:08:01**. This was an **unplanned incident**, not a supervised, induced failure test. After a separately successful R2 upgrade to five Unbound `1.26.2-1` packages, direct DNSSEC good AD/bogus SERVFAIL on UDP/TCP and both router dnsmasq and Pi-hole client paths passed, including after one actual router reboot.
+
+The client paths depicted in this diagram were **not automatically moved to WAN DNS**. The monitored direct dnsmasq UDP/53 probe failed **83 of 121** samples in the selected incident window while ICMP and HTTPS checks passed. This proves failure of the *tested DNS probe target*, not continuous outage of every client or uninterrupted filtering. Its dependency on the shared Unbound is the reason this topology is **not DNS HA**. The optional active DNS Guard TCP probe was repeatedly skipped because `bounded_exec dig -v` failed, although a separately executed direct `dig -v` later succeeded; its coverage remains unknown.
+
+Fedora monitoring experienced DNS/timeout notification errors and delayed email alert delivery during the same incident. The present single-provider resolver arrangement must not be promoted as independent alert-delivery DNS. [Full dated evidence and limits](../case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md) · [production Unbound 1.26.2 acceptance](../operations/unbound-1.26.2-production-deployment-2026-10-24.md) · [DNS Guard residuals](../dns-guard-v3.2-recovery-audit.md). Client failover #212 and dual-provider #216 remain unimplemented; no policy/configuration change was made by documenting this event.
+
 ## Client DNS continuity boundary — 2026-10-13 (design-only clarification)
 
 **Current / validated:** DHCP-managed main-LAN clients receive only the

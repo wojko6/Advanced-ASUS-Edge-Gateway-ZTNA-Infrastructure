@@ -1,3 +1,8 @@
+# Standalone Entware example only; NOT current ASUS Unbound Manager production.
+# Current manager-generated Unbound 1.26.2 R2 uses a dedicated writable
+# dnssec-auto trust-anchor directory within the chroot and its own config.
+# Do not copy over /opt/var/lib/unbound/unbound.conf or assume the sample
+# anchor/ownership applies to the manager runtime. See docs/router-disaster-recovery.md.
 server:
     interface: 127.0.0.1
     # dnsmasq owns LAN port 53 and forwards here.
@@ -19,6 +24,8 @@ server:
     aggressive-nsec: yes
     minimal-responses: yes
 
+    # Standalone example path, NOT the active manager-owned ASUS R2 key path.
+    # Verify writable parent and safe RFC 5011 replacement on the real target.
     auto-trust-anchor-file: "/opt/var/lib/unbound/root.key"
     val-clean-additional: yes
 

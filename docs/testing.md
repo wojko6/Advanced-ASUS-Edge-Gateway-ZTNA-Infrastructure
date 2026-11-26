@@ -2,6 +2,12 @@
 
 ## Test boundaries
 
+### Separate supervised Qwen GUI evidence — 2026-11-05
+
+The [operator-reported Fedora GUI v0.12.29 worklog](worklog/2026-11-05.md) describes **338/338 creator-run offline tests**, limited simulated local HTTP/UI checks and separate real-Fedora browser/terminal observations. These are distinct evidence classes: a simulated PASS does not prove real DNS/Internet/service availability; a user screenshot demonstrates the displayed UI path but not a source-code security audit. The GUI Python implementation is **not** versioned in this repository. Do not present its test count as this repository's CI, an autonomous-agent acceptance test, or a production ASUS maintenance result. [GUI authority boundary](design/local-qwen-supervised-gui-2026-11-03.md) · `DEPLOYMENT_GATE=HOLD`.
+
+The bounded service checks differentiate command completion, systemd `active`, `/ready` HTTP readiness and end-to-end functionality. Loki 503 `INGESTER_NOT_READY` and its later 200 samples remain **intermittent observation / root cause unknown**; Grafana manifest-watcher warnings are not proof of failed ordinary dashboard search.
+
 **Off-router package-maintenance evidence (2026-10-18):** the [Fedora update runbook](operations/fedora-homelab-automatic-updates.md) keeps check-only timer deployment, a real operator-approved Grafana upgrade, synthetic cross-UID lock laboratories and unverified end-to-end service gates separate. A 12/12 descendant laboratory test is not production backup cooperation or authorization for an unattended installer. See [dated evidence](../evidence/2026-10-18/fedora-update-operator-validation.md).
 
 This repository uses separate validation tracks. A PASS in one track must not be promoted into a claim about another layer.
@@ -32,6 +38,7 @@ recovery and documentation checks:
 
 ```sh
 python3 tests/test-doc-links.py
+python3 tests/test-doc-language-policy.py
 python3 tests/test-asus-webui-pl-overlay.py
 python3 tests/test-recovery.py
 python3 tests/test-pihole-dns-collector.py
@@ -53,6 +60,7 @@ sh tests/test-healthcheck-lan-dot-contract.sh
 sh tests/test-update-tailscale-static.sh
 sh tests/test-restore-validation.sh
 sh tests/test-cleanroom-restore.sh
+python3 -B tests/test-restore-postmount-rollback.py
 sh tests/test-uninstall.sh
 sh tests/test-fedora-dr-restore.sh
 sh tests/test-wan-event-handler.sh
@@ -61,6 +69,10 @@ sh tests/test-install-preflight-static.sh
 sh tests/test-install-rollback.sh
 sh tests/test-wan-prevalidation-static.sh
 ```
+
+The [Issue #276 rollback regression](../evidence/2026-10-22/issue-276-legacy-post-mount-rollback-review.md) includes a synthetic negative mutation control and positive rollback cases against a disposable alternate root. The verified shared applicable-manifest behavior prevents an archived legacy `post-mount` from entering rollback. This CI/Fedora evidence is **not** a production-router restore and does not validate a firmware-only recovery toolchain without Entware (tracked in [#129](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/129)).
+
+The documentation-language policy check verifies declared EN/PL indexes and cross-references, but cannot detect every language inconsistency in GitHub discussion comments or prove semantic translation equivalence.
 
 The Markdown-link test checks repository-local links and image targets across
 all Markdown documents so renamed or removed files fail CI instead of silently
@@ -133,6 +145,38 @@ See:
 - [RouterCloud UI production validation](../evidence/2026-10-03/routercloud-ui-production-validation.md)
 - [RouterCloud password-recovery production validation](../evidence/2026-10-03/routercloud-password-recovery-production-validation.md)
 
+### Edge Gateway WebUI snapshot contract (Issue #283)
+
+`tests/test-webui-status-contract.sh` runs the real read-only
+`router/scripts/webui-status` collector **only in a disposable output
+directory on an isolated CI/Fedora test host**. It uses synthetic management
+source strings (documentation-only IP ranges) and never contacts the
+production router. Five fixtures cover empty, single, multiline and
+mixed-whitespace source lists, plus explicit overrides. Each generated
+`status.js` is checked with Node.js and evaluated for a single numeric
+`policy.adminSourceCount`, non-disclosure of source identities, and parity
+of effective policy defaults with `router/scripts/firewall-start`.
+
+The generated `generatedEpoch` is a router-side Unix timestamp (seconds),
+alongside the existing human-readable `generated` value. The WebUI now
+compares this timestamp against the browser clock. Snapshots older than
+**180 seconds** are visibly marked **stale**, and those without a valid
+timestamp (including pre-upgrade retained files) or with a substantial
+clock skew are marked **unknown** rather than **fresh**. The Unbound
+runtime status no longer claims to be current when snapshot freshness
+is stale/unknown; historical metrics remain readable but are not evidence
+of live health. The tested browser-clock tolerance is 30 seconds into
+the future. A router/browser time-sync discrepancy can produce
+`unknown` even if collection succeeded; it does not prove an outage.
+
+This does **not** replace the collector's prior safety behavior:
+an incomplete live Unbound snapshot still aborts publication, retaining
+the last generated `status.js`. The age signal prevents this retained
+file from silently masquerading as a fresh measurement once the
+staleness threshold elapses. To maintain the separate Issue #235 trust
+boundary, this change does **not** modify production scripts/services,
+file privileges, installation hooks, DNS, WAN or firmware.
+
 ## Router and remote-client security matrix
 
 | Source | Destination | Test | Expected |
@@ -151,6 +195,53 @@ Use the port from the *deployed* private configuration for the SSH row, rather t
 The expected column describes policy; dated evidence is required before treating a row as observed. The [2026-09-23 worklog](worklog/2026-09-23.md#same-day-router-reboot-and-persistence-check) records successful Fedora HTTPS with verified TLS, both managed admin rule matches, and operator-reported Android login over Tailscale after reboot. A later same-day negative test used a separate tailnet Windows client that was intentionally absent from `EDGE_ADMIN_TS_SOURCES`. Tailscale peer reachability succeeded, TCP/8443 connection establishment failed, a directional capture on `tailscale0` recorded five client-to-router SYN packets, and a temporary counter-only rule scoped to that client and TCP/8443 matched the same five packets / 260 bytes before returning to the unchanged production LOG/DROP tail. The two production admin ACCEPT counters did not increase during that controlled probe. The temporary instrumentation was removed and the production health check then returned zero failures and warnings. See the [sanitized negative-management validation](../evidence/2026-09-23/unauthorized-tailnet-management-denial.md).
 
 The packet-capture filter used for that negative test was intentionally directional, so it proves ingress of the unauthorized client's SYN packets but does not independently establish whether reverse packets were emitted; the failed client TCP connection and firewall rule path provide the end-to-end denial result. A phone failing to load the page after turning off Tailscale is not a substitute for this role-specific negative test. Run WAN scans only against addresses you own or are authorized to test.
+
+### Legacy remote-client smoke-check contract (Issue #289)
+
+The optional `tests/test-live-client.sh ROUTER_MANAGEMENT_IP [DENIED_LAN_IP]`
+is an **active remote-client/Tailscale policy probe**, not a passive healthcheck
+and not a replacement for the role-specific matrix above. Its historical
+expectations are router TCP/8443 **reachable** for an authorized tailnet
+administrator, router TCP/22 **denied**, and optional LAN TCP/445 **denied**.
+These fixed probes must **not** be reinterpreted as an acceptance check for
+the current Fedora **5 GHz LAN administration** profile, whose private
+configuration can use other HTTPS/SSH ports and source-IP allowlisting.
+Only run the script from a separately approved test client during a controlled
+window; do not copy example addresses into a production invocation.
+
+Missing `nc` no longer silently suppresses port checks:
+- `PASS`: the invoked check returned the expected result;
+- `FAIL`: an executed check violated the expectation;
+- `SKIP`: `nc` was missing; the relevant port check did **not** run.
+
+The script's exit status is **0** only when all requested checks were run
+and passed, **1** on a check failure (even with additional skipped checks),
+**2** if the mandatory address argument is missing, and **3** for incomplete
+coverage without observed failures. Omission of the *optional* denied-LAN
+target is not itself a skipped check. A returned `PASS` on TCP denial is
+only a connectivity observation from that client, not a firewall-rule proof.
+The `dig @1.1.1.1` check also requires independent capture evidence to
+establish DNS interception rather than merely a successful DNS answer.
+
+For offline reproducibility, run
+`sh tests/test-live-client-contract.sh`; its fake `dig` and `nc`
+executables make **no network connection**. The main `test-static.sh`
+suite includes this isolated contract test.
+
+The same static suite runs `sh tests/test-healthcheck-warning-contract.sh`,
+which extracts and executes the real DNS Guard resolver-mode, optional `dig`
+readiness, warning counter and final-exit branches using disposable filesystem
+fixtures and mock commands. It distinguishes `LOCAL`, `BOOTSTRAP`, `MIXED`,
+`UNKNOWN`, missing `dig` and nonfunctional `dig`; it is **not** a full live
+Unbound or router DNSSEC validation. The existing DNS Guard mock tests already
+cover the optional skipped TCP `dig` probe, which remains a separate unresolved
+production diagnostic issue.
+
+Separately, the production `scripts/healthcheck.sh` retains its original
+**0 failures / warning-only = exit 0** policy: warnings are not silently
+reclassified as passing checks, and strict/degraded mode is **not implemented**
+by Issue #289's narrow client-test patch. Any strict-mode behavior would
+require a separate interface and compatibility review for existing consumers.
 
 ## DNS activity analytics validation
 

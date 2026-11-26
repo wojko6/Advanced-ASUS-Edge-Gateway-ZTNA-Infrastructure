@@ -85,6 +85,32 @@ Never commit the Caddy CA private key or other files from the live Caddy storage
 directory.
 
 
+## Fedora VictoriaMetrics current operator checkpoint — 2026-11-09
+
+The operator reported a separately approved, manual upgrade from **v1.155.0 to v1.156.0** on the Fedora 44 monitoring host, using the official Linux AMD64 release artifact (archive SHA256 `54409ea381db0316f0bf6f242c718bc498085eb1eb37520b73526e6d86891601`, verified locally). The previous executable checksum and backup matched. An API snapshot and a separately copied **32M** stopped-service data directory were retained, all **on the same host**, without an off-host restore rehearsal. The production unit kept `-retentionPeriod=90d`, `127.0.0.1:8428` and the existing Prometheus scrape config. **No router, Grafana alert routing, Alloy or Loki configuration changed.**
+
+The deployed systemd unit at `/etc/systemd/system/victoriametrics.service` includes additional hardening and a 30-second stop timeout (`KillSignal=15`/SIGTERM). The repository's `systemd/victoriametrics.service` is a *reference*, not a byte-identical live copy. Do not overwrite the live unit from this documentation checkpoint.
+
+Post-upgrade `vm_app_version` reported **v1.156.0**, `/health` passed, and `/api/v1/targets` had **7/7 `health=up`**; an instant `up` query returned seven series of value `1`. The database startup log reported `rowsCount=24025030`. **Scrape success is not the same as Blackbox probe success:** the separate `probe_success` metric for ICMP, DNS and HTTPS was **not** checked in that evidence. Backup recovery, full Grafana alert delivery, reboot persistence and an extended soak remain untested.
+
+Read-only operational smoke checks (run individually in a terminal; avoid persistent shell option changes):
+
+```sh
+systemctl is-active victoriametrics
+curl -fsS http://127.0.0.1:8428/health
+curl -fsS http://127.0.0.1:8428/metrics | grep '^vm_app_version'
+curl -fsSG http://127.0.0.1:8428/api/v1/query --data-urlencode 'query=up'
+curl -fsSG http://127.0.0.1:8428/api/v1/query --data-urlencode 'query=probe_success'
+```
+
+Do not automate binary replacement or remove the original rollback copy. A snapshot is not a stand-alone off-host backup, and a downgrade requires checking binary/storage-format compatibility. Use explicit operator approval and an independently tested recovery plan for subsequent changes.
+
+[Full Nov 9 evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md) · [worklog](../docs/worklog/2026-11-09.md) · [Fedora update policy](../docs/operations/fedora-homelab-automatic-updates.md).
+
+## Fedora VictoriaMetrics manual upgrade (2026-10-21)
+
+**Operator-reported production acceptance:** VictoriaMetrics was upgraded from the previously recorded `1.153.0` baseline to **`1.154.1`** on Fedora 44. A backup and isolated `vmrestore` trial returned `RESTORE_TEST=PASS` (17,100,289 bytes restored); the installer then returned `DEPLOYMENT=PASS`, `SERVICE=ACTIVE`, `HTTP_HEALTH=PASS`, `QUERY_API=PASS`, `DATA_CONFIG_CHANGED=NO` and `OTHER_SERVICES_RESTARTED=NO`. A rollback/data directory was retained on Fedora. No router runtime or other monitoring service was intentionally modified by this VictoriaMetrics installer. This does not prove a cold-boot return or long-term scrape freshness. See [dated evidence](../evidence/2026-10-21/fedora-victoriametrics-1.154.1-live-upgrade.md).
+
 ## Grafana alerting
 
 **2026-10-18 Fedora controlled-update checkpoint (operator-reported):** manually upgraded Grafana from 13.2.3 to **13.2.4** via Pilot v2.3 after verified offline SQLite/archive backup. Postflight returned Grafana HTTP 200, 15 rules / 0 paused, five active services and zero error-priority Grafana journal records in the checked hour; the operator confirmed receipt of Email and Telegram notifications. **This is not proof of delivery from all 15 rules, configuration parity after an unrelated future provisioning reload or automatic rollback.** A check-only package-update timer is active, but unattended installation is **not**. Caddy TLS 1.3/SNI passed 3/3 local probes; HTTP-over-HTTPS remains untested in the new update gate. See [Fedora update operations](../docs/operations/fedora-homelab-automatic-updates.md), [18 October worklog](../docs/worklog/2026-10-18.md) and [operator evidence](../evidence/2026-10-18/fedora-update-operator-validation.md). Existing 2026-10-15 and 2026-10-13 passages below remain dated history; the checked-in Email-only Grafana contact source is **not** a safe live Email+Telegram replacement.
@@ -361,3 +387,12 @@ configuration only. The GitHub credential remains in the locally provisioned
 datasource and is not stored in dashboard JSON. Business Charts remains
 optional and is not required by this dashboard.
 
+## 2026-10-27 Grafana 13.3.0 / Loki 3.7.9 DNS-query follow-up
+
+**Operator-reported Fedora production checkpoint; manual change, not an unattended-update authorization.** Grafana OSS was upgraded from `13.2.4-1` to `13.3.0-1.x86_64` using the official release RPM. The operator reported successful SHA-256 / RPM signature verification, `grafana-server=active`, `/api/health` with `database=ok` / `version=13.3.0`, and no priority-error entries in the checked post-restart Grafana journal. VictoriaMetrics was active and its health endpoint answered OK; Loki `3.7.9` was active and ultimately returned `/ready=200` after a transient startup-readiness state.
+
+The provisioned **Pi-hole — Aktywność DNS v2** dashboard initially had a `Top 10 domen` panel failure for the last 24 hours: Loki's default `max_query_series=500` rejected the query. Shorter-range and selective JSON parsing tests alone did not solve the 24-hour limit. A controlled, operator-validated change to `limits_config.max_query_series: 1000` passed `loki -verify-config`, Loki readiness, live `/config` inspection and an actual 24-hour `topk(10, ...)` query (HTTP 200, 10 results). Both domain-ranking panels subsequently displayed data for the last 24 hours using their existing `| json` expressions; **no dashboard JSON change is required by this observation**. The reference Loki configuration here records the approved operator-reported setting.
+
+The first deployment attempt rolled back safely because `/config?mode=diff` returned HTTP 500, *including with the original configuration*. Normal `/config` returned HTTP 200 and was used for the successful verification instead. The Loki rollback config was compared byte-for-byte with its backup; the successful deployment preserved the existing 168-hour retention. Post-check showed all Grafana, Loki and VictoriaMetrics services active. The Grafana alert scheduler loaded 15 rule definitions; the checked post-change journal query did not find matching evaluation-error messages. **Per-rule history, complete alert evaluation, and actual notification delivery were not independently validated**. Duplicate Loki/plugin paths were observed and deliberately left unchanged.
+
+See [sanitized Grafana/Loki validation evidence](../evidence/2026-10-27/fedora-grafana-1330-loki-series-cap.md). No ASUS gateway, DNS Guard, Pi-hole, firewall, Caddy, automatic updating, retention or alert-provisioning changes are authorized by this note.

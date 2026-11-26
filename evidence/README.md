@@ -1,28 +1,4 @@
-- **2026-10-20 — Issue #235 V2.11 GNUton root-script owner-repair feasibility:** [source-backed firmware dispatch and project launcher graph, per-entrypoint inhibition gaps and NO-GO decision](2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md). No new live test, no installer, no extra backups, no ASUS/SSD modifications. **HOLD**.
-
-- **2026-10-20 — Issue #235 V2.12 pinned GNUton firmware source:** [freshly fetched tag `3004.388.11_1-gnuton1` `stat`→`fork`→`execvp` and writer-only `cru` review](2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md); Git source verified, production binary not inspected, no deployable trusted execution boundary proven. **HOLD**.
-
 # Validation evidence
-
-- **2026-10-20 — Issue #235 V2.10 recovery architecture after V2.9:** [design-only encrypted detached medium vs second off-host storage comparison](../docs/operations/issue235-independent-script-recovery-options-v210-2026-10-20.md), operator V2.9 9/9 PASS with both existing copies on the same filesystem. No new backup/restore, independent storage not validated. **HOLD**.
-
-- **2026-10-20 — Issue #235 V2.9 independent recovery-domain assessment:** [bounded metadata-only local inventory, 9/9 synthetic tests and offline restore dependency matrix](2026-10-20/issue-235-independent-recovery-failure-domain-v29.md); operator Fedora **9/9 PASS**, both copies detected, `SAME_ST_DEV` (same filesystem), physical/off-host recovery and Restic snapshot coverage unproven. **HOLD**.
-
-- **2026-10-20 — Issue #235 V2.8 Fedora recovery copy separation:** [two-script private-copy bounded read-only preflight](2026-10-20/issue-235-recovery-copy-separation-v28.md); local **18/18 synthetic PASS**, operator's second Fedora audit **both primary copy SHA/DAC PASS_AT_READ_TIME, exit 0** (earlier blank-input HOLD superseded), distinct filesystem does not mean independent failure domain, no Restic restore or approval issuer proven. **HOLD**.
-
-- **2026-10-20 — Issue #235 V2.6 Fedora reproduction & V2.7 design:** [29/29 operator synthetic schema replay](2026-10-20/issue-235-two-script-approval-contract-v26.md); [distinct offline operator-approval authority proposal](../docs/operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md). Independent approval **NOT ISSUED**, root publisher **NOT BUILT**, production **HOLD**.
-
-- **2026-10-20 — Issue #235 V2.6 distinct two-script approval contract:** [29/29 local and 29/29 independently replayed Fedora synthetic schema negative tests](2026-10-20/issue-235-two-script-approval-contract-v26.md). Owner/mode/path role pinning, revocation denial and explicit refusal of PR #245 SSD scope; no live script byte verification, no root publisher, no JFFS2 test. **HOLD**.
-
-- **2026-10-20 — Issue #235 V2.5 original C + ZIP provenance:** [read-only original Canonical C/ZIP source preflight](2026-10-20/issue-235-original-c-zip-provenance-v25.md), local synthetic 10/10 PASS; operator Fedora C/ZIP source attestation **EXACT_MATCH/PASS**, 10/10 self-tests; independent approval remains **NOT PROVEN**. These files are SSD PR #245 lab prerequisites, not two-target publication authorization. **HOLD**.
-
-- **2026-10-20 — Issue #235 V2.4 recovered historical artifacts:** [source SHA-256 cross-check for selected Stage B v1.3–v1.5 C/Python files, with three-role PR #245 scope warning](2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md). Library source bytes recovered; original C/ZIP dependency and two-script production authorization unproven. **HOLD**.
-
-- **2026-10-20 — Issue #235 trusted publisher gap matrix V2.4:** [document-only prior lab/provenance and production gate review](2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md); no new test, nonroot-owner repair and JFFS2 recovery remain unproven, **HOLD**.
-
-- **2026-10-20 — Issue #235 adversarial FD-to-name V2.3:** [20/20 rootless local synthetic tests](2026-10-20/issue-235-fd-to-name-publication-race-v23.md). Expected-red basename swap after correct FD hash can publish another inode; late postcheck is detection, not pre-execution prevention. Operator Fedora V2.2 **19/19 independently replayed** and V2.3 **20/20 independently replayed**; both are rootless synthetic primitives. All production gates **HOLD**.
-
-- **2026-10-20 — Issue #235 rootless rename/inode V2.2:** [19/19 local tests on synthetic actual filesystem objects](2026-10-20/issue-235-rootless-file-inode-publish-v22.md); old writable FD survives replacement, confirming no automatic FD revocation; no JFFS2 or root-owner proof, **HOLD**.
 
 Automated shell, configuration, mock-firewall, recovery, and evidence-redaction tests run in [GitHub Actions](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/actions).
 
@@ -35,14 +11,20 @@ Use the template that matches the evidence class:
 
 Both files are templates only. A template or unfilled placeholder is never validation evidence.
 
-- **2026-10-20 — Issue #235 dual-target quiescence and crash model V2.0:** [Fedora-only synthetic 20/20 state-machine assertions](2026-10-20/issue-235-dual-target-quiescence-model-v20.md), including **expected-red** Cron-only and partial-publication/power-failure exposure. No production inhibitor, JFFS2 power-loss property or apply authorization; **HOLD**.
-- **2026-10-20 — Issue #235 WAN recovery entrypoint source drift:**- **2026-10-20 — Issue #235 monotonic two-target publication V2.1:** [Fedora-only synthetic candidate and 19/19 local tests](2026-10-20/issue-235-monotonic-two-target-model-v21.md). Conditional one-path-at-a-time trust improvement; no JFFS2 durability, owner-writer exclusion or live repair proven; **HOLD**.
- [bounded V1.8 operator-reported source snapshot](2026-10-20/issue-235-wan-trigger-source-v18.md): V1.8 initially compared a generated WAN wrapper to the wrong full-script source; V1.10 confirmed exact pinned wrapper **and** addon bytes. Downstream handler and emergency helper match their source references; V1.11 confirmed normal DAC/ancestry for the WAN chain and V1.12 found the optional legacy WAN hook **absent at read time**. Bounded source/DAC/presence inventory complete; runtime dispatch, ACL/xattrs and continuous writer trust unproven; no changes, **HOLD**.
-- **2026-10-20 — Issue #235 `services-start` trust-chain source classification:** [operator-reported V1.4–V1.7 read-only evidence](2026-10-20/issue-235-services-start-trust-chain-v14-v17.md) established a nonroot-owned firmware hook byte-identical to pinned source, root-owned addon and config, and a moved watchdog call in the addon. No trusted live ownership, scheduler quiescence, or production repair; **HOLD**.
-
 ## Published validation timeline
 
-- **2026-10-19 — Issue #235 DNS Guard privileged-Cron ownership:** [sanitized operator-reported live read-only and Fedora rollback checkpoint](2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md) includes V1.2.3 metadata, SquashFS RO/JFFS2 RW topology, independent streamed SHA-256 match, private off-router backup and rootless 32/32 rollback rehearsal. **Nonroot executable ownership remains unresolved; no live Cron/owner/service change, no JFFS2 failure-recovery proof; deployment HOLD.**
+- **2026-11-09 — Fedora VictoriaMetrics v1.156.0 manual live acceptance (operator-reported):** artifact SHA256, local snapshot/stopped-service copy, `vm_app_version` and health passed with seven `up=1` scrape targets; Blackbox `probe_success` and off-host restore not verified. [Evidence](2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md) · [worklog](../docs/worklog/2026-11-09.md). No router change.
+
+- **2026-10-24 — Unbound 1.26.2 R2 and actual router reboot (cross-reference to existing reports, not a new test):** five production packages `1.26.2-1` and direct good/bogus DNSSEC `AD`/`SERVFAIL` on UDP/TCP, dnsmasq/Pi-hole client-path checks and one later actual functional reboot **PASS within their bounded scope**. Post-reboot RFC 5011 anchor file `0666` under a service-owned `0700` parent is an **OPEN** hardening exception (#298/#299, HOLD), not approved restored-target permissions. The **first** upgrade/rollback outage remains part of the record. Sanitary published reports are in `docs/`, not in a fictitious `evidence/2026-10-24/` directory: [R2 deployment/reboot report](../docs/operations/unbound-1.26.2-production-deployment-2026-10-24.md), [incident study](../docs/case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md), [October 24 worklog](../docs/worklog/2026-10-24.md). Controlled fault injection, LAN/Tailscale DNS continuity, cold power-loss boot, long soak and bare-metal DR remain unproven.
+- **2026-10-24 — DNS Guard/Grafana notification forensics (cross-reference, no new live evidence):** an **unplanned** router-system DNS Guard fail-open/failback was OBSERVED; direct router dnsmasq Blackbox had 83/121 failed DNS samples and Grafana reported 14 notifier DNS/timeout/retry errors. Controlled injection and independent notification DNS remain unproven. [Separate case study](../docs/case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md).
+
+
+- **2026-10-23 — Issue #287 ARMv7 bounded-exec research (Fedora-only, HOLD):** a [sanitized, bounded process-lifetime/FD/capability and signed-worker checkpoint](2026-10-23/issue287-native-bounded-exec-fedora-lab-checkpoint.md) records V0.7p–V0.7v, an inherited `memfd` in the earlier V0.7u fixture, and a separate `FD_CLOEXEC` candidate. It does **not** demonstrate a PID-reuse attack, complete descendant cleanup, or a production DNS Guard patch. [Dated engineering worklog](../docs/worklog/2026-10-23.md). `ISSUE287_DEPLOYMENT_GATE=HOLD`.
+
+- **2026-10-21 — Tailscale 1.104.2 ARMv7 live rollout:** operator-reported locally compiled ARMv7 binaries upgraded the reference ASUS from live 1.103.375; controlled daemon restart, connected state, configured exit-node/DNS/firewall prerequisites, and project healthcheck **0 failures / 0 warnings** passed. Previous binaries preserved for rollback. Full router reboot and independent external-client dataplane retest were **not** performed. See [bounded live evidence](2026-10-21/tailscale-1.104.2-armv7-live-validation.md).
+
+- **2026-10-21 — Issue #235 read-only ASUS privilege evidence + Fedora rootless/browser labs:** an operator-authorized read-only V2.30R2 audit identified UID 0 / broad process capabilities and `0777` SSD mount roots/backup parent, while root-owned asset files remained mode `0644`. Fedora-only V2.30M–V negative tests were bounded; cached-credential CSRF tests P/P1 were **SKIP** and **V2.30W was NOT RUN**. No RouterCloud/DUFS/SSD/JFFS remediation was deployed; `DEPLOYMENT_GATE=HOLD`. [Evidence and limits](2026-10-21/issue235-readonly-privileges-and-fedora-rootless-lab.md), [dated worklog](../docs/worklog/2026-10-21.md).
+
 - **2026-09-30 — RouterCloud browser-based LAN/Tailscale acceptance (#137):** previously unmerged Draft PR #151 held the unique operator-reported [browser-access validation report](2026-09-30/issue-137-routercloud-browser-access-validation.md). It is now preserved as dated evidence with a provenance note. At that time global Dufs DELETE was disabled; Issue #137 was **later closed** after further acceptance, while [Issue #235](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/235) separately remains OPEN for privileges and HTTP origin. The original start scripts and obsolete configuration have **not** been made installable by this archive. See [2026-10-15 #151 reconciliation audit](../docs/audits/2026-10-15-pr151-routercloud-legacy-reconciliation.md).
 
 - **2026-10-13 — Grafana #236 V4 Telegram Chat ID and bounded notification acceptance:** sanitized [per-rule/operator traceability matrix](2026-10-13/grafana-rule-traceability-matrix.md) records one controlled V4 migration (with earlier V3 rollback chronology), subsequent one-rule **Gmail+Telegram Firing/Resolved PASS**, synthetic cleanup and the **15 permanent rule** baseline (operator-confirmed). [Protected host-local migration/rollback record](../docs/grafana-236-telegram-chatid-deployment-runbook.md) is a dated retrospective, **not a live migration instruction**. Per-rule delivery, grouping/anti-flap, and reproducible full Email+Telegram provisioning remain **OPEN** under #236.
@@ -155,3 +137,26 @@ Use precise result language:
 A successful controlled reboot and health check demonstrate reboot stability and functional recovery at that point in time. They do **not** by themselves prove long-term stability. The reference deployment's unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22; this must not be described as a completed 14-day endurance test.
 
 Subsequent live validation and router changes should remain explicit, bounded maintenance actions with sanitized evidence and rollback planning where state changes are involved.
+
+## Historical Issue #235 evidence — 2026-10-19–20 (reconciled 2026-11-26)
+
+Recovered without changing the original 18 document blobs from [Draft PR #270's historical head](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/tree/c57dc3d30d61819929d72dec7919a506a7834d97). These are dated, scoped reports and design candidates, not new tests or approval. In particular, synthetic PASS may demonstrate an expected-red condition, and the pinned firmware source review is not live binary attestation. The existing November evidence and current project status remain authoritative for their own scopes. PRIVILEGED_EXECUTION_TRUST_GATE=HOLD; DEPLOYMENT_GATE=HOLD.
+
+- [issue235-independent-script-recovery-options-v210-2026-10-20](../docs/operations/issue235-independent-script-recovery-options-v210-2026-10-20.md)
+- [issue235-privileged-startup-trust-maintenance-design-2026-10-20](../docs/operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md)
+- [issue235-two-script-offline-approval-authority-v27-2026-10-20](../docs/operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md)
+- [issue235-two-target-trusted-publisher-design-2026-10-20](../docs/operations/issue235-two-target-trusted-publisher-design-2026-10-20.md)
+- [issue-235-dns-guard-root-cron-trust-and-rollback](2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md)
+- [issue-235-dual-target-quiescence-model-v20](2026-10-20/issue-235-dual-target-quiescence-model-v20.md)
+- [issue-235-fd-to-name-publication-race-v23](2026-10-20/issue-235-fd-to-name-publication-race-v23.md)
+- [issue-235-gnuton-dispatch-inhibition-feasibility-v211](2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md)
+- [issue-235-gnuton-firmware-launch-trust-boundary-v212](2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md)
+- [issue-235-independent-recovery-failure-domain-v29](2026-10-20/issue-235-independent-recovery-failure-domain-v29.md)
+- [issue-235-monotonic-two-target-model-v21](2026-10-20/issue-235-monotonic-two-target-model-v21.md)
+- [issue-235-original-c-zip-provenance-v25](2026-10-20/issue-235-original-c-zip-provenance-v25.md)
+- [issue-235-recovery-copy-separation-v28](2026-10-20/issue-235-recovery-copy-separation-v28.md)
+- [issue-235-rootless-file-inode-publish-v22](2026-10-20/issue-235-rootless-file-inode-publish-v22.md)
+- [issue-235-services-start-trust-chain-v14-v17](2026-10-20/issue-235-services-start-trust-chain-v14-v17.md)
+- [issue-235-trusted-publisher-evidence-gap-review-v24](2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md)
+- [issue-235-two-script-approval-contract-v26](2026-10-20/issue-235-two-script-approval-contract-v26.md)
+- [issue-235-wan-trigger-source-v18](2026-10-20/issue-235-wan-trigger-source-v18.md)

@@ -4,6 +4,79 @@ Tailscale updates on the ASUS Edge Gateway are explicit maintenance actions.
 They are not performed automatically at boot and automatic Tailscale update
 application is kept disabled.
 
+## Reference router live checkpoint — 2026-11-17
+
+**Status: OPERATOR-REPORTED LIVE / BOUNDED PASS.** On the ARMv7
+reference ASUS, a separate Fedora 45 cross-build of upstream Tailscale
+`v1.104.7` (commit `cbc74fe48ef1b1649f69a4d9a602319427e25102`,
+Go 1.27.4, `CGO_ENABLED=0`) was transferred through a LAN-only
+management session and deployed explicitly, without `opkg`, automatic
+updaters or a router reboot. CLI and active daemon were both observed at
+`1.104.7` after the service restart, with matching SHA-256 hashes,
+`BackendState=Running`, preserved tailnet IPv4 and an active direct
+Fedora peer. The ASUS continued advertising its exit-node capability.
+A cellular client observed its public IPv4 change to the home-WAN egress
+when selecting this exit node (IPv4 smoke PASS).
+
+The managed Entware package metadata still reported `1.96.1-1`; it
+does not reflect the manually installed `1.104.7` binaries. The
+existing service and the ASUS Edge startup configuration were
+inspected; the externally sourced configuration resolved to the active
+daemon state path. No file-state migration or service-script rewrite
+was performed.
+
+A **separate operator-created protected on-device backup** (reported
+66.6 MB) retained the previous `1.104.4` binaries, both existing
+state files, daemon-state directory and startup scripts. It is on the
+same Entware storage device; it is not an off-device disaster-recovery
+copy. The one-shot updater's automatic rollback path was prepared but
+**not exercised**. This procedure is distinct from the
+`update-tailscale.sh` package-manager updater and its snapshot layout
+documented in the following sections; do not assume they share a
+manifest, path or identical recovery behavior.
+
+The router returned `ipv6_service=disabled` and no default IPv6 route.
+There was no new DNS-path validation, packet-level forwarding proof,
+reboot-persistence test, rollback drill or long soak during this update.
+See the [dated worklog](worklog/2026-11-17.md) for the exact acceptance
+boundary. Do not use the historical October `1.102.3` example below as
+the current live version.
+
+## Post-reboot operator checkpoint — 2026-11-17 (G9K)
+
+Later that day, the operator rebooted the reference ASUS and ran a
+read-only post-start audit. Both active Tailscale executable versions
+remained **1.104.7** and both live SHA-256 checksums matched their
+pre-reboot values. Local API reported `BackendState=Running` and the
+tailnet IPv4 was unchanged. `tailscaled`, `pihole-FTL`, `unbound`
+and `dnsmasq` were present as running processes; WAN IPv6 remained
+disabled with no default IPv6 route.
+
+This **closes the bounded post-reboot startup/persistence gate** for the
+manual 1.104.7 installation only. At this G9K checkpoint, full DNS path validation and active
+client IPv4 forwarding **after** the reboot were not yet tested; rollback execution,
+disaster-recovery restoration and extended soak remain untested.
+The original deployment occurred without a reboot; G9K was a
+**separate later reboot**. [G9K worklog](worklog/2026-11-17.md).
+
+## Post-reboot Android DNS and filtering check — 2026-11-17 (G9L–G9O)
+
+After G9K, the operator confirmed cellular-client internet access
+using the ASUS as Tailscale exit node, with public IPv4 matching
+the router's WAN egress. The active DNS Guard v3.2 state was
+`LOCAL_DNS_READY` and local Pi-hole resolver checks
+(`UNBOUND`, `PIHOLE_LISTENER`, `PIHOLE_QUERY`) passed.
+An operator-supplied Pi-hole Query Log screenshot showed an
+exact unique test domain from the phone/browser under the
+router's DNS-client identity; a second showed a controlled
+advertising hostname blocked for that source.
+
+These are **bounded post-reboot mobile DNS and filtering smoke
+tests**, not exhaustive client DNS-leak, encrypted-DNS,
+packet-capture or all-application validation. The exact
+blocklist/rule responsible for the denied hostname was not
+identified. [G9L–G9O dated evidence](worklog/2026-11-17.md).
+
 ## Why
 
 The reference router has demonstrated real package/live-version drift:

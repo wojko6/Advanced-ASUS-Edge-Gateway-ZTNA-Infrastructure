@@ -1,7 +1,7 @@
 # Documentation language and translation policy
 
 **Status:** CURRENT (tracked in issue #206)  
-**Reviewed:** 2026-10-09  
+**Reviewed:** 2026-10-23 (public discussion and private/public publication boundaries clarified)  
 **Scope:** public documentation, operator guides, evidence, code comments and UI localization.
 
 ## Language ownership
@@ -13,9 +13,12 @@ This repository is primarily **English-language technical documentation** for a 
 | Root `README.md`, `PROJECT-STATUS.md`, `CHANGELOG.md`, `CONTRIBUTING.md` | English | Project status and portfolio-facing entry points |
 | `docs/architecture/`, network/security design, requirements, operations and canonical recovery contracts | English | Historical Polish dated snapshots are retained, not silently rewritten |
 | `docs/case-studies/`, `evidence/`, `docs/worklog/` | English | Preserve original historical evidence, quotes, log output and dated claims |
+| Public GitHub Issues, pull-request titles/descriptions, comments, review summaries and checklists | English | Keep public engineering discussion in the same language as its authoritative evidence; retain machine-readable test output verbatim |
 | `docs/pl/` catalog and **operator-focused Polish guides** | Polish | Existing `*-pl.md` and `deployment-pl.md` paths remain valid |
 | Code, test assertions, CLI output, config keys and code comments | English / exact technical identifiers | **Do not translate** execution contracts or machine-readable output |
 | Polish ASUS WebUI overlay and RouterCloud UI strings | Polish where intended | Product UI localization is independent of documentation-language policy |
+
+**Publication boundary:** private operator planning and private worklogs use the operator's own Polish-language convention and are not automatically published in the public repository. When a private checkpoint needs a public trace, publish a sanitized **English summary** with source/date/status boundaries rather than copying or mass-translating private files. Historical material and upstream quotations retain their original language. A past GitHub comment may retain a historical interim status, but later comments must make the current status explicit; avoid silently turning historical `PENDING` into `PASS`.
 
 Do not treat an English word in Polish operational prose as an automatic error: product names, established network terms, literal status labels and exact commands may legitimately remain English.
 

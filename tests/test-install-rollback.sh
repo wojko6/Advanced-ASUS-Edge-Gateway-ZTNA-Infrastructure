@@ -72,13 +72,49 @@ PATCH_STUB="$TMPROOT/patch-stub"
 printf '%s\n' '#!/bin/sh' 'exit 0' > "$PATCH_STUB"
 chmod 0755 "$PATCH_STUB"
 
-python3 - <<'PY' "$TMPROOT/repo/scripts/install.sh"
+# Validate the original production installer without changing its source.
+# Only invoke the unmodified script when non-root; EDGE_TEST_ROOT is private.
+sh -n "$ROOT_DIR/scripts/install.sh"
+if [ "$(id -u)" -ne 0 ]; then
+    if EDGE_TEST_ROOT="$TMPROOT" EDGE_PATCH_BIN="$PATCH_STUB" \
+       sh "$ROOT_DIR/scripts/install.sh" >"$TMPROOT/original-root-guard.log" 2>&1; then
+        echo "FAIL: original installer accepted non-root invocation" >&2
+        exit 1
+    fi
+    grep -Fxq 'ERROR: run as root' "$TMPROOT/original-root-guard.log" || {
+        echo "FAIL: original installer did not reject at root guard" >&2
+        exit 1
+    }
+    [ ! -e "$TMPROOT/jffs/configs/asus-edge.conf" ] || {
+        echo "FAIL: original installer changed isolated JFFS" >&2
+        exit 1
+    }
+    echo "PASS: unmodified production installer rejects non-root"
+else
+    echo "SKIP: unmodified non-root guard runtime (test runner is root)"
+fi
+
+# The rollback fixture must simulate root privileges on non-root CI workers.
+# This isolated copied-file transformation is exact-match and fail-closed;
+# never add a root-bypass switch to the actual production installer.
+python3 - <<'PY' "$ROOT_DIR/scripts/install.sh" "$TMPROOT/repo/scripts/install.sh"
 from pathlib import Path
 import sys
-p = Path(sys.argv[1])
-s = p.read_text()
-s = s.replace('uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }\n[ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }\n','uid=0\n')
-p.write_text(s)
+
+production = Path(sys.argv[1]).read_text()
+fixture_path = Path(sys.argv[2])
+fixture = fixture_path.read_text()
+guard = ('uid="$(current_uid)" || { echo "ERROR: cannot determine current user" >&2; exit 1; }\n'
+         '[ "$uid" = "0" ] || { echo "ERROR: run as root" >&2; exit 1; }\n')
+if fixture != production:
+    raise SystemExit("FAIL: test installer differs from production before transformation")
+if production.count(guard) != 1:
+    raise SystemExit("FAIL: production root guard not found exactly once")
+patched = fixture.replace(guard, 'uid=0\n', 1)
+if guard in patched or patched == fixture:
+    raise SystemExit("FAIL: fixture-only root bypass did not apply")
+fixture_path.write_text(patched)
+print("PASS: production root guard verified; bypass only in copied test fixture")
 PY
 
 managed_snapshot_count() {

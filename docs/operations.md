@@ -1,10 +1,38 @@
 # Operations and recovery
 
+> **Separate Fedora observability checkpoint — 2026-11-09:** [VictoriaMetrics v1.156.0 evidence](../evidence/2026-11-09/fedora-victoriametrics-v1.156.0-live-upgrade.md) · [Fedora maintenance policy](operations/fedora-homelab-automatic-updates.md) · [worklog](worklog/2026-11-09.md). Operator-reported 7/7 successful scrapes, not Blackbox `probe_success` or off-host restore. No ASUS router production change.
+
 ## Current reference-state status
 
 The reference deployment completed its SSD migration and controlled reboot validation on 2026-09-11. The unchanged-state observation was deliberately closed on 2026-09-22 after continuous 24/7 operation from 2026-09-11 through 2026-09-22; the project does not claim the originally planned full 14-day window through 2026-09-25.
 
 Routine router changes may now proceed only as deliberate maintenance with backup, rollback planning, repository/CI validation and post-change live verification. Read-only inspection remains preferred when it can answer the question without changing the reference state.
+
+## Current Unbound 1.26.2 and DNS Guard operations — 2026-10-24
+
+**Current production:** the operator-authorized R2 upgrade installed all five ARMv7 Unbound `1.26.2-1` packages on the ASUS. The preserved custom Entware Manager `S61unbound` was restored and verified; direct Unbound DNSSEC validated signed answers (`AD=1`) and deliberately invalid answers (`SERVFAIL`) over **UDP and TCP**, and router dnsmasq/Pi-hole DNS paths passed bounded checks. **An actual later router reboot** retained all five packages, the listeners and the same DNSSEC/client-path results. This does not prove power-loss cold-boot reliability, continuous client DNS through the upgrade, an extended soak or full disaster recovery.
+
+**Incident retained:** the first maintenance attempt caused Unbound to exit when its unprivileged chroot could not create the RFC5011 trust-anchor temporary file. Merely restoring the previous 1.26.1 packages did not recover the daemon; a dedicated service-owned `dnssec-auto` directory fixed the write-boundary problem. The later R2 upgrade succeeded independently. [Production acceptance and rollback boundaries](operations/unbound-1.26.2-production-deployment-2026-10-24.md) · [incident and recovery](case-studies/unbound-dnssec-autotrust-opkg-incident-2026-10-24.md).
+
+**Open security hardening, not an outstanding package upgrade:** after the successful reboot the active `root.key` was owned by UID/GID 65534 under a private `0700` directory but had mode **0666**, not the desired `0600`. Fedora-only real ARMv7 tests confirmed child-scoped `umask 077` produces `0600`, but also a newly created Unbound PID file of `root:root 0600`, requiring separate manager compatibility assessment. [#298 — RFC5011 anchor permissions](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/298) and [#299 — PID/Manager compatibility](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/299) remain **OPEN / DEPLOYMENT HOLD**. No production `umask`, `chmod`, `chown` or service-launch modification is authorized.
+
+**DNS Guard v3.2 remains in production unchanged.** During the first, unplanned resolver outage, read-only log analysis found genuine **router-system** WAN bootstrap selection at **10:25:02** and return to Pi-hole at **11:08:01**. This was not a controlled outage test and does **not** establish LAN/Tailscale client DNS continuity: both Pi-hole and firmware dnsmasq still depend on the same Unbound. Monitoring showed **83/121 failed direct router-DNS Blackbox samples**, while tested IP/HTTPS probes stayed healthy. Grafana recorded **14 notifier errors** associated with DNS/timeout/retries, and its FIRING email arrived around **30m33s** after the alert-observation timestamp stated in that email; the exact per-channel cause remains unproven.
+
+**DNS Guard residuals:** a scoped same-day log analysis counted **565 `dig is installed but not runnable; skipping active TCP DNS query probe`** warnings. Direct `dig -v` later worked, so the wrapper/execution-context reason and true optional TCP-probe coverage remain **unresolved**. Fedora-only #287 reproduced a timer-child `sleep` survivor and researched cancellation alternatives; an unrelated PID-reuse kill was **not demonstrated**. The root-Cron target and startup-file trust concerns remain separately **#235 HOLD**. Independent monitor DNS, full notification-delivery matrix, full controlled local/bootstrap failure injection and automatic client failover have **not** been deployed or proved. [DNS Guard incident and delayed alerts](case-studies/dns-guard-grafana-alert-delivery-dns-failure-2026-10-24.md) · [v3.2 validation and waivers](dns-guard-v3.2-recovery-audit-live-validation.md) · [#287](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/issues/287).
+
+**Safety:** historical test commands that stop resolvers, manipulate `iptables`, invoke manual break-glass or restart WAN are **not** ordinary maintenance instructions. Run such tests only with separately approved supervised recovery and rollback. This update changes documentation only.
+
+<details><summary>Historical 2026-10-23 Fedora-only release-readiness plan (superseded by R2)</summary>
+
+## Unbound 1.26.2 pending maintenance — Fedora-only readiness (2026-10-23)
+
+The current live ASUS resolver remains Unbound `1.26.1-1` (five packages). Verified `1.26.2-1` ARMv7 IPKs, original `1.26.1-1` rollback IPKs and the Manager start-script restore source are staged **only on Fedora**. An isolated rootless QEMU/`opkg` lab reproduced successful real-package installation, upgrade and downgrade as **file/db transactions** with stubbed external dependencies; no router/runtime acceptance or independent direct DNS recursion is claimed.
+
+**Hard precondition:** Package operations replace the non-conffile `/opt/etc/init.d/S61unbound` on both upgrade and rollback. Restore and verify the Manager script **before** restarting Unbound. Its `rc.func` start path invokes a dnsmasq restart; do not use a blind service `restart` as an atomic maintenance operation. The active trust anchor is separate from the legacy package root key. DNS Guard Cron registration and live service listeners were observed, but watchdog last execution and uninterrupted DNS during a resolver stop remain **unproven**. A separately approved maintenance window must explicitly accept possible DNS interruption and include tested off-router rollback materials.
+
+**Router staging:** NOT PERFORMED. **Installation:** NOT PERFORMED. **`DEPLOYMENT_GATE=HOLD`.** Full [readiness evidence, limitations and maintenance sequencing](operations/unbound-1.26.2-armv7-release-readiness-2026-10-23.md).
+
+</details>
 
 ## SSD root mode after boot — Issue #235 HOLD (2026-10-16)
 
@@ -21,51 +49,6 @@ The generic `scripts/install.sh` uses root-run `cp` followed by `chmod` without 
 **Operational prohibition:** do not run the general installer, `chown`/`chmod` the live DNS Guard, delete/reschedule its Cron job, rewrite its parent directories, or deploy the test scripts as a quick fix. Preserve independent off-router verified recovery material and require separate operator approval, a trusted-parent/writer preflight, a secure owner/mode-preserving rollback and evaluated JFFS2 failure recovery. This is a **separate DNS Guard root-execution trust issue**, not a modification to the SSD mode-repair [Draft PR #245](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/245).
 
 [Full dated evidence and limitations](worklog/2026-10-18.md). `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
-
-## DNS Guard root-Cron: 2026-10-19 evidence and future maintenance gates (HOLD)
-
-[Dated sanitized evidence](../evidence/2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md) covers the approved **read-only** ASUS V1.2.3 checks, separate streamed SHA-256 confirmation, firmware-native tooling limitations, JFFS2 mount topology and off-router backup/restore verification. The target remains **nonroot-owned and owner-writable**, mode 0755, despite matching approved v3.2 bytes. Exactly one named Cron entry matched in one snapshot. `/` is SquashFS RO; `/jffs` is JFFS2 RW. The 147-process snapshot showed zero matching owner UIDs, **not** absence of future/open-descriptor/other writers.
-
-The verified private Fedora copy and rootless V1.3 **32/32** rollback rehearsal protect only the documented off-router bytes and test model. They do **not** establish live `root:root` rollback, full physical-storage independence, on-router filesystem crash durability or scheduler quiescence.
-
-**Proposed maintenance sequence — planning only, NOT shell commands to run:**
-
-1. Verify an independent trusted backup and separately recoverable DNS path; review parent-chain and all authorized writers.
-2. With a new explicit maintenance approval, inhibit the named Cron **dispatcher and any `services-start` re-registration**, then prove existing jobs, open writable FDs and competing writers are drained. `flock` availability alone is insufficient.
-3. Only after the previous gates, separately review and authorize a JFFS2-aware staged publish that verifies content and establishes trusted `root:root` and intended mode 0755 on both the candidate and rollback executable; fail closed on uncertain partial state.
-4. Validate bounded DNS Guard, Unbound, Pi-hole and Cron restoration postflight using an operator-held recovery path. Reboot, if ever needed, is a separate authorization.
-
-**Current prohibition remains:** do not use the generic installer or perform an ad hoc live `chown`/`chmod`, Cron change, service restart, post-mount edit or SSD mutation. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `STAGE_B_C_E_AUTHORIZATION=NOT_GRANTED`; `DEPLOYMENT_GATE=HOLD`. This is distinct from Draft PR #245 and from the separate RouterCloud/DUFS work.
-
-## services-start hook trust: 2026-10-20 bounded discovery (HOLD)
-
-A [read-only V1.4–V1.7 evidence checkpoint](../evidence/2026-10-20/issue-235-services-start-trust-chain-v14-v17.md) establishes that the **firmware hook** `/jffs/scripts/services-start` is **nonroot-owned, mode 0755** and contains the exact pinned full source. The separate addon script is root:root 0755, but its local watchdog call is **later** than in the full hook. The edge config was root:root 0600. This is a point-in-time trust problem even though the bytes match a reviewed source.
-
-The operator also verified a private Fedora backup of the active full hook (`HOOK_OFFROUTER_BACKUP=PASS`, SHA-256 and 0600/0700 DAC PASS); an off-router DNS Guard backup was separately verified. Neither backup proves independently protected media or live JFFS2 rollback. [Draft two-target maintenance design](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md).
-
-**Execution surface expansion:** reviewed source confirms a *direct* `dns-guard auto` call on primary WAN `connected` through `wan-event-handler`, plus operator break-glass calls; Cron inhibition alone cannot quiesce the root-executed target. The Merlin manual classifies `services-start` as a boot hook. Do not infer repeat invocation after every service restart or suppress the WAN/break-glass recovery path as a quick fix. The [detailed design](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md) tracks these as explicit GO/NO-GO boundaries. [V1.10 source verification](../evidence/2026-10-20/issue-235-wan-trigger-source-v18.md) confirmed the generated WAN hook wrapper and the intermediate addon by pinned SHA-256; together with prior handler/helper pins, the standard WAN launch-chain bytes match their references. Live owner/DAC/ancestor trust, optional legacy branch and runtime invocation remain **NOT PROVEN**.
-
-**WAN DAC V1.11:** fixed-path metadata inspection found the standard WAN wrapper/addon/handler and break-glass helper root:root, regular single-link executable, and without group/other write; ancestor directories root:root and config mode 0600. The optional legacy WAN hook was initially `ABSENT_OR_UNREADABLE_UNRESOLVED` under V1.11; **V1.12 confirmed `LEGACY_WAN=ABSENT_POINT_IN_TIME`** without reading config or contents. The byte-verified wrapper cannot execute an absent legacy file, irrespective of the config flag, at that observation instant. This resolves the bounded legacy uncertainty without production changes. No WAN runtime execution, ACL/xattr assessment or writer exclusion proved; [dated evidence](../evidence/2026-10-20/issue-235-wan-trigger-source-v18.md). `HOLD`.
-
-The future remedial transaction therefore involves **two privileged targets**, the firmware hook and DNS Guard. Keep the **current full-hook semantics**; do not run the general installer, which generates a *different short wrapper*. Before considering any mutation, separately verify trusted, independently recoverable inputs for both targets, exclude competing writers and open descriptors, inhibit both root-Cron dispatch and Merlin startup re-entry/re-registration, review combined JFFS2 failure handling, and obtain an **explicit new maintenance authorization**. DNS Guard/Unbound/Pi-hole plus Cron startup postflight are required after an authorized change. No automatic production activation or reboot. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
-
-## Issue #235 dual privileged target recovery — V2.0 expected-red model (no apply)
-
-The [V2.0 Fedora-only state-machine exercise](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) passed 20/20 local assertions while intentionally exposing unsafe scenarios. Named Cron-only suppression cannot inhibit direct WAN/emergency DNS Guard calls or firmware boot/manual `services-start`. A simulated crash after one of two per-file trusted-owner publishes may restore volatile triggers before the other file is secured. A **hypothetical** earlier-than-hook persistent inhibition barrier was modeled but **has not been implemented or demonstrated** on GNUton/JFFS2. Do not equate this with an atomic two-file transaction or with a successful live recovery exercise.
-
-Until a verified power-interruption-safe strategy, independent protected backups, writer/FD quiescence and independent DNS rescue are available, there is **no apply approval**. Follow the [design-only state machine](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md), not a generic installer or ad hoc `chown`/Cron edits. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
-
-## Issue #235 — V2.3 publication race evidence (2026-10-20)
-
-[Bounded Linux synthetic study](../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md): V2.2 was reproduced by operator Fedora **19/19 PASS**; V2.3 local nonroot fixture **20/20 PASS**, independently replayed by operator Fedora **20/20 PASS**, including an expected-red attack that swaps staged basename after FD digest verification. A subsequent `rename` can publish the attacker-controlled inode. A later hash mismatch **detects** but does not guarantee prevention of transient execution. Root:root trusted stage authority and JFFS2 persistence are unproven; no production patch or temporary gate is authorized. `DEPLOYMENT_GATE=HOLD`.
-
-## Issue #235 — optional monotonic publication research (2026-10-20)
-
-The [V2.1 Fedora-only model](../evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md) passed **19/19 local abstract checks**: a trusted single-path replacement could reduce one target's nonroot-owner surface, but an interruption still leaves the other root-executed script untrusted. This **does not prove** actual JFFS2 atomicity/durability, old-owner FD/writer safety, service availability or production approval. No generic installer, direct `chown` or path replacement is authorized. The [maintenance design](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md) remains `HOLD`.
-
-## Issue #235 — pinned GNUton hook dispatch trust finding (2026-10-20)
-
-[Operator V2.0 replay and pinned GNUton source inspection](../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) show 20/20 Fedora model assertions PASS and the underlying firmware `run_custom_script` checks *execute bits* but does not check `root:root` ownership or same-FD identity in the inspected function. Both `services-start` and earlier `init-start` are JFFS-dispatched scripts. A new `init-start` hook or a global `jffs2_scripts=0` switch is **not** an approved, independently trusted crash-durable protection strategy; the latter may disable necessary recovery hooks. Preserve recovery and actual hook semantics. `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.
 
 ## Change workflow
 
@@ -275,21 +258,16 @@ The Fedora observability host now has a **check-only** `homelab-update-check.tim
 
 This off-router work is separate from ASUS Entware/firmware updates and from the explicitly disabled Tailscale automatic update application described below.
 
+**Later Fedora monitoring checkpoint (2026-10-27):** [merged PR #324](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/324) documents operator-validated Grafana **13.3.0** and Loki **3.7.9** in a bounded DNS-query follow-up ([evidence](../evidence/2026-10-27/fedora-grafana-1330-loki-series-cap.md)). The earlier 13.2.4 statement is the **historical October 18 pilot**. VictoriaMetrics **1.155.0** and manual HCC source/history work are recorded in the [published October 27 worklog](worklog/2026-10-27.md) via [merged PR #325](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/325); the superseded partial [Draft PR #317](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/317) should not be merged separately. Unattended installation remains **HOLD**.
 
-### Current reference Tailscale runtime
 
-As of the end of 2026-10-06, the reference router runs:
+### Reference Tailscale runtime — dated evidence, not package-feed metadata
 
-```text
-1.103.375
-track unstable (dev)
-```
+**2026-10-21 accepted router checkpoint:** the ASUS reference runtime moved from the earlier 1.103.375 unstable/dev build to operator-compiled stable **1.104.2 ARMv7**. Bounded version, service restart, exit-node/DNS prerequisites and project healthcheck checks passed; this does **not** prove a subsequent reboot. [Dated live validation](../evidence/2026-10-21/tailscale-1.104.2-armv7-live-validation.md).
 
-This runtime was installed from the official ARM tarball after checksum
-verification and rollback preparation. It is newer than the Entware package
-metadata/candidate observed on the reference router.
+**2026-10-28 operator-reported Tailscale maintenance (published worklog):** stable **1.104.4 ARMv7** on the ASUS, Fedora 1.104.4 and a separately signed Android development build are documented in the [October 28 worklog](worklog/2026-10-28.md) ([merged PR #326](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/pull/326)). The record distinguishes source-pinned staging/rollback, native runtime postflight and Android Pi-hole/IPv4 exit-node tests from **untested cold boot, long soak, full rollback and IPv6**. The October 21 1.104.2 evidence below remains a valid historical deployment baseline, not the latest operator-reported installed version.
 
-Earlier 1.102.3 evidence remains a historical pre-upgrade checkpoint.
+Historical **2026-10-06** baseline: 1.103.375 unstable/dev came from the official ARM tarball after checksum and rollback preparation; 1.102.3 was an even older baseline. These are **not** current-version claims.
 
 Until the Entware feed catches up or the repository gains a separately
 validated official-tarball transaction mode:
@@ -484,3 +462,7 @@ cru l | grep ASUS_Edge
 ```
 
 Do not reuse one identifier for multiple schedules because the later entry can replace the earlier task.
+
+## Historical Issue #235 evidence — 2026-10-19–20 (reconciled 2026-11-26)
+
+Design/evidence only, not an executable runbook: [privileged startup trust](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md), [two-target trusted publisher](operations/issue235-two-target-trusted-publisher-design-2026-10-20.md), [separate offline approval authority](operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md), [independent recovery options](operations/issue235-independent-script-recovery-options-v210-2026-10-20.md). Preserve the distinct SSD PR #245 scope; no generic installer, live ownership changes, Cron/boot changes, new backup operations or production repair authorized. Trusted publisher, old-writer exclusion, JFFS2 crash recovery and independent DNS recovery remain unproven. See [historical evidence register](../evidence/README.md#historical-issue-235-evidence--2026-10-1920-reconciled-2026-11-26). HOLD.

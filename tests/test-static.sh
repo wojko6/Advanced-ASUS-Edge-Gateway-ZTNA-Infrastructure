@@ -43,6 +43,10 @@ else
     echo "WARN: shellcheck not installed"
 fi
 
+# Issue #289: hermetic remote-client completeness and negative-policy cases.
+sh "$REPO_DIR/tests/test-live-client-contract.sh"
+sh "$REPO_DIR/tests/test-healthcheck-warning-contract.sh"
+
 grep -F 'dig +time=3 +tries=1 +dnssec -p "$EDGE_UNBOUND_PORT" @127.0.0.1' "$REPO_DIR/scripts/healthcheck.sh" >/dev/null || {
     echo "FAIL: healthcheck does not test the configured Unbound port" >&2
     exit 1
@@ -356,6 +360,9 @@ if [ -n "$duplicate_webui_ids" ]; then
     echo "FAIL: duplicate HTML id(s) in Edge Gateway WebUI: $duplicate_webui_ids" >&2
     exit 1
 fi
+
+# Issue #283: generated WebUI snapshot, safe policy count/defaults and age-state checks.
+sh "$REPO_DIR/tests/test-webui-status-contract.sh"
 
 for webui_phase3_guard in \
     'window.edgeGatewayStatus' \

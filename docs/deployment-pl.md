@@ -121,7 +121,10 @@ ip6tables -nvL EDGE_TS6_FORWARD
 
 dnsmasq pozostaje usługą nasłuchującą na porcie `53` dla LAN i `tailscale0`. Unbound nasłuchuje wyłącznie na `127.0.0.1:53535`.
 
-Dla standardowej instalacji Entware:
+Dla **samodzielnej instalacji** Entware (nie dla produkcyjnego Unbound Manager):
+
+> **Uwaga po R2 (2026-10-24):** `config/unbound.conf.example` używa ścieżki właściwej dla przykładu samodzielnego, a nie aktywnego `dnssec-auto` w zarządzanym Unbound 1.26.2. **Nie kopiuj** go do pliku generowanego przez Manager. [Bramka odtworzenia](router-disaster-recovery.md#unbound-runtime-ownership-reconstruction) · [R2](operations/unbound-1.26.2-production-deployment-2026-10-24.md).
+
 
 ```sh
 cp config/unbound.conf.example /opt/etc/unbound/unbound.conf
