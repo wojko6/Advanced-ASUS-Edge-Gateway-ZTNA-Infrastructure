@@ -1,5 +1,7 @@
 # Project status
 
+> **2026-11-26 operator-reported read-only ASUS checkpoint (not a deployment):** Unbound, Pi-hole FTL, syslog-ng, Tailscale and custom RouterCloud/DUFS processes present; loopback DNS A/AAAA resolution passed, direct Tailscale peer and RouterCloud LAN HTTPS listener observed. No forwarding, login, transfer, end-to-end telemetry, replay or controlled reboot test. Separate Fedora logrotate duplicate-rule repair succeeded. Nov 20 remains the latest documented router change; existing HOLD gates unchanged. [Dated worklog](docs/worklog/2026-11-26.md).
+
 > **Current operator-reported ASUS router production checkpoint — 2026-11-20:** a
 > separately performed, attended Entware ARMv7 syslog-ng upgrade
 > **4.12.0-3 → 4.13.0-1** passed new package/binary version, two running
