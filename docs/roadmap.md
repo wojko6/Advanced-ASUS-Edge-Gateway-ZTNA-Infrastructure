@@ -613,3 +613,7 @@ See [2026-10-12 platform decision](architecture/platform-direction-2026-10-12.md
 The TUF-AX5400 remains the production gateway. Only after a separately
 approved, validated future platform migration could it become a secondary
 lab/AP node; there is no current retirement date or target hardware order.
+
+## Historical Issue #235 evidence — 2026-10-19–20 (reconciled 2026-11-26)
+
+The [historical evidence register](../evidence/README.md#historical-issue-235-evidence--2026-10-1920-reconciled-2026-11-26) retains V2.0–V2.12 findings. At that checkpoint, separate trusted publication and execution-trigger isolation remained unresolved; independent recovery and a supervised production decision required separate evidence and approval. No new task activation, backup expansion or deployment is authorized by preserving these records. Existing Issue #235 and separate PR #245 gates remain HOLD.

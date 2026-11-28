@@ -1,0 +1,153 @@
+# Issue #235 — privileged startup trust maintenance design (2026-10-20)
+
+> **Status:** DRAFT / DESIGN ONLY / `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD` / `DEPLOYMENT_GATE=HOLD`.  
+> **Scope:** the *existing* firmware hook `/jffs/scripts/services-start` and DNS Guard `/jffs/addons/asus-edge/bin/dns-guard`.  
+> **Not in scope:** PR #245 SSD mode repair, RouterCloud/DUFS PrivDrop or HTTP origin, generic installer, unrelated firmware hook rewrites, router reboot, and automatic Cron/permission modifications.  
+> **This is not a deployable runbook:** there are no production apply commands, approved maintenance windows, or authorizations.
+
+## Evidence and design boundaries
+
+The [19 October root-Cron investigation](../../evidence/2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md) and [20 October services-start audit](../../evidence/2026-10-20/issue-235-services-start-trust-chain-v14-v17.md) show two owner-writable, nonroot-owned **privileged entrypoint files**. Both currently match reviewed source bytes in bounded point-in-time reads. The existing full `services-start` firmware hook exactly matches the pinned source, while the root-owned addon script differs by moving watchdog registration to a later startup call site. Do not conflate those entrypoints or replace the full hook with the installer's generated short wrapper.
+
+The operator has verified **private Fedora copies of both live script byte streams**. DNS Guard had an off-router disposable restore and V1.3 32/32 isolated rollback rehearsal. The hook backup has source-byte integrity PASS, file mode 0600 and private directory mode 0700. **Neither backup yet establishes independently protected media or full on-router JFFS2 recovery**; the hook restore rehearsal and live root-owned publish have not been verified. Source hashes alone do not resolve owner trust or continuous writers.
+
+## Direct privileged execution and re-entry inventory (source and DAC snapshot verified; runtime not traced)
+
+Disabling `AsusEdgeDNSGuard` via `cru` alone **does not** inhibit every legitimate DNS Guard invocation. Each row requires separate treatment; the source repository is evidence of *possible entrypoints*, not proof that all files and settings are deployed identically:
+
+| Origin | Reviewed source path | DNS Guard impact | Required treatment |
+| --- | --- | --- | --- |
+| Merlin boot hook | `/jffs/scripts/services-start`, full approved pinned source | Calls `configure_dns_guard_watchdog` (line 325) to add/delete named cron; no direct `dns-guard auto` in this function | During future approved window, prevent new boot/manual hook invocation and rule out any active instance; do **not** assume every ordinary service restart calls this hook |
+| Named root-Cron | `AsusEdgeDNSGuard` | Runs `/jffs/addons/asus-edge/bin/dns-guard auto` every minute while registered | Only separately approved dispatcher inhibition; verify absence after applying and drain in-flight runs; deleting the entry by itself is not quiescence |
+| WAN-connected event | `router/scripts/wan-event` → `router/scripts/wan-event-handler` | `wan-event` dispatches on primary WAN `connected`; handler calls DNS Guard `auto` immediately and conditionally a second time after readiness wait | Treat as **independent re-entry**. **Do not indiscriminately disable WAN or its fail-open recovery**. A separately reviewed trusted transition mechanism or demonstrable event exclusion is required |
+| Operator emergency | `router/scripts/edge-dns-breakglass.sh` | Calls DNS Guard through checked and supervised `breakglass-on/off` and fallback paths | Preserve operator emergency channel; coordinate its use during any window. Disabling it without an independent rescue method is a NO-GO |
+| Deliberate maintenance | `scripts/uninstall.sh`, manual healthcheck and explicit DNS Guard calls | May invoke DNS Guard or change `cru` state | Never run overlapping maintenance/diagnostic operations while expecting quiescence |
+
+The official [Asuswrt-Merlin user-script reference](https://github.com/RMerl/asuswrt-merlin.ng/wiki/User-scripts) describes `services-start` **after boot services are started**. It does not document automatic execution for every ordinary service restart. The prior generic term “service-start re-entry” must be read as **boot / manually invoked hook / unverified platform-specific trigger**, not as an observed recurring service-restart behavior. A future controlled test would be needed to prove any additional GNUton-specific invocation routes.
+
+[V1.8–V1.10 WAN source verification](../../evidence/2026-10-20/issue-235-wan-trigger-source-v18.md) resolves the apparent hook drift: the live eight-line wrapper exactly matches the **installer-generated** source, while the intermediate addon `/jffs/addons/asus-edge/bin/wan-event`, downstream `wan-event-handler` and the independently pinned DNS Guard match their corresponding source bytes. The emergency `edge-dns-breakglass.sh` also matches pinned bytes. **Four-hop standard WAN source chain: EXACT_MATCH_AT_READ_TIME.** The actual WAN runtime dispatch, ACL/xattr effects and future competing writers remain **unverified**. Point-in-time standard WAN owner/mode/parent DAC passed V1.11, and the optional legacy hook was absent in V1.12. A hash match is not execution assurance or proof of trusted privilege separation.
+
+Current limitation: read-only WAN owner/DAC pathname checks and source bytes passed at observation time, but **runtime invocation, ACL/xattrs, writer/FD races and persistence** remain unproven; do not present source and DAC evidence as a full live WAN execution trace. Do not confuse a source-level trigger map with a runtime trace.
+
+**Quiescence acceptance must account for all launch sources, as well as possible already-open executable/script FDs and nonroot ownership.** If a trustworthy inhibitor would break WAN DNS bootstrap or operator break-glass, the window is a **NO-GO**. A root-owned metadata marker/lock, alone, cannot prevent independent firmware-triggered child processes or cron launches.
+
+### V1.11 WAN DAC checkpoint: source-matching standard chain is root-owned at snapshot time
+
+The [same-day V1.11 read-only metadata check](../../evidence/2026-10-20/issue-235-wan-trigger-source-v18.md) observed root:root ownership, single-link regular executable files and no group/other write for the firmware WAN wrapper, addon WAN hook, addon WAN handler, and emergency break-glass helper. Ancestor JFFS directories passed root:root/no group-or-other write, while edge config was root:root mode 0600. **The observed standard WAN chain has no DAC deviation**. V1.11's optional legacy WAN file was `ABSENT_OR_UNREADABLE_UNRESOLVED` because failed `ls` alone was ambiguous. **V1.12 resolved this with `LEGACY_WAN=ABSENT_POINT_IN_TIME`** using only fixed-path shell existence/type predicates: the candidate cannot run through the source-verified wrapper's guarded legacy branch at that instant. Private `EDGE_RUN_LEGACY_HOOKS` value was not read and does not need to be read to resolve this absent-file question. The bounded source/DAC/legacy inventory is complete; no WAN event was triggered. Source/DAC at two separate observation times is **not** full runtime attestation and cannot prove unobserved ACL/xattr/writers are absent.
+
+## V2.0 offline two-target quiescence and crash model — EXPECTED-RED gates (2026-10-20)
+
+The [standalone off-router model evidence](../../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) (synthetic Fedora state machine; **20/20 self-tests PASS**) provides **no production mechanism or security acceptance**. Its eight-scenario matrix includes intentional expected-red witnesses:
+
+- Named Cron inhibition alone leaves boot/manual `services-start`, direct WAN and operator emergency trigger classes available. Do not block the operator emergency path without independently available DNS recovery.
+- Publishing **only one of the two targets** followed by a simulated crash exposes the remaining nonroot-owned privileged target when volatile controls disappear.
+- Even a perfect abstract quiescence assumption cannot protect against **power loss before a safe early-boot gate** is established. Normal firmware boot may invoke `services-start` before a later user-space reconciliation controller.
+- The model's trusted *persistent pre-boot barrier* is **hypothetical and unproven** for the actual GNUton/TUF-AX5400 setup. No JFFS2 power-loss or early boot durability was tested.
+
+**New hard NO-GO:** a plan that only deletes Cron, holds a `flock` or writes a transaction log after normal boot is **not an interruption-safe two-file trust repair**. First prove a concrete safe strategy across restart/power interruption, or accept an explicit *unautomated, operator-driven recovery* proposal with documented residual risks — never claim the model itself authorizes either strategy. A root-owned rollback must not recreate previously observed nonroot-owned privileged entrypoints.
+
+### Firmware-native bootstrap gating — inspected source, NOT PROVEN
+
+The [V2.0 operator-replay and pinned GNUton source investigation](../../evidence/2026-10-20/issue-235-dual-target-quiescence-model-v20.md) directly reviewed `run_custom_script` at tag `3004.388.11_1-gnuton1`: it checks global user-script enablement and any execute bit before path-based `_eval`, **not root ownership, trusted parent chain or pinned same-FD content** in that function. `services-start` and earlier `init-start` are both invoked via this mechanism from writable JFFS. Installing another JFFS `init-start` wrapper alone cannot be assumed to provide a trusted crash-durable guard, and global `jffs2_scripts=0` is not an approved targeted mitigation because it could disable recovery hooks. An early-boot barrier remains **NOT PROVEN**, not a feature we can claim on the reference firmware.
+
+## Four independent operator approvals — not granted
+
+1. Scope and additional *read-only* evidence collection, including any necessary separately approved ASUS access.
+2. Staging trusted sources and recovery materials. Staging on ASUS is a **mutating action** and is not implicitly approved by read-only checks.
+3. One controlled production **apply** window for the exact two targets, only after the GO gates below are demonstrably met and an operator accepts the outage/recovery risk.
+4. Any reboot or wider dependency intervention requires its own explicit authorization.
+
+No repository merge, synthetic PASS, hash match, or maintenance calendar provides these approvals.
+
+## Required GO/NO-GO before any apply
+
+| Gate | Required acceptance evidence | Current state |
+| --- | --- | --- |
+| Trusted recovery | Protected, independently retrievable verified source and rollback copies for both scripts; document provenance, checksums and recovery from inaccessible router/JFFS | Fedora copies verified; independent failure-domain recovery **NOT PROVEN** |
+| Scope pin | Exact active path, file identity, link count, no symlinks, trusted ancestry, SHA-256 and intended original behavior; no unauthorized writer | Point-in-time snapshots, no race-free guarantee |
+| Identity boundary | An execution/transaction authority inaccessible to the observed nonroot owner, including its staging, receipts and lock | **NOT PROVEN** |
+| Runtime quiescence | No in-flight `services-start` or DNS Guard, no writable active FDs or cooperating/competing writer, no new privileged trigger during publish | **NOT PROVEN** |
+| Scheduler + all entrypoints | Precise prevention of named root-Cron launches, boot/manual `services-start` re-registration **and** independent primary-WAN `connected` handler entry, while preserving verified bootstrap DNS and operator break-glass; account for all launch sources and early-boot recovery | **WAN SOURCE/DAC POINT-IN-TIME PASS; DISPATCH INHIBITION AND LIVE RECOVERY NOT PROVEN** |
+| Atomic file publication | Per-file trusted same-filesystem staging, root:root ownership, 0755 mode, content digest checks, directory/file publication identity constraints and safe handling of failures | Fedora fixture only, not proven on real JFFS2 |
+| Interruption semantics | Tested and documented recovery for partial publish, process crash, uncertain JFFS2 persistence and potential restart/power interruption | **NOT PROVEN** |
+| Functional recovery | Independent LAN admin access and preapproved DNS fallback; bounded DNS Guard, Unbound, Pi-hole and root-Cron verification after any change | **NOT AUTHORIZED** |
+
+**Hard NO-GO:** any failed/ambiguous gate or detected source/owner drift; do not perform a partial or ad hoc single-file `chown` as a substitute.
+
+## Draft execution state machine (not executable)
+
+| State | Intent | Permitted transition after separate approval |
+| --- | --- | --- |
+| `HOLD` | Normal reference services, no action. Preserve evidence only | To `PREPARED` after protected sources/recovery exist and the maintenance proposal is approved |
+| `PREPARED` | Independently authenticated immutable inputs for both scripts, no router mutation yet | To `QUIESCED` after separately approved scheduler/startup inhibition and verified drain |
+| `QUIESCED` | No new launch through root-Cron, boot/manual startup hook, primary-WAN event or operator maintenance path; active jobs/FD writers drained; demonstrably safe DNS bootstrap and break-glass held | To `PUBLISHING` only if the trusted mutation authority and JFFS2 prerequisites are proven |
+| `PUBLISHING` | Stage both files with verified root:root 0755 and pinned bytes. Publish each path using separately checked atomic file replacements | To `VERIFYING` only after **both** paths have trusted inode identity/metadata/content |
+| `VERIFYING` | Validate both on-disk targets, independent DNS Guard/Unbound/Pi-hole health and expected watchdog schedule without unsafe duplicate registration | To `ACCEPTED` after operator approval and independently recoverable record |
+| `RECOVERY_HOLD` | Any uncertain, mixed or failed state. Keep privilege launch inhibited as safely feasible, follow a preapproved recovery path | Return to a vetted trusted state; do not automatically restore insecure ownership |
+| `ACCEPTED` | Two trusted owned targets and bounded functional recovery confirmed | Any future changes become a new maintenance event |
+
+**Two renames are not one atomic transaction.** An interruption may leave the hook replaced while DNS Guard is not (or vice versa). The plan therefore requires a trustworthy persistent phase record and explicit detection/repair of mixed states; a stale or same-UID-writable receipt/lock is not adequate. Power-loss persistence on the real JFFS2 system has not been demonstrated. Do not infer directory `fsync` support or crash consistency from Fedora/ext4 tests.
+
+## V2.1 research alternative — monotonic *per-target* publication, NOT a two-file transaction
+
+The [offline V2.1 comparison](../../evidence/2026-10-20/issue-235-monotonic-two-target-model-v21.md) completed **19/19 synthetic local tests**. It models two independent publications of the *existing* pinned bytes as trusted root-owned files. Conditional idealized counts of **untrusted launch classes** decline from four at baseline to one when DNS Guard is hypothetically published first, versus three if the boot hook is published first. **These are Boolean exposure counts, not probabilities, actual exploited paths or production recommendations.**
+
+**Nuance relative to the strict V2.0 boot-barrier finding:** under ideal assumptions, a crash after the first trusted per-file replacement *could* leave a namespace with one *remaining pre-existing* nonroot-owned target, without introducing a new target. This is a partial security improvement, **not a completed trust repair**. V2.0's warning remains applicable to any claim of **complete power-loss-safe maintenance**: the untrusted path could execute before an after-boot recovery script. No JFFS2 crash-persistent single-file publication, old-FD/writer exclusion, or independent recovery has been proven on the reference device.
+
+Do not substitute live in-place `chown` for vetted source-to-root-owned publication; the previous owner could modify content or retain a writable FD. A one-file repair is not safe merely because a prior checksum matched. If incomplete, the procedure must stop with an explicitly untrusted target, not automatically resume or roll back to nonroot ownership. Any practical preferred publication order is subject to later independently reviewed DNS availability and firmware-specific checks; `DEPLOYMENT_GATE=HOLD`.
+
+## V2.3 — FD-to-rename source-name race (rootless expected-red proof)
+
+After [V2.2 operator Fedora replay, 19/19 PASS](../../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md), the [isolated nonroot V2.3 test](../../evidence/2026-10-20/issue-235-fd-to-name-publication-race-v23.md) ran **20/20 local assertions PASS**. A checked/pinned FD retained good synthetic bytes while an injected same-UID name swap replaced `stage` before `os.replace`. Rename by basename published unapproved bytes; a post-publish hash detected that but could not guarantee no transient exposure. Pinning a directory FD protects against certain parent-path replacements, **not against adversarial rewriting of a basename inside that directory**.
+
+**Security-design requirement:** before any root-owned single-path publish, the source directory and staged inode must be genuinely inaccessible to competing writers; the actual publication must bind trusted bytes/metadata to the object being made executable. Pre-check + name-based `rename` + postcheck alone is **NO-GO** as a race-free algorithm. Real GNUton/JFFS2 publication authority, writer exclusion, physical crash durability and safe DNS recovery remain unproven. V2.3 is not a production patch.
+
+## V2.2 rootless Linux filesystem fixture — real inode and stale-FD behavior
+
+The [V2.2 isolated filesystem test](../../evidence/2026-10-20/issue-235-rootless-file-inode-publish-v22.md) ran **19/19 local self-tests** with *real* user-owned disposable files and same-filesystem `os.replace`. New pathname reads saw the new inode and expected synthetic bytes, while a previously open writable FD continued to access the **old inode** after rename. It also demonstrated mixed states when stopping after only one of two path replacements. Its negative checks rejected symlinks, a hardlinked stage, changed candidate bytes and unsafe stage modes.
+
+**Important limit:** this is *not* root-owned publication and *not* JFFS2. An FD pin checked before pathname-based rename does not prove an attacker-resistant FD-to-name handoff; an intervening replacement is still a distinct risk. File/dir `fsync` calls returning in the local fixture do not prove power-loss persistence. **Operator independently replayed V2.2 on Fedora 19/19 PASS and V2.3 on Fedora 20/20 PASS.** **No reduction of production HOLD.**
+
+## V2.3 follow-up — a concrete, bounded threat-model distinction
+
+**Operator Fedora replay 20/20 PASS** reproduces an *expected-red* source-basename swap by a writer who could modify the test's staging directory. This **does not** establish that the nonroot owner of `services-start` or `dns-guard` can rename files inside a root:root, non-group/world-writable directory on the ASUS. Prior ASUS V1.4/V1.11 read-only snapshots instead found root-owned JFFS ancestor directories with no such write permission, albeit only **at observation time**. Those snapshots have not established a *dedicated immutable trusted staging area*, absence of ACL/mount bypass, or guaranteed isolation from another authorized writer.
+
+This separates two threats:
+
+1. **Source-basename swap** — requires ability to change the staged directory entry. A truly root-exclusive directory with a root-owned staged inode and independent authority would block ordinary nonroot basename swaps; V2.3 intentionally did not model that isolation.
+2. **Old-inode content write / in-flight root execution** — the old privileged target is nonroot-owned. Even without directory write access, its owner or retained writable FD may still change/execute **old inode bytes before the trusted replacement becomes visible**. A completed atomic name replacement also does **not** revoke already-open FDs or prevent a previously launched process from continuing. These require independently proven source provenance, publication process authority and process/FD quiescence.
+
+**Next acceptance work** must **reuse previous Issue #235 three-role/FD-binding/ARMv7 trust-helper lab evidence** before duplicating another same-UID Linux fixture; then explicitly identify gaps relative to the pinned active `services-start` and DNS Guard scripts: identity of the privileged publisher, unwritable source stage, pinned content-to-published inode, JFFS2 crash consistency and safe DNS/boot recovery. Existing isolated acceptance tests are not a green light for production changes. If the old source can still be modified between read and root execution, a safe post-publication result alone cannot retroactively remove that pre-existing hazard.
+
+## V2.4 prior-lab evidence reconciliation (docs-only)
+
+**Source recovery update:** five v1.3/v1.4/v1.5 Stage B C/Python files were independently byte-hashed from the operator's file Library and matched exact earlier review SHA-256 pins; several other Stage B scripts were found and hashed. The original Canonical Manifest C/ZIP dependency was not reconstructed **at the V2.4 checkpoint**, but was subsequently recovered and independently verified in [V2.5](../../evidence/2026-10-20/issue-235-original-c-zip-provenance-v25.md); this concerns **SSD PR #245**, not Issue #235 owner-repair approval. These recovered helpers were written for **three-role SSD PR #245** with explicit scope `pr245-ssd-mount-roots`, **not** startup hook/DNS Guard publication. The trust/approval records cannot be reinterpreted as authorizing a different production operation. [Provenance and limitation matrix](../../evidence/2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md).
+
+[V2.4 trust-boundary matrix](../../evidence/2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md) distinguishes prior reported separate-UID/three-role/same-FD/Stage B tests from a **reproducible, source-pinned firmware-compatible publisher**. At this V2.4 checkpoint the exact artifact/target-specific contract still required retrieval and verification; later [V2.5](../../evidence/2026-10-20/issue-235-original-c-zip-provenance-v25.md) established historical C/ZIP bytes, and [V2.6](../../evidence/2026-10-20/issue-235-two-script-approval-contract-v26.md) established separate synthetic role grammar, without production approval; no previous synthetic PASS demonstrates the live root authority, protected stage inode, old-owner FD exclusion, JFFS2 crash durability or independently usable DNS recovery. **Do not start a new same-UID fixture until the earlier source artifacts are reconciled.** No change to any GO/NO-GO.
+
+
+
+## Ordering and rollback constraints
+
+- Source priority: **preserve exact byte content of the currently deployed full hook** and approved DNS Guard source. Do not introduce the addon’s delayed watchdog call or a short wrapper during ownership remediation.
+- Prefer a trusted startup-entrypoint replacement before Cron target reactivation, but **do not assume an execution order is safe** without proven suppression of both privileged entrypoints. The order is still subject to review.
+- Both candidate and rollback publications must be **trusted root:root, mode 0755**. Historical evidence must retain the old nonroot ownership for forensic provenance, but a rollback must **not re-introduce owner-writable nonroot privileged scripts**.
+- If safe `root:root` publication or rollback cannot be guaranteed, stay in a documented `RECOVERY_HOLD` with operator recovery rather than silently reopening the original privilege boundary.
+- DNS Guard watchdog is part of fail-open recovery. Disabling Cron without demonstrating independent DNS recovery is **not** a safe maintenance precondition. The primary-WAN `connected` path calls DNS Guard directly, independent of Cron; boot/manual `services-start` hook invocation can also re-register Cron. Never suppress WAN or break-glass recovery casually.
+- No generic installer, recursive DAC changes, runtime shell sourcing of untrusted data, or blanket service restarts.
+
+### V2.11 source-backed launcher review
+
+The [V2.11 GNUton dispatch/owner-repair feasibility record](../../evidence/2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md) confirms source-level constraints: `services-start` lock is in-script (too late to stop first execution), one-minute root-Cron can be re-registered by `services-start`, WAN and operator break-glass invoke Guard directly, and the generic installer would overwrite full `services-start` with the shorter managed wrapper. No verified firmware-native selective interruption-safe early gate and no root-only two-target publisher. No additional backup or lab replay performed. Continue source review only, no production authorization.
+
+### V2.12 implementation-backed source dispatch gap
+
+In contrast to V2.11's previously pinned summary, [V2.12](../../evidence/2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md) newly opened **the exact upstream GNUton tag** and checked `shared/shutils.c`: `_eval` forks then calls `execvp(argv[0], argv)` on a pathname. The preceding `run_custom_script` only checks `stat`, global enablement and execute bits. This is a documented TOCTOU source-level gap with no owner/digest/inode-execution binding. Exact `others/cru` similarly locks only cron-file write activity. A live target firmware binary equivalence and any firmware-native selective durable inhibitor are **NOT PROVEN**; project scripts and ASUS are unchanged. Do not run an ad-hoc owner repair or Cron-disable maneuver.
+
+## Current operator checkpoint and next work
+
+**20 October:** fixed-path hook backup on Fedora `HOOK_OFFROUTER_BACKUP=PASS`, `BACKUP_HASH=PASS`, backup file mode 0600, directory 0700, `ASUS_MODIFIED=NO`, `CRON_MODIFIED=NO`. The off-router backup is a recovery **input**, not proof of independent resilience or live rollback.
+
+**Next engineering decision (after V2.8/V2.9 and operator V2.10 scope correction):** existing primary Fedora backup bytes passed V2.8, both copies were classified `SAME_ST_DEV` in V2.9, and no off-host recovery has been verified. The [V2.10 extra recovery-medium proposal](issue235-independent-script-recovery-options-v210-2026-10-20.md) is **deferred**, not an active request for another backup. The immediate Issue #235 priority is a specific firmware-compatible trust/launch-inhibition and trusted *full two-target* publication review: independent authority and stage, process/old writable-FD quiescence, Cron/WAN/boot/break-glass continuity and JFFS2 partial-failure semantics. Do not perform a live `chown`, direct `rename`, installer or new backup. The independently usable recovery gap remains an outstanding **production GO** criterion; offline review may continue without claiming it closed. Any active router intervention requires distinct explicit operator authorization.
+
+**Current final status:** `PRIVILEGED_EXECUTION_TRUST_GATE=HOLD`; `DEPLOYMENT_GATE=HOLD`.

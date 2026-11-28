@@ -474,3 +474,7 @@ Automated shell, configuration, mock-firewall, recovery, and evidence-redaction 
 ## License
 
 See [LICENSE](LICENSE).
+
+## Historical Issue #235 evidence — 2026-10-19–20 (reconciled 2026-11-26)
+
+The [historical evidence register](evidence/README.md#historical-issue-235-evidence--2026-10-1920-reconciled-2026-11-26) preserves the bounded DNS Guard root-Cron / startup trust investigation, offline publication models, firmware source review and recovery design. These records predate the November production checkpoints. They do not establish a trusted root publisher, a durable execution-inhibition mechanism, independent off-host recovery or an approved owner repair. Issue #235 remains HOLD; the separate SSD Draft PR #245 is not an authorization for the two privileged scripts.

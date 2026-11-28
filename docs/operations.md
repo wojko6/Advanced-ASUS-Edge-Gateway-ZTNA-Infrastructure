@@ -462,3 +462,7 @@ cru l | grep ASUS_Edge
 ```
 
 Do not reuse one identifier for multiple schedules because the later entry can replace the earlier task.
+
+## Historical Issue #235 evidence — 2026-10-19–20 (reconciled 2026-11-26)
+
+Design/evidence only, not an executable runbook: [privileged startup trust](operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md), [two-target trusted publisher](operations/issue235-two-target-trusted-publisher-design-2026-10-20.md), [separate offline approval authority](operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md), [independent recovery options](operations/issue235-independent-script-recovery-options-v210-2026-10-20.md). Preserve the distinct SSD PR #245 scope; no generic installer, live ownership changes, Cron/boot changes, new backup operations or production repair authorized. Trusted publisher, old-writer exclusion, JFFS2 crash recovery and independent DNS recovery remain unproven. See [historical evidence register](../evidence/README.md#historical-issue-235-evidence--2026-10-1920-reconciled-2026-11-26). HOLD.

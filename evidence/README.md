@@ -137,3 +137,26 @@ Use precise result language:
 A successful controlled reboot and health check demonstrate reboot stability and functional recovery at that point in time. They do **not** by themselves prove long-term stability. The reference deployment's unchanged-state observation was closed on 2026-09-22 after continuous 24/7 powered operation from 2026-09-11 through 2026-09-22; this must not be described as a completed 14-day endurance test.
 
 Subsequent live validation and router changes should remain explicit, bounded maintenance actions with sanitized evidence and rollback planning where state changes are involved.
+
+## Historical Issue #235 evidence — 2026-10-19–20 (reconciled 2026-11-26)
+
+Recovered without changing the original 18 document blobs from [Draft PR #270's historical head](https://github.com/wojko6/Advanced-ASUS-Edge-Gateway-ZTNA-Infrastructure/tree/c57dc3d30d61819929d72dec7919a506a7834d97). These are dated, scoped reports and design candidates, not new tests or approval. In particular, synthetic PASS may demonstrate an expected-red condition, and the pinned firmware source review is not live binary attestation. The existing November evidence and current project status remain authoritative for their own scopes. PRIVILEGED_EXECUTION_TRUST_GATE=HOLD; DEPLOYMENT_GATE=HOLD.
+
+- [issue235-independent-script-recovery-options-v210-2026-10-20](../docs/operations/issue235-independent-script-recovery-options-v210-2026-10-20.md)
+- [issue235-privileged-startup-trust-maintenance-design-2026-10-20](../docs/operations/issue235-privileged-startup-trust-maintenance-design-2026-10-20.md)
+- [issue235-two-script-offline-approval-authority-v27-2026-10-20](../docs/operations/issue235-two-script-offline-approval-authority-v27-2026-10-20.md)
+- [issue235-two-target-trusted-publisher-design-2026-10-20](../docs/operations/issue235-two-target-trusted-publisher-design-2026-10-20.md)
+- [issue-235-dns-guard-root-cron-trust-and-rollback](2026-10-19/issue-235-dns-guard-root-cron-trust-and-rollback.md)
+- [issue-235-dual-target-quiescence-model-v20](2026-10-20/issue-235-dual-target-quiescence-model-v20.md)
+- [issue-235-fd-to-name-publication-race-v23](2026-10-20/issue-235-fd-to-name-publication-race-v23.md)
+- [issue-235-gnuton-dispatch-inhibition-feasibility-v211](2026-10-20/issue-235-gnuton-dispatch-inhibition-feasibility-v211.md)
+- [issue-235-gnuton-firmware-launch-trust-boundary-v212](2026-10-20/issue-235-gnuton-firmware-launch-trust-boundary-v212.md)
+- [issue-235-independent-recovery-failure-domain-v29](2026-10-20/issue-235-independent-recovery-failure-domain-v29.md)
+- [issue-235-monotonic-two-target-model-v21](2026-10-20/issue-235-monotonic-two-target-model-v21.md)
+- [issue-235-original-c-zip-provenance-v25](2026-10-20/issue-235-original-c-zip-provenance-v25.md)
+- [issue-235-recovery-copy-separation-v28](2026-10-20/issue-235-recovery-copy-separation-v28.md)
+- [issue-235-rootless-file-inode-publish-v22](2026-10-20/issue-235-rootless-file-inode-publish-v22.md)
+- [issue-235-services-start-trust-chain-v14-v17](2026-10-20/issue-235-services-start-trust-chain-v14-v17.md)
+- [issue-235-trusted-publisher-evidence-gap-review-v24](2026-10-20/issue-235-trusted-publisher-evidence-gap-review-v24.md)
+- [issue-235-two-script-approval-contract-v26](2026-10-20/issue-235-two-script-approval-contract-v26.md)
+- [issue-235-wan-trigger-source-v18](2026-10-20/issue-235-wan-trigger-source-v18.md)
