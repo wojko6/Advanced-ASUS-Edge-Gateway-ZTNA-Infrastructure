@@ -1,0 +1,49 @@
+name: Local AI Agent diagnostic entrypoint — offline only
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/fedora/local-ai-agent-v0.21/agent/**'
+      - 'experiments/fedora/local-ai-agent-v0.21/c63/**'
+      - '.github/workflows/agent-diagnostic-offline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
+      - name: Verify C.63 pinned fixture and 17 sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/fedora/local-ai-agent-v0.21/c63
+          sha256sum --check SHA256SUMS
+          sha256sum --check SHA256SUMS_PUBLIC_C63_11_14.txt
+          test "$(find . -maxdepth 1 -type f -name 'local_ai_agent_v021c63*.py' | wc -l)" -eq 17
+      - name: Run 17 upstream offline self-test suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/fedora/local-ai-agent-v0.21/c63
+          for source in local_ai_agent_v021c63*.py; do
+            python3 -B "$source" --self-test
+          done
+      - name: Run unified agent synthetic offline self-test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B experiments/fedora/local-ai-agent-v0.21/agent/diagnostic_agent.py --self-test
+      - name: Verify structured output invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT=experiments/fedora/local-ai-agent-v0.21/agent/diagnostic_agent.py
+          python3 -B "$SCRIPT" --summary-json | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x["deployment_gate"] == "HOLD"; assert x["model_action_authority"] == "NONE"; assert x["model_requests"] == 0; assert not x["remediation_authorized"]; assert x["incident_quality_gate"] == "ABSTAIN_NO_MODEL_INFERENCE"; assert not x["gate_demo_authorizes_model_for_incident"]; assert x["root_cause"] == "UNDETERMINED"; assert x["dns_health"] == "NOT_ESTABLISHED"'
+          python3 -B "$SCRIPT" --operator-report | grep -q 'DEPLOYMENT_GATE=HOLD'
